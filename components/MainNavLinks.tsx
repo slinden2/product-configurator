@@ -11,11 +11,11 @@ const links = [
   },
   {
     label: "Configurazioni",
-    href: "/configurazioni",
+    href: "/configurations",
   },
   {
     label: "Utenti",
-    href: "/utenti",
+    href: "/users",
   },
 ];
 
