@@ -14,7 +14,7 @@ model Configuration {
   description           String?
   brush_num             Int
   brush_type            BrushType
-  brush_color           String
+  brush_color           BrushColor
   has_shampoo_pump      Boolean
   has_wax_pump          Boolean
   has_chemical_pump     Boolean
@@ -48,6 +48,13 @@ enum BrushType {
   THREAD
   MIXED
   CARLITE
+}
+
+enum BrushColor {
+  BLUE_SILVER
+  GREEN_SILVER
+  RED
+  GREEN_BLACK
 }
 
 enum ChemicalPumpPos {
