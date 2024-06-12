@@ -1,14 +1,93 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Configuration {
+  id                    Int              @id @default(autoincrement())
+  name                  String
+  description           String?
+  brush_num             Int
+  brush_type            BrushType
+  brush_color           String
+  has_shampoo_pump      Boolean
+  has_wax_pump          Boolean
+  has_chemical_pump     Boolean
+  chemical_num          Int?             @default(0)
+  chemical_pump_pos     ChemicalPumpPos  @default(NO_PUMP)
+  has_foam              Boolean          @default(false)
+  has_acid_pump         Boolean
+  has_hp_roof_bar       Boolean
+  has_chemical_roof_bar Boolean          @default(false)
+  has_high_spinners     Boolean          @default(false)
+  has_low_spinners      Boolean
+  has_short_hp_bars     Boolean
+  has_long_hp_bars      Boolean
+  supply_side           SupplySide
+  supply_type           SupplyType
+  supply_fixing_type    SupplyFixingType
+  has_post_frame        Boolean          @default(false)
+  cable_chain_width     CableChainWidth  @default(NO_CHAIN)
+  has_double_supply     Boolean
+  water_type_1          WaterType
+  water_type_2          WaterType        @default(NO_WATER)
+  rail_type             RailType
+  rail_length           Int
+  rail_guide_num        Int
+  has_itecoweb          Boolean
+
+  @@map("configurations")
+}
+
+enum BrushType {
+  THREAD
+  MIXED
+  CARLITE
+}
+
+enum ChemicalPumpPos {
+  NO_PUMP
+  ABOARD
+  WASHBAY
+}
+
+enum SupplySide {
+  LEFT
+  RIGHT
+}
+
+enum SupplyType {
+  STRAIGHT_SHELF
+  BOOM
+  CABLE_CHAIN
+}
+
+enum SupplyFixingType {
+  WALL
+  FLOOR
+}
+
+enum CableChainWidth {
+  NO_CHAIN
+  L150
+  L200
+  L250
+  L300
+}
+
+enum WaterType {
+  NO_WATER
+  NETWORK
+  RECYCLED
+  DEMINERALIZED
+}
+
+enum RailType {
+  DOWELED
+  WELDED
 }
