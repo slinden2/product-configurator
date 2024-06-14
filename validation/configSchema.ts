@@ -98,69 +98,202 @@ const RailTypeEnum = z_enumFromArray(
 const brushNums: SelectOption[] = [
   {
     value: 0,
-    label: "Zero",
+    label: "No spazzole",
   },
   {
     value: 2,
-    label: "Due",
+    label: "Due spazzole",
   },
   {
     value: 3,
-    label: "Tre",
+    label: "Tre spazzole",
+  },
+];
+
+// Number of brushes
+const chemicalNum: SelectOption[] = [
+  {
+    value: 1,
+    label: "Una pompa di prelavaggio",
+  },
+  {
+    value: 2,
+    label: "Due pompe di prelavaggio",
   },
 ];
 
 export const selectFieldOptions: SelectOptionGroup = {
   brushNums,
   brushTypes,
+  brushColors,
+  chemicalNum,
+  chemicalPumpPositions,
+  supplySides,
+  supplyTypes,
+  supplyFixingTypes,
+  cableChainWidths,
+  waterTypes,
+  railTypes,
 };
 
-export const configSchema = z.object({
+// export const configSchema = z.object({
+//   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
+//   description: z.string().optional(),
+//   brush_num: z
+//     .string()
+//     .transform((val) => parseInt(val, 10))
+//     .refine((value) => brushNums.map((item) => item.value).includes(value), {
+//       message: "Numero di spazzole deve essere 0, 2, or 3.",
+//     }),
+//   brush_type: BrushTypeEnum,
+//   brush_color: BrushColorEnum,
+//   has_shampoo_pump: z.boolean().default(false),
+//   has_wax_pump: z.boolean().default(false),
+//   has_chemical_pump: z.boolean().default(false),
+//   has_acid_pump: z.boolean().default(false),
+//   chemical_num: z
+//     .string()
+//     .transform((val) => parseInt(val, 10))
+//     .refine((value) => chemicalNum.map((item) => item.value).includes(value), {
+//       message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
+//     })
+//     .optional(),
+//   chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+//   acid_pump_pos: ChemicalPumpPosEnum.optional(),
+//   // has_foam: z.boolean().optional(),
+//   // has_hp_roof_bar: z.boolean(),
+//   // has_chemical_roof_bar: z.boolean().optional(),
+//   // has_high_spinners: z.boolean(),
+//   // has_low_spinners: z.boolean(),
+//   // has_short_hp_bars: z.boolean(),
+//   // has_long_hp_bars: z.boolean(),
+//   // supply_side: SupplySideEnum,
+//   // supply_type: SupplyTypeEnum,
+//   // supply_fixing_type: SupplyFixingTypeEnum,
+//   // has_post_frame: z.boolean().optional(),
+//   // cable_chain_width: CableChainWidthEnum.optional(),
+//   // has_double_supply: z.boolean(),
+//   // water_type_1: WaterTypeEnum,
+//   // water_type_2: WaterTypeEnum.optional(),
+//   // rail_type: RailTypeEnum,
+//   // rail_length: z
+//   //   .number()
+//   //   .int()
+//   //   .refine(
+//   //     (val) => val >= 7 && val <= 26,
+//   //     "La lunghezza deve essere tra 7 e 26 metri."
+//   //   ),
+//   // rail_guide_num: z
+//   //   .number()
+//   //   .int()
+//   //   .refine(
+//   //     (val) => val >= 0 && val <= 2,
+//   //     "Le guide ruote (coppie) devono essere 0, 1 o 2."
+//   //   ),
+//   // has_itecoweb: z.boolean(),
+// });
+
+export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
   description: z.string().optional(),
   brush_num: z
     .string()
     .transform((val) => parseInt(val, 10))
-    .refine((value) => [0, 2, 3].includes(value), {
-      message: "Numero di spazzole deve essere 0, 2, or 3",
+    .refine((val) => brushNums.map((item) => item.value).includes(val), {
+      message: "Numero di spazzole deve essere 0, 2, or 3.",
     }),
   brush_type: BrushTypeEnum,
   brush_color: BrushColorEnum,
-  has_shampoo_pump: z.boolean(),
-  has_wax_pump: z.boolean(),
-  has_chemical_pump: z.boolean(),
-  chemical_num: z.number().int().optional(),
-  chemical_pump_pos: ChemicalPumpPosEnum.optional(),
-  has_foam: z.boolean().optional(),
-  has_acid_pump: z.boolean(),
-  has_hp_roof_bar: z.boolean(),
-  has_chemical_roof_bar: z.boolean().optional(),
-  has_high_spinners: z.boolean(),
-  has_low_spinners: z.boolean(),
-  has_short_hp_bars: z.boolean(),
-  has_long_hp_bars: z.boolean(),
-  supply_side: SupplySideEnum,
-  supply_type: SupplyTypeEnum,
-  supply_fixing_type: SupplyFixingTypeEnum,
-  has_post_frame: z.boolean().optional(),
-  cable_chain_width: CableChainWidthEnum.optional(),
-  has_double_supply: z.boolean(),
-  water_type_1: WaterTypeEnum,
-  water_type_2: WaterTypeEnum.optional(),
-  rail_type: RailTypeEnum,
-  rail_length: z
-    .number()
-    .int()
-    .refine(
-      (val) => val >= 7 && val <= 26,
-      "La lunghezza deve essere tra 7 e 26 metri."
-    ),
-  rail_guide_num: z
-    .number()
-    .int()
-    .refine(
-      (val) => val >= 0 && val <= 2,
-      "Le guide ruote (coppie) devono essere 0, 1 o 2."
-    ),
-  has_itecoweb: z.boolean(),
+  has_shampoo_pump: z.boolean().default(false),
+  has_wax_pump: z.boolean().default(false),
 });
+
+const brushNumZeroSchema = z.object({
+  brush_num: z.literal("0").transform((val) => parseInt(val, 10)),
+  brush_type: z.undefined(),
+  brush_color: z.undefined(),
+});
+
+const brushNumPositiveSchema = z.object({
+  brush_num: z.literal("0").transform((val) => parseInt(val, 10)),
+  brush_type: BrushTypeEnum,
+  brush_color: BrushColorEnum,
+});
+
+const chemPumpNumBase = z
+  .string()
+  .transform((val) => parseInt(val, 10))
+  .refine((value) => chemicalNum.map((item) => item.value).includes(value), {
+    message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
+  });
+
+const chemPumpUndefinedSchema = z.object({
+  has_chemical_pump: z.literal(undefined),
+  chemical_num: chemPumpNumBase.optional(),
+  chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+});
+
+const chemPumpFalseSchema = z.object({
+  has_chemical_pump: z.literal(false),
+  chemical_num: chemPumpNumBase.optional(),
+  chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+});
+
+const chemPumpTrueSchema = z.object({
+  has_chemical_pump: z.literal(true),
+  chemical_num: chemPumpNumBase,
+  chemical_pump_pos: ChemicalPumpPosEnum,
+});
+
+const chemPumpDiscriminatedUnion = z.discriminatedUnion("has_chemical_pump", [
+  chemPumpUndefinedSchema,
+  chemPumpFalseSchema,
+  chemPumpTrueSchema,
+]);
+
+const acidPumpUndefined = z.object({
+  has_acid_pump: z.literal(undefined),
+  acid_pump_pos: z.undefined(),
+});
+
+const acidPumpFalse = z.object({
+  has_acid_pump: z.literal(false),
+  acid_pump_pos: z.undefined(),
+});
+
+const acidPumpTrue = z.object({
+  has_acid_pump: z.literal(true),
+  acid_pump_pos: ChemicalPumpPosEnum,
+});
+
+const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
+  acidPumpUndefined,
+  acidPumpFalse,
+  acidPumpTrue,
+]);
+
+export const configSchema = chemPumpDiscriminatedUnion
+  .and(acidPumpDiscriminatedUnion)
+  .and(baseSchema)
+  .superRefine((data, ctx) => {
+    if (
+      data.chemical_num &&
+      data.chemical_num === 2 &&
+      data.chemical_pump_pos === "ABOARD" &&
+      data.has_acid_pump &&
+      data.acid_pump_pos === "ABOARD"
+    ) {
+      const fieldNames: Array<keyof typeof data> = [
+        "chemical_pump_pos",
+        "acid_pump_pos",
+      ];
+      fieldNames.forEach((field) => {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "A bordo impianto si possono montare solo due pompe di prelavaggio.",
+          path: [field],
+        });
+      });
+    }
+  });

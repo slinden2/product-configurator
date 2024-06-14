@@ -10,9 +10,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ConfigFormData } from "@/components/ConfigForm";
 
 interface InputFieldProps {
-  name: string;
+  name: keyof ConfigFormData;
   label: string;
   placeholder: string;
 }
