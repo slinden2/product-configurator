@@ -225,18 +225,21 @@ const chemPumpUndefinedSchema = z.object({
   has_chemical_pump: z.literal(undefined),
   chemical_num: chemPumpNumBase.optional(),
   chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+  has_foam: z.boolean().optional(),
 });
 
 const chemPumpFalseSchema = z.object({
   has_chemical_pump: z.literal(false),
   chemical_num: chemPumpNumBase.optional(),
   chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+  has_foam: z.boolean().optional(),
 });
 
 const chemPumpTrueSchema = z.object({
   has_chemical_pump: z.literal(true),
   chemical_num: chemPumpNumBase,
   chemical_pump_pos: ChemicalPumpPosEnum,
+  has_foam: z.boolean().default(false),
 });
 
 const chemPumpDiscriminatedUnion = z.discriminatedUnion("has_chemical_pump", [

@@ -130,6 +130,10 @@ const ConfigForm = () => {
                   />
                 </div>
               </div>
+              <CheckboxField
+                name="has_foam"
+                label="Nebulizzazione con schiuma"
+              />
             </div>
           )}
           {hasAcidPump && (
