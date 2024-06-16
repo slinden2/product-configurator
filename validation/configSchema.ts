@@ -1,8 +1,12 @@
 import { SelectOption, SelectOptionGroup } from "@/types";
 import { z } from "zod";
 
+const genericRequiredMessage = "Scelta obbligatoria";
+
 function z_enumFromArray(array: string[]) {
-  return z.enum([array[0], ...array.slice(1)]);
+  return z.enum([array[0], ...array.slice(1)], {
+    message: genericRequiredMessage,
+  });
 }
 
 // Brush Type
@@ -197,31 +201,21 @@ export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
   description: z.string().optional(),
   brush_num: z
-    .string()
+    .string({ message: genericRequiredMessage })
     .transform((val) => parseInt(val, 10))
     .refine((val) => brushNums.map((item) => item.value).includes(val), {
-      message: "Numero di spazzole deve essere 0, 2, or 3.",
+      message: `Numero di spazzole deve essere ${brushNums
+        .map((item) => item.value)
+        .join(", ")}.`,
     }),
-  brush_type: BrushTypeEnum,
-  brush_color: BrushColorEnum,
+  brush_type: BrushTypeEnum.optional(),
+  brush_color: BrushColorEnum.optional(),
   has_shampoo_pump: z.boolean().default(false),
   has_wax_pump: z.boolean().default(false),
 });
 
-const brushNumZeroSchema = z.object({
-  brush_num: z.literal("0").transform((val) => parseInt(val, 10)),
-  brush_type: z.undefined(),
-  brush_color: z.undefined(),
-});
-
-const brushNumPositiveSchema = z.object({
-  brush_num: z.literal("0").transform((val) => parseInt(val, 10)),
-  brush_type: BrushTypeEnum,
-  brush_color: BrushColorEnum,
-});
-
 const chemPumpNumBase = z
-  .string()
+  .string({ message: genericRequiredMessage })
   .transform((val) => parseInt(val, 10))
   .refine((value) => chemicalNum.map((item) => item.value).includes(value), {
     message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
@@ -272,9 +266,9 @@ const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
   acidPumpTrue,
 ]);
 
-export const configSchema = chemPumpDiscriminatedUnion
+export const configSchema = baseSchema
+  .and(chemPumpDiscriminatedUnion)
   .and(acidPumpDiscriminatedUnion)
-  .and(baseSchema)
   .superRefine((data, ctx) => {
     if (
       data.chemical_num &&
@@ -294,6 +288,22 @@ export const configSchema = chemPumpDiscriminatedUnion
             "A bordo impianto si possono montare solo due pompe di prelavaggio.",
           path: [field],
         });
+      });
+    }
+
+    if (data.brush_num > 0 && !data.brush_type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["brush_type"],
+      });
+    }
+
+    if (data.brush_num > 0 && !data.brush_color) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["brush_color"],
       });
     }
   });

@@ -26,9 +26,6 @@ const ConfigForm = () => {
   const hasChemicalPump = form.watch("has_chemical_pump");
   const hasAcidPump = form.watch("has_acid_pump");
 
-  console.log("brushNum", brushNum);
-  console.log("selectFieldOptions", selectFieldOptions);
-
   async function onSubmit(values: ConfigFormData) {
     console.log(values);
   }
@@ -60,22 +57,31 @@ const ConfigForm = () => {
                 fieldsToReset: ["brush_type", "brush_color"],
               }}
             />
-            <SelectField
-              name="brush_type"
-              label="Tipo di setole"
-              placeholder="Selezionare..."
-              className="md:flex-1"
-              disabled={brushNum == 0}
-              items={selectFieldOptions.brushTypes}
-            />
-            <SelectField
-              name="brush_color"
-              label="Colore di setole"
-              placeholder="Selezionare..."
-              className="md:flex-1"
-              disabled={brushNum == 0}
-              items={selectFieldOptions.brushColors}
-            />
+            {brushNum > 0 ? (
+              <>
+                <SelectField
+                  name="brush_type"
+                  label="Tipo di setole"
+                  placeholder="Selezionare..."
+                  className="md:flex-1"
+                  disabled={!brushNum || brushNum == 0}
+                  items={selectFieldOptions.brushTypes}
+                />
+                <SelectField
+                  name="brush_color"
+                  label="Colore di setole"
+                  placeholder="Selezionare..."
+                  className="md:flex-1"
+                  disabled={!brushNum || brushNum == 0}
+                  items={selectFieldOptions.brushColors}
+                />
+              </>
+            ) : (
+              <>
+                <div className="md:flex-1" />
+                <div className="md:flex-1" />
+              </>
+            )}
           </div>
           <div className="mt-4 grid grid-rows-2 grid-cols-2 md:grid-rows-1 md:grid-cols-4">
             <CheckboxField
