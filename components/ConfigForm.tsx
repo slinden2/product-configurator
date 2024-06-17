@@ -25,6 +25,7 @@ const ConfigForm = () => {
   const brushNum = form.watch("brush_num");
   const hasChemicalPump = form.watch("has_chemical_pump");
   const hasAcidPump = form.watch("has_acid_pump");
+  const hasHPRoofBar = form.watch("has_hp_roof_bar");
 
   async function onSubmit(values: ConfigFormData) {
     console.log(values);
@@ -147,6 +148,20 @@ const ConfigForm = () => {
               />
             </div>
           )}
+          <Separator className="my-4" />
+          <div className="flex gap-4">
+            <CheckboxField
+              name="has_hp_roof_bar"
+              label="Barra oscillante HP"
+              fieldsToResetOnUncheck={["has_chemical_roof_bar"]}
+            />
+            {hasHPRoofBar && (
+              <CheckboxField
+                name="has_chemical_roof_bar"
+                label="Barra di prelevaggio"
+              />
+            )}
+          </div>
           <Button className="mt-2" type="submit">
             Salva
           </Button>

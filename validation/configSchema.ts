@@ -257,9 +257,25 @@ const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
   }),
 ]);
 
+const hpRoofBarDiscriminatedUnion = z.discriminatedUnion("has_hp_roof_bar", [
+  z.object({
+    has_hp_roof_bar: z.literal(undefined),
+    has_chemical_roof_bar: z.undefined(),
+  }),
+  z.object({
+    has_hp_roof_bar: z.literal(false),
+    has_chemical_roof_bar: z.undefined(),
+  }),
+  z.object({
+    has_hp_roof_bar: z.literal(true),
+    has_chemical_roof_bar: z.boolean().default(false),
+  }),
+]);
+
 export const configSchema = baseSchema
   .and(chemPumpDiscriminatedUnion)
   .and(acidPumpDiscriminatedUnion)
+  .and(hpRoofBarDiscriminatedUnion)
   .superRefine((data, ctx) => {
     if (
       data.chemical_num &&
