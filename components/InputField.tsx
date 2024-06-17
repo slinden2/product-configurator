@@ -27,7 +27,7 @@ const InputField = ({ name, label, placeholder }: InputFieldProps) => {
       defaultValue=""
       render={({ field }) => {
         return (
-          <FormItem>
+          <FormItem className="mb-4">
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Input placeholder={placeholder} {...field} />
