@@ -25,9 +25,7 @@ model Configuration {
   has_hp_roof_bar       Boolean
   has_chemical_roof_bar Boolean?
   has_high_spinners     Boolean
-  has_low_spinners      Boolean
-  has_short_hp_bars     Boolean
-  has_long_hp_bars      Boolean
+  low_hp_gantry         LowHPGantry?
   supply_side           SupplySide
   supply_type           SupplyType
   supply_fixing_type    SupplyFixingType
@@ -63,6 +61,13 @@ enum BrushColor {
 enum ChemicalPumpPos {
   ABOARD
   WASH_BAY
+}
+
+enum LowHPGantry {
+  LOW_SPINNER
+  LOW_BAR
+  HIGH_BAR
+  LOW_HIGH_SPINNER
 }
 
 enum SupplySide {

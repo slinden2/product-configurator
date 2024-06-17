@@ -40,6 +40,17 @@ const ChemicalPumpPosEnum = z_enumFromArray(
   chemicalPumpPositions.map((item) => item.value.toString())
 );
 
+const hp20barGantryTypes: SelectOption[] = [
+  { value: "NO_SELECTION", label: "Niente" },
+  { value: "LOW_SPINNER", label: "2 robottine basse" },
+  { value: "LOW_BAR", label: "Barre HP basse" },
+  { value: "HIGH_BAR", label: "Barre HP alte" },
+  { value: "LOW_HIGH_SPINNER", label: "2+4 robottine" },
+];
+const HPGantryTypeEnum = z_enumFromArray(
+  hp20barGantryTypes.map((item) => item.value.toString())
+);
+
 // Supply Side
 const supplySides: SelectOption[] = [
   { value: "LEFT", label: "Sinistra" },
@@ -132,6 +143,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   brushColors,
   chemicalNum,
   chemicalPumpPositions,
+  hp20barGantryTypes,
   supplySides,
   supplyTypes,
   supplyFixingTypes,
@@ -212,6 +224,10 @@ export const baseSchema = z.object({
   brush_color: BrushColorEnum.optional(),
   has_shampoo_pump: z.boolean().default(false),
   has_wax_pump: z.boolean().default(false),
+  low_hp_gantry: HPGantryTypeEnum.transform((val) =>
+    val === "NO_SELECTION" ? undefined : val
+  ),
+  has_high_spinners: z.boolean().default(false),
 });
 
 const chemPumpNumBase = z
