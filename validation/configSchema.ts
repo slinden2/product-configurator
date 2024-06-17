@@ -221,52 +221,40 @@ const chemPumpNumBase = z
     message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
   });
 
-const chemPumpUndefinedSchema = z.object({
-  has_chemical_pump: z.literal(undefined),
-  chemical_num: chemPumpNumBase.optional(),
-  chemical_pump_pos: ChemicalPumpPosEnum.optional(),
-  has_foam: z.boolean().optional(),
-});
-
-const chemPumpFalseSchema = z.object({
-  has_chemical_pump: z.literal(false),
-  chemical_num: chemPumpNumBase.optional(),
-  chemical_pump_pos: ChemicalPumpPosEnum.optional(),
-  has_foam: z.boolean().optional(),
-});
-
-const chemPumpTrueSchema = z.object({
-  has_chemical_pump: z.literal(true),
-  chemical_num: chemPumpNumBase,
-  chemical_pump_pos: ChemicalPumpPosEnum,
-  has_foam: z.boolean().default(false),
-});
-
 const chemPumpDiscriminatedUnion = z.discriminatedUnion("has_chemical_pump", [
-  chemPumpUndefinedSchema,
-  chemPumpFalseSchema,
-  chemPumpTrueSchema,
+  z.object({
+    has_chemical_pump: z.literal(undefined),
+    chemical_num: chemPumpNumBase.optional(),
+    chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+    has_foam: z.boolean().optional(),
+  }),
+  z.object({
+    has_chemical_pump: z.literal(false),
+    chemical_num: chemPumpNumBase.optional(),
+    chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+    has_foam: z.boolean().optional(),
+  }),
+  z.object({
+    has_chemical_pump: z.literal(true),
+    chemical_num: chemPumpNumBase,
+    chemical_pump_pos: ChemicalPumpPosEnum,
+    has_foam: z.boolean().default(false),
+  }),
 ]);
 
-const acidPumpUndefined = z.object({
-  has_acid_pump: z.literal(undefined),
-  acid_pump_pos: z.undefined(),
-});
-
-const acidPumpFalse = z.object({
-  has_acid_pump: z.literal(false),
-  acid_pump_pos: z.undefined(),
-});
-
-const acidPumpTrue = z.object({
-  has_acid_pump: z.literal(true),
-  acid_pump_pos: ChemicalPumpPosEnum,
-});
-
 const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
-  acidPumpUndefined,
-  acidPumpFalse,
-  acidPumpTrue,
+  z.object({
+    has_acid_pump: z.literal(undefined),
+    acid_pump_pos: z.undefined(),
+  }),
+  z.object({
+    has_acid_pump: z.literal(false),
+    acid_pump_pos: z.undefined(),
+  }),
+  z.object({
+    has_acid_pump: z.literal(true),
+    acid_pump_pos: ChemicalPumpPosEnum,
+  }),
 ]);
 
 export const configSchema = baseSchema
