@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "zod": "npx tsx ./validation/zodTestFile.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",

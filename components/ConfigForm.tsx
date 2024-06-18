@@ -3,7 +3,11 @@
 import React, { useState } from "react";
 import { Form } from "@/components/ui/form";
 import { z } from "zod";
-import { configSchema, selectFieldOptions } from "@/validation/configSchema";
+import {
+  configSchema,
+  selectFieldOptions,
+  zodEnums,
+} from "@/validation/configSchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -50,7 +54,7 @@ const ConfigForm = () => {
             />
           </FormSection>
           <FormSection title="Spazzole">
-            <div className="md:flex md:justify-between md:gap-4">
+            <div className="md:flex md:justify-between md:gap-4 space-y-3">
               <SelectField
                 name="brush_num"
                 label="Numero di spazzole"
@@ -160,7 +164,7 @@ const ConfigForm = () => {
               <RadioGroupField
                 name="low_hp_gantry"
                 label="Configurazione uscita pompa da 15/30kW @ 20bar"
-                defaultValue="NO_SELECTION"
+                defaultValue={zodEnums.HPGantryTypeEnum.enum.NO_SELECTION}
                 items={selectFieldOptions.hp20barGantryTypes}
               />
             </div>
@@ -185,6 +189,34 @@ const ConfigForm = () => {
                 name="has_high_spinners"
                 label="4 teste rotanti alte"
               />
+            </div>
+          </FormSection>
+          <FormSection title="Alimentazione portale">
+            <div className="md:flex md:justify-between md:gap-4 space-y-3">
+              <div className="md:flex-1">
+                <SelectField
+                  name="supply_type"
+                  label="Tipo di alimentazione"
+                  placeholder="Selezionare..."
+                  items={selectFieldOptions.supplyTypes}
+                />
+              </div>
+              <div className="md:flex-1">
+                <SelectField
+                  name="supply_fixing_type"
+                  label="Tipo di fissaggio"
+                  placeholder="Selezionare..."
+                  items={selectFieldOptions.supplyFixingTypes}
+                />
+              </div>
+              <div className="md:flex-1">
+                <SelectField
+                  name="supply_side"
+                  label="Lato di alimentazione"
+                  placeholder="Selezionare..."
+                  items={selectFieldOptions.supplySides}
+                />
+              </div>
             </div>
           </FormSection>
           <Button type="submit">Salva</Button>

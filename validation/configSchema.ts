@@ -70,7 +70,13 @@ const cableChainWidths: SelectOption[] = generateSelectOptionsFromZodEnum(
 );
 
 const SupplyFixingTypeEnum = z.enum(["NONE", "FLOOR", "WALL"], {
-  message: genericRequiredMessage,
+  required_error: genericRequiredMessage,
+});
+const SupplyFixingTypeNoNoneEnum = z.enum(["FLOOR", "WALL"], {
+  errorMap: () => ({
+    message:
+      "Il tipo di fissaggio deve essere Palo o Staffa a muro per Braccio Mobile o Catena Portacavi.",
+  }),
 });
 const supplyFixingTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplyFixingTypeEnum,
@@ -128,6 +134,19 @@ const chemicalNum: SelectOption[] = [
     label: "Due pompe di prelavaggio",
   },
 ];
+
+export const zodEnums = {
+  BrushTypeEnum,
+  BrushColorEnum,
+  ChemicalPumpPosEnum,
+  HPGantryTypeEnum,
+  SupplyTypeEnum,
+  CableChainWidthEnum,
+  SupplyFixingTypeEnum,
+  SupplySideEnum,
+  WaterTypeEnum,
+  RailTypeEnum,
+};
 
 export const selectFieldOptions: SelectOptionGroup = {
   brushNums,
@@ -220,6 +239,7 @@ export const baseSchema = z.object({
     val === "NO_SELECTION" ? undefined : val
   ),
   has_high_spinners: z.boolean().default(false),
+  supply_side: SupplySideEnum,
 });
 
 const chemPumpNumBase = z
@@ -280,17 +300,33 @@ const hpRoofBarDiscriminatedUnion = z.discriminatedUnion("has_hp_roof_bar", [
   }),
 ]);
 
+const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
+  z.object({
+    supply_type: z.literal("STRAIGHT_SHELF"),
+    supply_fixing_type: SupplyFixingTypeEnum,
+  }),
+  z.object({
+    supply_type: z.literal("BOOM"),
+    supply_fixing_type: SupplyFixingTypeNoNoneEnum,
+  }),
+  z.object({
+    supply_type: z.literal("CABLE_CHAIN"),
+    supply_fixing_type: SupplyFixingTypeNoNoneEnum,
+  }),
+]);
+
 export const configSchema = baseSchema
   .and(chemPumpDiscriminatedUnion)
   .and(acidPumpDiscriminatedUnion)
   .and(hpRoofBarDiscriminatedUnion)
+  .and(supplyTypeDiscriminatedUnion)
   .superRefine((data, ctx) => {
     if (
       data.chemical_num &&
       data.chemical_num === 2 &&
-      data.chemical_pump_pos === "ABOARD" &&
+      data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ABOARD &&
       data.has_acid_pump &&
-      data.acid_pump_pos === "ABOARD"
+      data.acid_pump_pos === ChemicalPumpPosEnum.enum.ABOARD
     ) {
       const fieldNames: Array<keyof typeof data> = [
         "chemical_pump_pos",
