@@ -1,112 +1,104 @@
 import { SelectOption, SelectOptionGroup } from "@/types";
 import { z } from "zod";
 
-const genericRequiredMessage = "Scelta obbligatoria";
-
-function z_enumFromArray(array: string[]) {
-  return z.enum([array[0], ...array.slice(1)], {
-    message: genericRequiredMessage,
-  });
+function generateSelectOptionsFromZodEnum<T extends string>(
+  enumObject: z.ZodEnum<[T, ...T[]]>,
+  labels: string[]
+): SelectOption[] {
+  return enumObject._def.values.map((value: T, i) => ({
+    value,
+    label: labels[i],
+  }));
 }
 
-// Brush Type
-const brushTypes: SelectOption[] = [
-  { value: "THREAD", label: "Filo" },
-  { value: "MIXED", label: "Misto" },
-  { value: "CARLITE", label: "Carlite" },
-];
+const genericRequiredMessage = "Scelta obbligatoria";
 
-const BrushTypeEnum = z_enumFromArray(
-  brushTypes.map((item) => item.value.toString())
+const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
+  message: genericRequiredMessage,
+});
+const brushTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  BrushTypeEnum,
+  ["Filo", "Misto", "Carlite"]
 );
 
-// Brush Color
-const brushColors: SelectOption[] = [
-  { value: "BLUE_SILVER", label: "Blu/Argento" },
-  { value: "GREEN_SILVER", label: "Verde/Argento" },
-  { value: "RED", label: "Rosso" },
-  { value: "GREEN_BLACK", label: "Verde/Nero" },
-];
-const BrushColorEnum = z_enumFromArray(
-  brushColors.map((item) => item.value.toString())
+const BrushColorEnum = z.enum(
+  ["BLUE_SILVER", "GREEN_SILVER", "RED", "GREEN_BLACK"],
+  { message: genericRequiredMessage }
+);
+const brushColors: SelectOption[] = generateSelectOptionsFromZodEnum(
+  BrushColorEnum,
+  ["Blu/Argento", "Verde/Argento", "Rosso", "Verde/Nero"]
 );
 
-// Chemical Pump Position
-const chemicalPumpPositions: SelectOption[] = [
-  { value: "ABOARD", label: "A Bordo" },
-  { value: "WASH_BAY", label: "In Sala Tecnica" },
-];
-const ChemicalPumpPosEnum = z_enumFromArray(
-  chemicalPumpPositions.map((item) => item.value.toString())
+const ChemicalPumpPosEnum = z.enum(["ABOARD", "WASH_BAY"], {
+  message: genericRequiredMessage,
+});
+const chemicalPumpPositions: SelectOption[] = generateSelectOptionsFromZodEnum(
+  ChemicalPumpPosEnum,
+  ["A Bordo", "In Sala Tecnica"]
 );
 
-const hp20barGantryTypes: SelectOption[] = [
-  { value: "NO_SELECTION", label: "Niente" },
-  { value: "LOW_SPINNER", label: "2 robottine basse" },
-  { value: "LOW_BAR", label: "Barre HP basse" },
-  { value: "HIGH_BAR", label: "Barre HP alte" },
-  { value: "LOW_HIGH_SPINNER", label: "2+4 robottine" },
-];
-const HPGantryTypeEnum = z_enumFromArray(
-  hp20barGantryTypes.map((item) => item.value.toString())
+const HPGantryTypeEnum = z.enum(
+  ["NO_SELECTION", "LOW_SPINNER", "LOW_BAR", "HIGH_BAR", "LOW_HIGH_SPINNER"],
+  { message: genericRequiredMessage }
+);
+const hp20barGantryTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  HPGantryTypeEnum,
+  [
+    "Niente",
+    "2 robottine basse",
+    "Barre HP basse",
+    "Barre HP alte",
+    "2+4 robottine",
+  ]
 );
 
-// Supply Side
-const supplySides: SelectOption[] = [
-  { value: "LEFT", label: "Sinistra" },
-  { value: "RIGHT", label: "Destra" },
-];
-const SupplySideEnum = z_enumFromArray(
-  supplySides.map((item) => item.value.toString())
+const SupplyTypeEnum = z.enum(["STRAIGHT_SHELF", "BOOM", "CABLE_CHAIN"], {
+  message: genericRequiredMessage,
+});
+const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  SupplyTypeEnum,
+  ["Mensola Dritta", "Braccio Mobile", "Catena Portacavi"]
 );
 
-// Supply Type
-const supplyTypes: SelectOption[] = [
-  { value: "STRAIGHT_SHELF", label: "Mensola Dritta" },
-  { value: "BOOM", label: "Braccio Mobile" },
-  { value: "CABLE_CHAIN", label: "Catena Portacavi" },
-];
-const SupplyTypeEnum = z_enumFromArray(
-  supplyTypes.map((item) => item.value.toString())
+const CableChainWidthEnum = z.enum(["L150", "L200", "L250", "L300"], {
+  message: genericRequiredMessage,
+});
+const cableChainWidths: SelectOption[] = generateSelectOptionsFromZodEnum(
+  CableChainWidthEnum,
+  ["ST072S.150.R300", "ST072S.200.R300", "ST072S.250.R300", "ST072S.300.R300"]
 );
 
-// Supply Fixing Type
-const supplyFixingTypes: SelectOption[] = [
-  { value: "WALL", label: "Parete" },
-  { value: "FLOOR", label: "Pavimento" },
-];
-const SupplyFixingTypeEnum = z_enumFromArray(
-  supplyFixingTypes.map((item) => item.value.toString())
+const SupplyFixingTypeEnum = z.enum(["NONE", "FLOOR", "WALL"], {
+  message: genericRequiredMessage,
+});
+const supplyFixingTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  SupplyFixingTypeEnum,
+  ["Niente", "Palo alimentazione", "Staffa a muro"]
 );
 
-// Cable Chain Width
-const cableChainWidths: SelectOption[] = [
-  { value: "L150", label: "ST072S.150.R300" },
-  { value: "L200", label: "ST072S.200.R300" },
-  { value: "L250", label: "ST072S.250.R300" },
-  { value: "L300", label: "ST072S.300.R300" },
-];
-const CableChainWidthEnum = z_enumFromArray(
-  cableChainWidths.map((item) => item.value.toString())
+const SupplySideEnum = z.enum(["TBD", "LEFT", "RIGHT"], {
+  message: genericRequiredMessage,
+});
+const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
+  SupplySideEnum,
+  ["Da definire", "Sinistra", "Destra"]
 );
 
-// Water Type
-const waterTypes: SelectOption[] = [
-  { value: "NETWORK", label: "Rete" },
-  { value: "RECYCLED", label: "Riciclata" },
-  { value: "DEMINERALIZED", label: "Demineralizzata" },
-];
-const WaterTypeEnum = z_enumFromArray(
-  waterTypes.map((item) => item.value.toString())
+const WaterTypeEnum = z.enum(["NETWORK", "RECYCLED", "DEMINERALIZED"], {
+  message: genericRequiredMessage,
+});
+const waterTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  WaterTypeEnum,
+  ["Rete", "Riciclata", "Demineralizzata"]
 );
 
-// Rail Type
-const railTypes: SelectOption[] = [
-  { value: "DOWELED", label: "Da tassellare" },
-  { value: "WELDED", label: "Da saldare incassato" },
-];
-const RailTypeEnum = z_enumFromArray(
-  railTypes.map((item) => item.value.toString())
+const RailTypeEnum = z.enum(["DOWELED", "WELDED"], {
+  message: genericRequiredMessage,
+});
+const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  RailTypeEnum,
+  ["Da tassellare", "Da saldare incassato"]
 );
 
 // Number of brushes
