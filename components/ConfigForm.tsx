@@ -256,6 +256,35 @@ const ConfigForm = () => {
               </div>
             </div>
           </FormSection>
+          <FormSection title="Alimentazione acqua">
+            <div className="space-y-3">
+              <div className="md:flex md:gap-4 md:space-y-0 space-y-2">
+                <div className="md:flex-1 ">
+                  <SelectField
+                    name="water_type_1"
+                    label="Tipo acqua 1"
+                    placeholder="Selezionare..."
+                    items={selectFieldOptions.waterTypes1}
+                  />
+                </div>
+                <div className="md:flex-1 ">
+                  <SelectField
+                    name="water_type_2"
+                    label="Tipo acqua 2"
+                    placeholder="Selezionare..."
+                    items={selectFieldOptions.waterTypes2}
+                  />
+                </div>
+                <div className="hidden md:block md:flex-1" />
+              </div>
+              <div className="">
+                <CheckboxField
+                  name="has_antifreeze"
+                  label="Scarico invernale"
+                />
+              </div>
+            </div>
+          </FormSection>
           <Button type="submit">Salva</Button>
         </form>
       </Form>

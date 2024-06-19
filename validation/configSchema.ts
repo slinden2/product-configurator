@@ -91,12 +91,24 @@ const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Da definire", "Sinistra", "Destra"]
 );
 
-const WaterTypeEnum = z.enum(["NETWORK", "RECYCLED", "DEMINERALIZED"], {
+const commonWaterTypeValues = ["NETWORK", "RECYCLED", "DEMINERALIZED"] as const;
+const WaterType1Enum = z.enum(commonWaterTypeValues, {
   message: genericRequiredMessage,
 });
-const waterTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
-  WaterTypeEnum,
-  ["Rete", "Riciclata", "Demineralizzata"]
+const commonWaterTypeLabels = [
+  "Acqua di rete",
+  "Acqua riciclata",
+  "Acqua demineralizzata",
+];
+const waterTypes1: SelectOption[] = generateSelectOptionsFromZodEnum(
+  WaterType1Enum,
+  commonWaterTypeLabels
+);
+
+const WaterType2Enum = z.enum(["NO_SELECTION", ...commonWaterTypeValues]);
+const waterTypes2: SelectOption[] = generateSelectOptionsFromZodEnum(
+  WaterType2Enum,
+  ["No selezione", ...commonWaterTypeLabels]
 );
 
 const RailTypeEnum = z.enum(["DOWELED", "WELDED"], {
@@ -144,7 +156,8 @@ export const zodEnums = {
   CableChainWidthEnum,
   SupplyFixingTypeEnum,
   SupplySideEnum,
-  WaterTypeEnum,
+  WaterType1Enum,
+  WaterType2Enum,
   RailTypeEnum,
 };
 
@@ -159,7 +172,8 @@ export const selectFieldOptions: SelectOptionGroup = {
   supplyTypes,
   supplyFixingTypes,
   cableChainWidths,
-  waterTypes,
+  waterTypes1,
+  waterTypes2,
   railTypes,
 };
 
@@ -205,6 +219,11 @@ export const baseSchema = z.object({
   ),
   has_high_spinners: z.boolean().default(false),
   supply_side: SupplySideEnum,
+  water_type_1: WaterType1Enum,
+  water_type_2: WaterType2Enum.optional().transform((val) =>
+    val === "NO_SELECTION" ? undefined : val
+  ),
+  has_antifreeze: z.boolean().default(false),
 });
 
 const chemPumpNumBase = z
@@ -275,7 +294,7 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
   z.object({
     supply_type: z.literal("BOOM"),
     supply_fixing_type: SupplyFixingTypeNoNoneEnum,
-    has_post_frame: z.boolean().or(z.undefined()),
+    has_post_frame: z.boolean().optional(),
     cable_chain_width: z.undefined(),
   }),
   z.object({
