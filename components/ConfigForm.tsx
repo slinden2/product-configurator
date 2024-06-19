@@ -44,16 +44,18 @@ const ConfigForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FormSection title="Informazioni generali">
-            <InputField
-              name="name"
-              label="Nome del cliente"
-              placeholder="Inserire il nome del cliente"
-            />
-            <TextareaField
-              name="description"
-              label="Descrizione"
-              placeholder="Inserire la descrizione"
-            />
+            <div className="space-y-4">
+              <InputField
+                name="name"
+                label="Nome del cliente"
+                placeholder="Inserire il nome del cliente"
+              />
+              <TextareaField
+                name="description"
+                label="Descrizione"
+                placeholder="Inserire la descrizione"
+              />
+            </div>
           </FormSection>
           <FormSection title="Spazzole">
             <div className="md:flex md:justify-between md:gap-4 space-y-3">
@@ -281,6 +283,33 @@ const ConfigForm = () => {
                 <CheckboxField
                   name="has_antifreeze"
                   label="Scarico invernale"
+                />
+              </div>
+            </div>
+          </FormSection>
+          <FormSection title="Rotaie">
+            <div className="space-y-2 md:flex md:space-y-0 md:gap-4">
+              <div className="md:flex-1">
+                <SelectField
+                  name="rail_type"
+                  label="Tipo di rotaie"
+                  placeholder="Selezionare..."
+                  items={selectFieldOptions.railTypes}
+                />
+              </div>
+              <div className="md:flex-1">
+                <InputField
+                  name="rail_length"
+                  label="Lunghezza rotaie"
+                  placeholder="Inserire lunghezza (7-26m)"
+                />
+              </div>
+              <div className="md:flex-1">
+                <SelectField
+                  name="rail_guide_num"
+                  label="Guida ruote"
+                  placeholder="Selezionare..."
+                  items={selectFieldOptions.railGuideNum}
                 />
               </div>
             </div>

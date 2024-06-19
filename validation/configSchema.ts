@@ -147,6 +147,22 @@ const chemicalNum: SelectOption[] = [
   },
 ];
 
+// Number of guide rails
+const railGuideNum: SelectOption[] = [
+  {
+    value: 0,
+    label: "Niente",
+  },
+  {
+    value: 1,
+    label: "Una coppia",
+  },
+  {
+    value: 2,
+    label: "Due coppie",
+  },
+];
+
 export const zodEnums = {
   BrushTypeEnum,
   BrushColorEnum,
@@ -175,27 +191,9 @@ export const selectFieldOptions: SelectOptionGroup = {
   waterTypes1,
   waterTypes2,
   railTypes,
+  railGuideNum,
 };
 
-// export const configSchema = z.object({
-//   // has_double_supply: z.boolean(),
-//   // water_type_1: WaterTypeEnum,
-//   // water_type_2: WaterTypeEnum.optional(),
-//   // rail_type: RailTypeEnum,
-//   // rail_length: z
-//   //   .number()
-//   //   .int()
-//   //   .refine(
-//   //     (val) => val >= 7 && val <= 26,
-//   //     "La lunghezza deve essere tra 7 e 26 metri."
-//   //   ),
-//   // rail_guide_num: z
-//   //   .number()
-//   //   .int()
-//   //   .refine(
-//   //     (val) => val >= 0 && val <= 2,
-//   //     "Le guide ruote (coppie) devono essere 0, 1 o 2."
-//   //   ),
 //   // has_itecoweb: z.boolean(),
 // });
 
@@ -224,6 +222,21 @@ export const baseSchema = z.object({
     val === "NO_SELECTION" ? undefined : val
   ),
   has_antifreeze: z.boolean().default(false),
+  rail_type: RailTypeEnum,
+  rail_length: z
+    .number()
+    .int()
+    .refine(
+      (val) => val >= 7 && val <= 26,
+      "La lunghezza deve essere tra 7 e 26 metri."
+    ),
+  rail_guide_num: z
+    .number()
+    .int()
+    .refine(
+      (val) => val >= 0 && val <= 2,
+      "Le guide ruote (coppie) devono essere 0, 1 o 2."
+    ),
 });
 
 const chemPumpNumBase = z
