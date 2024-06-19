@@ -32,6 +32,8 @@ const ConfigForm = () => {
   const hasChemicalPump = form.watch("has_chemical_pump");
   const hasAcidPump = form.watch("has_acid_pump");
   const hasHPRoofBar = form.watch("has_hp_roof_bar");
+  const supplyType = form.watch("supply_type");
+  const supplyFixingType = form.watch("supply_fixing_type");
 
   async function onSubmit(values: ConfigFormData) {
     console.log(values);
@@ -61,10 +63,12 @@ const ConfigForm = () => {
                 placeholder="Selezionare..."
                 className="md:flex-1"
                 items={selectFieldOptions.brushNums}
-                fieldsToResetOnValue={{
-                  triggerValue: 0,
-                  fieldsToReset: ["brush_type", "brush_color"],
-                }}
+                fieldsToResetOnValue={[
+                  {
+                    triggerValue: 0,
+                    fieldsToReset: ["brush_type", "brush_color"],
+                  },
+                ]}
               />
               {brushNum > 0 ? (
                 <>
@@ -192,22 +196,55 @@ const ConfigForm = () => {
             </div>
           </FormSection>
           <FormSection title="Alimentazione portale">
-            <div className="md:flex md:justify-between md:gap-4 space-y-3">
-              <div className="md:flex-1">
+            <div className="space-y-3 md:flex md:gap-4 md:space-y-0">
+              <div className="md:flex-1 space-y-2">
                 <SelectField
                   name="supply_type"
                   label="Tipo di alimentazione"
                   placeholder="Selezionare..."
                   items={selectFieldOptions.supplyTypes}
+                  fieldsToResetOnValue={[
+                    {
+                      triggerValue: "BOOM",
+                      fieldsToReset: ["has_post_frame"],
+                      invertTrigger: true,
+                    },
+                    {
+                      triggerValue: "CABLE_CHAIN",
+                      fieldsToReset: ["cable_chain_width"],
+                      invertTrigger: true,
+                    },
+                  ]}
                 />
+                {supplyType === "CABLE_CHAIN" && (
+                  <SelectField
+                    name="cable_chain_width"
+                    label="Larghezza catena"
+                    placeholder="Selezionare..."
+                    items={selectFieldOptions.cableChainWidths}
+                  />
+                )}
               </div>
-              <div className="md:flex-1">
+              <div className="md:flex-1 space-y-2">
                 <SelectField
                   name="supply_fixing_type"
                   label="Tipo di fissaggio"
                   placeholder="Selezionare..."
                   items={selectFieldOptions.supplyFixingTypes}
+                  fieldsToResetOnValue={[
+                    {
+                      triggerValue: "FLOOR",
+                      fieldsToReset: ["has_post_frame"],
+                      invertTrigger: true,
+                    },
+                  ]}
                 />
+                {supplyType === "BOOM" && supplyFixingType === "FLOOR" && (
+                  <CheckboxField
+                    name="has_post_frame"
+                    label="Con telaio e coperchio"
+                  />
+                )}
               </div>
               <div className="md:flex-1">
                 <SelectField

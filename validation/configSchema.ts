@@ -164,41 +164,6 @@ export const selectFieldOptions: SelectOptionGroup = {
 };
 
 // export const configSchema = z.object({
-//   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
-//   description: z.string().optional(),
-//   brush_num: z
-//     .string()
-//     .transform((val) => parseInt(val, 10))
-//     .refine((value) => brushNums.map((item) => item.value).includes(value), {
-//       message: "Numero di spazzole deve essere 0, 2, or 3.",
-//     }),
-//   brush_type: BrushTypeEnum,
-//   brush_color: BrushColorEnum,
-//   has_shampoo_pump: z.boolean().default(false),
-//   has_wax_pump: z.boolean().default(false),
-//   has_chemical_pump: z.boolean().default(false),
-//   has_acid_pump: z.boolean().default(false),
-//   chemical_num: z
-//     .string()
-//     .transform((val) => parseInt(val, 10))
-//     .refine((value) => chemicalNum.map((item) => item.value).includes(value), {
-//       message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
-//     })
-//     .optional(),
-//   chemical_pump_pos: ChemicalPumpPosEnum.optional(),
-//   acid_pump_pos: ChemicalPumpPosEnum.optional(),
-//   // has_foam: z.boolean().optional(),
-//   // has_hp_roof_bar: z.boolean(),
-//   // has_chemical_roof_bar: z.boolean().optional(),
-//   // has_high_spinners: z.boolean(),
-//   // has_low_spinners: z.boolean(),
-//   // has_short_hp_bars: z.boolean(),
-//   // has_long_hp_bars: z.boolean(),
-//   // supply_side: SupplySideEnum,
-//   // supply_type: SupplyTypeEnum,
-//   // supply_fixing_type: SupplyFixingTypeEnum,
-//   // has_post_frame: z.boolean().optional(),
-//   // cable_chain_width: CableChainWidthEnum.optional(),
 //   // has_double_supply: z.boolean(),
 //   // water_type_1: WaterTypeEnum,
 //   // water_type_2: WaterTypeEnum.optional(),
@@ -304,14 +269,20 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
   z.object({
     supply_type: z.literal("STRAIGHT_SHELF"),
     supply_fixing_type: SupplyFixingTypeEnum,
+    has_post_frame: z.literal(false).or(z.undefined()),
+    cable_chain_width: z.undefined(),
   }),
   z.object({
     supply_type: z.literal("BOOM"),
     supply_fixing_type: SupplyFixingTypeNoNoneEnum,
+    has_post_frame: z.boolean().or(z.undefined()),
+    cable_chain_width: z.undefined(),
   }),
   z.object({
     supply_type: z.literal("CABLE_CHAIN"),
     supply_fixing_type: SupplyFixingTypeNoNoneEnum,
+    has_post_frame: z.literal(false).or(z.undefined()),
+    cable_chain_width: CableChainWidthEnum,
   }),
 ]);
 
@@ -355,6 +326,19 @@ export const configSchema = baseSchema
         code: z.ZodIssueCode.custom,
         message: genericRequiredMessage,
         path: ["brush_color"],
+      });
+    }
+
+    if (
+      data.supply_type === "BOOM" &&
+      data.supply_fixing_type !== "FLOOR" &&
+      data.has_post_frame
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Non puoi selezionare telaio e coperchio senza palo alimentazione.",
+        path: ["has_post_frame"],
       });
     }
   });

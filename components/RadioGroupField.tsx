@@ -40,7 +40,7 @@ const RadioGroupField = ({
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className="md:flex space-y-1 md:gap-4">
+                  className="space-y-1 md:flex  md:gap-4 md:space-y-0">
                   {items.map((item) => {
                     return (
                       <FormItem

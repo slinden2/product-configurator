@@ -21,17 +21,19 @@ import { SelectOption } from "@/types";
 import { ConfigFormData } from "@/components/ConfigForm";
 
 interface SelectFieldProps {
-  name: keyof ConfigFormData;
-  label: string;
+  name: keyof ConfigFormData; // Name of the field in your form data (used for form state management)
+  label: string; // Label displayed above the select input
   placeholder: string;
-  description?: string;
+  description?: string; // Optional description displayed below the select input
   className?: string;
   disabled?: boolean;
-  items: SelectOption[];
-  fieldsToResetOnValue?: {
-    triggerValue: string | number;
-    fieldsToReset: Array<keyof ConfigFormData>;
-  };
+  items: SelectOption[]; // Array of options to display in the select input
+  fieldsToResetOnValue?: Array<{
+    // (IMPORTANT) Array of fields to reset when a specific value is selected
+    triggerValue: string | number; // The value that triggers the reset of other fields
+    fieldsToReset: Array<keyof ConfigFormData>; // Array of field names to reset
+    invertTrigger?: boolean; // If true, resets fields when the value is NOT equal to triggerValue (default: false)
+  }>;
 }
 
 const SelectField = ({
@@ -55,11 +57,16 @@ const SelectField = ({
             <FormLabel>{label}</FormLabel>
             <Select
               onValueChange={(val) => {
-                if (val == fieldsToResetOnValue?.triggerValue) {
-                  fieldsToResetOnValue.fieldsToReset.forEach((fieldName) => {
-                    resetField(fieldName);
-                  });
-                }
+                fieldsToResetOnValue?.forEach((item) => {
+                  const cond = item.invertTrigger
+                    ? val != item.triggerValue
+                    : val == item.triggerValue;
+                  if (cond) {
+                    item.fieldsToReset.forEach((fieldName) => {
+                      resetField(fieldName);
+                    });
+                  }
+                });
                 return field.onChange(val);
               }}
               defaultValue={field.value}>
