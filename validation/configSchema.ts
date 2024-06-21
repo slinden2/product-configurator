@@ -1,24 +1,19 @@
 import { SelectOption, SelectOptionGroup } from "@/types";
+import {
+  coerceStringToNumber,
+  generateSelectOptionsFromZodEnum,
+  genericRequiredMessage,
+} from "@/validation/common";
+import {
+  WaterType1Enum,
+  WaterType2Enum,
+  boosterPumpEnum,
+  boosterPumps,
+  waterSupplySchema,
+  waterTypes1,
+  waterTypes2,
+} from "@/validation/waterSupplySchema";
 import { z } from "zod";
-
-function generateSelectOptionsFromZodEnum<T extends string>(
-  enumObject: z.ZodEnum<[T, ...T[]]>,
-  labels: string[]
-): SelectOption[] {
-  return enumObject._def.values.map((value: T, i) => ({
-    value,
-    label: labels[i],
-  }));
-}
-
-function coerceStringToNumber(schema: z.ZodTypeAny) {
-  return z.preprocess((val) => {
-    if (val === "") return undefined;
-    return val && typeof val === "string" ? parseInt(val, 10) : val;
-  }, schema);
-}
-
-const genericRequiredMessage = "Scelta obbligatoria";
 
 const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
   message: genericRequiredMessage,
@@ -96,26 +91,6 @@ const SupplySideEnum = z.enum(["TBD", "LEFT", "RIGHT"], {
 const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplySideEnum,
   ["Da definire", "Sinistra", "Destra"]
-);
-
-const commonWaterTypeValues = ["NETWORK", "RECYCLED", "DEMINERALIZED"] as const;
-const WaterType1Enum = z.enum(commonWaterTypeValues, {
-  message: genericRequiredMessage,
-});
-const commonWaterTypeLabels = [
-  "Acqua di rete",
-  "Acqua riciclata",
-  "Acqua demineralizzata",
-];
-const waterTypes1: SelectOption[] = generateSelectOptionsFromZodEnum(
-  WaterType1Enum,
-  commonWaterTypeLabels
-);
-
-const WaterType2Enum = z.enum(["NO_SELECTION", ...commonWaterTypeValues]);
-const waterTypes2: SelectOption[] = generateSelectOptionsFromZodEnum(
-  WaterType2Enum,
-  ["No selezione", ...commonWaterTypeLabels]
 );
 
 const RailTypeEnum = z.enum(["DOWELED", "WELDED"], {
@@ -199,6 +174,7 @@ export const zodEnums = {
   SupplySideEnum,
   WaterType1Enum,
   WaterType2Enum,
+  boosterPumpEnum,
   RailTypeEnum,
   PanelNumEnum,
   PanelPosEnum,
@@ -218,6 +194,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   cableChainWidths,
   waterTypes1,
   waterTypes2,
+  boosterPumps,
   railTypes,
   railGuideNum,
   panelNums,
@@ -245,11 +222,6 @@ export const baseSchema = z.object({
   ),
   has_high_spinners: z.boolean().default(false),
   supply_side: SupplySideEnum,
-  water_type_1: WaterType1Enum,
-  water_type_2: WaterType2Enum.optional().transform((val) =>
-    val === "NO_SELECTION" ? undefined : val
-  ),
-  has_antifreeze: z.boolean().default(false),
   rail_type: RailTypeEnum,
   rail_length: coerceStringToNumber(
     z
@@ -378,6 +350,7 @@ const panelPosDiscriminatedUnion = z.discriminatedUnion("panel_pos", [
 ]);
 
 export const configSchema = baseSchema
+  .and(waterSupplySchema)
   .and(chemPumpDiscriminatedUnion)
   .and(acidPumpDiscriminatedUnion)
   .and(hpRoofBarDiscriminatedUnion)

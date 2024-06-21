@@ -34,6 +34,7 @@ const ConfigForm = () => {
   const hasHPRoofBar = form.watch("has_hp_roof_bar");
   const supplyType = form.watch("supply_type");
   const supplyFixingType = form.watch("supply_fixing_type");
+  const waterType2 = form.watch("water_type_2");
   const panelNum = form.watch("panel_num");
   const panelPos = form.watch("panel_pos");
   const hasItecoweb = form.watch("has_itecoweb");
@@ -69,7 +70,7 @@ const ConfigForm = () => {
             </div>
           </FormSection>
           <FormSection title="Spazzole">
-            <div className="md:flex md:justify-between md:gap-4 space-y-3">
+            <div className="md:flex md:justify-between md:gap-4 space-y-3 md:space-y-0">
               <SelectField
                 name="brush_num"
                 label="Numero di spazzole"
@@ -273,20 +274,46 @@ const ConfigForm = () => {
             <div className="space-y-3">
               <div className="md:flex md:gap-4 md:space-y-0 space-y-2">
                 <div className="md:flex-1 ">
-                  <SelectField
-                    name="water_type_1"
-                    label="Tipo acqua 1"
-                    placeholder="Selezionare..."
-                    items={selectFieldOptions.waterTypes1}
-                  />
+                  <div className="space-y-2">
+                    <SelectField
+                      name="water_type_1"
+                      label="Tipo acqua 1"
+                      placeholder="Selezionare..."
+                      items={selectFieldOptions.waterTypes1}
+                    />
+                    <SelectField
+                      name="booster_pump_1"
+                      label="Pompa di rilancio"
+                      placeholder="Selezionare..."
+                      items={selectFieldOptions.boosterPumps}
+                    />
+                  </div>
                 </div>
                 <div className="md:flex-1 ">
-                  <SelectField
-                    name="water_type_2"
-                    label="Tipo acqua 2"
-                    placeholder="Selezionare..."
-                    items={selectFieldOptions.waterTypes2}
-                  />
+                  <div className="space-y-2">
+                    <SelectField
+                      name="water_type_2"
+                      label="Tipo acqua 2"
+                      placeholder="Selezionare..."
+                      items={selectFieldOptions.waterTypes2}
+                      fieldsToResetOnValue={[
+                        {
+                          triggerValue:
+                            zodEnums.WaterType2Enum.enum.NO_SELECTION,
+                          fieldsToReset: ["booster_pump_2"],
+                        },
+                      ]}
+                    />
+                    {waterType2 &&
+                      waterType2 in zodEnums.WaterType1Enum.enum && (
+                        <SelectField
+                          name="booster_pump_2"
+                          label="Pompa di rilancio"
+                          placeholder="Selezionare..."
+                          items={selectFieldOptions.boosterPumps}
+                        />
+                      )}
+                  </div>
                 </div>
                 <div className="hidden md:block md:flex-1" />
               </div>
