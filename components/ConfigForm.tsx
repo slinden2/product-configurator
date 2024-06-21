@@ -17,7 +17,6 @@ import SelectField from "@/components/SelectField";
 import { Separator } from "@/components/ui/separator";
 import CheckboxField from "@/components/CheckboxField";
 import FormSection from "@/components/FormSection";
-import RadioGroupField from "@/components/RadioGroupField";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -178,35 +177,37 @@ const ConfigForm = () => {
             )}
           </FormSection>
           <FormSection title="Alta pressione sul portale">
-            <div className="mb-4">
-              <RadioGroupField
-                name="low_hp_gantry"
-                label="Configurazione uscita pompa da 15/30kW @ 20bar"
-                defaultValue={zodEnums.HPGantryTypeEnum.enum.NO_SELECTION}
-                items={selectFieldOptions.hp20barGantryTypes}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Configurazione uscita pompa da 30kW @ 70bar
-              </label>
-              <div className="flex gap-4">
-                <CheckboxField
-                  name="has_hp_roof_bar"
-                  label="Barra oscillante HP"
-                  fieldsToResetOnUncheck={["has_chemical_roof_bar"]}
+            <div className="space-y-3">
+              <div>
+                <SelectField
+                  name="low_hp_gantry"
+                  label="Configurazione uscita pompa da 15/30kW @ 20bar"
+                  placeholder="Selezionare..."
+                  items={selectFieldOptions.hp20barGantryTypes}
                 />
-                {hasHPRoofBar && (
-                  <CheckboxField
-                    name="has_chemical_roof_bar"
-                    label="Barra di prelevaggio sulla barra oscillante"
-                  />
-                )}
               </div>
-              <CheckboxField
-                name="has_high_spinners"
-                label="4 teste rotanti alte"
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Configurazione uscita pompa da 30kW @ 70bar
+                </label>
+                <div className="flex gap-4">
+                  <CheckboxField
+                    name="has_hp_roof_bar"
+                    label="Barra oscillante HP"
+                    fieldsToResetOnUncheck={["has_chemical_roof_bar"]}
+                  />
+                  {hasHPRoofBar && (
+                    <CheckboxField
+                      name="has_chemical_roof_bar"
+                      label="Barra di prelevaggio sulla barra oscillante"
+                    />
+                  )}
+                </div>
+                <CheckboxField
+                  name="has_high_spinners"
+                  label="4 teste rotanti alte"
+                />
+              </div>
             </div>
           </FormSection>
           <FormSection title="Alimentazione portale">
