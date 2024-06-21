@@ -11,6 +11,13 @@ function generateSelectOptionsFromZodEnum<T extends string>(
   }));
 }
 
+function coerceStringToNumber(schema: z.ZodTypeAny) {
+  return z.preprocess((val) => {
+    if (val === "") return undefined;
+    return val && typeof val === "string" ? parseInt(val, 10) : val;
+  }, schema);
+}
+
 const genericRequiredMessage = "Scelta obbligatoria";
 
 const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
@@ -119,6 +126,24 @@ const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Da tassellare", "Da saldare incassato"]
 );
 
+const PanelNumEnum = z.enum(["ONE", "TWO"]);
+const panelNums: SelectOption[] = generateSelectOptionsFromZodEnum(
+  PanelNumEnum,
+  ["1", "2"]
+);
+
+const PanelPosEnum = z.enum(["INTERNAL", "EXTERNAL"]);
+const panelPositions: SelectOption[] = generateSelectOptionsFromZodEnum(
+  PanelPosEnum,
+  ["A bordo", "In piazzola"]
+);
+
+const ExtPanelFixingType = z.enum(["WALL", "POST"]);
+const extPanelFixingTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  ExtPanelFixingType,
+  ["A muro", "Su palo"]
+);
+
 // Number of brushes
 const brushNums: SelectOption[] = [
   {
@@ -175,6 +200,9 @@ export const zodEnums = {
   WaterType1Enum,
   WaterType2Enum,
   RailTypeEnum,
+  PanelNumEnum,
+  PanelPosEnum,
+  ExtPanelFixingType,
 };
 
 export const selectFieldOptions: SelectOptionGroup = {
@@ -192,10 +220,10 @@ export const selectFieldOptions: SelectOptionGroup = {
   waterTypes2,
   railTypes,
   railGuideNum,
+  panelNums,
+  panelPositions,
+  extPanelFixingTypes,
 };
-
-//   // has_itecoweb: z.boolean(),
-// });
 
 export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
@@ -223,20 +251,25 @@ export const baseSchema = z.object({
   ),
   has_antifreeze: z.boolean().default(false),
   rail_type: RailTypeEnum,
-  rail_length: z
-    .number()
-    .int()
-    .refine(
-      (val) => val >= 7 && val <= 26,
-      "La lunghezza deve essere tra 7 e 26 metri."
-    ),
-  rail_guide_num: z
-    .number()
-    .int()
-    .refine(
-      (val) => val >= 0 && val <= 2,
-      "Le guide ruote (coppie) devono essere 0, 1 o 2."
-    ),
+  rail_length: coerceStringToNumber(
+    z
+      .number()
+      .refine(
+        (val) => val >= 7 && val <= 26,
+        "La lunghezza deve essere tra 7 e 26 metri."
+      )
+  ),
+  rail_guide_num: coerceStringToNumber(
+    z
+      .number()
+      .refine(
+        (val) => val >= 0 && val <= 2,
+        "Le guide ruote (coppie) devono essere 0, 1 o 2."
+      )
+  ),
+  has_itecoweb: z.boolean().optional(),
+  has_card_reader: z.boolean().optional(),
+  card_num: coerceStringToNumber(z.number().int().positive().optional()),
 });
 
 const chemPumpNumBase = z
@@ -318,11 +351,39 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
   }),
 ]);
 
+const panelNumDiscriminatedUnion = z.discriminatedUnion("panel_num", [
+  z.object({
+    panel_num: z.literal(PanelNumEnum.enum.ONE),
+    panel_pos: PanelPosEnum,
+  }),
+  z.object({
+    panel_num: z.literal(PanelNumEnum.enum.TWO),
+    panel_pos: z.undefined(),
+    ext_panel_fixing_type: ExtPanelFixingType,
+  }),
+]);
+
+const panelPosDiscriminatedUnion = z.discriminatedUnion("panel_pos", [
+  z.object({
+    panel_pos: z.literal(undefined),
+  }),
+  z.object({
+    panel_pos: z.literal(PanelPosEnum.enum.EXTERNAL),
+    ext_panel_fixing_type: ExtPanelFixingType,
+  }),
+  z.object({
+    panel_pos: z.literal(PanelPosEnum.enum.INTERNAL),
+    ext_panel_fixing_type: z.undefined(),
+  }),
+]);
+
 export const configSchema = baseSchema
   .and(chemPumpDiscriminatedUnion)
   .and(acidPumpDiscriminatedUnion)
   .and(hpRoofBarDiscriminatedUnion)
   .and(supplyTypeDiscriminatedUnion)
+  .and(panelNumDiscriminatedUnion)
+  .and(panelPosDiscriminatedUnion)
   .superRefine((data, ctx) => {
     if (
       data.chemical_num &&

@@ -34,6 +34,17 @@ const ConfigForm = () => {
   const hasHPRoofBar = form.watch("has_hp_roof_bar");
   const supplyType = form.watch("supply_type");
   const supplyFixingType = form.watch("supply_fixing_type");
+  const panelNum = form.watch("panel_num");
+  const panelPos = form.watch("panel_pos");
+  const hasItecoweb = form.watch("has_itecoweb");
+  const hasCardReader = form.watch("has_card_reader");
+
+  React.useEffect(() => {
+    // Resetting card_num when itecoweb and card_reader are unchecked
+    if (!hasItecoweb && !hasCardReader) {
+      form.resetField("card_num");
+    }
+  }, [hasItecoweb, hasCardReader, form]);
 
   async function onSubmit(values: ConfigFormData) {
     console.log(values);
@@ -311,6 +322,75 @@ const ConfigForm = () => {
                   placeholder="Selezionare..."
                   items={selectFieldOptions.railGuideNum}
                 />
+              </div>
+            </div>
+          </FormSection>
+          <FormSection title="Configurazione quadro elettrico">
+            <div className="space-y-3">
+              <div className="md:flex md:gap-4">
+                <div className="md:flex-1">
+                  <SelectField
+                    name="panel_num"
+                    label="Numero di pannelli"
+                    placeholder="Selezionare..."
+                    items={selectFieldOptions.panelNums}
+                    fieldsToResetOnValue={[
+                      {
+                        triggerValue: zodEnums.PanelNumEnum.enum.TWO,
+                        fieldsToReset: ["panel_pos"],
+                      },
+                    ]}
+                  />
+                </div>
+                <div className="md:flex-1">
+                  {panelNum === zodEnums.PanelNumEnum.enum.ONE && (
+                    <SelectField
+                      name="panel_pos"
+                      label="Posizione pannello"
+                      placeholder="Selezionare..."
+                      items={selectFieldOptions.panelPositions}
+                      fieldsToResetOnValue={[
+                        {
+                          triggerValue: zodEnums.PanelPosEnum.enum.INTERNAL,
+                          fieldsToReset: ["ext_panel_fixing_type"],
+                        },
+                      ]}
+                    />
+                  )}
+                </div>
+                <div className="md:flex-1">
+                  {(panelNum === zodEnums.PanelNumEnum.enum.TWO ||
+                    panelPos === "EXTERNAL") && (
+                    <SelectField
+                      name="ext_panel_fixing_type"
+                      label="Fissaggio pannello esterno"
+                      placeholder="Selezionare..."
+                      items={selectFieldOptions.extPanelFixingTypes}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex gap-4">
+                  <div>
+                    <CheckboxField name="has_itecoweb" label="Itecoweb" />
+                  </div>
+                  <div>
+                    <CheckboxField
+                      name="has_card_reader"
+                      label="Lettore schede"
+                    />
+                  </div>
+                </div>
+                {(hasItecoweb || hasCardReader) && (
+                  <div className="w-1/3">
+                    <InputField
+                      name="card_num"
+                      label="Numero di schede"
+                      placeholder="Inserisci numero di schede"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </FormSection>
