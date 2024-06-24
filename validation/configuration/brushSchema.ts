@@ -50,7 +50,7 @@ const brushWithColorSchema = z.object({
   brush_color: BrushColorEnum,
 });
 
-export const brushDiscriminatedUnion = z.discriminatedUnion("brush_num", [
+export const brushSchema = z.discriminatedUnion("brush_num", [
   noBrushSchema,
   z.object({ brush_num: z.literal("2") }).merge(brushWithColorSchema),
   z.object({ brush_num: z.literal("3") }).merge(brushWithColorSchema),
