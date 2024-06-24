@@ -1,5 +1,6 @@
 import { SelectOption } from "@/types";
 import {
+  emptyStringOrUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
@@ -34,33 +35,20 @@ export const boosterPumps: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["No selezione", "1.5KW", "2.2KW"]
 );
 
-export const waterSupplySchema = z
-  .object({
-    water_type_1: WaterType1Enum,
-    booster_pump_1: boosterPumpEnum
-      .optional()
-      .transform((val) =>
-        val === boosterPumpEnum.enum.NO_SELECTION ? undefined : val
-      ),
-    water_type_2: WaterType2Enum.optional().transform((val) =>
-      val === WaterType2Enum.enum.NO_SELECTION ? undefined : val
+export const waterSupplySchema = z.object({
+  water_type_1: WaterType1Enum,
+  booster_pump_1: boosterPumpEnum
+    .or(emptyStringOrUndefined())
+    .transform((val) =>
+      val === boosterPumpEnum.enum.NO_SELECTION || !val ? undefined : val
     ),
-    booster_pump_2: boosterPumpEnum
-      .optional()
-      .transform((val) =>
-        val === boosterPumpEnum.enum.NO_SELECTION ? undefined : val
-      ),
-    has_antifreeze: z.boolean().default(false),
-  })
-  .refine(
-    (data) => {
-      if (!data.water_type_2 && typeof data.booster_pump_2 !== "undefined") {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Il campo Pompa di rilancio 2 deve essere resettato.",
-      path: ["water_type_2"],
-    }
-  );
+  water_type_2: WaterType2Enum.optional().transform((val) =>
+    val === WaterType2Enum.enum.NO_SELECTION ? undefined : val
+  ),
+  booster_pump_2: boosterPumpEnum
+    .or(emptyStringOrUndefined())
+    .transform((val) =>
+      val === boosterPumpEnum.enum.NO_SELECTION || !val ? undefined : val
+    ),
+  has_antifreeze: z.boolean().default(false),
+});

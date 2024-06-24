@@ -25,7 +25,7 @@ const CheckboxField = ({
   containerClassName,
   fieldsToResetOnUncheck,
 }: CheckboxFieldProps) => {
-  const { control, resetField } = useFormContext();
+  const { control, setValue } = useFormContext();
   return (
     <FormField
       control={control}
@@ -40,9 +40,11 @@ const CheckboxField = ({
                   <Checkbox
                     checked={field.value}
                     onCheckedChange={(val) => {
-                      fieldsToResetOnUncheck?.forEach((fieldName) => {
-                        resetField(fieldName);
-                      });
+                      if (val === false) {
+                        fieldsToResetOnUncheck?.forEach((fieldToReset) => {
+                          setValue(fieldToReset, "");
+                        });
+                      }
                       return field.onChange(val);
                     }}
                   />

@@ -13,9 +13,9 @@ export function generateSelectOptionsFromZodEnum<T extends string>(
   }));
 }
 
-export function coerceStringToNumber(schema: z.ZodTypeAny) {
-  return z.preprocess((val) => {
-    if (val === "") return undefined;
-    return val && typeof val === "string" ? parseInt(val, 10) : val;
-  }, schema);
+export function emptyStringOrUndefined() {
+  return z.union([
+    z.string().refine((value) => value === "", { message: "Opzione invalida" }),
+    z.undefined(),
+  ]);
 }
