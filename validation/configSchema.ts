@@ -1,6 +1,7 @@
 import { zodEnums } from "@/validation/configuration";
 import { brushSchema } from "@/validation/configuration/brushSchema";
 import { chemPumpSchema } from "@/validation/configuration/chemPumpSchema";
+import { hpPumpSchema } from "@/validation/configuration/hpPumpSchema";
 import { panelSchema } from "@/validation/configuration/panelSchema";
 import { railSchema } from "@/validation/configuration/railSchema";
 import { supplyTypeSchema } from "@/validation/configuration/supplyTypeSchema";
@@ -17,8 +18,9 @@ export const configSchema = baseSchema
   .and(waterSupplySchema)
   .and(chemPumpSchema)
   .and(supplyTypeSchema)
-  .and(panelSchema)
   .and(railSchema)
+  .and(hpPumpSchema)
+  .and(panelSchema)
   .superRefine((data, ctx) => {
     if (
       data.chemical_num &&

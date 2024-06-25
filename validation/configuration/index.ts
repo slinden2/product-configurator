@@ -12,6 +12,14 @@ import {
   chemicalPumpPositions,
 } from "@/validation/configuration/chemPumpSchema";
 import {
+  HPPumpOutlet15kwEnum,
+  hpPumpOutlet15kwTypes,
+  HPPumpOutlet30kwEnum,
+  hpPumpOutlet30kwTypes,
+  OMZPumpOutletEnum,
+  omzPumpOutletTypes,
+} from "@/validation/configuration/hpPumpSchema";
+import {
   ExtPanelFixingType,
   PanelNumEnum,
   PanelPosEnum,
@@ -55,6 +63,9 @@ export const zodEnums = {
   WaterType2Enum,
   BoosterPumpEnum,
   RailTypeEnum,
+  HPPumpOutlet15kwEnum,
+  HPPumpOutlet30kwEnum,
+  OMZPumpOutletEnum,
   PanelNumEnum,
   PanelPosEnum,
   ExtPanelFixingType,
@@ -75,6 +86,9 @@ export const selectFieldOptions: SelectOptionGroup = {
   boosterPumps,
   railTypes,
   railGuideNum,
+  hpPumpOutlet15kwTypes,
+  hpPumpOutlet30kwTypes,
+  omzPumpOutletTypes,
   panelNums,
   panelPositions,
   extPanelFixingTypes,

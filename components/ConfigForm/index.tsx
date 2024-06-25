@@ -14,6 +14,7 @@ import SupplySection from "@/components/ConfigForm/SupplySection";
 import WaterSupplySection from "@/components/ConfigForm/WaterSupplySection";
 import RailSection from "@/components/ConfigForm/RailSection";
 import PanelSection from "@/components/ConfigForm/PanelSection";
+import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import { DevTool } from "@hookform/devtools";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
@@ -45,16 +46,17 @@ const ConfigForm = () => {
 
   return (
     <div>
-      {/* <DevTool control={form.control} /> */}
+      <DevTool control={form.control} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <GeneralSection />
           <BrushSection />
           <ChemPumpSection />
-          <SupplySection />
           <WaterSupplySection />
+          <SupplySection />
           <RailSection />
           <PanelSection />
+          <HPPumpSection />
           <Button type="submit">Salva</Button>
         </form>
       </Form>
