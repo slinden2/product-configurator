@@ -76,10 +76,15 @@ export const waterSupplySchema = z
   })
   .and(inverterPumpSchema)
   .superRefine((data, ctx) => {
+    // Counts the number of selected outlets and gives error if less than 2
     const numOfSelectedOutlets = Object.entries(data)
-      .filter((entry) => entry[0].startsWith("has_inv_pump_outlet"))
-      .reduce((acc, cur) => {
-        if (cur[1]) acc += 1;
+      .filter(
+        ([key, value]) =>
+          key.startsWith("inv_pump_outlet") && typeof value === "string"
+      )
+      .reduce((acc, [, value]) => {
+        const stringValue = value as string;
+        if (stringValue) acc += parseInt(stringValue, 10) || 0;
         return acc;
       }, 0);
 

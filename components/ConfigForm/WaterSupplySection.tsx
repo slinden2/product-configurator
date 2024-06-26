@@ -36,17 +36,30 @@ const WaterSupplySection = () => {
                       zodEnums.WaterPump1Enum.enum["BOOST_2.2KW"],
                     ],
                     fieldsToReset: [
-                      "has_inv_pump_outlet_gantry",
-                      "has_inv_pump_outlet_dosatron1",
-                      "has_inv_pump_outlet_dosatron2",
-                      "has_inv_pump_outlet_pw1",
-                      "has_inv_pump_outlet_pw2",
+                      "inv_pump_outlet_dosatron_num",
+                      "inv_pump_outlet_pw_num",
                     ],
                   },
                 ]}
               />
             </div>
           </FieldsetItem>
+          {hasInvPump && (
+            <FieldsetItem>
+              <>
+                <SelectField
+                  name="inv_pump_outlet_dosatron_num"
+                  label="Uscite Dosatron"
+                  items={selectFieldOptions.inverterPumpOutletOpts}
+                />
+                <SelectField
+                  name="inv_pump_outlet_pw_num"
+                  label="Uscite Dosatron"
+                  items={selectFieldOptions.inverterPumpOutletOpts}
+                />
+              </>
+            </FieldsetItem>
+          )}
           <FieldsetItem>
             <div className="space-y-3">
               <SelectField
@@ -68,35 +81,7 @@ const WaterSupplySection = () => {
               />
             </div>
           </FieldsetItem>
-          <FieldsetItem className="self-center">
-            {hasInvPump && (
-              <fieldset className="space-y-3">
-                <legend className=" text-sm font-medium">
-                  Uscite pompa inverter
-                </legend>
-                <CheckboxField
-                  name="has_inv_pump_outlet_gantry"
-                  label="Uscita portale"
-                />
-                <CheckboxField
-                  name="has_inv_pump_outlet_dosatron1"
-                  label="Uscita Dosatron 1"
-                />
-                <CheckboxField
-                  name="has_inv_pump_outlet_dosatron2"
-                  label="Uscita Dosatron 2"
-                />
-                <CheckboxField
-                  name="has_inv_pump_outlet_pw1"
-                  label="Uscita idropulitrice 1"
-                />
-                <CheckboxField
-                  name="has_inv_pump_outlet_pw2"
-                  label="Uscita idropulitrice 2"
-                />
-              </fieldset>
-            )}
-          </FieldsetItem>
+          {!hasInvPump && <FieldsetItem />}
         </FieldsetRow>
         <div className="">
           <CheckboxField name="has_antifreeze" label="Scarico invernale" />

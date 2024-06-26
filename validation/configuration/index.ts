@@ -19,6 +19,7 @@ import {
   OMZPumpOutletEnum,
   omzPumpOutletTypes,
 } from "@/validation/configuration/hpPumpSchema";
+import { inverterPumpOutletOpts } from "@/validation/configuration/invertPumpSchema";
 import {
   ExtPanelFixingType,
   PanelNumEnum,
@@ -90,6 +91,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   waterTypes2,
   waterPump1Opts,
   waterPump2Opts,
+  inverterPumpOutletOpts,
   railTypes,
   railLengths,
   railGuideNum,
