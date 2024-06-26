@@ -29,6 +29,12 @@ export const ExtPanelFixingType = z.enum(["WALL", "POST"], {
 export const extPanelFixingTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(ExtPanelFixingType, ["A muro", "Su palo"]);
 
+export const cardQtyOpts: SelectOption[] = [];
+
+for (let i = 0; i <= 300; i += 50) {
+  cardQtyOpts.push({ value: i.toString(), label: i.toString() });
+}
+
 const panelNumDiscriminatedUnion = z.discriminatedUnion("panel_num", [
   z.object({
     panel_num: z.literal(undefined).refine((val) => (!val ? false : val), {
@@ -76,6 +82,7 @@ export const panelSchema = z
         message: "Devi inserire un numero.",
       })
       .or(emptyStringOrUndefined().transform(() => undefined)),
+    is_fast: z.boolean().default(false),
   })
   .and(panelNumDiscriminatedUnion)
   .and(panelPosDiscriminatedUnion);

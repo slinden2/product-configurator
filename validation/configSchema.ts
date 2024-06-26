@@ -22,11 +22,21 @@ export const configSchema = baseSchema
   .and(hpPumpSchema)
   .and(panelSchema)
   .superRefine((data, ctx) => {
+    // Limit rail length to 25 if cable chain width is set
     if (data.cable_chain_width && parseInt(data.rail_length, 10) < 25) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
           "Con la catena portacavi le rotaie devono essere almeno 25 metri.",
+        path: ["rail_length"],
+      });
+    }
+
+    // Limit rail length to 7 if is_fast is set
+    if (data.is_fast && parseInt(data.rail_length, 10) > 7) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Per un portale fast le rotaie devono essere da 7 metri.",
         path: ["rail_length"],
       });
     }

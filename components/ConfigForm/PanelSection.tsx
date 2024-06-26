@@ -3,7 +3,6 @@ import Fieldset from "@/components/Fieldset";
 import FieldsetContent from "@/components/FieldsetContent";
 import FieldsetItem from "@/components/FieldsetItem";
 import FieldsetRow from "@/components/FieldsetRow";
-import InputField from "@/components/InputField";
 import SelectField from "@/components/SelectField";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
@@ -73,13 +72,16 @@ const PanelSection = () => {
           <div>
             <CheckboxField name="has_card_reader" label="Lettore schede" />
           </div>
+          <div>
+            <CheckboxField name="is_fast" label="Portale fast" />
+          </div>
         </FieldsetRow>
         {(hasItecowebWatch || hasCardReaderWatch) && (
           <div className="w-1/2 md:w-1/3">
-            <InputField
+            <SelectField
               name="card_num"
               label="Numero di schede"
-              placeholder="Inserisci numero di schede"
+              items={selectFieldOptions.cardQtyOpts}
             />
           </div>
         )}

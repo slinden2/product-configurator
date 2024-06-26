@@ -23,6 +23,7 @@ import {
   ExtPanelFixingType,
   PanelNumEnum,
   PanelPosEnum,
+  cardQtyOpts,
   extPanelFixingTypes,
   panelNums,
   panelPositions,
@@ -94,4 +95,5 @@ export const selectFieldOptions: SelectOptionGroup = {
   panelNums,
   panelPositions,
   extPanelFixingTypes,
+  cardQtyOpts,
 };
