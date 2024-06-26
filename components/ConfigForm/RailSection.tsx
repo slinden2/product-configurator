@@ -20,10 +20,10 @@ const RailSection = () => {
             />
           </FieldsetItem>
           <FieldsetItem>
-            <InputField
+            <SelectField
               name="rail_length"
               label="Lunghezza rotaie"
-              placeholder="Inserire lunghezza (7-26m)"
+              items={selectFieldOptions.railLengths}
             />
           </FieldsetItem>
           <FieldsetItem>

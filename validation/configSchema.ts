@@ -20,4 +20,14 @@ export const configSchema = baseSchema
   .and(supplyTypeSchema)
   .and(railSchema)
   .and(hpPumpSchema)
-  .and(panelSchema);
+  .and(panelSchema)
+  .superRefine((data, ctx) => {
+    if (data.cable_chain_width && parseInt(data.rail_length, 10) < 25) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Con la catena portacavi le rotaie devono essere almeno 25 metri.",
+        path: ["rail_length"],
+      });
+    }
+  });

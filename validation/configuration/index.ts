@@ -30,6 +30,7 @@ import {
 import {
   RailTypeEnum,
   railGuideNum,
+  railLengths,
   railTypes,
 } from "@/validation/configuration/railSchema";
 import {
@@ -85,6 +86,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   waterTypes2,
   boosterPumps,
   railTypes,
+  railLengths,
   railGuideNum,
   hpPumpOutlet15kwTypes,
   hpPumpOutlet30kwTypes,

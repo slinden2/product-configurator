@@ -13,6 +13,13 @@ export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Da tassellare", "Da saldare incassato"]
 );
 
+export const railLengths: SelectOption[] = [
+  { value: "7", label: "7 metri" },
+  { value: "21", label: "21 metri" },
+  { value: "25", label: "25 metri" },
+  { value: "26", label: "26 metri" },
+];
+
 // Number of guide rails
 export const railGuideNum: SelectOption[] = [
   {
