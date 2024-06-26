@@ -47,10 +47,12 @@ import {
 import {
   WaterType1Enum,
   WaterType2Enum,
-  BoosterPumpEnum,
-  boosterPumps,
+  WaterPump1Enum,
+  waterPump1Opts,
   waterTypes1,
   waterTypes2,
+  waterPump2Opts,
+  WaterPump2Enum,
 } from "@/validation/configuration/waterSupplySchema";
 
 export const zodEnums = {
@@ -63,7 +65,8 @@ export const zodEnums = {
   SupplySideEnum,
   WaterType1Enum,
   WaterType2Enum,
-  BoosterPumpEnum,
+  WaterPump1Enum,
+  WaterPump2Enum,
   RailTypeEnum,
   HPPumpOutlet15kwEnum,
   HPPumpOutlet30kwEnum,
@@ -85,7 +88,8 @@ export const selectFieldOptions: SelectOptionGroup = {
   cableChainWidths,
   waterTypes1,
   waterTypes2,
-  boosterPumps,
+  waterPump1Opts,
+  waterPump2Opts,
   railTypes,
   railLengths,
   railGuideNum,

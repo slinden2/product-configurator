@@ -10,6 +10,8 @@ import { useWatch } from "react-hook-form";
 
 const WaterSupplySection = () => {
   const waterType2Watch = useWatch({ name: "water_type_2" });
+  const waterPump1Watch = useWatch({ name: "water_pump_1" });
+  const hasInvPump = waterPump1Watch?.startsWith("INV_3KW");
 
   return (
     <Fieldset title="Alimentazione acqua">
@@ -23,9 +25,25 @@ const WaterSupplySection = () => {
                 items={selectFieldOptions.waterTypes1}
               />
               <SelectField
-                name="booster_pump_1"
+                name="water_pump_1"
                 label="Pompa di rilancio"
-                items={selectFieldOptions.boosterPumps}
+                items={selectFieldOptions.waterPump1Opts}
+                fieldsToResetOnValue={[
+                  {
+                    triggerValue: [
+                      zodEnums.WaterPump1Enum.enum.NO_SELECTION,
+                      zodEnums.WaterPump1Enum.enum["BOOST_1.5KW"],
+                      zodEnums.WaterPump1Enum.enum["BOOST_2.2KW"],
+                    ],
+                    fieldsToReset: [
+                      "has_inv_pump_outlet_gantry",
+                      "has_inv_pump_outlet_dosatron1",
+                      "has_inv_pump_outlet_dosatron2",
+                      "has_inv_pump_outlet_pw1",
+                      "has_inv_pump_outlet_pw2",
+                    ],
+                  },
+                ]}
               />
             </div>
           </FieldsetItem>
@@ -38,20 +56,47 @@ const WaterSupplySection = () => {
                 fieldsToResetOnValue={[
                   {
                     triggerValue: zodEnums.WaterType2Enum.enum.NO_SELECTION,
-                    fieldsToReset: ["booster_pump_2"],
+                    fieldsToReset: ["water_pump_2"],
                   },
                 ]}
               />
-
               <SelectField
-                name="booster_pump_2"
+                name="water_pump_2"
                 label="Pompa di rilancio"
                 disabled={!(waterType2Watch in zodEnums.WaterType1Enum.enum)}
-                items={selectFieldOptions.boosterPumps}
+                items={selectFieldOptions.waterPump2Opts}
               />
             </div>
           </FieldsetItem>
-          <FieldsetItem />
+          <FieldsetItem className="self-center">
+            {hasInvPump && (
+              <fieldset className="space-y-3">
+                <legend className=" text-sm font-medium">
+                  Uscite pompa inverter
+                </legend>
+                <CheckboxField
+                  name="has_inv_pump_outlet_gantry"
+                  label="Uscita portale"
+                />
+                <CheckboxField
+                  name="has_inv_pump_outlet_dosatron1"
+                  label="Uscita Dosatron 1"
+                />
+                <CheckboxField
+                  name="has_inv_pump_outlet_dosatron2"
+                  label="Uscita Dosatron 2"
+                />
+                <CheckboxField
+                  name="has_inv_pump_outlet_pw1"
+                  label="Uscita idropulitrice 1"
+                />
+                <CheckboxField
+                  name="has_inv_pump_outlet_pw2"
+                  label="Uscita idropulitrice 2"
+                />
+              </fieldset>
+            )}
+          </FieldsetItem>
         </FieldsetRow>
         <div className="">
           <CheckboxField name="has_antifreeze" label="Scarico invernale" />

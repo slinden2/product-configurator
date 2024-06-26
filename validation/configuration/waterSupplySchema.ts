@@ -4,6 +4,7 @@ import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
+import { inverterPumpSchema } from "@/validation/configuration/invertPumpSchema";
 import { z } from "zod";
 
 const commonWaterTypeValues = ["NETWORK", "RECYCLED", "DEMINERALIZED"] as const;
@@ -29,24 +30,68 @@ export const waterTypes2: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["No selezione", ...commonWaterTypeLabels]
 );
 
-export const BoosterPumpEnum = z.enum(["NO_SELECTION", "1.5KW", "2.2KW"]);
-export const boosterPumps: SelectOption[] = generateSelectOptionsFromZodEnum(
-  BoosterPumpEnum,
-  ["No selezione", "1.5KW", "2.2KW"]
+export const WaterPump1Enum = z.enum([
+  "NO_SELECTION",
+  "BOOST_1.5KW",
+  "BOOST_2.2KW",
+  "INV_3KW_200L",
+  "INV_3KW_250L",
+]);
+
+export const waterPump1Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
+  WaterPump1Enum,
+  [
+    "No selezione",
+    "Pompa di rilancio 1.5kW",
+    "Pompa di rilancio 2.2kW",
+    "Pompa inv. 3kW 200l/min",
+    "Pompa inv. 3kW 250l/min",
+  ]
 );
 
-export const waterSupplySchema = z.object({
-  water_type_1: WaterType1Enum,
-  booster_pump_1: BoosterPumpEnum.or(emptyStringOrUndefined()).transform(
-    (val) =>
-      val === BoosterPumpEnum.enum.NO_SELECTION || !val ? undefined : val
-  ),
-  water_type_2: WaterType2Enum.optional().transform((val) =>
-    val === WaterType2Enum.enum.NO_SELECTION ? undefined : val
-  ),
-  booster_pump_2: BoosterPumpEnum.or(emptyStringOrUndefined()).transform(
-    (val) =>
-      val === BoosterPumpEnum.enum.NO_SELECTION || !val ? undefined : val
-  ),
-  has_antifreeze: z.boolean().default(false),
-});
+export const WaterPump2Enum = z.enum([
+  "NO_SELECTION",
+  "BOOST_1.5KW",
+  "BOOST_2.2KW",
+]);
+
+export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
+  WaterPump2Enum,
+  ["No selezione", "Pompa di rilancio 1.5kW", "Pompa di rilancio 2.2kW"]
+);
+
+export const waterSupplySchema = z
+  .object({
+    water_type_1: WaterType1Enum,
+    water_pump_1: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
+      val === WaterPump1Enum.enum.NO_SELECTION || !val ? undefined : val
+    ),
+    water_type_2: WaterType2Enum.optional().transform((val) =>
+      val === WaterType2Enum.enum.NO_SELECTION ? undefined : val
+    ),
+    water_pump_2: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
+      val === WaterPump1Enum.enum.NO_SELECTION || !val ? undefined : val
+    ),
+    has_antifreeze: z.boolean().default(false),
+  })
+  .and(inverterPumpSchema)
+  .superRefine((data, ctx) => {
+    const numOfSelectedOutlets = Object.entries(data)
+      .filter((entry) => entry[0].startsWith("has_inv_pump_outlet"))
+      .reduce((acc, cur) => {
+        if (cur[1]) acc += 1;
+        return acc;
+      }, 0);
+
+    if (
+      (data.water_pump_1 === WaterPump1Enum.enum.INV_3KW_200L ||
+        data.water_pump_1 === WaterPump1Enum.enum.INV_3KW_250L) &&
+      numOfSelectedOutlets < 2
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Seleziona almeno due uscite.",
+        path: ["water_pump_1"],
+      });
+    }
+  });

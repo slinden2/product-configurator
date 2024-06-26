@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { SelectOption } from "@/types";
 import { ConfigFormData } from "@/components/ConfigForm";
+import { isArrayOfStrings } from "@/lib/utils";
 
 interface SelectFieldProps {
   name: keyof ConfigFormData; // Name of the field in your form data (used for form state management)
@@ -26,7 +27,7 @@ interface SelectFieldProps {
   items: SelectOption[]; // Array of options to display in the select input
   fieldsToResetOnValue?: Array<{
     // (IMPORTANT) Array of fields to reset when a specific value is selected
-    triggerValue: string; // The value that triggers the reset of other fields
+    triggerValue: string | string[]; // The value that triggers the reset of other fields
     fieldsToReset: Array<keyof ConfigFormData>; // Array of field names to reset
     invertTrigger?: boolean; // If true, resets fields when the value is NOT equal to triggerValue (default: false)
   }>;
@@ -54,14 +55,21 @@ const SelectField = ({
               value={field.value}
               onValueChange={(val) => {
                 fieldsToResetOnValue?.forEach((item) => {
-                  const cond = item.invertTrigger
-                    ? val != item.triggerValue
-                    : val == item.triggerValue;
-                  if (cond) {
-                    item.fieldsToReset.forEach((fieldToReset) => {
-                      setValue(fieldToReset, "");
-                    });
-                  }
+                  const triggerValues = isArrayOfStrings(item.triggerValue)
+                    ? item.triggerValue
+                    : [item.triggerValue];
+
+                  triggerValues.forEach((triggerValue) => {
+                    const shouldReset = item.invertTrigger
+                      ? val !== triggerValue
+                      : val === triggerValue;
+
+                    if (shouldReset) {
+                      item.fieldsToReset.forEach((fieldToReset) => {
+                        setValue(fieldToReset, "");
+                      });
+                    }
+                  });
                 });
                 return field.onChange(val);
               }}
