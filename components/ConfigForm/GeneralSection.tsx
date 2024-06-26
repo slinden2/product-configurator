@@ -1,12 +1,13 @@
-import FormSection from "@/components/FormSection";
+import Fieldset from "@/components/Fieldset";
+import FieldsetContent from "@/components/FieldsetContent";
 import InputField from "@/components/InputField";
 import TextareaField from "@/components/TextareaField";
 import React from "react";
 
 const GeneralSection = () => {
   return (
-    <FormSection title="Informazioni generali">
-      <div className="space-y-4">
+    <Fieldset title="Informazioni generali">
+      <FieldsetContent>
         <InputField
           name="name"
           label="Nome del cliente"
@@ -17,8 +18,8 @@ const GeneralSection = () => {
           label="Descrizione"
           placeholder="Inserire la descrizione"
         />
-      </div>
-    </FormSection>
+      </FieldsetContent>
+    </Fieldset>
   );
 };
 

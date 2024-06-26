@@ -1,5 +1,8 @@
 import CheckboxField from "@/components/CheckboxField";
-import FormSection from "@/components/FormSection";
+import Fieldset from "@/components/Fieldset";
+import FieldsetContent from "@/components/FieldsetContent";
+import FieldsetItem from "@/components/FieldsetItem";
+import FieldsetRow from "@/components/FieldsetRow";
 import SelectField from "@/components/SelectField";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
@@ -9,11 +12,11 @@ const WaterSupplySection = () => {
   const waterType2Watch = useWatch({ name: "water_type_2" });
 
   return (
-    <FormSection title="Alimentazione acqua">
-      <div className="space-y-3">
-        <div className="md:flex md:gap-4 md:space-y-0 space-y-2">
-          <div className="md:flex-1 ">
-            <div className="space-y-2">
+    <Fieldset title="Alimentazione acqua">
+      <FieldsetContent>
+        <FieldsetRow className="md:items-start">
+          <FieldsetItem>
+            <div className="space-y-3">
               <SelectField
                 name="water_type_1"
                 label="Tipo acqua 1"
@@ -25,9 +28,9 @@ const WaterSupplySection = () => {
                 items={selectFieldOptions.boosterPumps}
               />
             </div>
-          </div>
-          <div className="md:flex-1 ">
-            <div className="space-y-2">
+          </FieldsetItem>
+          <FieldsetItem>
+            <div className="space-y-3">
               <SelectField
                 name="water_type_2"
                 label="Tipo acqua 2"
@@ -39,23 +42,22 @@ const WaterSupplySection = () => {
                   },
                 ]}
               />
-              {waterType2Watch &&
-                waterType2Watch in zodEnums.WaterType1Enum.enum && (
-                  <SelectField
-                    name="booster_pump_2"
-                    label="Pompa di rilancio"
-                    items={selectFieldOptions.boosterPumps}
-                  />
-                )}
+
+              <SelectField
+                name="booster_pump_2"
+                label="Pompa di rilancio"
+                disabled={!(waterType2Watch in zodEnums.WaterType1Enum.enum)}
+                items={selectFieldOptions.boosterPumps}
+              />
             </div>
-          </div>
-          <div className="hidden md:block md:flex-1" />
-        </div>
+          </FieldsetItem>
+          <FieldsetItem />
+        </FieldsetRow>
         <div className="">
           <CheckboxField name="has_antifreeze" label="Scarico invernale" />
         </div>
-      </div>
-    </FormSection>
+      </FieldsetContent>
+    </Fieldset>
   );
 };
 

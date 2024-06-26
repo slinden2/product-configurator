@@ -1,5 +1,8 @@
 import CheckboxField from "@/components/CheckboxField";
-import FormSection from "@/components/FormSection";
+import Fieldset from "@/components/Fieldset";
+import FieldsetContent from "@/components/FieldsetContent";
+import FieldsetItem from "@/components/FieldsetItem";
+import FieldsetRow from "@/components/FieldsetRow";
 import InputField from "@/components/InputField";
 import SelectField from "@/components/SelectField";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
@@ -21,10 +24,10 @@ const PanelSection = () => {
   }, [hasItecowebWatch, hasCardReaderWatch, setValue]);
 
   return (
-    <FormSection title="Configurazione quadro elettrico">
-      <div className="space-y-3">
-        <div className="md:flex md:gap-4">
-          <div className="md:flex-1">
+    <Fieldset title="Configurazione quadro elettrico">
+      <FieldsetContent>
+        <FieldsetRow>
+          <FieldsetItem>
             <SelectField
               name="panel_num"
               label="Numero di pannelli"
@@ -36,8 +39,8 @@ const PanelSection = () => {
                 },
               ]}
             />
-          </div>
-          <div className="md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             {panelNumWatch === zodEnums.PanelNumEnum.enum.ONE && (
               <SelectField
                 name="panel_pos"
@@ -51,8 +54,8 @@ const PanelSection = () => {
                 ]}
               />
             )}
-          </div>
-          <div className="md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             {(panelNumWatch === zodEnums.PanelNumEnum.enum.TWO ||
               panelPosWatch === "EXTERNAL") && (
               <SelectField
@@ -61,29 +64,27 @@ const PanelSection = () => {
                 items={selectFieldOptions.extPanelFixingTypes}
               />
             )}
+          </FieldsetItem>
+        </FieldsetRow>
+        <FieldsetRow>
+          <div>
+            <CheckboxField name="has_itecoweb" label="Itecoweb" />
           </div>
-        </div>
-        <div className="space-y-3">
-          <div className="flex gap-4">
-            <div>
-              <CheckboxField name="has_itecoweb" label="Itecoweb" />
-            </div>
-            <div>
-              <CheckboxField name="has_card_reader" label="Lettore schede" />
-            </div>
+          <div>
+            <CheckboxField name="has_card_reader" label="Lettore schede" />
           </div>
-          {(hasItecowebWatch || hasCardReaderWatch) && (
-            <div className="w-1/3">
-              <InputField
-                name="card_num"
-                label="Numero di schede"
-                placeholder="Inserisci numero di schede"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </FormSection>
+        </FieldsetRow>
+        {(hasItecowebWatch || hasCardReaderWatch) && (
+          <div className="w-1/2 md:w-1/3">
+            <InputField
+              name="card_num"
+              label="Numero di schede"
+              placeholder="Inserisci numero di schede"
+            />
+          </div>
+        )}
+      </FieldsetContent>
+    </Fieldset>
   );
 };
 

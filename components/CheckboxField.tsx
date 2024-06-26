@@ -14,7 +14,6 @@ interface CheckboxFieldProps {
   name: keyof ConfigFormData;
   label: string;
   description?: string;
-  containerClassName?: string;
   fieldsToResetOnUncheck?: Array<keyof ConfigFormData>;
 }
 
@@ -22,7 +21,6 @@ const CheckboxField = ({
   name,
   label,
   description,
-  containerClassName,
   fieldsToResetOnUncheck,
 }: CheckboxFieldProps) => {
   const { control, setValue } = useFormContext();
@@ -33,7 +31,7 @@ const CheckboxField = ({
       render={({ field }) => {
         if (field.value === undefined) field.value = false;
         return (
-          <div className={containerClassName}>
+          <div>
             <div>
               <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                 <FormControl>
@@ -52,7 +50,9 @@ const CheckboxField = ({
                 <div className="space-y-1 leading-none">
                   <FormLabel>{label}</FormLabel>
                   {description && (
-                    <FormDescription>{description}</FormDescription>
+                    <FormDescription className="absolute">
+                      {description}
+                    </FormDescription>
                   )}
                 </div>
               </FormItem>

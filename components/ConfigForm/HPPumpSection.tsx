@@ -1,9 +1,12 @@
 import CheckboxField from "@/components/CheckboxField";
-import FormSection from "@/components/FormSection";
+import Fieldset from "@/components/Fieldset";
+import FieldsetRow from "@/components/FieldsetRow";
 import SelectField from "@/components/SelectField";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
 import { useWatch } from "react-hook-form";
+import FieldsetItem from "@/components/FieldsetItem";
+import FieldsetContent from "@/components/FieldsetContent";
 
 const HPPumpSection = () => {
   const has15kwPumpWatch = useWatch({ name: "has_15kw_pump" });
@@ -12,10 +15,10 @@ const HPPumpSection = () => {
   const omzPumpOutletWatch = useWatch({ name: "pump_outlet_omz" });
 
   return (
-    <FormSection title="Pompe HP">
-      <div className="space-y-3">
-        <div className="space-y-3 md:flex md:gap-4 md:space-y-0">
-          <div className="md:flex-1 md:self-end md:pb-3">
+    <Fieldset title="Pompe HP">
+      <FieldsetContent className="space-y-6 md:space-y-3">
+        <FieldsetRow>
+          <FieldsetItem className="md:self-end md:pb-3">
             <CheckboxField
               name="has_15kw_pump"
               label="Pompa 15kW"
@@ -24,26 +27,26 @@ const HPPumpSection = () => {
                 "pump_outlet_2_15kw",
               ]}
             />
-          </div>
-          <div className="md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             <SelectField
               name="pump_outlet_1_15kw"
               label="Uscita 1"
               disabled={!has15kwPumpWatch}
               items={selectFieldOptions.hpPumpOutlet15kwTypes}
             />
-          </div>
-          <div className="md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             <SelectField
               name="pump_outlet_2_15kw"
               label="Uscita 2"
               disabled={!has15kwPumpWatch}
               items={selectFieldOptions.hpPumpOutlet15kwTypes}
             />
-          </div>
-        </div>
-        <div className="space-y-3 md:flex md:gap-4 md:space-y-0">
-          <div className="md:flex-1 md:self-end md:pb-3">
+          </FieldsetItem>
+        </FieldsetRow>
+        <FieldsetRow>
+          <FieldsetItem className="md:self-end md:pb-3">
             <CheckboxField
               name="has_30kw_pump"
               label="Pompa 30kW"
@@ -52,26 +55,26 @@ const HPPumpSection = () => {
                 "pump_outlet_2_30kw",
               ]}
             />
-          </div>
-          <div className="md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             <SelectField
               name="pump_outlet_1_30kw"
               label="Uscita 1"
               disabled={!has30kwPumpWatch}
               items={selectFieldOptions.hpPumpOutlet30kwTypes}
             />
-          </div>
-          <div className="md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             <SelectField
               name="pump_outlet_2_30kw"
               label="Uscita 2"
               disabled={!has30kwPumpWatch}
               items={selectFieldOptions.hpPumpOutlet30kwTypes}
             />
-          </div>
-        </div>
-        <div className="space-y-3 md:flex md:gap-4 md:space-y-0">
-          <div className="md:flex-1 md:self-center md:mt-1">
+          </FieldsetItem>
+        </FieldsetRow>
+        <FieldsetRow>
+          <FieldsetItem className="md:self-center md:mt-1">
             <CheckboxField
               name="has_omz_pump"
               label="Pompa OMZ"
@@ -80,8 +83,8 @@ const HPPumpSection = () => {
                 "has_chemical_roof_bar",
               ]}
             />
-          </div>
-          <div className="space-y-3 md:space-y-0 md:flex-1">
+          </FieldsetItem>
+          <FieldsetItem>
             <SelectField
               name="pump_outlet_omz"
               label="Uscita 1"
@@ -108,11 +111,11 @@ const HPPumpSection = () => {
                 label="Con barra di prelavaggio"
               />
             </div>
-          </div>
-          <div className="md:flex-1"></div>
-        </div>
-      </div>
-    </FormSection>
+          </FieldsetItem>
+          <FieldsetItem />
+        </FieldsetRow>
+      </FieldsetContent>
+    </Fieldset>
   );
 };
 
