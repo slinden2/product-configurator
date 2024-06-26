@@ -7,14 +7,7 @@ import {
 import { z } from "zod";
 
 export const HPPumpOutlet15kwEnum = z.enum(
-  [
-    "NO_SELECTION",
-    "CHASSIS_WASH",
-    "LOW_SPINNERS",
-    "LOW_BAR",
-    "HIGH_BAR",
-    "LOW_HIGH_SPINNERS",
-  ],
+  ["NO_SELECTION", "CHASSIS_WASH", "LOW_SPINNERS", "LOW_BAR", "HIGH_BAR"],
   { message: genericRequiredMessage }
 );
 
@@ -25,7 +18,6 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
     "2 robottine basse",
     "Barre HP basse",
     "Barre HP alte",
-    "6 robottine",
   ]);
 
 export const HPPumpOutlet30kwEnum = z.enum(
