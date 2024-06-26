@@ -20,26 +20,4 @@ export const configSchema = baseSchema
   .and(supplyTypeSchema)
   .and(railSchema)
   .and(hpPumpSchema)
-  .and(panelSchema)
-  .superRefine((data, ctx) => {
-    if (
-      data.chemical_num &&
-      data.chemical_num === "2" &&
-      data.chemical_pump_pos === zodEnums.ChemicalPumpPosEnum.enum.ABOARD &&
-      data.has_acid_pump &&
-      data.acid_pump_pos === zodEnums.ChemicalPumpPosEnum.enum.ABOARD
-    ) {
-      const fieldNames: Array<keyof typeof data> = [
-        "chemical_pump_pos",
-        "acid_pump_pos",
-      ];
-      fieldNames.forEach((field) => {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "A bordo impianto si possono montare solo due pompe di prelavaggio.",
-          path: [field],
-        });
-      });
-    }
-  });
+  .and(panelSchema);

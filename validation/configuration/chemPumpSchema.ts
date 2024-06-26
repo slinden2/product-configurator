@@ -80,4 +80,26 @@ export const chemPumpSchema = z
     has_wax_pump: z.boolean().default(false),
   })
   .and(chemPumpDiscriminatedUnion)
-  .and(acidPumpDiscriminatedUnion);
+  .and(acidPumpDiscriminatedUnion)
+  .superRefine((data, ctx) => {
+    if (
+      data.chemical_num &&
+      data.chemical_num === "2" &&
+      data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ABOARD &&
+      data.has_acid_pump &&
+      data.acid_pump_pos === ChemicalPumpPosEnum.enum.ABOARD
+    ) {
+      const fieldNames: Array<keyof typeof data> = [
+        "chemical_pump_pos",
+        "acid_pump_pos",
+      ];
+      fieldNames.forEach((field) => {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "A bordo impianto si possono montare solo due pompe di prelavaggio.",
+          path: [field],
+        });
+      });
+    }
+  });
