@@ -16,6 +16,7 @@ import RailSection from "@/components/ConfigForm/RailSection";
 import PanelSection from "@/components/ConfigForm/PanelSection";
 import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import { DevTool } from "@hookform/devtools";
+import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -37,6 +38,16 @@ const ConfigForm = () => {
       rail_guide_num: "0",
       panel_num: "ONE",
       panel_pos: "INTERNAL",
+      water_tanks: [
+        {
+          type: "2500L",
+          inlet_w_float_qty: "1",
+          inlet_no_float_qty: "0",
+          outlet_w_valve_qty: "1",
+          outlet_no_valve_qty: "0",
+          has_blower: false,
+        },
+      ],
     },
   });
 
@@ -57,6 +68,7 @@ const ConfigForm = () => {
           <RailSection />
           <PanelSection />
           <HPPumpSection />
+          <WaterTankSection />
           <Button type="submit">Salva</Button>
         </form>
       </Form>

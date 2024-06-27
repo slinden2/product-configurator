@@ -55,6 +55,10 @@ import {
   waterPump2Opts,
   WaterPump2Enum,
 } from "@/validation/configuration/waterSupplySchema";
+import {
+  WaterTankTypeEnum,
+  waterTankOpts,
+} from "@/validation/configuration/waterTankSchema";
 
 export const zodEnums = {
   BrushTypeEnum,
@@ -75,6 +79,7 @@ export const zodEnums = {
   PanelNumEnum,
   PanelPosEnum,
   ExtPanelFixingType,
+  WaterTankTypeEnum,
 };
 
 export const selectFieldOptions: SelectOptionGroup = {
@@ -102,4 +107,5 @@ export const selectFieldOptions: SelectOptionGroup = {
   panelPositions,
   extPanelFixingTypes,
   cardQtyOpts,
+  waterTankOpts,
 };

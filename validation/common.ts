@@ -19,3 +19,10 @@ export function emptyStringOrUndefined() {
     z.undefined(),
   ]);
 }
+
+export const getNumericSelectOptions = (numArr: number[]): SelectOption[] => {
+  return numArr.map((num) => ({
+    value: num.toString(),
+    label: num.toString(),
+  }));
+};
