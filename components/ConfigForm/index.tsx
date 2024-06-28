@@ -49,6 +49,18 @@ const ConfigForm = () => {
           has_blower: false,
         },
       ],
+      wash_bays: [
+        {
+          hp_lance_qty: "2",
+          det_lance_qty: "2",
+          hose_reel_qty: "2",
+          pressure_washer_type: "21L/200BAR",
+          pressure_washer_qty: "2",
+          has_gantry: true,
+          is_first_bay: true,
+          has_bay_dividers: false,
+        },
+      ],
     },
   });
 
