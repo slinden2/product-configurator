@@ -45,7 +45,7 @@ export const railSchema = z.object({
       (val) => parseInt(val, 10) >= 7 && parseInt(val, 10) <= 26,
       "La lunghezza deve essere tra 7 e 26 metri."
     ),
-  rail_guide_num: z
+  rail_guide_qty: z
     .string()
     .min(1, { message: genericRequiredMessage })
     .refine(

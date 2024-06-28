@@ -31,19 +31,19 @@ export const chemicalNum: SelectOption[] = [
 const chemPumpDiscriminatedUnion = z.discriminatedUnion("has_chemical_pump", [
   z.object({
     has_chemical_pump: z.literal(undefined).transform((val) => Boolean(val)),
-    chemical_num: emptyStringOrUndefined().transform(() => undefined),
+    chemical_qty: emptyStringOrUndefined().transform(() => undefined),
     chemical_pump_pos: emptyStringOrUndefined().transform(() => undefined),
     has_foam: emptyStringOrUndefined().transform((val) => Boolean(val)),
   }),
   z.object({
     has_chemical_pump: z.literal(false),
-    chemical_num: emptyStringOrUndefined().transform(() => undefined),
+    chemical_qty: emptyStringOrUndefined().transform(() => undefined),
     chemical_pump_pos: emptyStringOrUndefined().transform(() => undefined),
     has_foam: emptyStringOrUndefined().transform((val) => Boolean(val)),
   }),
   z.object({
     has_chemical_pump: z.literal(true),
-    chemical_num: z
+    chemical_qty: z
       .string({ message: genericRequiredMessage })
       .refine(
         (value) => chemicalNum.map((item) => item.value).includes(value),
@@ -83,8 +83,8 @@ export const chemPumpSchema = z
   .and(acidPumpDiscriminatedUnion)
   .superRefine((data, ctx) => {
     if (
-      data.chemical_num &&
-      data.chemical_num === "2" &&
+      data.chemical_qty &&
+      data.chemical_qty === "2" &&
       data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ABOARD &&
       data.has_acid_pump &&
       data.acid_pump_pos === ChemicalPumpPosEnum.enum.ABOARD

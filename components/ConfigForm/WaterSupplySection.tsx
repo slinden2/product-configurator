@@ -36,8 +36,8 @@ const WaterSupplySection = () => {
                       zodEnums.WaterPump1Enum.enum["BOOST_2.2KW"],
                     ],
                     fieldsToReset: [
-                      "inv_pump_outlet_dosatron_num",
-                      "inv_pump_outlet_pw_num",
+                      "inv_pump_outlet_dosatron_qty",
+                      "inv_pump_outlet_pw_qty",
                     ],
                   },
                 ]}
@@ -48,12 +48,12 @@ const WaterSupplySection = () => {
             <FieldsetItem>
               <>
                 <SelectField
-                  name="inv_pump_outlet_dosatron_num"
+                  name="inv_pump_outlet_dosatron_qty"
                   label="Uscite Dosatron"
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
                 <SelectField
-                  name="inv_pump_outlet_pw_num"
+                  name="inv_pump_outlet_pw_qty"
                   label="Uscite Dosatron"
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />

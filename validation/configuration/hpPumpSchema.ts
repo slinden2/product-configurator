@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 
 export const HPPumpOutlet15kwEnum = z.enum(
-  ["NO_SELECTION", "CHASSIS_WASH", "LOW_SPINNERS", "LOW_BAR", "HIGH_BAR"],
+  ["NO_SELECTION", "CHASSIS_WASH", "LOW_SPINNERS", "LOW_BARS", "HIGH_BARS"],
   { message: genericRequiredMessage }
 );
 
@@ -21,7 +21,12 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
   ]);
 
 export const HPPumpOutlet30kwEnum = z.enum(
-  ["NO_SELECTION", "CHASSIS_WASH", "LOW_SPINNER_HIGH_BAR", "LOW_HIGH_SPINNERS"],
+  [
+    "NO_SELECTION",
+    "CHASSIS_WASH",
+    "LOW_SPINNER_HIGH_BARS",
+    "LOW_HIGH_SPINNERS",
+  ],
   { message: genericRequiredMessage }
 );
 
@@ -34,7 +39,7 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
   ]);
 
 export const OMZPumpOutletEnum = z.enum(
-  ["HP_ROOF_BAR", "SPINNERS", "HP_ROOF_BAR_WITH_SPINNERS"],
+  ["HP_ROOF_BAR", "SPINNERS", "HP_ROOF_BAR_SPINNERS"],
   { message: genericRequiredMessage }
 );
 

@@ -25,7 +25,7 @@ const ChemPumpSection = () => {
               name="has_chemical_pump"
               label="Pompa prelavaggio"
               fieldsToResetOnUncheck={[
-                "chemical_num",
+                "chemical_qty",
                 "chemical_pump_pos",
                 "has_foam",
               ]}
@@ -50,7 +50,7 @@ const ChemPumpSection = () => {
             <div className="md:flex md:gap-4">
               <div className="md:flex-1 my-4">
                 <SelectField
-                  name="chemical_num"
+                  name="chemical_qty"
                   label="Numero di pompe di prelavaggio"
                   description="La seconda pompa serve esclusivamente per le barre di prelavaggio basse."
                   items={selectFieldOptions.chemicalNum}

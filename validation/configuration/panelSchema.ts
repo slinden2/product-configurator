@@ -35,19 +35,19 @@ for (let i = 0; i <= 300; i += 50) {
   cardQtyOpts.push({ value: i.toString(), label: i.toString() });
 }
 
-const panelNumDiscriminatedUnion = z.discriminatedUnion("panel_num", [
+const panelNumDiscriminatedUnion = z.discriminatedUnion("panel_qty", [
   z.object({
-    panel_num: z.literal(undefined).refine((val) => (!val ? false : val), {
+    panel_qty: z.literal(undefined).refine((val) => (!val ? false : val), {
       message: genericRequiredMessage,
     }),
     panel_pos: emptyStringOrUndefined().transform(() => undefined),
   }),
   z.object({
-    panel_num: z.literal(PanelNumEnum.enum.ONE),
+    panel_qty: z.literal(PanelNumEnum.enum.ONE),
     panel_pos: PanelPosEnum,
   }),
   z.object({
-    panel_num: z.literal(PanelNumEnum.enum.TWO),
+    panel_qty: z.literal(PanelNumEnum.enum.TWO),
     panel_pos: emptyStringOrUndefined().transform(() => undefined),
     ext_panel_fixing_type: ExtPanelFixingType,
   }),
@@ -76,7 +76,7 @@ export const panelSchema = z
   .object({
     has_itecoweb: z.boolean().default(false),
     has_card_reader: z.boolean().default(false),
-    card_num: z
+    card_qty: z
       .string()
       .refine((val) => !isNaN(parseInt(val, 10)), {
         message: "Devi inserire un numero.",

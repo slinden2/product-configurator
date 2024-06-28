@@ -40,7 +40,7 @@ export const brushNums: SelectOption[] = [
 ];
 
 const noBrushSchema = z.object({
-  brush_num: z.literal("0"),
+  brush_qty: z.literal("0"),
   brush_type: emptyStringOrUndefined().transform(() => undefined),
   brush_color: emptyStringOrUndefined().transform(() => undefined),
 });
@@ -50,8 +50,8 @@ const brushWithColorSchema = z.object({
   brush_color: BrushColorEnum,
 });
 
-export const brushSchema = z.discriminatedUnion("brush_num", [
+export const brushSchema = z.discriminatedUnion("brush_qty", [
   noBrushSchema,
-  z.object({ brush_num: z.literal("2") }).merge(brushWithColorSchema),
-  z.object({ brush_num: z.literal("3") }).merge(brushWithColorSchema),
+  z.object({ brush_qty: z.literal("2") }).merge(brushWithColorSchema),
+  z.object({ brush_qty: z.literal("3") }).merge(brushWithColorSchema),
 ]);

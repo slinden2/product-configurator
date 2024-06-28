@@ -28,7 +28,7 @@ const RailSection = () => {
           </FieldsetItem>
           <FieldsetItem>
             <SelectField
-              name="rail_guide_num"
+              name="rail_guide_qty"
               label="Guida ruote"
               items={selectFieldOptions.railGuideNum}
             />

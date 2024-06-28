@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 
 export const WaterTankTypeEnum = z.enum(
-  ["2000L", "2000L_JOLLY", "2500L", "4500L"],
+  ["L2000", "L2000_JOLLY", "L2500", "L4500"],
   {
     message: genericRequiredMessage,
   }

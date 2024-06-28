@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 
 export const PressureWasherTypeEnum = z.enum(
-  ["NO_SELECTION", "21L/150BAR", "21L/200BAR"],
+  ["NO_SELECTION", "L21_150BAR", "L21_200BAR"],
   { message: genericRequiredMessage }
 );
 

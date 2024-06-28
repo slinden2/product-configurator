@@ -8,7 +8,7 @@ import React from "react";
 import { useWatch } from "react-hook-form";
 
 const BrushSection = () => {
-  const brushNumWatch = useWatch({ name: "brush_num" });
+  const brushNumWatch = useWatch({ name: "brush_qty" });
 
   return (
     <Fieldset title="Spazzole">
@@ -16,7 +16,7 @@ const BrushSection = () => {
         <FieldsetRow>
           <FieldsetItem>
             <SelectField
-              name="brush_num"
+              name="brush_qty"
               label="Numero di spazzole"
               items={selectFieldOptions.brushNums}
               fieldsToResetOnValue={[

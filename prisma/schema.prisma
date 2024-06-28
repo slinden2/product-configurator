@@ -9,39 +9,87 @@ datasource db {
 }
 
 model Configuration {
-  id                    Int              @id @default(autoincrement())
+  id                    Int                   @id @default(autoincrement())
   name                  String
   description           String?
-  brush_num             Int
-  brush_type            BrushType
-  brush_color           BrushColor
+  brush_qty             Int
+  brush_type            BrushType?
+  brush_color           BrushColor?
   has_shampoo_pump      Boolean
   has_wax_pump          Boolean
   has_chemical_pump     Boolean
-  chemical_num          Int?
+  chemical_qty          Int?
   chemical_pump_pos     ChemicalPumpPos?
-  has_foam              Boolean?
+  has_foam              Boolean
   has_acid_pump         Boolean
-  has_hp_roof_bar       Boolean
-  has_chemical_roof_bar Boolean?
-  has_high_spinners     Boolean
-  low_hp_gantry         LowHPGantry?
-  supply_side           SupplySide
+  acid_pump_pos         ChemicalPumpPos?
+  water_1_type          WaterType
+  water_1_pump          Water1PumpType?
+  water_2_type          WaterType?
+  water_2_pump          Water2PumpType?
+  has_antifreeze        Boolean
   supply_type           SupplyType
   supply_fixing_type    SupplyFixingType
-  has_post_frame        Boolean?
+  supply_side           SupplySide
+  has_post_frame        Boolean
   cable_chain_width     CableChainWidth?
-  has_double_supply     Boolean
-  water_type_1          WaterType
-  water_type_2          WaterType?
   rail_type             RailType
   rail_length           Int
-  rail_guide_num        Int
+  rail_guide_qty        Int
+  touch_qty             Int
+  touch_pos             TouchPos?
+  touch_fixing_type     TouchFixingType?
   has_itecoweb          Boolean
-  created_at            DateTime         @default(now())
-  updated_at            DateTime         @updatedAt
+  has_card_reader       Boolean
+  is_fast               Boolean
+  card_qty              Int
+  has_15kw_pump         Boolean
+  pump_outlet_1_15kw    HpPump15kwOutletType?
+  pump_outlet_2_15kw    HpPump15kwOutletType?
+  has_30kw_pump         Boolean
+  pump_outlet_1_30kw    HpPump30kwOutletType?
+  pump_outlet_2_30kw    HpPump30kwOutletType?
+  has_omz_pump          Boolean
+  pump_outlet_omz       HpPumpOMZOutletType?
+  has_chemical_roof_bar Boolean
+  water_tanks           WaterTank[]
+  wash_bays             WashBay[]
+  created_at            DateTime              @default(now())
+  updated_at            DateTime              @updatedAt
+  // created_by User
+  // updated_by User
 
   @@map("configurations")
+}
+
+model WaterTank {
+  id                  Int           @id @default(autoincrement())
+  type                WaterTankType
+  inlet_w_float_qty   Int
+  inlet_no_float_qty  Int
+  outlet_w_valve_qty  Int
+  outlet_no_valve_qty Int
+  has_blower          Boolean
+  configuration       Configuration @relation(fields: [configurationId], references: [id])
+  configurationId     Int
+
+  @@map("water_tanks")
+}
+
+model WashBay {
+  id                   Int                @id @default(autoincrement())
+  hp_lance_qty         Int
+  det_lance_qty        Int
+  hose_reel_qty        Int
+  pressure_washer_type PressureWasherType
+  pressure_washer_qty  Int?
+  has_gantry           Boolean
+  is_first_bay         Boolean
+  has_bay_dividers     Boolean
+  configuration        Configuration      @relation(fields: [configurationId], references: [id])
+  configurationId      Int
+
+  @@map("wash_bays")
 }
 
 // If Prisma enums are modified, check also zod validation enums
@@ -63,14 +111,26 @@ enum ChemicalPumpPos {
   WASH_BAY
 }
 
-enum LowHPGantry {
-  LOW_SPINNER
-  LOW_BAR
-  HIGH_BAR
-  LOW_HIGH_SPINNER
+enum WaterType {
+  NETWORK
+  RECYCLED
+  DEMINERALIZED
+}
+
+enum Water1PumpType {
+  BOOST_15KW
+  BOOST_22KW
+  INV_3KW_200L
+  INV_3KW_250L
+}
+
+enum Water2PumpType {
+  BOOST_15KW
+  BOOST_22KW
 }
 
 enum SupplySide {
+  TBD
   LEFT
   RIGHT
 }
@@ -82,8 +142,9 @@ enum SupplyType {
 }
 
 enum SupplyFixingType {
+  NONE
+  POST
   WALL
-  FLOOR
 }
 
 enum CableChainWidth {
@@ -93,13 +154,48 @@ enum CableChainWidth {
   L300
 }
 
-enum WaterType {
-  NETWORK
-  RECYCLED
-  DEMINERALIZED
-}
-
 enum RailType {
   DOWELED
   WELDED
+}
+
+enum TouchPos {
+  INTERNAL
+  EXTERNAL
+}
+
+enum TouchFixingType {
+  POST
+  WALL
+}
+
+enum HpPump15kwOutletType {
+  CHASSIS_WASH
+  LOW_SPINNERS
+  LOW_BARS
+  HIGH_BARS
+}
+
+enum HpPump30kwOutletType {
+  CHASSIS_WASH
+  LOW_SPINNERS_HIGH_BARS
+  LOW_HIGH_SPINNERS
+}
+
+enum HpPumpOMZOutletType {
+  HP_ROOF_BAR
+  SPINNERS
+  HP_ROOF_BAR_SPINNERS
+}
+
+enum WaterTankType {
+  L2000
+  L2000_JOLLY
+  L2500
+  L4500
+}
+
+enum PressureWasherType {
+  L21_150BAR
+  L21_200BAR
 }

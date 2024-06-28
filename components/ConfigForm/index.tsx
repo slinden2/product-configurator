@@ -18,6 +18,7 @@ import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import { DevTool } from "@hookform/devtools";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
 import WashBaySection from "@/components/ConfigForm/WashBaySection";
+import { zodEnums } from "@/validation/configuration";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -29,19 +30,19 @@ const ConfigForm = () => {
     defaultValues: {
       name: "Nome Cliente",
       description: "Descrizione Impianto",
-      brush_num: "0",
-      supply_type: "STRAIGHT_SHELF",
-      supply_fixing_type: "NONE",
-      supply_side: "TBD",
-      water_type_1: "NETWORK",
-      rail_type: "DOWELED",
+      brush_qty: "0",
+      supply_type: zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF,
+      supply_fixing_type: zodEnums.SupplyFixingTypeEnum.enum.NONE,
+      supply_side: zodEnums.SupplySideEnum.enum.TBD,
+      water_type_1: zodEnums.WaterType1Enum.enum.NETWORK,
+      rail_type: zodEnums.RailTypeEnum.enum.DOWELED,
       rail_length: "25",
-      rail_guide_num: "0",
-      panel_num: "ONE",
-      panel_pos: "INTERNAL",
+      rail_guide_qty: "1",
+      panel_qty: zodEnums.PanelNumEnum.enum.ONE,
+      panel_pos: zodEnums.PanelPosEnum.enum.INTERNAL,
       water_tanks: [
         {
-          type: "2500L",
+          type: zodEnums.WaterTankTypeEnum.enum.L2500,
           inlet_w_float_qty: "1",
           inlet_no_float_qty: "0",
           outlet_w_valve_qty: "1",
@@ -54,7 +55,7 @@ const ConfigForm = () => {
           hp_lance_qty: "2",
           det_lance_qty: "2",
           hose_reel_qty: "2",
-          pressure_washer_type: "21L/200BAR",
+          pressure_washer_type: zodEnums.PressureWasherTypeEnum.enum.L21_200BAR,
           pressure_washer_qty: "2",
           has_gantry: true,
           is_first_bay: true,

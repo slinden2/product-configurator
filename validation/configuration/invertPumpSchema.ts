@@ -9,13 +9,13 @@ export const inverterPumpOutletOpts: SelectOption[] = [
 ];
 
 export const inverterPumpSchema = z.object({
-  inv_pump_outlet_dosatron_num: z
+  inv_pump_outlet_dosatron_qty: z
     .string()
     .refine((val) => !isNaN(parseInt(val, 10)), {
       message: "Devi inserire un numero.",
     })
     .or(emptyStringOrUndefined().transform(() => undefined)),
-  inv_pump_outlet_pw_num: z
+  inv_pump_outlet_pw_qty: z
     .string()
     .refine((val) => !isNaN(parseInt(val, 10)), {
       message: "Devi inserire un numero.",
