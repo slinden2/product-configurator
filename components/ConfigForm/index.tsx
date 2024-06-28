@@ -17,6 +17,7 @@ import PanelSection from "@/components/ConfigForm/PanelSection";
 import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import { DevTool } from "@hookform/devtools";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
+import WashBaySection from "@/components/ConfigForm/WashBaySection";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -69,6 +70,7 @@ const ConfigForm = () => {
           <PanelSection />
           <HPPumpSection />
           <WaterTankSection />
+          <WashBaySection />
           <Button type="submit">Salva</Button>
         </form>
       </Form>

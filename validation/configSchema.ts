@@ -5,6 +5,7 @@ import { hpPumpSchema } from "@/validation/configuration/hpPumpSchema";
 import { panelSchema } from "@/validation/configuration/panelSchema";
 import { railSchema } from "@/validation/configuration/railSchema";
 import { supplyTypeSchema } from "@/validation/configuration/supplyTypeSchema";
+import { washBaySchema } from "@/validation/configuration/washBaySchema";
 import { waterSupplySchema } from "@/validation/configuration/waterSupplySchema";
 import { waterTankSchema } from "@/validation/configuration/waterTankSchema";
 import { z } from "zod";
@@ -23,6 +24,7 @@ export const configSchema = baseSchema
   .and(hpPumpSchema)
   .and(panelSchema)
   .and(waterTankSchema)
+  .and(washBaySchema)
   .superRefine((data, ctx) => {
     // Limit rail length to 25 if cable chain width is set
     if (data.cable_chain_width && parseInt(data.rail_length, 10) < 25) {

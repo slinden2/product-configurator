@@ -46,6 +46,10 @@ import {
   supplyTypes,
 } from "@/validation/configuration/supplyTypeSchema";
 import {
+  PressureWasherTypeEnum,
+  pressureWasherOpts,
+} from "@/validation/configuration/washBaySchema";
+import {
   WaterType1Enum,
   WaterType2Enum,
   WaterPump1Enum,
@@ -80,6 +84,7 @@ export const zodEnums = {
   PanelPosEnum,
   ExtPanelFixingType,
   WaterTankTypeEnum,
+  PressureWasherTypeEnum,
 };
 
 export const selectFieldOptions: SelectOptionGroup = {
@@ -108,4 +113,5 @@ export const selectFieldOptions: SelectOptionGroup = {
   extPanelFixingTypes,
   cardQtyOpts,
   waterTankOpts,
+  pressureWasherOpts,
 };
