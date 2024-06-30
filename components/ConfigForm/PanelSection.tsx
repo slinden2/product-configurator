@@ -10,8 +10,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 const PanelSection = () => {
   const { setValue } = useFormContext();
-  const panelNumWatch = useWatch({ name: "panel_qty" });
-  const panelPosWatch = useWatch({ name: "panel_pos" });
+  const panelNumWatch = useWatch({ name: "touch_qty" });
+  const panelPosWatch = useWatch({ name: "touch_pos" });
   const hasItecowebWatch = useWatch({ name: "has_itecoweb" });
   const hasCardReaderWatch = useWatch({ name: "has_card_reader" });
 
@@ -28,39 +28,39 @@ const PanelSection = () => {
         <FieldsetRow>
           <FieldsetItem>
             <SelectField
-              name="panel_qty"
+              name="touch_qty"
               label="Numero di pannelli"
-              items={selectFieldOptions.panelNums}
+              items={selectFieldOptions.touchQtyOpts}
               fieldsToResetOnValue={[
                 {
-                  triggerValue: zodEnums.PanelNumEnum.enum.TWO,
-                  fieldsToReset: ["panel_pos"],
+                  triggerValue: zodEnums.TouchQtyEnum.enum.TWO,
+                  fieldsToReset: ["touch_pos"],
                 },
               ]}
             />
           </FieldsetItem>
           <FieldsetItem>
-            {panelNumWatch === zodEnums.PanelNumEnum.enum.ONE && (
+            {panelNumWatch === zodEnums.TouchQtyEnum.enum.ONE && (
               <SelectField
-                name="panel_pos"
+                name="touch_pos"
                 label="Posizione pannello"
-                items={selectFieldOptions.panelPositions}
+                items={selectFieldOptions.touchPositionOpts}
                 fieldsToResetOnValue={[
                   {
-                    triggerValue: zodEnums.PanelPosEnum.enum.INTERNAL,
-                    fieldsToReset: ["ext_panel_fixing_type"],
+                    triggerValue: zodEnums.TouchPosEnum.enum.INTERNAL,
+                    fieldsToReset: ["touch_fixing_type"],
                   },
                 ]}
               />
             )}
           </FieldsetItem>
           <FieldsetItem>
-            {(panelNumWatch === zodEnums.PanelNumEnum.enum.TWO ||
+            {(panelNumWatch === zodEnums.TouchQtyEnum.enum.TWO ||
               panelPosWatch === "EXTERNAL") && (
               <SelectField
-                name="ext_panel_fixing_type"
+                name="touch_fixing_type"
                 label="Fissaggio pannello esterno"
-                items={selectFieldOptions.extPanelFixingTypes}
+                items={selectFieldOptions.touchFixingTypeOpts}
               />
             )}
           </FieldsetItem>

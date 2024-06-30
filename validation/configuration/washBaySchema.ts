@@ -22,7 +22,6 @@ export const washBaySchema = z.object({
   wash_bays: z
     .array(
       z.object({
-        has_gantry: z.boolean(),
         hp_lance_qty: z.string().min(1, { message: genericRequiredMessage }),
         det_lance_qty: z.string().min(1, { message: genericRequiredMessage }),
         hose_reel_qty: z.string().min(1, { message: genericRequiredMessage }),
@@ -31,8 +30,9 @@ export const washBaySchema = z.object({
           .string()
           .min(1, { message: genericRequiredMessage })
           .or(emptyStringOrUndefined().transform(() => undefined)),
-        has_bay_dividers: z.boolean(),
+        has_gantry: z.boolean(),
         is_first_bay: z.boolean(),
+        has_bay_dividers: z.boolean(),
       })
     )
     .superRefine((data, ctx) => {

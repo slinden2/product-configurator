@@ -21,14 +21,14 @@ import {
 } from "@/validation/configuration/hpPumpSchema";
 import { inverterPumpOutletOpts } from "@/validation/configuration/invertPumpSchema";
 import {
-  ExtPanelFixingType,
-  PanelNumEnum,
-  PanelPosEnum,
+  TouchFixingType,
+  TouchQtyEnum,
+  TouchPosEnum,
   cardQtyOpts,
-  extPanelFixingTypes,
-  panelNums,
-  panelPositions,
-} from "@/validation/configuration/panelSchema";
+  touchFixingTypeOpts,
+  touchQtyOpts,
+  touchPositionOpts,
+} from "@/validation/configuration/touchSchema";
 import {
   RailTypeEnum,
   railGuideNum,
@@ -80,9 +80,9 @@ export const zodEnums = {
   HPPumpOutlet15kwEnum,
   HPPumpOutlet30kwEnum,
   OMZPumpOutletEnum,
-  PanelNumEnum,
-  PanelPosEnum,
-  ExtPanelFixingType,
+  TouchQtyEnum,
+  TouchPosEnum,
+  TouchFixingType,
   WaterTankTypeEnum,
   PressureWasherTypeEnum,
 };
@@ -108,9 +108,9 @@ export const selectFieldOptions: SelectOptionGroup = {
   hpPumpOutlet15kwTypes,
   hpPumpOutlet30kwTypes,
   omzPumpOutletTypes,
-  panelNums,
-  panelPositions,
-  extPanelFixingTypes,
+  touchQtyOpts,
+  touchPositionOpts,
+  touchFixingTypeOpts,
   cardQtyOpts,
   waterTankOpts,
   pressureWasherOpts,

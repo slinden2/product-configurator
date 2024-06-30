@@ -2,7 +2,7 @@ import { zodEnums } from "@/validation/configuration";
 import { brushSchema } from "@/validation/configuration/brushSchema";
 import { chemPumpSchema } from "@/validation/configuration/chemPumpSchema";
 import { hpPumpSchema } from "@/validation/configuration/hpPumpSchema";
-import { panelSchema } from "@/validation/configuration/panelSchema";
+import { touchSchema } from "@/validation/configuration/touchSchema";
 import { railSchema } from "@/validation/configuration/railSchema";
 import { supplyTypeSchema } from "@/validation/configuration/supplyTypeSchema";
 import { washBaySchema } from "@/validation/configuration/washBaySchema";
@@ -22,7 +22,7 @@ export const configSchema = baseSchema
   .and(supplyTypeSchema)
   .and(railSchema)
   .and(hpPumpSchema)
-  .and(panelSchema)
+  .and(touchSchema)
   .and(waterTankSchema)
   .and(washBaySchema)
   .superRefine((data, ctx) => {

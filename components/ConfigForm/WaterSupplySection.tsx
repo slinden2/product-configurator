@@ -9,8 +9,8 @@ import React from "react";
 import { useWatch } from "react-hook-form";
 
 const WaterSupplySection = () => {
-  const waterType2Watch = useWatch({ name: "water_type_2" });
-  const waterPump1Watch = useWatch({ name: "water_pump_1" });
+  const waterType2Watch = useWatch({ name: "water_2_type" });
+  const waterPump1Watch = useWatch({ name: "water_1_pump" });
   const hasInvPump = waterPump1Watch?.startsWith("INV_3KW");
 
   return (
@@ -20,20 +20,20 @@ const WaterSupplySection = () => {
           <FieldsetItem>
             <div className="space-y-3">
               <SelectField
-                name="water_type_1"
+                name="water_1_type"
                 label="Tipo acqua 1"
                 items={selectFieldOptions.waterTypes1}
               />
               <SelectField
-                name="water_pump_1"
+                name="water_1_pump"
                 label="Pompa di rilancio"
                 items={selectFieldOptions.waterPump1Opts}
                 fieldsToResetOnValue={[
                   {
                     triggerValue: [
                       zodEnums.WaterPump1Enum.enum.NO_SELECTION,
-                      zodEnums.WaterPump1Enum.enum["BOOST_1.5KW"],
-                      zodEnums.WaterPump1Enum.enum["BOOST_2.2KW"],
+                      zodEnums.WaterPump1Enum.enum["BOOST_15KW"],
+                      zodEnums.WaterPump1Enum.enum["BOOST_22KW"],
                     ],
                     fieldsToReset: [
                       "inv_pump_outlet_dosatron_qty",
@@ -63,18 +63,18 @@ const WaterSupplySection = () => {
           <FieldsetItem>
             <div className="space-y-3">
               <SelectField
-                name="water_type_2"
+                name="water_2_type"
                 label="Tipo acqua 2"
                 items={selectFieldOptions.waterTypes2}
                 fieldsToResetOnValue={[
                   {
                     triggerValue: zodEnums.WaterType2Enum.enum.NO_SELECTION,
-                    fieldsToReset: ["water_pump_2"],
+                    fieldsToReset: ["water_2_pump"],
                   },
                 ]}
               />
               <SelectField
-                name="water_pump_2"
+                name="water_2_pump"
                 label="Pompa di rilancio"
                 disabled={!(waterType2Watch in zodEnums.WaterType1Enum.enum)}
                 items={selectFieldOptions.waterPump2Opts}

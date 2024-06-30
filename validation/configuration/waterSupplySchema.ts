@@ -32,8 +32,8 @@ export const waterTypes2: SelectOption[] = generateSelectOptionsFromZodEnum(
 
 export const WaterPump1Enum = z.enum([
   "NO_SELECTION",
-  "BOOST_1.5KW",
-  "BOOST_2.2KW",
+  "BOOST_15KW",
+  "BOOST_22KW",
   "INV_3KW_200L",
   "INV_3KW_250L",
 ]);
@@ -51,8 +51,8 @@ export const waterPump1Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
 
 export const WaterPump2Enum = z.enum([
   "NO_SELECTION",
-  "BOOST_1.5KW",
-  "BOOST_2.2KW",
+  "BOOST_15KW",
+  "BOOST_22KW",
 ]);
 
 export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
@@ -62,14 +62,14 @@ export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
 
 export const waterSupplySchema = z
   .object({
-    water_type_1: WaterType1Enum,
-    water_pump_1: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
+    water_1_type: WaterType1Enum,
+    water_1_pump: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
       val === WaterPump1Enum.enum.NO_SELECTION || !val ? undefined : val
     ),
-    water_type_2: WaterType2Enum.optional().transform((val) =>
+    water_2_type: WaterType2Enum.optional().transform((val) =>
       val === WaterType2Enum.enum.NO_SELECTION ? undefined : val
     ),
-    water_pump_2: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
+    water_2_pump: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
       val === WaterPump1Enum.enum.NO_SELECTION || !val ? undefined : val
     ),
     has_antifreeze: z.boolean().default(false),
@@ -89,14 +89,14 @@ export const waterSupplySchema = z
       }, 0);
 
     if (
-      (data.water_pump_1 === WaterPump1Enum.enum.INV_3KW_200L ||
-        data.water_pump_1 === WaterPump1Enum.enum.INV_3KW_250L) &&
+      (data.water_1_pump === WaterPump1Enum.enum.INV_3KW_200L ||
+        data.water_1_pump === WaterPump1Enum.enum.INV_3KW_250L) &&
       numOfSelectedOutlets < 2
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Seleziona almeno due uscite.",
-        path: ["water_pump_1"],
+        path: ["water_1_pump"],
       });
     }
   });
