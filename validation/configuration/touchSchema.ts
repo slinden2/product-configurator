@@ -3,15 +3,14 @@ import {
   emptyStringOrUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  getNumericSelectOptions,
+  invalidOption,
+  mustBeUndefined,
+  mustBeZero,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const TouchQtyEnum = z.enum(["ONE", "TWO"]);
-
-export const touchQtyOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
-  TouchQtyEnum,
-  ["1", "2"]
-);
+export const touchQtyOpts: SelectOption[] = getNumericSelectOptions([1, 2]);
 
 export const TouchPosEnum = z.enum(["INTERNAL", "EXTERNAL"], {
   message: genericRequiredMessage,
@@ -33,54 +32,57 @@ for (let i = 0; i <= 300; i += 50) {
   cardQtyOpts.push({ value: i.toString(), label: i.toString() });
 }
 
-const touchQtyDiscriminatedUnion = z.discriminatedUnion("touch_qty", [
-  z.object({
-    touch_qty: z.literal(undefined).refine((val) => (!val ? false : val), {
-      message: genericRequiredMessage,
+const touchQtyDiscriminatedUnion = z
+  .discriminatedUnion("touch_qty", [
+    z.object({
+      touch_qty: z.literal(1),
+      touch_pos: TouchPosEnum,
+      touch_fixing_type: TouchFixingType.or(mustBeUndefined()),
     }),
-    touch_pos: emptyStringOrUndefined().transform(() => undefined),
-  }),
-  z.object({
-    touch_qty: z.literal(TouchQtyEnum.enum.ONE),
-    touch_pos: TouchPosEnum,
-  }),
-  z.object({
-    touch_qty: z.literal(TouchQtyEnum.enum.TWO),
-    touch_pos: emptyStringOrUndefined().transform(() => undefined),
-    touch_fixing_type: TouchFixingType,
-  }),
-]);
+    z.object({
+      touch_qty: z.literal(2),
+      touch_pos: mustBeUndefined(),
+      touch_fixing_type: TouchFixingType,
+    }),
+  ])
+  .superRefine((data, ctx) => {
+    if (data.touch_pos === "INTERNAL" && data.touch_fixing_type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: invalidOption,
+        path: ["touch_fixing_type"],
+      });
+    }
 
-const touchPosDiscriminatedUnion = z.discriminatedUnion("touch_pos", [
-  z.object({
-    touch_pos: z.literal(undefined),
-    touch_fixing_type: TouchFixingType.or(emptyStringOrUndefined()),
-  }),
-  z.object({
-    touch_pos: z.literal("").transform(() => undefined),
-    touch_fixing_type: TouchFixingType.or(emptyStringOrUndefined()),
-  }),
-  z.object({
-    touch_pos: z.literal(TouchPosEnum.enum.EXTERNAL),
-    touch_fixing_type: TouchFixingType,
-  }),
-  z.object({
-    touch_pos: z.literal(TouchPosEnum.enum.INTERNAL),
-    touch_fixing_type: emptyStringOrUndefined().transform(() => undefined),
-  }),
-]);
+    if (data.touch_pos === "EXTERNAL" && !data.touch_fixing_type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["touch_fixing_type"],
+      });
+    }
+  });
 
-export const touchSchema = z
+const baseTouchSchema = z.object({
+  has_itecoweb: z.boolean().default(false),
+  has_card_reader: z.boolean().default(false),
+  card_qty: z.coerce
+    .number({ message: genericRequiredMessage })
+    .min(0)
+    .max(300)
+    .refine((val) => val % 50 === 0, { message: "Solo multipli di 50" })
+    .or(mustBeZero()),
+  is_fast: z.boolean().default(false),
+});
+
+const touchQtySchema = z
   .object({
-    has_itecoweb: z.boolean().default(false),
-    has_card_reader: z.boolean().default(false),
-    card_qty: z
-      .string()
-      .refine((val) => !isNaN(parseInt(val, 10)), {
-        message: "Devi inserire un numero.",
-      })
-      .or(emptyStringOrUndefined().transform(() => "0")),
-    is_fast: z.boolean().default(false),
+    touch_qty: z.coerce
+      .number({ message: genericRequiredMessage })
+      .min(1)
+      .max(2),
   })
-  .and(touchQtyDiscriminatedUnion)
-  .and(touchPosDiscriminatedUnion);
+  .passthrough()
+  .pipe(touchQtyDiscriminatedUnion);
+
+export const touchSchema = baseTouchSchema.and(touchQtySchema);

@@ -27,7 +27,7 @@ export const configSchema = baseSchema
   .and(washBaySchema)
   .superRefine((data, ctx) => {
     // Limit rail length to 25 if cable chain width is set
-    if (data.cable_chain_width && parseInt(data.rail_length, 10) < 25) {
+    if (data.cable_chain_width && data.rail_length < 25) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
@@ -37,7 +37,7 @@ export const configSchema = baseSchema
     }
 
     // Limit rail length to 7 if is_fast is set
-    if (data.is_fast && parseInt(data.rail_length, 10) > 7) {
+    if (data.is_fast && data.rail_length > 7) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Per un portale fast le rotaie devono essere da 7 metri.",

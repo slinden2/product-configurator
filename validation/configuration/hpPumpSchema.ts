@@ -1,8 +1,9 @@
 import { SelectOption } from "@/types";
 import {
-  emptyStringOrUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  mustBeFalse,
+  mustBeUndefined,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -159,106 +160,105 @@ function transformPumpOutlets<T>(
 }
 
 const hpPump15kwDiscriminatedUnion = z
-  .discriminatedUnion("has_15kw_pump", [
-    z.object({
-      has_15kw_pump: z.literal(undefined).transform((val) => Boolean(val)),
-      pump_outlet_1_15kw: emptyStringOrUndefined().transform(() => undefined),
-      pump_outlet_2_15kw: emptyStringOrUndefined().transform(() => undefined),
-    }),
-    z.object({
-      has_15kw_pump: z.literal(false),
-      pump_outlet_1_15kw: emptyStringOrUndefined().transform(() => undefined),
-      pump_outlet_2_15kw: emptyStringOrUndefined().transform(() => undefined),
-    }),
-    z.object({
-      has_15kw_pump: z.literal(true),
-      pump_outlet_1_15kw: HPPumpOutlet15kwEnum,
-      pump_outlet_2_15kw: HPPumpOutlet15kwEnum,
-    }),
-  ])
-  .superRefine((data, ctx) =>
-    validatePumpOutlets(
-      data,
-      ctx,
-      HPPumpOutlet15kwEnum.enum.CHASSIS_WASH,
-      HPPumpOutlet15kwEnum.enum.NO_SELECTION
-    )
-  )
-  .transform((data) =>
-    transformPumpOutlets(data, HPPumpOutlet15kwEnum.enum.NO_SELECTION)
+  .object({
+    has_15kw_pump: z.coerce.boolean(),
+  })
+  .passthrough()
+  .pipe(
+    z
+      .discriminatedUnion("has_15kw_pump", [
+        z.object({
+          has_15kw_pump: z.literal(false),
+          pump_outlet_1_15kw: mustBeUndefined(),
+          pump_outlet_2_15kw: mustBeUndefined(),
+        }),
+        z.object({
+          has_15kw_pump: z.literal(true),
+          pump_outlet_1_15kw: HPPumpOutlet15kwEnum,
+          pump_outlet_2_15kw: HPPumpOutlet15kwEnum,
+        }),
+      ])
+      .superRefine((data, ctx) =>
+        validatePumpOutlets(
+          data,
+          ctx,
+          HPPumpOutlet15kwEnum.enum.CHASSIS_WASH,
+          HPPumpOutlet15kwEnum.enum.NO_SELECTION
+        )
+      )
+      .transform((data) =>
+        transformPumpOutlets(data, HPPumpOutlet15kwEnum.enum.NO_SELECTION)
+      )
   );
 
 const hpPump30kwDiscriminatedUnion = z
-  .discriminatedUnion("has_30kw_pump", [
-    z.object({
-      has_30kw_pump: z.literal(undefined).transform((val) => Boolean(val)),
-      pump_outlet_1_30kw: emptyStringOrUndefined().transform(() => undefined),
-      pump_outlet_2_30kw: emptyStringOrUndefined().transform(() => undefined),
-    }),
-    z.object({
-      has_30kw_pump: z.literal(false),
-      pump_outlet_1_30kw: emptyStringOrUndefined().transform(() => undefined),
-      pump_outlet_2_30kw: emptyStringOrUndefined().transform(() => undefined),
-    }),
-    z.object({
-      has_30kw_pump: z.literal(true),
-      pump_outlet_1_30kw: HPPumpOutlet30kwEnum,
-      pump_outlet_2_30kw: HPPumpOutlet30kwEnum,
-    }),
-  ])
-  .superRefine((data, ctx) =>
-    validatePumpOutlets(
-      data,
-      ctx,
-      HPPumpOutlet30kwEnum.enum.CHASSIS_WASH,
-      HPPumpOutlet30kwEnum.enum.NO_SELECTION
-    )
-  )
-  .transform((data) =>
-    transformPumpOutlets(data, HPPumpOutlet30kwEnum.enum.NO_SELECTION)
+  .object({
+    has_30kw_pump: z.coerce.boolean(),
+  })
+  .passthrough()
+  .pipe(
+    z
+      .discriminatedUnion("has_30kw_pump", [
+        z.object({
+          has_30kw_pump: z.literal(false),
+          pump_outlet_1_30kw: mustBeUndefined(),
+          pump_outlet_2_30kw: mustBeUndefined(),
+        }),
+        z.object({
+          has_30kw_pump: z.literal(true),
+          pump_outlet_1_30kw: HPPumpOutlet30kwEnum,
+          pump_outlet_2_30kw: HPPumpOutlet30kwEnum,
+        }),
+      ])
+      .superRefine((data, ctx) =>
+        validatePumpOutlets(
+          data,
+          ctx,
+          HPPumpOutlet30kwEnum.enum.CHASSIS_WASH,
+          HPPumpOutlet30kwEnum.enum.NO_SELECTION
+        )
+      )
+      .transform((data) =>
+        transformPumpOutlets(data, HPPumpOutlet30kwEnum.enum.NO_SELECTION)
+      )
   );
 
 const hpPumpOmzDiscriminatedUnion = z
-  .discriminatedUnion("has_omz_pump", [
-    z.object({
-      has_omz_pump: z.literal(undefined).transform((val) => Boolean(val)),
-      pump_outlet_omz: emptyStringOrUndefined().transform(() => undefined),
-      has_chemical_roof_bar: emptyStringOrUndefined().transform((val) =>
-        Boolean(val)
-      ),
-    }),
-    z.object({
-      has_omz_pump: z.literal(false).transform((val) => Boolean(val)),
-      pump_outlet_omz: emptyStringOrUndefined().transform(() => undefined),
-      has_chemical_roof_bar: emptyStringOrUndefined().transform((val) =>
-        Boolean(val)
-      ),
-    }),
-    z.object({
-      has_omz_pump: z.literal(true),
-      pump_outlet_omz: OMZPumpOutletEnum,
-      has_chemical_roof_bar: z
-        .boolean()
-        .default(false)
-        .or(emptyStringOrUndefined().transform((val) => Boolean(val))),
-    }),
-  ])
-  .refine(
-    (data) => {
-      if (
-        data.pump_outlet_omz !== OMZPumpOutletEnum.enum.HP_ROOF_BAR &&
-        data.pump_outlet_omz !==
-          OMZPumpOutletEnum.enum.HP_ROOF_BAR_WITH_SPINNERS &&
-        data.has_chemical_roof_bar
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message:
-        "Non puoi selezionare la nebulizzazione sulla barra oscillante se la barra oscillante non è stata selezionata.",
-    }
+  .object({
+    has_omz_pump: z.coerce.boolean(),
+  })
+  .passthrough()
+  .pipe(
+    z
+      .discriminatedUnion("has_omz_pump", [
+        z.object({
+          has_omz_pump: z.literal(false),
+          pump_outlet_omz: mustBeUndefined(),
+          has_chemical_roof_bar: mustBeFalse(),
+        }),
+        z.object({
+          has_omz_pump: z.literal(true),
+          pump_outlet_omz: OMZPumpOutletEnum,
+          has_chemical_roof_bar: z.boolean().default(false).or(mustBeFalse()),
+        }),
+      ])
+      .refine(
+        (data) => {
+          if (
+            data.pump_outlet_omz !== OMZPumpOutletEnum.enum.HP_ROOF_BAR &&
+            data.pump_outlet_omz !==
+              OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS &&
+            data.has_chemical_roof_bar
+          ) {
+            return false;
+          }
+          return true;
+        },
+        {
+          message:
+            "Non puoi selezionare la nebulizzazione sulla barra oscillante se la barra oscillante non è stata selezionata.",
+        }
+      )
   );
 
 export const hpPumpSchema = hpPump15kwDiscriminatedUnion

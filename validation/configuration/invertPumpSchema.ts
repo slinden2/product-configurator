@@ -1,5 +1,5 @@
 import { SelectOption } from "@/types";
-import { emptyStringOrUndefined } from "@/validation/common";
+import { mustBeUndefined } from "@/validation/common";
 import { z } from "zod";
 
 export const inverterPumpOutletOpts: SelectOption[] = [
@@ -14,11 +14,11 @@ export const inverterPumpSchema = z.object({
     .refine((val) => !isNaN(parseInt(val, 10)), {
       message: "Devi inserire un numero.",
     })
-    .or(emptyStringOrUndefined().transform(() => undefined)),
+    .or(mustBeUndefined()),
   inv_pump_outlet_pw_qty: z
     .string()
     .refine((val) => !isNaN(parseInt(val, 10)), {
       message: "Devi inserire un numero.",
     })
-    .or(emptyStringOrUndefined().transform(() => undefined)),
+    .or(mustBeUndefined()),
 });

@@ -102,7 +102,7 @@ const HPPumpSection = () => {
                 omzPumpOutletWatch ===
                   zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR ||
                 omzPumpOutletWatch ===
-                  zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR_WITH_SPINNERS
+                  zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS
                   ? "opacity-100"
                   : "opacity-0"
               }`}>

@@ -1,8 +1,9 @@
 import { SelectOption } from "@/types";
 import {
-  emptyStringOrUndefined,
+  mustBeUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  mustBeFalse,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -28,45 +29,43 @@ export const chemicalNum: SelectOption[] = [
   },
 ];
 
-const chemPumpDiscriminatedUnion = z.discriminatedUnion("has_chemical_pump", [
-  z.object({
-    has_chemical_pump: z.literal(undefined).transform((val) => Boolean(val)),
-    chemical_qty: emptyStringOrUndefined().transform(() => undefined),
-    chemical_pump_pos: emptyStringOrUndefined().transform(() => undefined),
-    has_foam: emptyStringOrUndefined().transform((val) => Boolean(val)),
-  }),
-  z.object({
-    has_chemical_pump: z.literal(false),
-    chemical_qty: emptyStringOrUndefined().transform(() => undefined),
-    chemical_pump_pos: emptyStringOrUndefined().transform(() => undefined),
-    has_foam: emptyStringOrUndefined().transform((val) => Boolean(val)),
-  }),
-  z.object({
-    has_chemical_pump: z.literal(true),
-    chemical_qty: z
-      .string({ message: genericRequiredMessage })
-      .refine(
-        (value) => chemicalNum.map((item) => item.value).includes(value),
-        {
-          message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
-        }
-      ),
-    chemical_pump_pos: ChemicalPumpPosEnum,
-    has_foam: z
-      .boolean()
-      .default(false)
-      .or(emptyStringOrUndefined().transform((val) => Boolean(val))),
-  }),
-]);
+const detergentPumpDiscriminatedUnion = z.discriminatedUnion(
+  "has_chemical_pump",
+  [
+    z.object({
+      has_chemical_pump: z.literal(false),
+      chemical_qty: mustBeUndefined(),
+      chemical_pump_pos: mustBeUndefined(),
+      has_foam: mustBeFalse(),
+    }),
+    z.object({
+      has_chemical_pump: z.literal(true),
+      chemical_qty: z.coerce
+        .number({ message: genericRequiredMessage })
+        .refine(
+          (value) =>
+            chemicalNum.map((item) => item.value).includes(value.toString()),
+          {
+            message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
+          }
+        ),
+      chemical_pump_pos: ChemicalPumpPosEnum,
+      has_foam: z.coerce.boolean().default(false),
+    }),
+  ]
+);
+
+const detergentPumpSchema = z
+  .object({
+    has_chemical_pump: z.coerce.boolean().default(false),
+  })
+  .passthrough()
+  .pipe(detergentPumpDiscriminatedUnion);
 
 const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
   z.object({
-    has_acid_pump: z.literal(undefined).transform((val) => Boolean(val)),
-    acid_pump_pos: emptyStringOrUndefined().transform(() => undefined),
-  }),
-  z.object({
     has_acid_pump: z.literal(false),
-    acid_pump_pos: emptyStringOrUndefined().transform(() => undefined),
+    acid_pump_pos: mustBeUndefined(),
   }),
   z.object({
     has_acid_pump: z.literal(true),
@@ -74,17 +73,24 @@ const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
   }),
 ]);
 
+const acidPumpSchema = z
+  .object({
+    has_acid_pump: z.coerce.boolean().default(false),
+  })
+  .passthrough()
+  .pipe(acidPumpDiscriminatedUnion);
+
 export const chemPumpSchema = z
   .object({
     has_shampoo_pump: z.boolean().default(false),
     has_wax_pump: z.boolean().default(false),
   })
-  .and(chemPumpDiscriminatedUnion)
-  .and(acidPumpDiscriminatedUnion)
+  .and(detergentPumpSchema)
+  .and(acidPumpSchema)
   .superRefine((data, ctx) => {
     if (
       data.chemical_qty &&
-      data.chemical_qty === "2" &&
+      data.chemical_qty === 2 &&
       data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ABOARD &&
       data.has_acid_pump &&
       data.acid_pump_pos === ChemicalPumpPosEnum.enum.ABOARD

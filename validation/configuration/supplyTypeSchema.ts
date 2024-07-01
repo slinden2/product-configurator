@@ -1,8 +1,9 @@
 import { SelectOption } from "@/types";
 import {
-  emptyStringOrUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  mustBeFalse,
+  mustBeUndefined,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -58,37 +59,35 @@ export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
 
 const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
   z.object({
-    supply_type: z
-      .literal(undefined)
-      .refine(() => false, { message: genericRequiredMessage }),
-    supply_fixing_type: emptyStringOrUndefined(),
-    has_post_frame: emptyStringOrUndefined().transform((val) => Boolean(val)),
-    cable_chain_width: emptyStringOrUndefined().transform(() => undefined),
-  }),
-  z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.STRAIGHT_SHELF),
     supply_fixing_type: SupplyFixingTypeEnum,
-    has_post_frame: emptyStringOrUndefined().transform((val) => Boolean(val)),
-    cable_chain_width: emptyStringOrUndefined().transform(() => undefined),
+    has_post_frame: mustBeFalse(),
+    cable_chain_width: mustBeUndefined(),
   }),
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.BOOM),
     supply_fixing_type: SupplyFixingTypeNoNoneEnum,
-    has_post_frame: emptyStringOrUndefined()
-      .transform((val) => Boolean(val))
-      .or(z.boolean().default(false)),
-    cable_chain_width: emptyStringOrUndefined().transform(() => undefined),
+    has_post_frame: z.boolean().default(false),
+    cable_chain_width: mustBeUndefined(),
   }),
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.CABLE_CHAIN),
     supply_fixing_type: SupplyFixingTypeNoNoneEnum,
-    has_post_frame: emptyStringOrUndefined().transform((val) => Boolean(val)),
+    has_post_frame: mustBeUndefined(),
     cable_chain_width: CableChainWidthEnum,
   }),
 ]);
+
+const _supplyTypeSchema = z
+  .object({
+    supply_type: SupplyTypeEnum,
+    supply_fixing_type: SupplyFixingTypeEnum,
+  })
+  .passthrough()
+  .pipe(supplyTypeDiscriminatedUnion);
 
 export const supplyTypeSchema = z
   .object({
     supply_side: SupplySideEnum,
   })
-  .and(supplyTypeDiscriminatedUnion);
+  .and(_supplyTypeSchema);

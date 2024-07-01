@@ -33,36 +33,37 @@ const PanelSection = () => {
               items={selectFieldOptions.touchQtyOpts}
               fieldsToResetOnValue={[
                 {
-                  triggerValue: zodEnums.TouchQtyEnum.enum.TWO,
+                  triggerValue: 2,
                   fieldsToReset: ["touch_pos"],
                 },
               ]}
             />
           </FieldsetItem>
           <FieldsetItem>
-            {panelNumWatch === zodEnums.TouchQtyEnum.enum.ONE && (
-              <SelectField
-                name="touch_pos"
-                label="Posizione pannello"
-                items={selectFieldOptions.touchPositionOpts}
-                fieldsToResetOnValue={[
-                  {
-                    triggerValue: zodEnums.TouchPosEnum.enum.INTERNAL,
-                    fieldsToReset: ["touch_fixing_type"],
-                  },
-                ]}
-              />
-            )}
+            {/* {panelNumWatch === "1" && ( */}
+            <SelectField
+              name="touch_pos"
+              label="Posizione pannello"
+              disabled={panelNumWatch !== "1"}
+              items={selectFieldOptions.touchPositionOpts}
+              fieldsToResetOnValue={[
+                {
+                  triggerValue: zodEnums.TouchPosEnum.enum.INTERNAL,
+                  fieldsToReset: ["touch_fixing_type"],
+                },
+              ]}
+            />
+            {/* )} */}
           </FieldsetItem>
           <FieldsetItem>
-            {(panelNumWatch === zodEnums.TouchQtyEnum.enum.TWO ||
-              panelPosWatch === "EXTERNAL") && (
-              <SelectField
-                name="touch_fixing_type"
-                label="Fissaggio pannello esterno"
-                items={selectFieldOptions.touchFixingTypeOpts}
-              />
-            )}
+            {/* {(panelNumWatch === "2" || panelPosWatch === "EXTERNAL") && ( */}
+            <SelectField
+              name="touch_fixing_type"
+              label="Fissaggio pannello esterno"
+              disabled={panelNumWatch !== "2" && panelPosWatch !== "EXTERNAL"}
+              items={selectFieldOptions.touchFixingTypeOpts}
+            />
+            {/* )} */}
           </FieldsetItem>
         </FieldsetRow>
         <FieldsetRow>

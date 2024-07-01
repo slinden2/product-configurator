@@ -22,7 +22,6 @@ import {
 import { inverterPumpOutletOpts } from "@/validation/configuration/invertPumpSchema";
 import {
   TouchFixingType,
-  TouchQtyEnum,
   TouchPosEnum,
   cardQtyOpts,
   touchFixingTypeOpts,
@@ -80,7 +79,6 @@ export const zodEnums = {
   HPPumpOutlet15kwEnum,
   HPPumpOutlet30kwEnum,
   OMZPumpOutletEnum,
-  TouchQtyEnum,
   TouchPosEnum,
   TouchFixingType,
   WaterTankTypeEnum,

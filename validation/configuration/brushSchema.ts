@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { SelectOption } from "@/types";
 import {
-  emptyStringOrUndefined,
+  mustBeUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  invalidOption,
 } from "@/validation/common";
 
 export const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
@@ -39,19 +40,29 @@ export const brushNums: SelectOption[] = [
   },
 ];
 
-const noBrushSchema = z.object({
-  brush_qty: z.literal("0"),
-  brush_type: emptyStringOrUndefined().transform(() => undefined),
-  brush_color: emptyStringOrUndefined().transform(() => undefined),
-});
-
-const brushWithColorSchema = z.object({
-  brush_type: BrushTypeEnum,
-  brush_color: BrushColorEnum,
-});
-
-export const brushSchema = z.discriminatedUnion("brush_qty", [
-  noBrushSchema,
-  z.object({ brush_qty: z.literal("2") }).merge(brushWithColorSchema),
-  z.object({ brush_qty: z.literal("3") }).merge(brushWithColorSchema),
-]);
+export const brushSchema = z
+  .object({
+    brush_qty: z.coerce
+      .number()
+      .refine((val) => !isNaN(val), { message: invalidOption }),
+  })
+  .passthrough()
+  .pipe(
+    z.discriminatedUnion("brush_qty", [
+      z.object({
+        brush_qty: z.literal(0),
+        brush_type: mustBeUndefined(),
+        brush_color: mustBeUndefined(),
+      }),
+      z.object({
+        brush_qty: z.literal(2),
+        brush_type: BrushTypeEnum,
+        brush_color: BrushColorEnum,
+      }),
+      z.object({
+        brush_qty: z.literal(3),
+        brush_type: BrushTypeEnum,
+        brush_color: BrushColorEnum,
+      }),
+    ])
+  );

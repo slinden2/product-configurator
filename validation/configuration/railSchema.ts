@@ -38,18 +38,12 @@ export const railGuideNum: SelectOption[] = [
 
 export const railSchema = z.object({
   rail_type: RailTypeEnum,
-  rail_length: z
-    .string()
-    .min(1, { message: genericRequiredMessage })
-    .refine(
-      (val) => parseInt(val, 10) >= 7 && parseInt(val, 10) <= 26,
-      "La lunghezza deve essere tra 7 e 26 metri."
-    ),
-  rail_guide_qty: z
-    .string()
-    .min(1, { message: genericRequiredMessage })
-    .refine(
-      (val) => parseInt(val, 10) >= 0 && parseInt(val, 10) <= 2,
-      "Le guide ruote (coppie) devono essere 0, 1 o 2."
-    ),
+  rail_length: z.coerce
+    .number({ message: genericRequiredMessage })
+    .min(7)
+    .max(26),
+  rail_guide_qty: z.coerce
+    .number({ message: genericRequiredMessage })
+    .min(0)
+    .max(2),
 });
