@@ -18,60 +18,50 @@ import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import { DevTool } from "@hookform/devtools";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
 import WashBaySection from "@/components/ConfigForm/WashBaySection";
-import { zodEnums } from "@/validation/configuration";
+import { useRouter } from "next/navigation";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
-const ConfigForm = () => {
+interface ConfigurationFormProps {
+  configuration?: ConfigFormData;
+}
+
+const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const router = useRouter();
 
   const form = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
-    defaultValues: {
-      name: "Nome Cliente",
-      description: "Descrizione Impianto",
-      brush_qty: "0",
-      supply_type: zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF,
-      supply_fixing_type: zodEnums.SupplyFixingTypeEnum.enum.NONE,
-      supply_side: zodEnums.SupplySideEnum.enum.TBD,
-      water_type_1: zodEnums.WaterType1Enum.enum.NETWORK,
-      rail_type: zodEnums.RailTypeEnum.enum.DOWELED,
-      rail_length: "25",
-      rail_guide_qty: "1",
-      panel_qty: zodEnums.PanelNumEnum.enum.ONE,
-      panel_pos: zodEnums.PanelPosEnum.enum.INTERNAL,
-      water_tanks: [
-        {
-          type: zodEnums.WaterTankTypeEnum.enum.L2500,
-          inlet_w_float_qty: "1",
-          inlet_no_float_qty: "0",
-          outlet_w_valve_qty: "1",
-          outlet_no_valve_qty: "0",
-          has_blower: false,
-        },
-      ],
-      wash_bays: [
-        {
-          hp_lance_qty: "2",
-          det_lance_qty: "2",
-          hose_reel_qty: "2",
-          pressure_washer_type: zodEnums.PressureWasherTypeEnum.enum.L21_200BAR,
-          pressure_washer_qty: "2",
-          has_gantry: true,
-          is_first_bay: true,
-          has_bay_dividers: false,
-        },
-      ],
-    },
+    defaultValues: configuration,
   });
 
   async function onSubmit(values: ConfigFormData) {
-    console.log(values);
+    console.log("🚀 ~ onSubmit ~ values:", values);
+    try {
+      setIsSubmitting(true);
+      setError("");
+
+      await fetch("/api/configurations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      setIsSubmitting(false);
+      router.push("/configurations");
+      router.refresh();
+    } catch (err) {
+      setError("Unknown error occured.");
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <div>
-      <DevTool control={form.control} />
+      {/* <DevTool control={form.control} /> */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <GeneralSection />
@@ -84,7 +74,9 @@ const ConfigForm = () => {
           <HPPumpSection />
           <WaterTankSection />
           <WashBaySection />
-          <Button type="submit">Salva</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            Salva
+          </Button>
         </form>
       </Form>
       <p className="text-destructive">{error}</p>
