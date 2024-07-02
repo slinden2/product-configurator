@@ -56,8 +56,9 @@ model Configuration {
   wash_bays             WashBay[]
   created_at            DateTime              @default(now())
   updated_at            DateTime              @updatedAt
-  // created_by User
-  // updated_by User
+  status                Status                @default(OPEN)
+  // created_by User // TODO
+  // updated_by User // TODO
 
   @@map("configurations")
 }
@@ -90,6 +91,12 @@ model WashBay {
   configurationId      Int
 
   @@map("wash_bays")
+}
+
+enum Status {
+  OPEN
+  LOCKED
+  CLOSED
 }
 
 // If Prisma enums are modified, check also zod validation enums
