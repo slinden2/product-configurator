@@ -8,12 +8,14 @@ import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
-const PanelSection = () => {
+const TouchSection = () => {
   const { setValue } = useFormContext();
-  const panelNumWatch = useWatch({ name: "touch_qty" });
-  const panelPosWatch = useWatch({ name: "touch_pos" });
+  const touchQtyWatch = useWatch({ name: "touch_qty" });
+  const touchPosWatch = useWatch({ name: "touch_pos" });
   const hasItecowebWatch = useWatch({ name: "has_itecoweb" });
   const hasCardReaderWatch = useWatch({ name: "has_card_reader" });
+
+  const touchQtyAsNum = parseInt(touchQtyWatch, 10);
 
   React.useEffect(() => {
     // Resetting card_qty when itecoweb and card_reader are unchecked
@@ -40,11 +42,10 @@ const PanelSection = () => {
             />
           </FieldsetItem>
           <FieldsetItem>
-            {/* {panelNumWatch === "1" && ( */}
             <SelectField
               name="touch_pos"
-              label="Posizione pannello"
-              disabled={panelNumWatch !== "1"}
+              label="Posizione touch"
+              disabled={touchQtyAsNum !== 1}
               items={selectFieldOptions.touchPositionOpts}
               fieldsToResetOnValue={[
                 {
@@ -56,14 +57,12 @@ const PanelSection = () => {
             {/* )} */}
           </FieldsetItem>
           <FieldsetItem>
-            {/* {(panelNumWatch === "2" || panelPosWatch === "EXTERNAL") && ( */}
             <SelectField
               name="touch_fixing_type"
-              label="Fissaggio pannello esterno"
-              disabled={panelNumWatch !== "2" && panelPosWatch !== "EXTERNAL"}
+              label="Fissaggio touch esterno"
+              disabled={touchQtyAsNum !== 2 && touchPosWatch !== "EXTERNAL"}
               items={selectFieldOptions.touchFixingTypeOpts}
             />
-            {/* )} */}
           </FieldsetItem>
         </FieldsetRow>
         <FieldsetRow>
@@ -91,4 +90,4 @@ const PanelSection = () => {
   );
 };
 
-export default PanelSection;
+export default TouchSection;

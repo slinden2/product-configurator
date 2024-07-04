@@ -11,8 +11,9 @@ import { waterTankSchema } from "@/validation/configuration/waterTankSchema";
 import { z } from "zod";
 
 export const baseSchema = z.object({
+  id: z.number().optional(),
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
-  description: z.string().optional(),
+  description: z.string().nullish(),
 });
 
 export const configSchema = baseSchema

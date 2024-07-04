@@ -13,7 +13,7 @@ import ChemPumpSection from "@/components/ConfigForm/ChemPumpSection";
 import SupplySection from "@/components/ConfigForm/SupplySection";
 import WaterSupplySection from "@/components/ConfigForm/WaterSupplySection";
 import RailSection from "@/components/ConfigForm/RailSection";
-import PanelSection from "@/components/ConfigForm/PanelSection";
+import TouchSection from "@/components/ConfigForm/TouchSection";
 import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import { DevTool } from "@hookform/devtools";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
@@ -42,20 +42,30 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
       setIsSubmitting(true);
       setError("");
 
-      await fetch("/api/configurations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+      if (configuration?.id) {
+        await fetch("/api/configurations/" + configuration.id, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+      } else {
+        await fetch("/api/configurations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+      }
 
       setIsSubmitting(false);
-      router.push("/configurations");
-      router.refresh();
     } catch (err) {
       setError("Unknown error occured.");
       setIsSubmitting(false);
+      router.push("/configurations");
+      router.refresh();
     }
   }
 
@@ -70,7 +80,7 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
           <WaterSupplySection />
           <SupplySection />
           <RailSection />
-          <PanelSection />
+          <TouchSection />
           <HPPumpSection />
           <WaterTankSection />
           <WashBaySection />

@@ -1,8 +1,8 @@
 import { SelectOption } from "@/types";
 import {
-  emptyStringOrUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  preprocessEmptyStringOrNotSelectedToNull,
 } from "@/validation/common";
 import { inverterPumpSchema } from "@/validation/configuration/invertPumpSchema";
 import { z } from "zod";
@@ -63,14 +63,14 @@ export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
 export const waterSupplySchema = z
   .object({
     water_1_type: WaterType1Enum,
-    water_1_pump: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
-      val === WaterPump1Enum.enum.NO_SELECTION || !val ? undefined : val
+    water_1_pump: preprocessEmptyStringOrNotSelectedToNull(
+      WaterPump1Enum.nullish()
     ),
-    water_2_type: WaterType2Enum.optional().transform((val) =>
-      val === WaterType2Enum.enum.NO_SELECTION ? undefined : val
+    water_2_type: preprocessEmptyStringOrNotSelectedToNull(
+      WaterType2Enum.nullish()
     ),
-    water_2_pump: WaterPump1Enum.or(emptyStringOrUndefined()).transform((val) =>
-      val === WaterPump1Enum.enum.NO_SELECTION || !val ? undefined : val
+    water_2_pump: preprocessEmptyStringOrNotSelectedToNull(
+      WaterPump2Enum.nullish()
     ),
     has_antifreeze: z.boolean().default(false),
   })
@@ -80,11 +80,11 @@ export const waterSupplySchema = z
     const numOfSelectedOutlets = Object.entries(data)
       .filter(
         ([key, value]) =>
-          key.startsWith("inv_pump_outlet") && typeof value === "string"
+          key.startsWith("inv_pump_outlet") && typeof value === "number"
       )
       .reduce((acc, [, value]) => {
-        const stringValue = value as string;
-        if (stringValue) acc += parseInt(stringValue, 10) || 0;
+        const numValue = value as number;
+        if (numValue) acc += numValue;
         return acc;
       }, 0);
 

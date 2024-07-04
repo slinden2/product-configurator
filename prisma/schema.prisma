@@ -9,54 +9,56 @@ datasource db {
 }
 
 model Configuration {
-  id                    Int                   @id @default(autoincrement())
-  name                  String
-  description           String?
-  brush_qty             Int
-  brush_type            BrushType?
-  brush_color           BrushColor?
-  has_shampoo_pump      Boolean
-  has_wax_pump          Boolean
-  has_chemical_pump     Boolean
-  chemical_qty          Int?
-  chemical_pump_pos     ChemicalPumpPos?
-  has_foam              Boolean
-  has_acid_pump         Boolean
-  acid_pump_pos         ChemicalPumpPos?
-  water_1_type          WaterType
-  water_1_pump          Water1PumpType?
-  water_2_type          WaterType?
-  water_2_pump          Water2PumpType?
-  has_antifreeze        Boolean
-  supply_type           SupplyType
-  supply_fixing_type    SupplyFixingType
-  supply_side           SupplySide
-  has_post_frame        Boolean
-  cable_chain_width     CableChainWidth?
-  rail_type             RailType
-  rail_length           Int
-  rail_guide_qty        Int
-  touch_qty             Int
-  touch_pos             TouchPos?
-  touch_fixing_type     TouchFixingType?
-  has_itecoweb          Boolean
-  has_card_reader       Boolean
-  is_fast               Boolean
-  card_qty              Int
-  has_15kw_pump         Boolean
-  pump_outlet_1_15kw    HpPump15kwOutletType?
-  pump_outlet_2_15kw    HpPump15kwOutletType?
-  has_30kw_pump         Boolean
-  pump_outlet_1_30kw    HpPump30kwOutletType?
-  pump_outlet_2_30kw    HpPump30kwOutletType?
-  has_omz_pump          Boolean
-  pump_outlet_omz       HpPumpOMZOutletType?
-  has_chemical_roof_bar Boolean
-  water_tanks           WaterTank[]
-  wash_bays             WashBay[]
-  created_at            DateTime              @default(now())
-  updated_at            DateTime              @updatedAt
-  status                Status                @default(OPEN)
+  id                           Int                   @id @default(autoincrement())
+  name                         String
+  description                  String?
+  brush_qty                    Int
+  brush_type                   BrushType?
+  brush_color                  BrushColor?
+  has_shampoo_pump             Boolean
+  has_wax_pump                 Boolean
+  has_chemical_pump            Boolean
+  chemical_qty                 Int?
+  chemical_pump_pos            ChemicalPumpPos?
+  has_foam                     Boolean
+  has_acid_pump                Boolean
+  acid_pump_pos                ChemicalPumpPos?
+  water_1_type                 WaterType
+  water_1_pump                 Water1PumpType?
+  inv_pump_outlet_dosatron_qty Int?
+  inv_pump_outlet_pw_qty       Int?
+  water_2_type                 WaterType?
+  water_2_pump                 Water2PumpType?
+  has_antifreeze               Boolean
+  supply_type                  SupplyType
+  supply_fixing_type           SupplyFixingType
+  supply_side                  SupplySide
+  has_post_frame               Boolean
+  cable_chain_width            CableChainWidth?
+  rail_type                    RailType
+  rail_length                  Int
+  rail_guide_qty               Int
+  touch_qty                    Int
+  touch_pos                    TouchPos?
+  touch_fixing_type            TouchFixingType?
+  has_itecoweb                 Boolean
+  has_card_reader              Boolean
+  is_fast                      Boolean
+  card_qty                     Int
+  has_15kw_pump                Boolean
+  pump_outlet_1_15kw           HpPump15kwOutletType?
+  pump_outlet_2_15kw           HpPump15kwOutletType?
+  has_30kw_pump                Boolean
+  pump_outlet_1_30kw           HpPump30kwOutletType?
+  pump_outlet_2_30kw           HpPump30kwOutletType?
+  has_omz_pump                 Boolean
+  pump_outlet_omz              HpPumpOMZOutletType?
+  has_chemical_roof_bar        Boolean
+  water_tanks                  WaterTank[]
+  wash_bays                    WashBay[]
+  created_at                   DateTime              @default(now())
+  updated_at                   DateTime              @updatedAt
+  status                       Status                @default(OPEN)
   // created_by User // TODO
   // updated_by User // TODO
 
@@ -71,8 +73,8 @@ model WaterTank {
   outlet_w_valve_qty  Int
   outlet_no_valve_qty Int
   has_blower          Boolean
-  configuration       Configuration @relation(fields: [configurationId], references: [id])
-  configurationId     Int
+  configuration       Configuration @relation(fields: [configuration_id], references: [id])
+  configuration_id    Int
 
   @@map("water_tanks")
 }
@@ -87,8 +89,8 @@ model WashBay {
   has_gantry           Boolean
   is_first_bay         Boolean
   has_bay_dividers     Boolean
-  configuration        Configuration      @relation(fields: [configurationId], references: [id])
-  configurationId      Int
+  configuration        Configuration      @relation(fields: [configuration_id], references: [id])
+  configuration_id     Int
 
   @@map("wash_bays")
 }

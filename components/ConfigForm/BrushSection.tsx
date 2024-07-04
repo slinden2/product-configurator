@@ -1,3 +1,4 @@
+import { ConfigFormData } from "@/components/ConfigForm";
 import Fieldset from "@/components/Fieldset";
 import FieldsetContent from "@/components/FieldsetContent";
 import FieldsetItem from "@/components/FieldsetItem";
@@ -8,7 +9,7 @@ import React from "react";
 import { useWatch } from "react-hook-form";
 
 const BrushSection = () => {
-  const brushNumWatch = useWatch({ name: "brush_qty" });
+  const brushNumWatch = useWatch<ConfigFormData>({ name: "brush_qty" });
 
   return (
     <Fieldset title="Spazzole">

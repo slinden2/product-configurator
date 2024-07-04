@@ -22,6 +22,7 @@ export const waterTankSchema = z.object({
   water_tanks: z.array(
     z
       .object({
+        id: z.number().optional(),
         type: WaterTankTypeEnum,
         inlet_w_float_qty: z.coerce
           .number({ message: genericRequiredMessage })

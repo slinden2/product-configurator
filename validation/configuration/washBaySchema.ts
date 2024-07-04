@@ -3,6 +3,7 @@ import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
   mustBeZero,
+  preprocessEmptyStringOrNotSelectedToNull,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -22,6 +23,7 @@ export const washBaySchema = z.object({
   wash_bays: z
     .array(
       z.object({
+        id: z.number().optional(),
         hp_lance_qty: z.coerce
           .number({ message: genericRequiredMessage })
           .min(1)
@@ -34,8 +36,8 @@ export const washBaySchema = z.object({
           .number({ message: genericRequiredMessage })
           .min(1)
           .max(2),
-        pressure_washer_type: PressureWasherTypeEnum.transform((val) =>
-          val === PressureWasherTypeEnum.enum.NO_SELECTION ? undefined : val
+        pressure_washer_type: preprocessEmptyStringOrNotSelectedToNull(
+          PressureWasherTypeEnum.nullish()
         ),
         pressure_washer_qty: z.coerce
           .number({ message: genericRequiredMessage })

@@ -73,7 +73,7 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.CABLE_CHAIN),
     supply_fixing_type: SupplyFixingTypeNoNoneEnum,
-    has_post_frame: mustBeUndefined(),
+    has_post_frame: mustBeFalse(),
     cable_chain_width: CableChainWidthEnum,
   }),
 ]);

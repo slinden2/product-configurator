@@ -54,7 +54,7 @@ const WaterSupplySection = () => {
                 />
                 <SelectField
                   name="inv_pump_outlet_pw_qty"
-                  label="Uscite Dosatron"
+                  label="Uscite idropulitrice"
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
               </>

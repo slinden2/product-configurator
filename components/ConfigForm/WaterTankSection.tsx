@@ -4,6 +4,7 @@ import Fieldset from "@/components/Fieldset";
 import FieldsetContent from "@/components/FieldsetContent";
 import FieldsetItem from "@/components/FieldsetItem";
 import FieldsetRow from "@/components/FieldsetRow";
+import InputField from "@/components/InputField";
 import SelectField from "@/components/SelectField";
 import { Button } from "@/components/ui/button";
 import { getNumericSelectOptions } from "@/validation/common";
@@ -14,10 +15,10 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 
 const defaultObject: ConfigFormData["water_tanks"][0] = {
   type: "" as any,
-  inlet_w_float_qty: "",
-  inlet_no_float_qty: "",
-  outlet_w_valve_qty: "",
-  outlet_no_valve_qty: "",
+  inlet_w_float_qty: "" as any,
+  inlet_no_float_qty: "" as any,
+  outlet_w_valve_qty: "" as any,
+  outlet_no_valve_qty: "" as any,
   has_blower: false,
 };
 

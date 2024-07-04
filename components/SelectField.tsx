@@ -47,11 +47,15 @@ const SelectField = ({
       control={control}
       name={name}
       render={({ field }) => {
+        // Convert the field value to a string. This is necessary because the Select component expects a string value.
+        // If the value is undefined or null, it will be converted to an empty string.
+        const stringValue =
+          field.value || field.value === 0 ? field.value.toString() : "";
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <Select
-              value={field.value}
+              value={stringValue}
               onValueChange={(val) => {
                 fieldsToResetOnValue?.forEach((item) => {
                   const triggerValues = Array.isArray(item.triggerValue)
@@ -81,7 +85,7 @@ const SelectField = ({
               <SelectContent>
                 {items.map((item) => {
                   return (
-                    <SelectItem key={item.value} value={item.value}>
+                    <SelectItem key={item.value} value={item.value.toString()}>
                       {item.label}
                     </SelectItem>
                   );

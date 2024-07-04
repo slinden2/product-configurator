@@ -13,11 +13,11 @@ import React from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const defaultObject: ConfigFormData["wash_bays"][0] = {
-  hp_lance_qty: "",
-  det_lance_qty: "",
-  hose_reel_qty: "",
+  hp_lance_qty: "" as any,
+  det_lance_qty: "" as any,
+  hose_reel_qty: "" as any,
   pressure_washer_type: "" as any,
-  pressure_washer_qty: "",
+  pressure_washer_qty: "" as any,
   has_gantry: false,
   is_first_bay: false,
   has_bay_dividers: false,

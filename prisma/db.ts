@@ -33,3 +33,14 @@ export async function getConfigurationsForDataTable() {
 export type ConfigurationsForDataTable = Prisma.PromiseReturnType<
   typeof getConfigurationsForDataTable
 >;
+
+export async function getConfiguration(id: string) {
+  const configuration = await prisma.configuration.findUnique({
+    where: { id: parseInt(id) },
+    include: {
+      water_tanks: true,
+      wash_bays: true,
+    },
+  });
+  return configuration;
+}

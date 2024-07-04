@@ -25,32 +25,37 @@ const DataTable = ({ configurations }: DataTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead className="text-center">ID</TableHead>
               <TableHead className="text-center">Stato</TableHead>
               <TableHead>Nome del cliente</TableHead>
               <TableHead>Descrizione</TableHead>
-              <TableHead>Data creazione</TableHead>
-              <TableHead>Ultimo aggiornamento</TableHead>
+              <TableHead className="text-center">Data creazione</TableHead>
+              <TableHead className="text-center">
+                Ultimo aggiornamento
+              </TableHead>
+              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
             {configurations
               ? configurations.map((configuration) => (
                   <TableRow key={configuration.id}>
-                    <TableCell>{configuration.id}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
+                      {configuration.id}
+                    </TableCell>
+                    <TableCell className="text-center">
                       <ConfigurationStatusBadge status={configuration.status} />
                     </TableCell>
                     <TableCell>{configuration.name}</TableCell>
                     <TableCell>{configuration.description}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       {formatDateDDMMYYHHMMSS(configuration.created_at)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       {formatDateDDMMYYHHMMSS(configuration.updated_at)}
                     </TableCell>
                     <TableCell>
-                      <Link href={`/configurations/${configuration.id}`}>
+                      <Link href={`/configurations/edit/${configuration.id}`}>
                         <Button variant="outline" size="icon">
                           <Pencil />
                         </Button>
