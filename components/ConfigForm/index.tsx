@@ -15,10 +15,10 @@ import WaterSupplySection from "@/components/ConfigForm/WaterSupplySection";
 import RailSection from "@/components/ConfigForm/RailSection";
 import TouchSection from "@/components/ConfigForm/TouchSection";
 import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
-import { DevTool } from "@hookform/devtools";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
 import WashBaySection from "@/components/ConfigForm/WashBaySection";
-import { useRouter } from "next/navigation";
+import { redirectTo } from "@/app/actions";
+import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -29,7 +29,6 @@ interface ConfigurationFormProps {
 const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const router = useRouter();
 
   const form = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
@@ -59,13 +58,12 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
           body: JSON.stringify(values),
         });
       }
-
       setIsSubmitting(false);
+      await redirectTo("/configurations");
     } catch (err) {
+      console.log("🚀 ~ onSubmit ~ err:", err);
       setError("Unknown error occured.");
       setIsSubmitting(false);
-      router.push("/configurations");
-      router.refresh();
     }
   }
 

@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     body.wash_bays as typeof configuration.wash_bays
   );
 
-  const updatedConfiguration = await prisma.$transaction([
+  await prisma.$transaction([
     prisma.configuration.update({
       where: { id: configuration.id },
       data: {

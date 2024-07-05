@@ -26,6 +26,7 @@ const configurationSelect = Prisma.validator<Prisma.ConfigurationSelect>()({
 export async function getConfigurationsForDataTable() {
   const configurations = await prisma.configuration.findMany({
     select: configurationSelect,
+    orderBy: { updated_at: "desc" },
   });
   return configurations;
 }

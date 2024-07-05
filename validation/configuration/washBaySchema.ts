@@ -26,22 +26,22 @@ export const washBaySchema = z.object({
         id: z.number().optional(),
         hp_lance_qty: z.coerce
           .number({ message: genericRequiredMessage })
-          .min(1)
+          .min(0)
           .max(2),
         det_lance_qty: z.coerce
           .number({ message: genericRequiredMessage })
-          .min(1)
+          .min(0)
           .max(2),
         hose_reel_qty: z.coerce
           .number({ message: genericRequiredMessage })
-          .min(1)
+          .min(0)
           .max(2),
         pressure_washer_type: preprocessEmptyStringOrNotSelectedToNull(
           PressureWasherTypeEnum.nullish()
         ),
         pressure_washer_qty: z.coerce
           .number({ message: genericRequiredMessage })
-          .min(1)
+          .min(0)
           .max(2)
           .or(mustBeZero()),
         has_gantry: z.boolean().default(false),
