@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "zod": "npx tsx ./validation/zodTestFile.ts",
-    "type-check": "npx tsc --noEmit"
+    "type-check": "npx tsc --noEmit",
+    "BOM": "npx tsx ./lib/BOM/BOM.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",
