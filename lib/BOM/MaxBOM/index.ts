@@ -1,6 +1,7 @@
 import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
 import { dosingPumpBom } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
 import { nozzleBarBOM } from "@/lib/BOM/MaxBOM/nozzleBarBOM";
+import { supplyBOM } from "@/lib/BOM/MaxBOM/supplyBOM";
 import { waterSupplyBOM } from "@/lib/BOM/MaxBOM/waterSupplyBOM";
 import { Configuration } from "@prisma/client";
 
@@ -20,4 +21,5 @@ export const MaxBOM: MaxBOMItem[] = [
   ...dosingPumpBom,
   ...waterSupplyBOM,
   ...nozzleBarBOM,
+  ...supplyBOM,
 ];
