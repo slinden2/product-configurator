@@ -1,12 +1,23 @@
 import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
 import { dosingPumpBom } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
+import { nozzleBarBOM } from "@/lib/BOM/MaxBOM/nozzleBarBOM";
+import { waterSupplyBOM } from "@/lib/BOM/MaxBOM/waterSupplyBOM";
 import { Configuration } from "@prisma/client";
+
+export interface ValidationFn {
+  (config: Configuration): boolean;
+}
 
 export interface MaxBOMItem {
   pn: string;
-  conditions: Array<(config: Configuration) => boolean>;
+  conditions: Array<ValidationFn>;
   qty: number | ((config: Configuration) => number);
   _description?: string;
 }
 
-export const MaxBOM: MaxBOMItem[] = [...brushBOM, ...dosingPumpBom];
+export const MaxBOM: MaxBOMItem[] = [
+  ...brushBOM,
+  ...dosingPumpBom,
+  ...waterSupplyBOM,
+  ...nozzleBarBOM,
+];
