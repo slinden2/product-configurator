@@ -1,6 +1,7 @@
 import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
 import { dosingPumpBom } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
 import { electricBOM } from "@/lib/BOM/MaxBOM/electricBOM";
+import { fastBOM } from "@/lib/BOM/MaxBOM/fastBOM";
 import { nozzleBarBOM } from "@/lib/BOM/MaxBOM/nozzleBarBOM";
 import { railBOM } from "@/lib/BOM/MaxBOM/railBOM";
 import { supplyBOM } from "@/lib/BOM/MaxBOM/supplyBOM";
@@ -26,4 +27,5 @@ export const MaxBOM: MaxBOMItem[] = [
   ...supplyBOM,
   ...railBOM,
   ...electricBOM,
+  ...fastBOM,
 ];
