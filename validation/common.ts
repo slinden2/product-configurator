@@ -34,7 +34,7 @@ export function mustBeUndefined() {
   return z.coerce
     .boolean()
     .refine((val) => !val, { message: "Opzione invalida" })
-    .transform(() => undefined)
+    .transform(() => null)
     .or(z.null());
 }
 
