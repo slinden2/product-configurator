@@ -73,7 +73,12 @@ function validatePumpOutlets<T>(
     ? data.pump_outlet_2_15kw
     : data.pump_outlet_2_30kw;
 
-  if (pumpOutlet1 === undefined || pumpOutlet2 === undefined) {
+  if (
+    pumpOutlet1 === undefined ||
+    pumpOutlet2 === undefined ||
+    pumpOutlet1 === null ||
+    pumpOutlet2 === null
+  ) {
     return true; // Outlets are not defined, so they can't be the same or not include the wash option.
   }
 
