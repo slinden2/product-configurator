@@ -33,7 +33,7 @@ model Configuration {
   water_2_pump                 Water2PumpType?
   has_antifreeze               Boolean
   supply_type                  SupplyType
-  supply_fixing_type           SupplyFixingType
+  supply_fixing_type           SupplyFixingType?
   supply_side                  SupplySide
   has_post_frame               Boolean
   cable_chain_width            CableChainWidth?
@@ -82,16 +82,16 @@ model WaterTank {
 }
 
 model WashBay {
-  id                   Int                @id @default(autoincrement())
+  id                   Int                 @id @default(autoincrement())
   hp_lance_qty         Int
   det_lance_qty        Int
   hose_reel_qty        Int
-  pressure_washer_type PressureWasherType
+  pressure_washer_type PressureWasherType?
   pressure_washer_qty  Int?
   has_gantry           Boolean
   is_first_bay         Boolean
   has_bay_dividers     Boolean
-  configuration        Configuration      @relation(fields: [configuration_id], references: [id])
+  configuration        Configuration       @relation(fields: [configuration_id], references: [id])
   configuration_id     Int
 
   @@map("wash_bays")
@@ -160,7 +160,6 @@ enum SupplyType {
 }
 
 enum SupplyFixingType {
-  NONE
   POST
   WALL
 }

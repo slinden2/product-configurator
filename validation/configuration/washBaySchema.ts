@@ -3,18 +3,15 @@ import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
   mustBeZero,
-  preprocessEmptyStringOrNotSelectedToNull,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const PressureWasherTypeEnum = z.enum(
-  ["NO_SELECTION", "L21_150BAR", "L21_200BAR"],
-  { message: genericRequiredMessage }
-);
+export const PressureWasherTypeEnum = z.enum(["L21_150BAR", "L21_200BAR"], {
+  message: genericRequiredMessage,
+});
 
 export const pressureWasherOpts: SelectOption[] =
   generateSelectOptionsFromZodEnum(PressureWasherTypeEnum, [
-    "Niente",
     "21 l/min 150 bar",
     "21 l/min 200 bar",
   ]);
@@ -36,9 +33,7 @@ export const washBaySchema = z.object({
           .number({ message: genericRequiredMessage })
           .min(0)
           .max(2),
-        pressure_washer_type: preprocessEmptyStringOrNotSelectedToNull(
-          PressureWasherTypeEnum.nullish()
-        ),
+        pressure_washer_type: PressureWasherTypeEnum.nullable(),
         pressure_washer_qty: z.coerce
           .number({ message: genericRequiredMessage })
           .min(0)

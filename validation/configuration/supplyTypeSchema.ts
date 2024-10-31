@@ -31,20 +31,12 @@ export const cableChainWidths: SelectOption[] =
     "ST072S.300.R300",
   ]);
 
-export const SupplyFixingTypeEnum = z.enum(["NONE", "POST", "WALL"], {
+export const SupplyFixingTypeEnum = z.enum(["POST", "WALL"], {
   required_error: genericRequiredMessage,
-});
-
-const SupplyFixingTypeNoNoneEnum = z.enum(["POST", "WALL"], {
-  errorMap: () => ({
-    message:
-      "Il tipo di fissaggio deve essere Palo o Staffa a muro per Braccio Mobile o Catena Portacavi.",
-  }),
 });
 
 export const supplyFixingTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(SupplyFixingTypeEnum, [
-    "Niente",
     "Palo alimentazione",
     "Staffa a muro",
   ]);
@@ -60,19 +52,19 @@ export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
 const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.STRAIGHT_SHELF),
-    supply_fixing_type: SupplyFixingTypeEnum,
-    has_post_frame: mustBeFalse(),
+    supply_fixing_type: SupplyFixingTypeEnum.nullable(),
+    has_post_frame: z.coerce.boolean(),
     cable_chain_width: mustBeUndefined(),
   }),
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.BOOM),
-    supply_fixing_type: SupplyFixingTypeNoNoneEnum,
-    has_post_frame: z.boolean().default(false),
+    supply_fixing_type: SupplyFixingTypeEnum,
+    has_post_frame: z.coerce.boolean(),
     cable_chain_width: mustBeUndefined(),
   }),
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.CABLE_CHAIN),
-    supply_fixing_type: SupplyFixingTypeNoNoneEnum,
+    supply_fixing_type: SupplyFixingTypeEnum,
     has_post_frame: mustBeFalse(),
     cable_chain_width: CableChainWidthEnum,
   }),
@@ -81,7 +73,6 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
 const _supplyTypeSchema = z
   .object({
     supply_type: SupplyTypeEnum,
-    supply_fixing_type: SupplyFixingTypeEnum,
   })
   .passthrough()
   .pipe(supplyTypeDiscriminatedUnion);

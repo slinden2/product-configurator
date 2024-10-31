@@ -1,3 +1,4 @@
+import { SelectOption } from "@/types";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -60,3 +61,10 @@ export function differenceInTwoArrays<K, T>(
     removed,
   };
 }
+
+export const NOT_SELECTED_VALUE = "null";
+export const NOT_SELECTED_LABEL = "---";
+
+export const withNoSelection = (items: SelectOption[]): SelectOption[] => {
+  return [{ value: NOT_SELECTED_VALUE, label: NOT_SELECTED_LABEL }, ...items];
+};

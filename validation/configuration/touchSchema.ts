@@ -1,6 +1,5 @@
 import { SelectOption } from "@/types";
 import {
-  emptyStringOrUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
   getNumericSelectOptions,

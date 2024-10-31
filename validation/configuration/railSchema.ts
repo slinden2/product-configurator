@@ -1,3 +1,4 @@
+import { NOT_SELECTED_LABEL } from "@/lib/utils";
 import { SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
@@ -24,7 +25,7 @@ export const railLengths: SelectOption[] = [
 export const railGuideNum: SelectOption[] = [
   {
     value: "0",
-    label: "Niente",
+    label: NOT_SELECTED_LABEL,
   },
   {
     value: "1",

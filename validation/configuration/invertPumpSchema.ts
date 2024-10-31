@@ -8,6 +8,6 @@ export const inverterPumpOutletOpts: SelectOption[] = [
 ];
 
 export const inverterPumpSchema = z.object({
-  inv_pump_outlet_dosatron_qty: z.coerce.number().min(0).max(2).nullish(),
-  inv_pump_outlet_pw_qty: z.coerce.number().min(0).max(2).nullish(),
+  inv_pump_outlet_dosatron_qty: z.coerce.number().min(0).max(2),
+  inv_pump_outlet_pw_qty: z.coerce.number().min(0).max(2),
 });

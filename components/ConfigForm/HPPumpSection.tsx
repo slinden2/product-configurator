@@ -7,6 +7,7 @@ import React from "react";
 import { useWatch } from "react-hook-form";
 import FieldsetItem from "@/components/FieldsetItem";
 import FieldsetContent from "@/components/FieldsetContent";
+import { withNoSelection } from "@/lib/utils";
 
 const HPPumpSection = () => {
   const has15kwPumpWatch = useWatch({ name: "has_15kw_pump" });
@@ -33,7 +34,7 @@ const HPPumpSection = () => {
               name="pump_outlet_1_15kw"
               label="Uscita 1"
               disabled={!has15kwPumpWatch}
-              items={selectFieldOptions.hpPumpOutlet15kwTypes}
+              items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
           </FieldsetItem>
           <FieldsetItem>
@@ -41,7 +42,7 @@ const HPPumpSection = () => {
               name="pump_outlet_2_15kw"
               label="Uscita 2"
               disabled={!has15kwPumpWatch}
-              items={selectFieldOptions.hpPumpOutlet15kwTypes}
+              items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
           </FieldsetItem>
         </FieldsetRow>
