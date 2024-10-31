@@ -4,12 +4,13 @@ import FieldsetContent from "@/components/FieldsetContent";
 import FieldsetItem from "@/components/FieldsetItem";
 import FieldsetRow from "@/components/FieldsetRow";
 import SelectField from "@/components/SelectField";
+import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
 import { useWatch } from "react-hook-form";
 
 const WaterSupplySection = () => {
-  const waterType2Watch = useWatch({ name: "water_2_type" });
+  const water2TypeWatch = useWatch({ name: "water_2_type" });
   const waterPump1Watch = useWatch({ name: "water_1_pump" });
   const hasInvPump = waterPump1Watch?.startsWith("INV_3KW");
 
@@ -22,16 +23,16 @@ const WaterSupplySection = () => {
               <SelectField
                 name="water_1_type"
                 label="Tipo acqua 1"
-                items={selectFieldOptions.waterTypes1}
+                items={selectFieldOptions.waterTypes}
               />
               <SelectField
                 name="water_1_pump"
                 label="Pompa di rilancio"
-                items={selectFieldOptions.waterPump1Opts}
+                items={withNoSelection(selectFieldOptions.waterPump1Opts)}
                 fieldsToResetOnValue={[
                   {
                     triggerValue: [
-                      zodEnums.WaterPump1Enum.enum.NO_SELECTION,
+                      NOT_SELECTED_VALUE,
                       zodEnums.WaterPump1Enum.enum["BOOST_15KW"],
                       zodEnums.WaterPump1Enum.enum["BOOST_22KW"],
                     ],
@@ -65,10 +66,10 @@ const WaterSupplySection = () => {
               <SelectField
                 name="water_2_type"
                 label="Tipo acqua 2"
-                items={selectFieldOptions.waterTypes2}
+                items={withNoSelection(selectFieldOptions.waterTypes)}
                 fieldsToResetOnValue={[
                   {
-                    triggerValue: zodEnums.WaterType2Enum.enum.NO_SELECTION,
+                    triggerValue: NOT_SELECTED_VALUE,
                     fieldsToReset: ["water_2_pump"],
                   },
                 ]}
@@ -76,8 +77,8 @@ const WaterSupplySection = () => {
               <SelectField
                 name="water_2_pump"
                 label="Pompa di rilancio"
-                disabled={!(waterType2Watch in zodEnums.WaterType1Enum.enum)}
-                items={selectFieldOptions.waterPump2Opts}
+                disabled={!(water2TypeWatch in zodEnums.WaterTypeEnum.enum)}
+                items={withNoSelection(selectFieldOptions.waterPump2Opts)}
               />
             </div>
           </FieldsetItem>

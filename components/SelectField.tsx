@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { SelectOption } from "@/types";
 import { ConfigFormData } from "@/components/ConfigForm";
+import { NOT_SELECTED_LABEL } from "@/lib/utils";
 
 interface SelectFieldProps {
   name: keyof ConfigFormData; // Name of the field in your form data (used for form state management)
@@ -69,17 +70,17 @@ const SelectField = ({
 
                     if (shouldReset) {
                       item.fieldsToReset.forEach((fieldToReset) => {
-                        setValue(fieldToReset, "");
+                        setValue(fieldToReset, null);
                       });
                     }
                   });
                 });
-                return field.onChange(val);
+                return field.onChange(val === "null" ? null : val);
               }}
               disabled={disabled}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selezionare..." />
+                  <SelectValue placeholder={NOT_SELECTED_LABEL} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>

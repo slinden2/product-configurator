@@ -8,13 +8,12 @@ import {
 import { z } from "zod";
 
 export const HPPumpOutlet15kwEnum = z.enum(
-  ["NO_SELECTION", "CHASSIS_WASH", "LOW_SPINNERS", "LOW_BARS", "HIGH_BARS"],
+  ["CHASSIS_WASH", "LOW_SPINNERS", "LOW_BARS", "HIGH_BARS"],
   { message: genericRequiredMessage }
 );
 
 export const hpPumpOutlet15kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet15kwEnum, [
-    "Niente",
     "Lavachassis",
     "2 robottine basse",
     "Barre HP basse",
@@ -22,18 +21,12 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
   ]);
 
 export const HPPumpOutlet30kwEnum = z.enum(
-  [
-    "NO_SELECTION",
-    "CHASSIS_WASH",
-    "LOW_SPINNER_HIGH_BARS",
-    "LOW_HIGH_SPINNERS",
-  ],
+  ["CHASSIS_WASH", "LOW_SPINNERS_HIGH_BARS", "LOW_HIGH_SPINNERS"],
   { message: genericRequiredMessage }
 );
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet30kwEnum, [
-    "Niente",
     "Lavachassis",
     "2 robottine basse, barre alte",
     "6 robottine",
@@ -53,41 +46,20 @@ export const omzPumpOutletTypes: SelectOption[] =
 
 // Validation function for 15kw and 30kw logic
 function validatePumpOutlets<T>(
-  data: {
-    has_15kw_pump?: boolean | undefined;
-    pump_outlet_1_15kw?: T;
-    pump_outlet_2_15kw?: T;
-
-    has_30kw_pump?: boolean | undefined;
-    pump_outlet_1_30kw?: T;
-    pump_outlet_2_30kw?: T;
-  },
+  hasPump: boolean,
+  pumpOutlet1: T,
+  pumpOutlet2: T,
   ctx: z.RefinementCtx,
   chassisWashOption: T,
-  noSelectionValue: T
+  errorPaths: string[]
 ) {
-  const pumpOutlet1 = data.has_15kw_pump
-    ? data.pump_outlet_1_15kw
-    : data.pump_outlet_1_30kw;
-  const pumpOutlet2 = data.has_15kw_pump
-    ? data.pump_outlet_2_15kw
-    : data.pump_outlet_2_30kw;
-
-  if (
-    pumpOutlet1 === undefined ||
-    pumpOutlet2 === undefined ||
-    pumpOutlet1 === null ||
-    pumpOutlet2 === null
-  ) {
-    return true; // Outlets are not defined, so they can't be the same or not include the wash option.
+  if (!hasPump) {
+    return true;
   }
 
-  const errorPaths = Object.keys(data).filter((key) =>
-    key.startsWith("pump_outlet")
-  );
-
   // Check if both outlets are not selected
-  if (pumpOutlet1 === noSelectionValue && pumpOutlet2 === noSelectionValue) {
+  if (!pumpOutlet1 && !pumpOutlet2) {
+    console.log("runs");
     errorPaths.forEach((path) => {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -95,6 +67,7 @@ function validatePumpOutlets<T>(
         path: [path],
       });
     });
+    return false;
   }
 
   // Check if outlets are the same
@@ -106,15 +79,11 @@ function validatePumpOutlets<T>(
         path: [path],
       });
     });
+    return false;
   }
 
   // Check if at least one outlet is for chassis wash
-  if (
-    pumpOutlet1 &&
-    pumpOutlet2 &&
-    pumpOutlet1 !== noSelectionValue &&
-    pumpOutlet2 !== noSelectionValue
-  ) {
+  if (pumpOutlet1 && pumpOutlet2) {
     if (
       pumpOutlet1 !== chassisWashOption &&
       pumpOutlet2 !== chassisWashOption
@@ -127,38 +96,25 @@ function validatePumpOutlets<T>(
         });
       });
     }
+    return false;
   }
+
+  return true;
 }
 
 function transformPumpOutlets<T>(
-  data: {
-    has_15kw_pump?: boolean | undefined;
-    pump_outlet_1_15kw?: T;
-    pump_outlet_2_15kw?: T;
-
-    has_30kw_pump?: boolean | undefined;
-    pump_outlet_1_30kw?: T;
-    pump_outlet_2_30kw?: T;
-  },
-  noSelectionValue: T
+  data: T,
+  pumpOutlet1Key: keyof T,
+  pumpOutlet2Key: keyof T
 ): typeof data {
-  const is15kwPump = data.has_15kw_pump === true;
-
-  // Get the appropriate outlet properties based on pump type
-  const pumpOutlet1Key = is15kwPump
-    ? "pump_outlet_1_15kw"
-    : "pump_outlet_1_30kw";
-  const pumpOutlet2Key = is15kwPump
-    ? "pump_outlet_2_15kw"
-    : "pump_outlet_2_30kw";
-  const pumpOutlet1 = data[pumpOutlet1Key] as T | undefined;
-  const pumpOutlet2 = data[pumpOutlet2Key] as T | undefined;
+  const pumpOutlet1 = data[pumpOutlet1Key];
+  const pumpOutlet2 = data[pumpOutlet2Key];
 
   // Check if the first outlet is not selected and the second one is
-  if ((!pumpOutlet1 || pumpOutlet1 === noSelectionValue) && pumpOutlet2) {
+  if (!pumpOutlet1 && pumpOutlet2) {
     // Swap values
     data[pumpOutlet1Key] = pumpOutlet2;
-    data[pumpOutlet2Key] = undefined;
+    data[pumpOutlet2Key] = null as T[keyof T];
   }
 
   return data;
@@ -179,20 +135,26 @@ const hpPump15kwDiscriminatedUnion = z
         }),
         z.object({
           has_15kw_pump: z.literal(true),
-          pump_outlet_1_15kw: HPPumpOutlet15kwEnum,
-          pump_outlet_2_15kw: HPPumpOutlet15kwEnum,
+          pump_outlet_1_15kw: HPPumpOutlet15kwEnum.nullable(),
+          pump_outlet_2_15kw: HPPumpOutlet15kwEnum.nullable(),
         }),
       ])
       .superRefine((data, ctx) =>
         validatePumpOutlets(
-          data,
+          data.has_15kw_pump,
+          data.pump_outlet_1_15kw,
+          data.pump_outlet_2_15kw,
           ctx,
           HPPumpOutlet15kwEnum.enum.CHASSIS_WASH,
-          HPPumpOutlet15kwEnum.enum.NO_SELECTION
+          ["pump_outlet_1_15kw", "pump_outlet_2_15kw"]
         )
       )
       .transform((data) =>
-        transformPumpOutlets(data, HPPumpOutlet15kwEnum.enum.NO_SELECTION)
+        transformPumpOutlets<typeof data>(
+          data,
+          "pump_outlet_1_15kw",
+          "pump_outlet_2_15kw"
+        )
       )
   );
 
@@ -211,20 +173,26 @@ const hpPump30kwDiscriminatedUnion = z
         }),
         z.object({
           has_30kw_pump: z.literal(true),
-          pump_outlet_1_30kw: HPPumpOutlet30kwEnum,
-          pump_outlet_2_30kw: HPPumpOutlet30kwEnum,
+          pump_outlet_1_30kw: HPPumpOutlet30kwEnum.nullable(),
+          pump_outlet_2_30kw: HPPumpOutlet30kwEnum.nullable(),
         }),
       ])
       .superRefine((data, ctx) =>
         validatePumpOutlets(
-          data,
+          data.has_30kw_pump,
+          data.pump_outlet_1_30kw,
+          data.pump_outlet_2_30kw,
           ctx,
           HPPumpOutlet30kwEnum.enum.CHASSIS_WASH,
-          HPPumpOutlet30kwEnum.enum.NO_SELECTION
+          ["pump_outlet_1_30kw", "pump_outlet_2_30kw"]
         )
       )
       .transform((data) =>
-        transformPumpOutlets(data, HPPumpOutlet30kwEnum.enum.NO_SELECTION)
+        transformPumpOutlets<typeof data>(
+          data,
+          "pump_outlet_1_30kw",
+          "pump_outlet_2_30kw"
+        )
       )
   );
 

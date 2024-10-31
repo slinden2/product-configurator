@@ -6,9 +6,10 @@ import FieldsetItem from "@/components/FieldsetItem";
 import FieldsetRow from "@/components/FieldsetRow";
 import SelectField from "@/components/SelectField";
 import { Button } from "@/components/ui/button";
+import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
-import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import { Check, Trash2 } from "lucide-react";
+import { selectFieldOptions } from "@/validation/configuration";
+import { Trash2 } from "lucide-react";
 import React from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
@@ -87,11 +88,12 @@ const WashBaySection = () => {
                       `wash_bays.${index}.pressure_washer_type` as `wash_bays.0.pressure_washer_type` as any // FIXME
                     }
                     label="Tipo idropulitrice"
-                    items={selectFieldOptions.pressureWasherOpts}
+                    items={withNoSelection(
+                      selectFieldOptions.pressureWasherOpts
+                    )}
                     fieldsToResetOnValue={[
                       {
-                        triggerValue:
-                          zodEnums.PressureWasherTypeEnum.enum.NO_SELECTION,
+                        triggerValue: NOT_SELECTED_VALUE,
                         fieldsToReset: [
                           `wash_bays.${index}.pressure_washer_qty` as any,
                         ],
@@ -108,8 +110,7 @@ const WashBaySection = () => {
                     items={getNumericSelectOptions([1, 2, 3, 4])}
                     disabled={
                       (washBayWatch &&
-                        washBayWatch[index]?.pressure_washer_type ===
-                          zodEnums.PressureWasherTypeEnum.enum.NO_SELECTION) ||
+                        washBayWatch[index]?.pressure_washer_type === null) ||
                       !washBayWatch[index]?.pressure_washer_type
                     }
                   />

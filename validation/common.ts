@@ -3,7 +3,6 @@ import { SelectOption } from "@/types";
 
 export const genericRequiredMessage = "Scelta obbligatoria";
 export const invalidOption = "Opzione invalida";
-export const NOT_SELECTED_VALUE = "NO_SELECTION";
 
 export function generateSelectOptionsFromZodEnum<T extends string>(
   enumObject: z.ZodEnum<[T, ...T[]]>,
@@ -13,14 +12,6 @@ export function generateSelectOptionsFromZodEnum<T extends string>(
     value,
     label: labels[i],
   }));
-}
-
-export function emptyStringOrUndefined() {
-  return z.union([
-    z.string().refine((value) => value === "", { message: "Opzione invalida" }),
-    z.undefined(),
-    z.literal(false),
-  ]);
 }
 
 export const getNumericSelectOptions = (numArr: number[]): SelectOption[] => {
@@ -50,14 +41,4 @@ export function mustBeZero() {
     .boolean()
     .refine((val) => !val)
     .transform(() => 0);
-}
-
-export function preprocessEmptyStringOrNotSelectedToNull<T>(
-  validation: z.ZodType<T>
-) {
-  return z.preprocess((val) => {
-    if (val === NOT_SELECTED_VALUE) return null;
-    if (val === "") return null;
-    return val;
-  }, validation);
 }
