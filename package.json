@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest",
     "zod": "npx tsx ./validation/zodTestFile.ts",
     "type-check": "npx tsc --noEmit"
   },
@@ -42,6 +43,8 @@
     "prisma": "^5.16.1",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.16.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^4.3.2",
+    "vitest": "^2.0.4"
   }
 }
