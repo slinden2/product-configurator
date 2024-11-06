@@ -24,12 +24,10 @@ model Configuration {
   has_acid_pump                Boolean
   acid_pump_pos                ChemicalPumpPos?
   water_1_type                 WaterType
-  has_water_1_solenoid         Boolean
   water_1_pump                 Water1PumpType?
   inv_pump_outlet_dosatron_qty Int?
   inv_pump_outlet_pw_qty       Int?
   water_2_type                 WaterType?
-  has_water_2_solenoid         Boolean
   water_2_pump                 Water2PumpType?
   has_antifreeze               Boolean
   supply_type                  SupplyType

@@ -111,7 +111,8 @@ const WashBaySection = () => {
                     disabled={
                       (washBayWatch &&
                         washBayWatch[index]?.pressure_washer_type === null) ||
-                      !washBayWatch[index]?.pressure_washer_type
+                      (washBayWatch &&
+                        !washBayWatch[index]?.pressure_washer_type)
                     }
                   />
                 </FieldsetItem>

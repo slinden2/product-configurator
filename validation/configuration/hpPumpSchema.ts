@@ -59,7 +59,6 @@ function validatePumpOutlets<T>(
 
   // Check if both outlets are not selected
   if (!pumpOutlet1 && !pumpOutlet2) {
-    console.log("runs");
     errorPaths.forEach((path) => {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

@@ -49,36 +49,58 @@ export const waterSupplySchema = z
   })
   .and(inverterPumpSchema)
   .superRefine((data, ctx) => {
-    // Counts the number of selected outlets and gives error if less than 2
-    const numOfSelectedOutlets = Object.entries(data)
-      .filter(
-        ([key, value]) =>
-          key.startsWith("inv_pump_outlet") && typeof value === "number"
-      )
-      .reduce((acc, [, value]) => {
-        const numValue = value as number;
-        if (numValue) acc += numValue;
-        return acc;
-      }, 0);
-
-    const isInverterPumpSelected =
-      data.water_1_pump === WaterPump1Enum.enum.INV_3KW_200L ||
-      data.water_1_pump === WaterPump1Enum.enum.INV_3KW_250L;
-
-    if (isInverterPumpSelected && numOfSelectedOutlets < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Seleziona almeno due uscite.",
-        path: ["water_1_pump"],
-      });
-    }
-
-    if (!isInverterPumpSelected && numOfSelectedOutlets > 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "Non puoi selezionare uscite pompa inverter se non pompa inverter non è presente.",
-        path: ["water_1_pump"],
-      });
-    }
+    validateWater2PumpType(data, ctx);
+    validateInverterPumpOutlets(data, ctx);
   });
+
+function validateWater2PumpType(
+  data: z.infer<typeof waterSupplySchema>,
+  ctx: z.RefinementCtx
+) {
+  if (!data.water_2_type && data.water_2_pump) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Se selezioni la seconda pompa devi scegliere anche il tipo acqua.",
+      path: ["water_2_type"],
+    });
+  }
+}
+
+function validateInverterPumpOutlets(
+  data: z.infer<typeof waterSupplySchema>,
+  ctx: z.RefinementCtx
+) {
+  // Counts the number of selected outlets and gives error if less than 2
+  const numOfSelectedOutlets = Object.entries(data)
+    .filter(
+      ([key, value]) =>
+        key.startsWith("inv_pump_outlet") && typeof value === "number"
+    )
+    .reduce((acc, [, value]) => {
+      const numValue = value as number;
+      if (numValue) acc += numValue;
+      return acc;
+    }, 0);
+
+  const isInverterPumpSelected =
+    data.water_1_pump === WaterPump1Enum.enum.INV_3KW_200L ||
+    data.water_1_pump === WaterPump1Enum.enum.INV_3KW_250L;
+
+  if (isInverterPumpSelected && numOfSelectedOutlets < 2) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Seleziona almeno due uscite.",
+      path: ["water_1_pump"],
+    });
+  }
+
+  if (!isInverterPumpSelected && numOfSelectedOutlets > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Non puoi selezionare uscite pompa inverter se non pompa inverter non è presente.",
+      path: ["water_1_pump"],
+    });
+  }
+}

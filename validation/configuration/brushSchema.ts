@@ -4,7 +4,6 @@ import {
   mustBeUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
-  invalidOption,
 } from "@/validation/common";
 
 export const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
@@ -42,9 +41,7 @@ export const brushNums: SelectOption[] = [
 
 export const brushSchema = z
   .object({
-    brush_qty: z.coerce
-      .number()
-      .refine((val) => !isNaN(val), { message: invalidOption }),
+    brush_qty: z.coerce.number({ invalid_type_error: genericRequiredMessage }),
   })
   .passthrough()
   .pipe(

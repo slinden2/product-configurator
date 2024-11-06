@@ -32,7 +32,11 @@ export const cableChainWidths: SelectOption[] =
   ]);
 
 export const SupplyFixingTypeEnum = z.enum(["POST", "WALL"], {
-  required_error: genericRequiredMessage,
+  errorMap: () => {
+    return {
+      message: genericRequiredMessage,
+    };
+  },
 });
 
 export const supplyFixingTypes: SelectOption[] =
@@ -73,6 +77,7 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
 const _supplyTypeSchema = z
   .object({
     supply_type: SupplyTypeEnum,
+    supply_fixing_type: SupplyFixingTypeEnum.nullable(),
   })
   .passthrough()
   .pipe(supplyTypeDiscriminatedUnion);

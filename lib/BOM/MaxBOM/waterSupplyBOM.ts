@@ -15,6 +15,14 @@ const PART_NUMBERS: Record<string, string> = {
   OUTLET_PW: "1100.024.XXX",
 };
 
+const hasWater1Solenoid = (config: Configuration): boolean => {
+  return !!config.water_1_type;
+};
+
+const hasWater2Solenoid = (config: Configuration): boolean => {
+  return !!config.water_2_type;
+};
+
 const uses15kwPump = (config: Configuration): boolean => {
   return (
     config.water_1_pump === $Enums.Water1PumpType.BOOST_15KW ||
@@ -40,7 +48,7 @@ export const waterSupplyBOM: MaxBOMItem[] = [
   {
     pn: PART_NUMBERS.WASH_BAY_SOLENOID_WITH_ANTIFREEZE,
     conditions: [
-      (config) => config.has_water_1_solenoid,
+      (config) => hasWater1Solenoid(config),
       (config) => config.has_antifreeze,
     ],
     qty: 1,
@@ -49,17 +57,17 @@ export const waterSupplyBOM: MaxBOMItem[] = [
   {
     pn: PART_NUMBERS.WASH_BAY_SOLENOID_NO_ANTIFREEZE,
     conditions: [
-      (config) => config.has_water_1_solenoid,
+      (config) => hasWater1Solenoid(config),
       (config) => !config.has_antifreeze,
     ],
     qty: (config) =>
-      config.has_water_2_solenoid && !config.has_antifreeze ? 2 : 1,
+      hasWater2Solenoid(config) && !config.has_antifreeze ? 2 : 1,
     _description: "Wash bay solenoid without antifreeze",
   },
   {
     pn: PART_NUMBERS.WASH_BAY_2ND_SOLENOID_WITH_ANTIFREEZE,
     conditions: [
-      (config) => config.has_water_2_solenoid,
+      (config) => hasWater2Solenoid(config),
       (config) => config.has_antifreeze,
     ],
     qty: 1,
