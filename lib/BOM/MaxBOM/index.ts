@@ -7,7 +7,8 @@ import { nozzleBarBOM } from "@/lib/BOM/MaxBOM/nozzleBarBOM";
 import { railBOM } from "@/lib/BOM/MaxBOM/railBOM";
 import { supplyBOM } from "@/lib/BOM/MaxBOM/supplyBOM";
 import { waterSupplyBOM } from "@/lib/BOM/MaxBOM/waterSupplyBOM";
-import { Configuration } from "@prisma/client";
+import { waterTankBOM } from "@/lib/BOM/MaxBOM/waterTankBOM";
+import { Configuration, WashBay, WaterTank } from "@prisma/client";
 
 export interface ValidationFn<T> {
   (config: T): boolean;
@@ -31,3 +32,7 @@ export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
   ...fastBOM,
   ...hpPumpBOM,
 ];
+
+export const WaterTankMaxBOM: MaxBOMItem<WaterTank>[] = [...waterTankBOM];
+
+export const WashBayMaxBOM: MaxBOMItem<WashBay>[] = [];

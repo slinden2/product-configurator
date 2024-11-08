@@ -1,6 +1,11 @@
-import { MaxBOM } from "@/lib/BOM/MaxBOM";
+import {
+  GeneralMaxBOM,
+  MaxBOMItem,
+  WashBayMaxBOM,
+  WaterTankMaxBOM,
+} from "@/lib/BOM/MaxBOM";
 import prisma from "@/prisma/db";
-import { Configuration, PartNumber } from "@prisma/client";
+import { Prisma, Configuration, PartNumber } from "@prisma/client";
 
 export interface BOMItem {
   pn: string;
@@ -11,33 +16,66 @@ export interface WithBOMItems {
   bomItems: BOMItem[];
 }
 
-class BOM {
-  configuration: Configuration;
-  partNumbers: PartNumber[] = [];
+const configurationWithWaterTanksAndWashBays =
+  Prisma.validator<Prisma.ConfigurationDefaultArgs>()({
+    include: {
+      water_tanks: true,
+      wash_bays: true,
+    },
+  });
 
-  private constructor(configuration: Configuration, partNumbers: PartNumber[]) {
+type ConfigurationWithWaterTanksAndWashBays = Prisma.ConfigurationGetPayload<
+  typeof configurationWithWaterTanksAndWashBays
+>;
+
+class BOM {
+  configuration: ConfigurationWithWaterTanksAndWashBays;
+  partNumbers: PartNumber[] = [];
+  generalMaxBOM = GeneralMaxBOM;
+  waterTankMaxBOM = WaterTankMaxBOM;
+  washBayMaxBOM = WashBayMaxBOM;
+
+  private constructor(
+    configuration: ConfigurationWithWaterTanksAndWashBays,
+    partNumbers: PartNumber[]
+  ) {
     this.configuration = configuration;
     this.partNumbers = partNumbers;
   }
 
-  static async init(configuration: Configuration): Promise<BOM> {
+  static async init(
+    configuration: ConfigurationWithWaterTanksAndWashBays
+  ): Promise<BOM> {
     const partNumbers = await fetchPartNumbers();
     return new BOM(configuration, partNumbers || []);
   }
 
-  generateBOM(): BOMItem[] {
-    return MaxBOM.filter((item) =>
-      item.conditions.every((conditionFn) => conditionFn(this.configuration))
-    ).map((item) => {
-      return {
-        pn: item.pn,
-        qty:
-          typeof item.qty === "function"
-            ? item.qty(this.configuration)
-            : item.qty,
-        _description: item._description,
-      };
-    });
+  buildGeneralBOM(): BOMItem[] {
+    return this._buildBOM<Configuration>(
+      this.generalMaxBOM,
+      this.configuration
+    );
+  }
+
+  buildWaterTankBOM(): BOMItem[][] {
+    return this.configuration.water_tanks.map((waterTank) =>
+      this._buildBOM(this.waterTankMaxBOM, waterTank)
+    );
+  }
+
+  private _buildBOM<T>(maxBOM: MaxBOMItem<T>[], configuration: T): BOMItem[] {
+    return maxBOM
+      .filter((item) =>
+        item.conditions.every((conditionFn) => conditionFn(configuration))
+      )
+      .map((item) => {
+        return {
+          pn: item.pn,
+          qty:
+            typeof item.qty === "function" ? item.qty(configuration) : item.qty,
+          _description: item._description,
+        };
+      });
   }
 
   getConfiguration() {
@@ -64,11 +102,16 @@ async function fetchPartNumbers(): Promise<PartNumber[] | undefined> {
 prisma.configuration
   .findUnique({
     where: { id: 1 },
+    include: {
+      water_tanks: true,
+      wash_bays: true,
+    },
   })
   .then(async (configuration) => {
     if (configuration) {
       const bom = await BOM.init(configuration);
-      console.log(bom.generateBOM());
+      console.table(bom.buildGeneralBOM());
+      bom.buildWaterTankBOM().forEach((wt) => console.table(wt));
     }
   })
   .catch((err) => console.log(err));
