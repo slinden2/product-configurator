@@ -50,7 +50,7 @@ const hasOneChemical = (config: Configuration): boolean =>
 const hasTwoChemicals = (config: Configuration): boolean =>
   config.has_chemical_pump && config.chemical_qty === 2;
 
-export const nozzleBarBOM: MaxBOMItem[] = [
+export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
   // Rinse
   {
     pn: PART_NUMBERS.RINSE_ARCH,

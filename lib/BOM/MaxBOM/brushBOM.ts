@@ -1,5 +1,5 @@
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums } from "@prisma/client";
+import { $Enums, Configuration } from "@prisma/client";
 
 // TODO Add part numbers where missing
 const PART_NUMBERS: Record<
@@ -64,7 +64,7 @@ const PART_NUMBERS: Record<
   },
 };
 
-const blueSilver: MaxBOMItem[] = [
+const blueSilver: MaxBOMItem<Configuration>[] = [
   // Thread
   {
     pn: PART_NUMBERS.BLUE_SILVER.THREAD.VERTICAL,
@@ -130,7 +130,7 @@ const blueSilver: MaxBOMItem[] = [
   },
 ];
 
-const greenBlack: MaxBOMItem[] = [
+const greenBlack: MaxBOMItem<Configuration>[] = [
   // Thread
   {
     pn: PART_NUMBERS.GREEN_BLACK.THREAD.VERTICAL,
@@ -197,7 +197,7 @@ const greenBlack: MaxBOMItem[] = [
   },
 ];
 
-const greenSilver: MaxBOMItem[] = [
+const greenSilver: MaxBOMItem<Configuration>[] = [
   //Thread
   {
     pn: PART_NUMBERS.GREEN_SILVER.THREAD.VERTICAL,
@@ -263,7 +263,7 @@ const greenSilver: MaxBOMItem[] = [
   },
 ];
 
-const red: MaxBOMItem[] = [
+const red: MaxBOMItem<Configuration>[] = [
   // Thread
   {
     pn: PART_NUMBERS.RED.THREAD.VERTICAL,
@@ -329,7 +329,7 @@ const red: MaxBOMItem[] = [
   },
 ];
 
-export const brushBOM: MaxBOMItem[] = [
+export const brushBOM: MaxBOMItem<Configuration>[] = [
   ...blueSilver,
   ...greenBlack,
   ...greenSilver,

@@ -44,7 +44,7 @@ const needsTwoPumps = (
   return config.water_1_pump === pumpType && config.water_2_pump === pumpType;
 };
 
-export const waterSupplyBOM: MaxBOMItem[] = [
+export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.WASH_BAY_SOLENOID_WITH_ANTIFREEZE,
     conditions: [

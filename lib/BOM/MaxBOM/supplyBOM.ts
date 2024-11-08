@@ -66,7 +66,7 @@ const has15kWPump = (config: Configuration): boolean => {
 
 type test = Omit<$Enums.HpPump15kwOutletType, "CHASSIS_WASH">;
 
-export const supplyBOM: MaxBOMItem[] = [
+export const supplyBOM: MaxBOMItem<Configuration>[] = [
   // Straight shelf
   {
     pn: PART_NUMBERS.STRAIGH_SHELF,

@@ -1,5 +1,5 @@
 import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
-import { dosingPumpBom } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
+import { dosingPumpBOM } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
 import { electricBOM } from "@/lib/BOM/MaxBOM/electricBOM";
 import { fastBOM } from "@/lib/BOM/MaxBOM/fastBOM";
 import { hpPumpBOM } from "@/lib/BOM/MaxBOM/hpPumpBOM";
@@ -9,20 +9,20 @@ import { supplyBOM } from "@/lib/BOM/MaxBOM/supplyBOM";
 import { waterSupplyBOM } from "@/lib/BOM/MaxBOM/waterSupplyBOM";
 import { Configuration } from "@prisma/client";
 
-export interface ValidationFn {
-  (config: Configuration): boolean;
+export interface ValidationFn<T> {
+  (config: T): boolean;
 }
 
-export interface MaxBOMItem {
+export interface MaxBOMItem<T> {
   pn: string;
-  conditions: Array<ValidationFn>;
-  qty: number | ((config: Configuration) => number);
+  conditions: Array<ValidationFn<T>>;
+  qty: number | ((config: T) => number);
   _description?: string;
 }
 
-export const MaxBOM: MaxBOMItem[] = [
+export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
   ...brushBOM,
-  ...dosingPumpBom,
+  ...dosingPumpBOM,
   ...waterSupplyBOM,
   ...nozzleBarBOM,
   ...supplyBOM,

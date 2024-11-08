@@ -16,7 +16,7 @@ const calculate3mRailQty = (config: Configuration): number =>
 const calculate1mRailQty = (config: Configuration): number =>
   (config.rail_length - 6) % 3;
 
-export const railBOM: MaxBOMItem[] = [
+export const railBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.DOWELED_RAIL_TERMINALS,
     conditions: [(config) => config.rail_type === $Enums.RailType.DOWELED],

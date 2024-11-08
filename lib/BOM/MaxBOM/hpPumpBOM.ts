@@ -67,7 +67,7 @@ const hasLowSpinners = (outlet1: TOutlet, outlet2: TOutlet): boolean => {
   );
 };
 
-export const hpPumpBOM: MaxBOMItem[] = [
+export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.PUMP_15KW,
     conditions: [uses15kwPump],

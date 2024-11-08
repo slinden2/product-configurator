@@ -32,7 +32,7 @@ const usesOnboardTouch = (config: Configuration): boolean =>
 const usesExternalTouch = (config: Configuration): boolean =>
   uses1ExternalTouch(config) || config.touch_qty === 2;
 
-export const electricBOM: MaxBOMItem[] = [
+export const electricBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.RFID_READER,
     conditions: [(config) => config.has_card_reader],

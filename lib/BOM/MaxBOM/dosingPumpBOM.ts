@@ -1,5 +1,5 @@
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums } from "@prisma/client";
+import { $Enums, Configuration } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   SHAMPOO_PUMP_NO_ALARM: "450.03.022",
@@ -18,7 +18,7 @@ const PART_NUMBERS: Record<string, string> = {
   FOAM_KIT: "852.00.000", // TODO To add in the assy excel
 };
 
-export const dosingPumpBom: MaxBOMItem[] = [
+export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.SHAMPOO_PUMP_NO_ALARM,
     conditions: [

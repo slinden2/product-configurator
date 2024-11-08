@@ -10,7 +10,7 @@ const PART_NUMBERS: Record<string, string> = {
 
 const isFast = (config: Configuration): boolean => config.is_fast;
 
-export const fastBOM: MaxBOMItem[] = [
+export const fastBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.ADDITIONAL_LATERAL_RINSE_BARS,
     conditions: [isFast, (config) => config.brush_qty === 2],
