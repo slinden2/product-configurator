@@ -16,6 +16,8 @@ export const pressureWasherOpts: SelectOption[] =
     "21 l/min 200 bar",
   ]);
 
+const lanceErrMsg = "La quantità di lance deve essere 0 o 2.";
+
 export const washBaySchema = z.object({
   wash_bays: z
     .array(
@@ -23,12 +25,14 @@ export const washBaySchema = z.object({
         id: z.number().optional(),
         hp_lance_qty: z.coerce
           .number({ message: genericRequiredMessage })
-          .min(0)
-          .max(2),
+          .refine((val) => val === 0 || val === 2, {
+            message: lanceErrMsg,
+          }),
         det_lance_qty: z.coerce
           .number({ message: genericRequiredMessage })
-          .min(0)
-          .max(2),
+          .refine((val) => val === 0 || val === 2, {
+            message: lanceErrMsg,
+          }),
         hose_reel_qty: z.coerce
           .number({ message: genericRequiredMessage })
           .min(0)

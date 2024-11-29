@@ -5,7 +5,7 @@ import {
   WaterTankMaxBOM,
 } from "@/lib/BOM/MaxBOM";
 import prisma from "@/prisma/db";
-import { Prisma, Configuration, PartNumber } from "@prisma/client";
+import { Prisma, Configuration, PartNumber, WashBay } from "@prisma/client";
 
 export interface BOMItem {
   pn: string;
@@ -15,6 +15,11 @@ export interface BOMItem {
 export interface WithBOMItems {
   bomItems: BOMItem[];
 }
+
+export type WithSupplyData = Pick<
+  Configuration,
+  "supply_side" | "supply_type" | "supply_fixing_type" | "cable_chain_width"
+> & { uses_3000_posts: boolean };
 
 const configurationWithWaterTanksAndWashBays =
   Prisma.validator<Prisma.ConfigurationDefaultArgs>()({
@@ -61,6 +66,25 @@ class BOM {
     return this.configuration.water_tanks.map((waterTank) =>
       this._buildBOM(this.waterTankMaxBOM, waterTank)
     );
+  }
+
+  buildWashBayBOM(): BOMItem[][] {
+    const uses3000posts = this.configuration.wash_bays.some((washBay) => {
+      return washBay.hp_lance_qty + washBay.det_lance_qty > 2;
+    });
+
+    return this.configuration.wash_bays.map((washBay) => {
+      const washBayWithSupplyData: WashBay & WithSupplyData = {
+        ...washBay,
+        supply_side: this.configuration.supply_side,
+        supply_type: this.configuration.supply_type,
+        supply_fixing_type: this.configuration.supply_fixing_type,
+        cable_chain_width: this.configuration.cable_chain_width,
+        uses_3000_posts: uses3000posts,
+      };
+
+      return this._buildBOM(this.washBayMaxBOM, washBayWithSupplyData);
+    });
   }
 
   private _buildBOM<T>(maxBOM: MaxBOMItem<T>[], configuration: T): BOMItem[] {
@@ -112,6 +136,7 @@ prisma.configuration
       const bom = await BOM.init(configuration);
       console.table(bom.buildGeneralBOM());
       bom.buildWaterTankBOM().forEach((wt) => console.table(wt));
+      bom.buildWashBayBOM().forEach((wt) => console.table(wt));
     }
   })
   .catch((err) => console.log(err));

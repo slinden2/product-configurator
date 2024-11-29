@@ -59,7 +59,7 @@ const WashBaySection = () => {
                       `wash_bays.${index}.hp_lance_qty` as `wash_bays.0.hp_lance_qty` as any // FIXME
                     }
                     label="Numero lance HP"
-                    items={getNumericSelectOptions([0, 1, 2])}
+                    items={getNumericSelectOptions([0, 2])}
                   />
                 </FieldsetItem>
                 <FieldsetItem>
@@ -68,7 +68,7 @@ const WashBaySection = () => {
                       `wash_bays.${index}.det_lance_qty` as `wash_bays.0.det_lance_qty` as any // FIXME
                     }
                     label={`Numero lance detergente`}
-                    items={getNumericSelectOptions([0, 1, 2])}
+                    items={getNumericSelectOptions([0, 2])}
                   />
                 </FieldsetItem>
                 <FieldsetItem>

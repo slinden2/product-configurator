@@ -1,3 +1,4 @@
+import { WithSupplyData } from "@/lib/BOM/BOM";
 import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
 import { dosingPumpBOM } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
 import { electricBOM } from "@/lib/BOM/MaxBOM/electricBOM";
@@ -6,6 +7,7 @@ import { hpPumpBOM } from "@/lib/BOM/MaxBOM/hpPumpBOM";
 import { nozzleBarBOM } from "@/lib/BOM/MaxBOM/nozzleBarBOM";
 import { railBOM } from "@/lib/BOM/MaxBOM/railBOM";
 import { supplyBOM } from "@/lib/BOM/MaxBOM/supplyBOM";
+import { washBayBOM } from "@/lib/BOM/MaxBOM/washBayBOM";
 import { waterSupplyBOM } from "@/lib/BOM/MaxBOM/waterSupplyBOM";
 import { waterTankBOM } from "@/lib/BOM/MaxBOM/waterTankBOM";
 import { Configuration, WashBay, WaterTank } from "@prisma/client";
@@ -35,4 +37,6 @@ export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
 
 export const WaterTankMaxBOM: MaxBOMItem<WaterTank>[] = [...waterTankBOM];
 
-export const WashBayMaxBOM: MaxBOMItem<WashBay>[] = [];
+export const WashBayMaxBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
+  ...washBayBOM,
+];
