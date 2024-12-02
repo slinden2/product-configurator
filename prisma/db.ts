@@ -1,3 +1,4 @@
+import { BOM } from "@/lib/BOM/BOM";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
@@ -44,4 +45,12 @@ export async function getConfiguration(id: string) {
     },
   });
   return configuration;
+}
+
+export async function getBOM(id: string) {
+  const configuration = await getConfiguration(id);
+  if (configuration) {
+    const bom = await BOM.init(configuration);
+    return bom;
+  }
 }

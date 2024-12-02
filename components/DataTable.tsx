@@ -11,7 +11,7 @@ import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
 import ConfigurationStatusBadge from "@/components/ConfigurationStatusBadge";
 import { ConfigurationsForDataTable } from "@/prisma/db";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, ScrollText } from "lucide-react";
 import Link from "next/link";
 
 interface DataTableProps {
@@ -58,6 +58,13 @@ const DataTable = ({ configurations }: DataTableProps) => {
                       <Link href={`/configurations/edit/${configuration.id}`}>
                         <Button variant="outline" size="icon">
                           <Pencil />
+                        </Button>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/configurations/bom/${configuration.id}`}>
+                        <Button variant="outline" size="icon">
+                          <ScrollText />
                         </Button>
                       </Link>
                     </TableCell>

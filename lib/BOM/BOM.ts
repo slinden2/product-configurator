@@ -10,6 +10,7 @@ import { Prisma, Configuration, PartNumber, WashBay } from "@prisma/client";
 export interface BOMItem {
   pn: string;
   qty: number;
+  _description: string;
 }
 
 export interface WithBOMItems {
@@ -33,7 +34,7 @@ type ConfigurationWithWaterTanksAndWashBays = Prisma.ConfigurationGetPayload<
   typeof configurationWithWaterTanksAndWashBays
 >;
 
-class BOM {
+export class BOM {
   configuration: ConfigurationWithWaterTanksAndWashBays;
   partNumbers: PartNumber[] = [];
   generalMaxBOM = GeneralMaxBOM;
@@ -123,20 +124,20 @@ async function fetchPartNumbers(): Promise<PartNumber[] | undefined> {
   }
 }
 
-prisma.configuration
-  .findUnique({
-    where: { id: 1 },
-    include: {
-      water_tanks: true,
-      wash_bays: true,
-    },
-  })
-  .then(async (configuration) => {
-    if (configuration) {
-      const bom = await BOM.init(configuration);
-      console.table(bom.buildGeneralBOM());
-      bom.buildWaterTankBOM().forEach((wt) => console.table(wt));
-      bom.buildWashBayBOM().forEach((wt) => console.table(wt));
-    }
-  })
-  .catch((err) => console.log(err));
+// prisma.configuration
+//   .findUnique({
+//     where: { id: 1 },
+//     include: {
+//       water_tanks: true,
+//       wash_bays: true,
+//     },
+//   })
+//   .then(async (configuration) => {
+//     if (configuration) {
+//       const bom = await BOM.init(configuration);
+//       console.table(bom.buildGeneralBOM());
+//       bom.buildWaterTankBOM().forEach((wt) => console.table(wt));
+//       bom.buildWashBayBOM().forEach((wt) => console.table(wt));
+//     }
+//   })
+//   .catch((err) => console.log(err));

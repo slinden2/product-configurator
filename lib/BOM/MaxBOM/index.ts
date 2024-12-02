@@ -20,7 +20,7 @@ export interface MaxBOMItem<T> {
   pn: string;
   conditions: Array<ValidationFn<T>>;
   qty: number | ((config: T) => number);
-  _description?: string;
+  _description: string;
 }
 
 export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
