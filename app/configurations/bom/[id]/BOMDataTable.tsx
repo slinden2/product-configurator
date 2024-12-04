@@ -14,20 +14,26 @@ interface BOMDataTableProps {
 
 const BOMDataTable = ({ items }: BOMDataTableProps) => {
   return (
-    <Table>
+    <Table className="mb-3 bg-muted/50 rounded-lg font-mono">
       <TableHeader>
         <TableRow>
-          <TableHead>Codice</TableHead>
-          <TableHead>Descrizione</TableHead>
-          <TableHead>Qtà</TableHead>
+          <TableHead className="table-cell w-32 py-2">Codice</TableHead>
+          <TableHead className="table-cell flex-1 py-2">Descrizione</TableHead>
+          <TableHead className="table-cell w-24 py-2 text-center">
+            Qtà
+          </TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>
+      <TableBody className="text-sm">
         {items.map((item, key) => (
           <TableRow key={key}>
-            <TableCell>{item.pn}</TableCell>
-            <TableCell>{item.description}</TableCell>
-            <TableCell>{item.qty}</TableCell>
+            <TableCell className="table-cell w-24 py-2">{item.pn}</TableCell>
+            <TableCell className="table-cell flex-1 py-2">
+              {item.description}
+            </TableCell>
+            <TableCell className="table-cell w-24 py-2 text-center">
+              {item.qty}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
