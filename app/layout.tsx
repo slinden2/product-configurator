@@ -33,8 +33,8 @@ export default function RootLayout({
           <main className="flex flex-col items-center px-5">
             <div className="max-w-6xl w-full">{children}</div>
           </main>
-          <SpeedInsights />
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
