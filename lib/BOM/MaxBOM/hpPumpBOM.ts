@@ -199,6 +199,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     conditions: [
       uses15kwOr30kwPump,
       (config) =>
+        hasChassisWash(config.pump_outlet_1_15kw, config.pump_outlet_2_15kw) ||
         hasChassisWash(config.pump_outlet_1_30kw, config.pump_outlet_2_30kw),
     ],
     qty: 1,
@@ -251,7 +252,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     _description: "High spinners (4x75l)",
   },
   {
-    pn: PART_NUMBERS.HIGH_BARS_2X150,
+    pn: PART_NUMBERS.HIGH_BARS_2X150L,
     conditions: [
       uses30kwPump,
       (config) =>

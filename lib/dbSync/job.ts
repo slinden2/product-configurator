@@ -32,25 +32,6 @@ async function batchUpsert() {
     await prisma.$executeRawUnsafe(sql);
     console.timeEnd("Update records in Supabase");
     console.log("Bulk upsert completed using raw SQL.");
-
-    // const upsertOperations = partNumbers.map((item) =>
-    //   prisma.partNumber.upsert({
-    //     where: { pn: item.pn },
-    //     update: { description: item.description },
-    //     create: { pn: item.pn, description: item.description },
-    //   })
-    // );
-
-    // try {
-    //   console.time("prisma.$transaction(upsertOperations)");
-    //   await prisma.$transaction(upsertOperations);
-    //   console.timeEnd("prisma.$transaction(upsertOperations)");
-    //   console.log("Batch upsert completed successfully.");
-    // } catch (error) {
-    //   console.error("Transaction failed. No operations were committed:", error);
-    // } finally {
-    //   await prisma.$disconnect();
-    // }
   }
 }
 

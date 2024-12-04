@@ -5,7 +5,7 @@ import {
   WaterTankMaxBOM,
 } from "@/lib/BOM/MaxBOM";
 import prisma from "@/prisma/db";
-import { Prisma, Configuration, PartNumber, WashBay } from "@prisma/client";
+import { Prisma, Configuration, WashBay } from "@prisma/client";
 
 export interface BOMItem {
   pn: string;
