@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import MainNav from "@/components/MainNav";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -32,6 +33,7 @@ export default function RootLayout({
           <main className="flex flex-col items-center px-5">
             <div className="max-w-6xl w-full">{children}</div>
           </main>
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>
