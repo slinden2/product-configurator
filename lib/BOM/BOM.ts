@@ -40,65 +40,19 @@ type ConfigurationWithWaterTanksAndWashBays = Prisma.ConfigurationGetPayload<
 
 export class BOM {
   configuration: ConfigurationWithWaterTanksAndWashBays;
-  partNumbers: PartNumber[] = [];
   generalMaxBOM = GeneralMaxBOM;
   waterTankMaxBOM = WaterTankMaxBOM;
   washBayMaxBOM = WashBayMaxBOM;
 
-  private constructor(
-    configuration: ConfigurationWithWaterTanksAndWashBays,
-    partNumbers: PartNumber[]
-  ) {
+  private constructor(configuration: ConfigurationWithWaterTanksAndWashBays) {
     this.configuration = configuration;
-    this.partNumbers = partNumbers;
   }
 
   static async init(
     configuration: ConfigurationWithWaterTanksAndWashBays
   ): Promise<BOM> {
-    const partNumbers = await fetchPartNumbers();
-    return new BOM(configuration, partNumbers || []);
+    return new BOM(configuration);
   }
-
-  // async generateBOM(
-  //   type: "general" | "waterTank" | "washBay"
-  // ): Promise<BOMItemWithDescription[]> {
-  //   switch (type) {
-  //     case "general": {
-  //       const bom = await Promise.all(
-  //         this._buildGeneralBOM().map(async (bomItem) => {
-  //           const partNumber = await prisma.partNumber.findUnique({
-  //             where: { pn: bomItem.pn },
-  //           });
-  //           return {
-  //             ...bomItem,
-  //             description: partNumber?.description || "N/A",
-  //           };
-  //         })
-  //       );
-  //       return bom;
-  //     }
-  //     case "waterTank": {
-  //       const bom = await Promise.all(
-  //         this._buildGeneralBOM().map(async (bomItem) => {
-  //           const partNumber = await prisma.partNumber.findUnique({
-  //             where: { pn: bomItem.pn },
-  //           });
-  //           return {
-  //             ...bomItem,
-  //             description: partNumber?.description || "N/A",
-  //           };
-  //         })
-  //       );
-  //       return this._buildWaterTankBOM();
-  //     }
-  //     case "washBay": {
-  //       return this._buildWashBayBOM();
-  //     }
-  //     default:
-  //       return [];
-  //   }
-  // }
 
   async buildGeneralBOM(): Promise<BOMItemWithDescription[]> {
     return await this._buildBOM<Configuration>(
@@ -175,29 +129,3 @@ export class BOM {
     return this.configuration.description;
   }
 }
-
-async function fetchPartNumbers(): Promise<PartNumber[] | undefined> {
-  try {
-    return (await prisma.partNumber.findMany({})) || [];
-  } catch (err) {
-    console.error("Error fetching part numbers: ", err);
-  }
-}
-
-// prisma.configuration
-//   .findUnique({
-//     where: { id: 1 },
-//     include: {
-//       water_tanks: true,
-//       wash_bays: true,
-//     },
-//   })
-//   .then(async (configuration) => {
-//     if (configuration) {
-//       const bom = await BOM.init(configuration);
-//       console.table(bom.buildGeneralBOM());
-//       bom.buildWaterTankBOM().forEach((wt) => console.table(wt));
-//       bom.buildWashBayBOM().forEach((wt) => console.table(wt));
-//     }
-//   })
-//   .catch((err) => console.log(err));
