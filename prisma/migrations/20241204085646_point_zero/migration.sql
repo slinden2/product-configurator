@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "Status" AS ENUM ('OPEN', 'LOCKED', 'CLOSED');
+
+-- CreateEnum
 CREATE TYPE "BrushType" AS ENUM ('THREAD', 'MIXED', 'CARLITE');
 
 -- CreateEnum
@@ -23,7 +26,7 @@ CREATE TYPE "SupplySide" AS ENUM ('TBD', 'LEFT', 'RIGHT');
 CREATE TYPE "SupplyType" AS ENUM ('STRAIGHT_SHELF', 'BOOM', 'CABLE_CHAIN');
 
 -- CreateEnum
-CREATE TYPE "SupplyFixingType" AS ENUM ('NONE', 'POST', 'WALL');
+CREATE TYPE "SupplyFixingType" AS ENUM ('POST', 'WALL');
 
 -- CreateEnum
 CREATE TYPE "CableChainWidth" AS ENUM ('L150', 'L200', 'L250', 'L300');
@@ -70,11 +73,13 @@ CREATE TABLE "configurations" (
     "acid_pump_pos" "ChemicalPumpPos",
     "water_1_type" "WaterType" NOT NULL,
     "water_1_pump" "Water1PumpType",
+    "inv_pump_outlet_dosatron_qty" INTEGER,
+    "inv_pump_outlet_pw_qty" INTEGER,
     "water_2_type" "WaterType",
     "water_2_pump" "Water2PumpType",
     "has_antifreeze" BOOLEAN NOT NULL,
     "supply_type" "SupplyType" NOT NULL,
-    "supply_fixing_type" "SupplyFixingType" NOT NULL,
+    "supply_fixing_type" "SupplyFixingType",
     "supply_side" "SupplySide" NOT NULL,
     "has_post_frame" BOOLEAN NOT NULL,
     "cable_chain_width" "CableChainWidth",
@@ -99,6 +104,7 @@ CREATE TABLE "configurations" (
     "has_chemical_roof_bar" BOOLEAN NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "status" "Status" NOT NULL DEFAULT 'OPEN',
 
     CONSTRAINT "configurations_pkey" PRIMARY KEY ("id")
 );
@@ -112,7 +118,7 @@ CREATE TABLE "water_tanks" (
     "outlet_w_valve_qty" INTEGER NOT NULL,
     "outlet_no_valve_qty" INTEGER NOT NULL,
     "has_blower" BOOLEAN NOT NULL,
-    "configurationId" INTEGER NOT NULL,
+    "configuration_id" INTEGER NOT NULL,
 
     CONSTRAINT "water_tanks_pkey" PRIMARY KEY ("id")
 );
@@ -123,18 +129,30 @@ CREATE TABLE "wash_bays" (
     "hp_lance_qty" INTEGER NOT NULL,
     "det_lance_qty" INTEGER NOT NULL,
     "hose_reel_qty" INTEGER NOT NULL,
-    "pressure_washer_type" "PressureWasherType" NOT NULL,
+    "pressure_washer_type" "PressureWasherType",
     "pressure_washer_qty" INTEGER,
     "has_gantry" BOOLEAN NOT NULL,
     "is_first_bay" BOOLEAN NOT NULL,
     "has_bay_dividers" BOOLEAN NOT NULL,
-    "configurationId" INTEGER NOT NULL,
+    "configuration_id" INTEGER NOT NULL,
 
     CONSTRAINT "wash_bays_pkey" PRIMARY KEY ("id")
 );
 
--- AddForeignKey
-ALTER TABLE "water_tanks" ADD CONSTRAINT "water_tanks_configurationId_fkey" FOREIGN KEY ("configurationId") REFERENCES "configurations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- CreateTable
+CREATE TABLE "part_numbers" (
+    "id" SERIAL NOT NULL,
+    "pn" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+
+    CONSTRAINT "part_numbers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "part_numbers_pn_key" ON "part_numbers"("pn");
 
 -- AddForeignKey
-ALTER TABLE "wash_bays" ADD CONSTRAINT "wash_bays_configurationId_fkey" FOREIGN KEY ("configurationId") REFERENCES "configurations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "water_tanks" ADD CONSTRAINT "water_tanks_configuration_id_fkey" FOREIGN KEY ("configuration_id") REFERENCES "configurations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "wash_bays" ADD CONSTRAINT "wash_bays_configuration_id_fkey" FOREIGN KEY ("configuration_id") REFERENCES "configurations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -96,7 +96,8 @@ model WashBay {
 }
 
 model PartNumber {
-  pn          String @id
+  id          Int    @id @default(autoincrement())
+  pn          String @unique
   description String
 
   @@map("part_numbers")
