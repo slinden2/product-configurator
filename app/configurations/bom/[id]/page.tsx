@@ -10,13 +10,13 @@ const BOMView = async ({ params }: BOMViewProps) => {
 
   if (!bom) return <div>Unable to find BOM</div>;
 
-  const generalBOM = bom.buildGeneralBOM();
-  const waterTankBOMs = bom.buildWaterTankBOM();
-  const washBayBOMs = bom.buildWashBayBOM();
+  const generalBOM = await bom.buildGeneralBOM();
+  const waterTankBOMs = await bom.buildWaterTankBOM();
+  const washBayBOMs = await bom.buildWashBayBOM();
 
   return (
     <>
-      <h2>Disinta</h2>
+      <h2>Distinta</h2>
       <BOMDataTable items={generalBOM} />
       {waterTankBOMs.length > 0 && (
         <>

@@ -6,10 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BOMItem } from "@/lib/BOM/BOM";
+import { BOMItemWithDescription } from "@/lib/BOM/BOM";
 
 interface BOMDataTableProps {
-  items: BOMItem[];
+  items: BOMItemWithDescription[];
 }
 
 const BOMDataTable = ({ items }: BOMDataTableProps) => {
@@ -26,7 +26,7 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
         {items.map((item, key) => (
           <TableRow key={key}>
             <TableCell>{item.pn}</TableCell>
-            <TableCell>{item._description}</TableCell>
+            <TableCell>{item.description}</TableCell>
             <TableCell>{item.qty}</TableCell>
           </TableRow>
         ))}

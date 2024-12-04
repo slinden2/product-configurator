@@ -17,6 +17,10 @@ export interface WithBOMItems {
   bomItems: BOMItem[];
 }
 
+export interface BOMItemWithDescription extends BOMItem {
+  description: string;
+}
+
 export type WithSupplyData = Pick<
   Configuration,
   "supply_side" | "supply_type" | "supply_fixing_type" | "cable_chain_width"
@@ -56,51 +60,107 @@ export class BOM {
     return new BOM(configuration, partNumbers || []);
   }
 
-  buildGeneralBOM(): BOMItem[] {
-    return this._buildBOM<Configuration>(
+  // async generateBOM(
+  //   type: "general" | "waterTank" | "washBay"
+  // ): Promise<BOMItemWithDescription[]> {
+  //   switch (type) {
+  //     case "general": {
+  //       const bom = await Promise.all(
+  //         this._buildGeneralBOM().map(async (bomItem) => {
+  //           const partNumber = await prisma.partNumber.findUnique({
+  //             where: { pn: bomItem.pn },
+  //           });
+  //           return {
+  //             ...bomItem,
+  //             description: partNumber?.description || "N/A",
+  //           };
+  //         })
+  //       );
+  //       return bom;
+  //     }
+  //     case "waterTank": {
+  //       const bom = await Promise.all(
+  //         this._buildGeneralBOM().map(async (bomItem) => {
+  //           const partNumber = await prisma.partNumber.findUnique({
+  //             where: { pn: bomItem.pn },
+  //           });
+  //           return {
+  //             ...bomItem,
+  //             description: partNumber?.description || "N/A",
+  //           };
+  //         })
+  //       );
+  //       return this._buildWaterTankBOM();
+  //     }
+  //     case "washBay": {
+  //       return this._buildWashBayBOM();
+  //     }
+  //     default:
+  //       return [];
+  //   }
+  // }
+
+  async buildGeneralBOM(): Promise<BOMItemWithDescription[]> {
+    return await this._buildBOM<Configuration>(
       this.generalMaxBOM,
       this.configuration
     );
   }
 
-  buildWaterTankBOM(): BOMItem[][] {
-    return this.configuration.water_tanks.map((waterTank) =>
-      this._buildBOM(this.waterTankMaxBOM, waterTank)
+  async buildWaterTankBOM(): Promise<BOMItemWithDescription[][]> {
+    return await Promise.all(
+      this.configuration.water_tanks.map(
+        async (waterTank) =>
+          await this._buildBOM(this.waterTankMaxBOM, waterTank)
+      )
     );
   }
 
-  buildWashBayBOM(): BOMItem[][] {
+  async buildWashBayBOM(): Promise<BOMItemWithDescription[][]> {
     const uses3000posts = this.configuration.wash_bays.some((washBay) => {
       return washBay.hp_lance_qty + washBay.det_lance_qty > 2;
     });
 
-    return this.configuration.wash_bays.map((washBay) => {
-      const washBayWithSupplyData: WashBay & WithSupplyData = {
-        ...washBay,
-        supply_side: this.configuration.supply_side,
-        supply_type: this.configuration.supply_type,
-        supply_fixing_type: this.configuration.supply_fixing_type,
-        cable_chain_width: this.configuration.cable_chain_width,
-        uses_3000_posts: uses3000posts,
-      };
+    return await Promise.all(
+      this.configuration.wash_bays.map(async (washBay) => {
+        const washBayWithSupplyData: WashBay & WithSupplyData = {
+          ...washBay,
+          supply_side: this.configuration.supply_side,
+          supply_type: this.configuration.supply_type,
+          supply_fixing_type: this.configuration.supply_fixing_type,
+          cable_chain_width: this.configuration.cable_chain_width,
+          uses_3000_posts: uses3000posts,
+        };
 
-      return this._buildBOM(this.washBayMaxBOM, washBayWithSupplyData);
-    });
+        return await this._buildBOM(this.washBayMaxBOM, washBayWithSupplyData);
+      })
+    );
   }
 
-  private _buildBOM<T>(maxBOM: MaxBOMItem<T>[], configuration: T): BOMItem[] {
-    return maxBOM
-      .filter((item) =>
-        item.conditions.every((conditionFn) => conditionFn(configuration))
-      )
-      .map((item) => {
-        return {
-          pn: item.pn,
-          qty:
-            typeof item.qty === "function" ? item.qty(configuration) : item.qty,
-          _description: item._description,
-        };
-      });
+  private async _buildBOM<T>(
+    maxBOM: MaxBOMItem<T>[],
+    configuration: T
+  ): Promise<BOMItemWithDescription[]> {
+    return await Promise.all(
+      maxBOM
+        .filter((item) =>
+          item.conditions.every((conditionFn) => conditionFn(configuration))
+        )
+        .map(async (item) => {
+          const partNumber = await prisma.partNumber.findUnique({
+            where: { pn: item.pn },
+          });
+          return {
+            pn: item.pn,
+            qty:
+              typeof item.qty === "function"
+                ? item.qty(configuration)
+                : item.qty,
+            _description: item._description,
+            description: partNumber?.description || "N/A",
+          };
+        })
+    );
   }
 
   getConfiguration() {
