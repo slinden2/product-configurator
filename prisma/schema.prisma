@@ -96,7 +96,7 @@ model WashBay {
 }
 
 model PartNumber {
-  id          String @id
+  pn          String @id
   description String
 
   @@map("part_numbers")

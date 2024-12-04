@@ -10,7 +10,8 @@
     "test": "vitest",
     "zod": "npx tsx ./validation/zodTestFile.ts",
     "type-check": "npx tsc --noEmit",
-    "BOM": "npx tsx ./lib/BOM/BOM.ts"
+    "BOM": "npx tsx ./lib/BOM/BOM.ts",
+    "job": "npx tsx ./lib//dbSync/job.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",
@@ -24,7 +25,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.394.0",
-    "next": "14.2.4",
+    "next": "^14.2.18",
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-dom": "^18",
@@ -35,11 +36,14 @@
   },
   "devDependencies": {
     "@hookform/devtools": "^4.3.1",
+    "@next/env": "^15.0.3",
+    "@types/mssql": "^9.1.5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.4",
+    "mssql": "^11.0.1",
     "postcss": "^8",
     "prisma": "^5.16.1",
     "tailwindcss": "^3.4.1",
