@@ -24,7 +24,7 @@ const DataTable = ({ configurations }: DataTableProps) => {
       <div className="rounded-md sm:border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableHead className="text-center">ID</TableHead>
               <TableHead className="text-center">Stato</TableHead>
               <TableHead>Nome del cliente</TableHead>
@@ -33,6 +33,7 @@ const DataTable = ({ configurations }: DataTableProps) => {
               <TableHead className="text-center">
                 Ultimo aggiornamento
               </TableHead>
+              <TableHead />
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -56,14 +57,22 @@ const DataTable = ({ configurations }: DataTableProps) => {
                     </TableCell>
                     <TableCell>
                       <Link href={`/configurations/edit/${configuration.id}`}>
-                        <Button variant="outline" size="icon">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="hover:bg-background"
+                          title="Modifica configurazione">
                           <Pencil />
                         </Button>
                       </Link>
                     </TableCell>
                     <TableCell>
                       <Link href={`/configurations/bom/${configuration.id}`}>
-                        <Button variant="outline" size="icon">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="hover:bg-background"
+                          title="Visualizza distinta">
                           <ScrollText />
                         </Button>
                       </Link>

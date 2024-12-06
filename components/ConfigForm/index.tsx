@@ -17,8 +17,10 @@ import TouchSection from "@/components/ConfigForm/TouchSection";
 import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
 import WashBaySection from "@/components/ConfigForm/WashBaySection";
+import BackButton from "@/components/BackButton";
 import { redirectTo } from "@/app/actions";
 import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
+import { Save } from "lucide-react";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -82,9 +84,17 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
           <HPPumpSection />
           <WaterTankSection />
           <WashBaySection />
-          <Button type="submit" disabled={isSubmitting}>
-            Salva
-          </Button>
+          <div className="space-x-6">
+            <BackButton fallbackPath="/configurations" />
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              size="icon"
+              variant="default"
+              title="Salva configurazione">
+              <Save />
+            </Button>
+          </div>
         </form>
       </Form>
       <p className="text-destructive">{error}</p>

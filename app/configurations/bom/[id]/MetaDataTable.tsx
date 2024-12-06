@@ -14,13 +14,13 @@ interface MetaDataTableProps {
 
 const MetaDataTable = ({ clientName, description }: MetaDataTableProps) => {
   return (
-    <Table className="mb-3 bg-muted/50 rounded-lg font-mono">
+    <Table className="mb-3 rounded-lg font-mono">
       <TableBody>
-        <TableRow>
+        <TableRow className="hover:bg-transparent">
           <TableHead className="table-cell w-44">Nome del cliente:</TableHead>
           <TableCell>{clientName}</TableCell>
         </TableRow>
-        <TableRow>
+        <TableRow className="hover:bg-transparent">
           <TableHead className="table-cell w-44 align-text-top p-4">
             Descrizione:
           </TableHead>

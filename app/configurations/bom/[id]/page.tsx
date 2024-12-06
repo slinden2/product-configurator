@@ -1,9 +1,13 @@
 import BOMDataTable from "@/app/configurations/bom/[id]/BOMDataTable";
 import MetaDataTable from "@/app/configurations/bom/[id]/MetaDataTable";
+import BackButton from "@/components/BackButton";
 import HeaderH2 from "@/components/HeaderH2";
 import HeaderH3 from "@/components/HeaderH3";
 import HeaderH4 from "@/components/HeaderH4";
+import { Button } from "@/components/ui/button";
 import { getBOM } from "@/prisma/db";
+import { Pencil } from "lucide-react";
+import Link from "next/link";
 import { Fragment } from "react";
 
 interface BOMViewProps {
@@ -22,7 +26,7 @@ const BOMView = async ({ params }: BOMViewProps) => {
   const washBayBOMs = await bom.buildWashBayBOM();
 
   return (
-    <>
+    <div className="space-y-6">
       <HeaderH2>Distinta</HeaderH2>
       <MetaDataTable clientName={clientName} description={description || ""} />
       <HeaderH3>Distinta generale</HeaderH3>
@@ -49,7 +53,15 @@ const BOMView = async ({ params }: BOMViewProps) => {
           ))}
         </>
       )}
-    </>
+      <div className="space-x-6">
+        <BackButton fallbackPath={"/configurations"} />
+        <Link href={`/configurations/edit/${params.id}`}>
+          <Button variant="default" size="icon">
+            <Pencil />
+          </Button>
+        </Link>
+      </div>
+    </div>
   );
 };
 

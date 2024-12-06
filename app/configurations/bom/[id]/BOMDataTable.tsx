@@ -14,9 +14,9 @@ interface BOMDataTableProps {
 
 const BOMDataTable = ({ items }: BOMDataTableProps) => {
   return (
-    <Table className="mb-3 bg-muted/50 rounded-lg font-mono">
+    <Table className="mb-3 rounded-lg font-mono">
       <TableHeader>
-        <TableRow>
+        <TableRow className="hover:bg-transparent">
           <TableHead className="table-cell w-32 py-2">Codice</TableHead>
           <TableHead className="table-cell flex-1 py-2">Descrizione</TableHead>
           <TableHead className="table-cell w-24 py-2 text-center">
