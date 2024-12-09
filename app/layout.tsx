@@ -24,14 +24,19 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          <nav className="flex flex-col items-center border-b mb-5 px-5 py-3">
-            <div className="max-w-6xl w-full">
-              <MainNav />
-            </div>
-          </nav>
-          <main className="flex flex-col items-center px-5">
-            <div className="max-w-6xl w-full">{children}</div>
-          </main>
+          <div className="min-h-screen">
+            <nav className="flex flex-col items-center border-b mb-5 px-5 py-3">
+              <div className="max-w-6xl w-full">
+                <MainNav />
+              </div>
+            </nav>
+            <main className="flex flex-col items-center px-5">
+              <div className="max-w-6xl w-full">{children}</div>
+            </main>
+          </div>
+          <footer className="flex align-middle justify-center border-t px-5 py-3 my-3">
+            &copy; Iteco SRL
+          </footer>
         </ThemeProvider>
       </body>
     </html>

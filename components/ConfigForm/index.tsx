@@ -21,6 +21,7 @@ import BackButton from "@/components/BackButton";
 import { redirectTo } from "@/app/actions";
 import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
 import { Save } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 export type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -86,14 +87,15 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
           <WashBaySection />
           <div className="space-x-6">
             <BackButton fallbackPath="/configurations" />
-            <Button
+            <LoadingButton
               type="submit"
-              disabled={isSubmitting}
-              size="icon"
               variant="default"
-              title="Salva configurazione">
-              <Save />
-            </Button>
+              title="Salva configurazione"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              size="icon">
+              {!isSubmitting && <Save />}
+            </LoadingButton>
           </div>
         </form>
       </Form>
