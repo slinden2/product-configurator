@@ -20,7 +20,12 @@ export default function BackButton({ fallbackPath }: BackButtonProps) {
   };
 
   return (
-    <Button variant="outline" size="icon" onClick={handleBack} title="Indietro">
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={handleBack}
+      title="Indietro"
+      type="button">
       <Undo2 />
     </Button>
   );
