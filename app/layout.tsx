@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import MainNav from "@/components/MainNav";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -33,6 +34,7 @@ export default function RootLayout({
             <div className="max-w-6xl w-full">{children}</div>
           </main>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
