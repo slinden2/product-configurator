@@ -3,6 +3,7 @@ import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
 import { dosingPumpBOM } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
 import { electricBOM } from "@/lib/BOM/MaxBOM/electricBOM";
 import { fastBOM } from "@/lib/BOM/MaxBOM/fastBOM";
+import { gruBOM } from "@/lib/BOM/MaxBOM/gruBOM";
 import { hpPumpBOM } from "@/lib/BOM/MaxBOM/hpPumpBOM";
 import { nozzleBarBOM } from "@/lib/BOM/MaxBOM/nozzleBarBOM";
 import { railBOM } from "@/lib/BOM/MaxBOM/railBOM";
@@ -24,6 +25,7 @@ export interface MaxBOMItem<T> {
 }
 
 export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
+  ...gruBOM,
   ...brushBOM,
   ...dosingPumpBOM,
   ...waterSupplyBOM,
