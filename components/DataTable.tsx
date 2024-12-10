@@ -34,7 +34,6 @@ const DataTable = ({ configurations }: DataTableProps) => {
                 Ultimo aggiornamento
               </TableHead>
               <TableHead />
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -55,7 +54,7 @@ const DataTable = ({ configurations }: DataTableProps) => {
                     <TableCell className="text-center">
                       {formatDateDDMMYYHHMMSS(configuration.updated_at)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-2">
                       <Link href={`/configurations/edit/${configuration.id}`}>
                         <Button
                           variant="outline"
@@ -65,8 +64,6 @@ const DataTable = ({ configurations }: DataTableProps) => {
                           <Pencil />
                         </Button>
                       </Link>
-                    </TableCell>
-                    <TableCell>
                       <Link href={`/configurations/bom/${configuration.id}`}>
                         <Button
                           variant="outline"
