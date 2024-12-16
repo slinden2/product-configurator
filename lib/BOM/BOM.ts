@@ -5,7 +5,7 @@ import {
   WaterTankMaxBOM,
 } from "@/lib/BOM/MaxBOM";
 import prisma from "@/prisma/db";
-import { Prisma, Configuration, WashBay } from "@prisma/client";
+import { Prisma, Configuration, WashBay, $Enums } from "@prisma/client";
 
 export interface BOMItem {
   pn: string;
@@ -24,7 +24,10 @@ export interface BOMItemWithDescription extends BOMItem {
 export type WithSupplyData = Pick<
   Configuration,
   "supply_side" | "supply_type" | "supply_fixing_type" | "cable_chain_width"
-> & { uses_3000_posts: boolean };
+> & {
+  uses_3000_posts: boolean;
+  uses_cable_chain_without_washbay: boolean;
+};
 
 const configurationWithWaterTanksAndWashBays =
   Prisma.validator<Prisma.ConfigurationDefaultArgs>()({
@@ -43,9 +46,13 @@ export class BOM {
   generalMaxBOM = GeneralMaxBOM;
   waterTankMaxBOM = WaterTankMaxBOM;
   washBayMaxBOM = WashBayMaxBOM;
+  usesCableChainWithoutWashBay = false;
 
   private constructor(configuration: ConfigurationWithWaterTanksAndWashBays) {
     this.configuration = configuration;
+    this.usesCableChainWithoutWashBay =
+      configuration.wash_bays.length === 0 &&
+      configuration.supply_type === $Enums.SupplyType.CABLE_CHAIN;
   }
 
   static async init(
@@ -54,11 +61,39 @@ export class BOM {
     return new BOM(configuration);
   }
 
-  async buildGeneralBOM(): Promise<BOMItemWithDescription[]> {
-    return await this._buildBOM<Configuration>(
-      this.generalMaxBOM,
-      this.configuration
-    );
+  async buildCompleteBOM(): Promise<{
+    generalBOM: BOMItemWithDescription[];
+    waterTankBOMs: BOMItemWithDescription[][];
+    washBayBOMs: BOMItemWithDescription[][];
+  }> {
+    const waterTankBOMs = await this.buildWaterTankBOM();
+    let washBayBOMs = await this.buildWashBayBOM();
+    let generalBOM: BOMItemWithDescription[] = [];
+
+    // This is needed to build the general BOM correctly and add the wash bay BOM (posts)
+    // to the general BOM if there are no wash bays (e.g. festoon line) and the supply type is cable chain
+    if (this.usesCableChainWithoutWashBay) {
+      generalBOM = await this.buildGeneralBOM(washBayBOMs[0]);
+      washBayBOMs = [];
+    } else {
+      generalBOM = await this.buildGeneralBOM();
+    }
+
+    return { generalBOM, waterTankBOMs, washBayBOMs };
+  }
+
+  async buildGeneralBOM(
+    washBayBOM: BOMItemWithDescription[] = []
+  ): Promise<BOMItemWithDescription[]> {
+    const bom = [
+      ...(await this._buildBOM<Configuration>(
+        this.generalMaxBOM,
+        this.configuration
+      )),
+      ...washBayBOM,
+    ];
+
+    return bom;
   }
 
   async buildWaterTankBOM(): Promise<BOMItemWithDescription[][]> {
@@ -70,21 +105,48 @@ export class BOM {
     );
   }
 
+  private _generateWashBayObjectWithSupplyData(
+    washBay: WashBay,
+    opts: { uses3000posts: boolean }
+  ): WashBay & WithSupplyData {
+    const { uses3000posts } = opts;
+    return {
+      ...washBay,
+      supply_side: this.configuration.supply_side,
+      supply_type: this.configuration.supply_type,
+      supply_fixing_type: this.configuration.supply_fixing_type,
+      cable_chain_width: this.configuration.cable_chain_width,
+      uses_3000_posts: uses3000posts,
+      uses_cable_chain_without_washbay: this.usesCableChainWithoutWashBay,
+    };
+  }
+
   async buildWashBayBOM(): Promise<BOMItemWithDescription[][]> {
     const uses3000posts = this.configuration.wash_bays.some((washBay) => {
       return washBay.hp_lance_qty + washBay.det_lance_qty > 2;
     });
 
+    // Check first if there are no wash bays and if the supply type is cable chain
+    // because in that case the posts are needed.
+    if (
+      this.configuration.wash_bays.length === 0 &&
+      this.configuration.supply_type === $Enums.SupplyType.CABLE_CHAIN &&
+      this.configuration.supply_fixing_type === $Enums.SupplyFixingType.POST
+    ) {
+      const washBayWithSupplyData: WashBay & WithSupplyData =
+        this._generateWashBayObjectWithSupplyData({} as WashBay, {
+          uses3000posts,
+        });
+
+      return [await this._buildBOM(this.washBayMaxBOM, washBayWithSupplyData)];
+    }
+
     return await Promise.all(
       this.configuration.wash_bays.map(async (washBay) => {
-        const washBayWithSupplyData: WashBay & WithSupplyData = {
-          ...washBay,
-          supply_side: this.configuration.supply_side,
-          supply_type: this.configuration.supply_type,
-          supply_fixing_type: this.configuration.supply_fixing_type,
-          cable_chain_width: this.configuration.cable_chain_width,
-          uses_3000_posts: uses3000posts,
-        };
+        const washBayWithSupplyData: WashBay & WithSupplyData =
+          this._generateWashBayObjectWithSupplyData(washBay, {
+            uses3000posts,
+          });
 
         return await this._buildBOM(this.washBayMaxBOM, washBayWithSupplyData);
       })

@@ -21,9 +21,8 @@ const BOMView = async ({ params }: BOMViewProps) => {
 
   const clientName = bom.getClientName();
   const description = bom.getDescription();
-  const generalBOM = await bom.buildGeneralBOM();
-  const waterTankBOMs = await bom.buildWaterTankBOM();
-  const washBayBOMs = await bom.buildWashBayBOM();
+  const { generalBOM, waterTankBOMs, washBayBOMs } =
+    await bom.buildCompleteBOM();
 
   return (
     <div className="space-y-6">

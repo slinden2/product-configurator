@@ -1,7 +1,6 @@
 import { WithSupplyData } from "@/lib/BOM/BOM";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
 import { $Enums, WashBay } from "@prisma/client";
-import { config } from "process";
 
 const PART_NUMBERS: Record<string, string> = {
   LINE_POST_ASSY_H2500: "2500-PL",
@@ -19,26 +18,27 @@ const PART_NUMBERS: Record<string, string> = {
   DETERGENT_LANCE_ASSY_WEEPING: "LT-DET-P", // TODO Add selections in front
   HOSE_REEL_ASSY: "AM",
   HOSE_REEL_ASSY_FOR_POST_PANEL_READY: "AM-PN",
-  CABLE_CHAIN_L150: "CP-150",
-  CABLE_CHAIN_L200: "CP-200",
-  CABLE_CHAIN_L250: "CP-250",
-  CABLE_CHAIN_L300: "CP-300",
   SIDE_PANEL_ASSY: "PN",
   SIDE_PANEL_ASSY_FOR_CENTRAL_POST_LINE: "PN-PC",
   SLIDING_BRACKETS_FOR_FESTOON_LINE_WITH_BOOM: "AS",
 };
 
-const hasCableChain = (config: WashBay & WithSupplyData) =>
+const usesCableChain = (config: WashBay & WithSupplyData) =>
   config.supply_type === $Enums.SupplyType.CABLE_CHAIN &&
-  config.supply_fixing_type === $Enums.SupplyFixingType.POST &&
-  config.has_gantry;
+  config.supply_fixing_type === $Enums.SupplyFixingType.POST;
+
+const hasCableChain = (config: WashBay & WithSupplyData) =>
+  usesCableChain(config) &&
+  (config.has_gantry || config.uses_cable_chain_without_washbay);
 
 const usesCentralPost = (config: WashBay & WithSupplyData) =>
   hasCableChain(config) &&
   config.cable_chain_width !== $Enums.CableChainWidth.L150;
 
 const uses2500posts = (config: WashBay & WithSupplyData) =>
-  config.hp_lance_qty + config.det_lance_qty === 2 && !config.uses_3000_posts;
+  (config.hp_lance_qty + config.det_lance_qty === 2 &&
+    !config.uses_3000_posts) ||
+  config.uses_cable_chain_without_washbay;
 
 const usesShortShelves = (config: WashBay & WithSupplyData) =>
   config.hp_lance_qty + config.det_lance_qty === 2;
