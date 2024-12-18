@@ -21,15 +21,23 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
   ]);
 
 export const HPPumpOutlet30kwEnum = z.enum(
-  ["CHASSIS_WASH", "LOW_SPINNERS_HIGH_BARS", "LOW_HIGH_SPINNERS"],
+  [
+    "CHASSIS_WASH_HORIZONTAL",
+    "CHASSIS_WASH_LATERAL_HORIZONTAL",
+    "LOW_SPINNERS_HIGH_BARS",
+    "LOW_MEDIUM_SPINNERS",
+    "HIGH_MEDIUM_SPINNERS",
+  ],
   { message: genericRequiredMessage }
 );
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet30kwEnum, [
-    "Lavachassis",
+    "Lavachassis orizzontale",
+    "Lavachassis orizzontale + laterale",
     "2 robottine basse, barre alte",
-    "6 robottine",
+    "2 robottine basse + 2 medie",
+    "2 robottine alte + 2 medie",
   ]);
 
 export const OMZPumpOutletEnum = z.enum(
@@ -50,7 +58,7 @@ function validatePumpOutlets<T>(
   pumpOutlet1: T,
   pumpOutlet2: T,
   ctx: z.RefinementCtx,
-  chassisWashOption: T,
+  chassisWashOption: T | T[],
   errorPaths: string[]
 ) {
   if (!hasPump) {
@@ -81,11 +89,31 @@ function validatePumpOutlets<T>(
     return false;
   }
 
+  // Check if both outlets are chassis wash (chassisWashOption can be an array)
+  if (Array.isArray(chassisWashOption)) {
+    if (
+      chassisWashOption.includes(pumpOutlet1) &&
+      chassisWashOption.includes(pumpOutlet2)
+    ) {
+      errorPaths.forEach((path) => {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Non puoi selezionare lavachassis due volte.",
+          path: [path],
+        });
+      });
+    }
+  }
+
   // Check if at least one outlet is for chassis wash
   if (pumpOutlet1 && pumpOutlet2) {
     if (
-      pumpOutlet1 !== chassisWashOption &&
-      pumpOutlet2 !== chassisWashOption
+      (Array.isArray(chassisWashOption)
+        ? !chassisWashOption.includes(pumpOutlet1)
+        : pumpOutlet1 !== chassisWashOption) &&
+      (Array.isArray(chassisWashOption)
+        ? !chassisWashOption.includes(pumpOutlet2)
+        : pumpOutlet2 !== chassisWashOption)
     ) {
       errorPaths.forEach((path) => {
         ctx.addIssue({
@@ -182,7 +210,10 @@ const hpPump30kwDiscriminatedUnion = z
           data.pump_outlet_1_30kw,
           data.pump_outlet_2_30kw,
           ctx,
-          HPPumpOutlet30kwEnum.enum.CHASSIS_WASH,
+          [
+            HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_HORIZONTAL,
+            HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_LATERAL_HORIZONTAL,
+          ],
           ["pump_outlet_1_30kw", "pump_outlet_2_30kw"]
         )
       )

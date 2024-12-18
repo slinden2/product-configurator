@@ -59,7 +59,7 @@ describe("hpPumpSchema", () => {
         createHpPumpObject(
           30,
           false,
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH,
+          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL,
           undefined
         ),
       ],
@@ -76,7 +76,7 @@ describe("hpPumpSchema", () => {
           30,
           false,
           null,
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH
+          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL
         ),
       ],
     ])(
@@ -98,8 +98,8 @@ describe("hpPumpSchema", () => {
         createHpPumpObject(
           30,
           true,
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH,
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH
+          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL,
+          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL
         ),
       ],
     ])(`should throw if the outlets are the same, %o`, (testObject) => {
@@ -118,7 +118,7 @@ describe("hpPumpSchema", () => {
         createHpPumpObject(
           30,
           true,
-          $Enums.HpPump30kwOutletType.LOW_HIGH_SPINNERS,
+          $Enums.HpPump30kwOutletType.LOW_MEDIUM_SPINNERS,
           $Enums.HpPump30kwOutletType.LOW_SPINNERS_HIGH_BARS
         ),
       ],
@@ -157,7 +157,7 @@ describe("hpPumpSchema", () => {
         createHpPumpObject(
           30,
           true,
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH,
+          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL,
           null
         ),
       ],
@@ -165,7 +165,7 @@ describe("hpPumpSchema", () => {
         createHpPumpObject(
           30,
           true,
-          $Enums.HpPump30kwOutletType.LOW_HIGH_SPINNERS,
+          $Enums.HpPump30kwOutletType.HIGH_MEDIUM_SPINNERS,
           null
         ),
       ],
@@ -173,8 +173,8 @@ describe("hpPumpSchema", () => {
         createHpPumpObject(
           30,
           true,
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH,
-          $Enums.HpPump30kwOutletType.LOW_HIGH_SPINNERS
+          $Enums.HpPump30kwOutletType.CHASSIS_WASH_LATERAL_HORIZONTAL,
+          $Enums.HpPump30kwOutletType.LOW_MEDIUM_SPINNERS
         ),
       ],
     ])(
