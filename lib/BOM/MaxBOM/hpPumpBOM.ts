@@ -19,18 +19,19 @@ const PART_NUMBERS: Record<string, string> = {
   CHASSIS_WASH_30KW_WITH_LATERAL_BARS: "1100.024.003",
   COVER_PLATE_KIT: "1100.024.008", // TODO Add option for this in the form
   ULTRASONIC_SENSOR_POST: "1100.021.000", // TODO Now this is automatically chosen with lavachassis. Missing logic for wall sensor and double sensors.
-  ULTRASONIC_SENSOR_WALL: "1100.052.000",
-  DOUBLE_ULTRASONIC_SENSORS: "1100.024.XXX",
+  ULTRASONIC_SENSOR_WALL: "1100.052.000", // TODO Add this in the form
+  DUAL_ULTRASONIC_SENSORS_POST: "1100.021.001", // TODO Add this in the form
+  DUAL_ULTRASONIC_SENSORS_WALL: "1100.052.004", // TODO Add this in the form
   MID_HEIGHT_HP_BARS: "1100.036.005",
   FULL_HEIGHT_HP_BARS: "1100.036.000",
   LOW_SPINNERS_2X150L: "940.11.000",
-  HIGH_BARS_2X150L: "XXX",
-  LOW_MEDIUM_SPINNERS_4X150L: "LOW_MEDIUM_SPINNERS_4X150L",
-  HIGH_MEDIUM_SPINNERS_4X150L: "XXX",
+  HIGH_BARS_2X150L_LOW_SPINNERS_2X150: "940.08.000",
+  LOW_MEDIUM_SPINNERS_4X150L: "940.13.001",
+  HIGH_MEDIUM_SPINNERS_4X150L: "940.13.000",
   HP_ROOF_BAR: "450.50.000",
-  CHEMICAL_ROOF_BAR: "450.50.XXX",
+  CHEMICAL_ROOF_BAR: "450.50.300",
   HIGH_SPINNERS_4X43L: "940.12.000",
-  HP_VALVE_ASSY: "XXX",
+  HP_VALVE_ASSY: "450.50.301",
   HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.030",
   HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.031",
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS: "9000.530.024",
@@ -267,22 +268,18 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.LOW_SPINNERS_2X150L,
     conditions: [
-      uses15kwOr30kwPump,
+      uses15kwPump,
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
           $Enums.HpPump15kwOutletType.LOW_SPINNERS
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.LOW_SPINNERS_HIGH_BARS
         ),
     ],
     qty: 1,
     _description: "Low spinners (2x150l)",
   },
   {
-    pn: PART_NUMBERS.HIGH_BARS_2X150L,
+    pn: PART_NUMBERS.HIGH_BARS_2X150L_LOW_SPINNERS_2X150,
     conditions: [
       uses30kwPump,
       (config) =>

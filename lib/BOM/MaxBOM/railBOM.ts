@@ -8,6 +8,7 @@ const PART_NUMBERS: Record<string, string> = {
   WELDED_RAIL_TERMINALS: "450.46.032",
   WELDED_RAILS_1M: "450.46.030",
   WELDED_RAILS_3M: "450.46.031",
+  PROXIMITY_PLATES: "450.35.010",
 };
 
 const calculate3mRailQty = (config: Configuration): number =>
@@ -61,5 +62,11 @@ export const railBOM: MaxBOMItem<Configuration>[] = [
     conditions: [(config) => config.rail_type === $Enums.RailType.WELDED],
     qty: calculate1mRailQty,
     _description: "Welded rail 3m",
+  },
+  {
+    pn: PART_NUMBERS.PROXIMITY_PLATES,
+    conditions: [() => true], // These are always in BOM.
+    qty: 1,
+    _description: "Proximity plates",
   },
 ];

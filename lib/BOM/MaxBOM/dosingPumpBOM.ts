@@ -8,14 +8,14 @@ const PART_NUMBERS: Record<string, string> = {
   WAX_PUMP_WITH_ALARM: "450.03.027",
   CHEMICAL_PUMP_NO_ALARM: "450.03.023",
   CHEMICAL_PUMP_WITH_ALARM: "450.03.026",
-  ACID_PUMP_NO_ALARM: "450.03.028", // TODO To be created in TSE
-  ACID_PUMP_WITH_ALARM: "450.03.029", // TODO To be created in TSE
-  DOSATRON_NO_ANTIFREEZE: "1100.061.003",
+  ACID_PUMP_WITH_ALARM: "450.03.028",
+  DOSATRON_NO_ANTIFREEZE: "1100.061.004",
   DOSATRON_WITH_ANTIFREEZE: "1100.061.001",
-  DOSATRON_ACID_NO_ANTIFREEZE: "1100.061.005",
-  DOSATRON_ACID_WITH_ANTIFREEZE: "1100.061.004",
-  FLOAT_SWITCH_FOR_DOSATRON: "1100.061.006",
-  FOAM_KIT: "852.00.000", // TODO To add in the assy excel
+  DOSATRON_WITH_MANUAL_ANTIFREEZE: "1100.061.003", // TODO Not in BOM
+  DOSATRON_ACID_NO_ANTIFREEZE: "1100.061.006",
+  DOSATRON_ACID_WITH_ANTIFREEZE: "1100.061.005",
+  FLOAT_SWITCH_FOR_DOSATRON: "1100.061.002",
+  FOAM_KIT: "852.00.000",
 };
 
 export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
@@ -76,21 +76,10 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     _description: "Chemical pump, with alarm",
   },
   {
-    pn: PART_NUMBERS.ACID_PUMP_NO_ALARM,
-    conditions: [
-      (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
-      (config) => !config.has_itecoweb,
-    ],
-    qty: 1,
-    _description: "Acid pump, no alarm",
-  },
-  {
     pn: PART_NUMBERS.ACID_PUMP_WITH_ALARM,
     conditions: [
       (config) => config.has_acid_pump,
       (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
-      (config) => config.has_itecoweb,
     ],
     qty: 1,
     _description: "Acid pump, with alarm",
@@ -126,7 +115,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     _description: "Dosatron for acid, no antifreeze",
   },
   {
-    pn: PART_NUMBERS.DOSATRON_ACID_NO_ANTIFREEZE,
+    pn: PART_NUMBERS.DOSATRON_ACID_WITH_ANTIFREEZE,
     conditions: [
       (config) => config.has_acid_pump,
       (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,

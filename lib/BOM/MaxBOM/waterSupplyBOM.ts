@@ -11,8 +11,8 @@ const PART_NUMBERS: Record<string, string> = {
   ELECTRIC_PANEL_22KW: "890.02.002",
   INV_3KW_200L: "1100.024.053",
   INV_3KW_250L: "1100.024.054",
-  OUTLET_DOSATRON: "1100.024.XXX",
-  OUTLET_PW: "1100.024.XXX",
+  OUTLET_DOSATRON: "1100.024.055",
+  OUTLET_PW: "1100.024.056",
 };
 
 const hasWater1Solenoid = (config: Configuration): boolean => {

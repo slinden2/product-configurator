@@ -3,6 +3,7 @@ import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
 import { $Enums, WashBay } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
+  // TODO Create all these in TSE. Remember also chains in supplyBOM.
   LINE_POST_ASSY_H2500: "2500-PL",
   LINE_POST_ASSY_H2500_PANEL_READY: "2500-PL-PP",
   CENTRAL_POST_ASSY_H2500_PANEL_READY: "2500-PC-PP",

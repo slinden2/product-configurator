@@ -13,16 +13,17 @@ const PART_NUMBERS: Record<string, string> = {
   SUNSHADE: "450.02.053",
   CLOSING_PLATE: "1100.050.004",
   BOX_FOR_TOUCH_ON_DET_CAB: "1100.057.000", // TODO Add option for this in the config form
-  BOX_FOR_EXTERNAL_CONSOLE: "NO_PN",
-  POST_FOR_EXTERNAL_CONSOLE: "NO_PN",
-  WALL_KIT_FOR_EXTERNAL_CONSOLE: "NO_PN",
+  EXTERNAL_CONSOLE_WALL_ONE_TOUCH: "1100.050.000",
+  EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
+  EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
+  EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
 };
 
 const uses1ExternalTouch = (config: Configuration): boolean => {
   return config.touch_qty === 1 && config.touch_pos === "EXTERNAL";
 };
 
-const usesDoubleTouch = (config: Configuration): boolean =>
+const usesDualTouch = (config: Configuration): boolean =>
   config.touch_qty === 2;
 
 const usesOnboardTouch = (config: Configuration): boolean =>
@@ -77,7 +78,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
   },
   {
     pn: PART_NUMBERS.WASH_BAY_MANAGEMENT_EXTENSION,
-    conditions: [usesDoubleTouch],
+    conditions: [usesDualTouch],
     qty: 1,
     _description: "Wash bay management extension",
   },
@@ -94,27 +95,39 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     _description: "Closing plate",
   },
   {
-    pn: PART_NUMBERS.BOX_FOR_EXTERNAL_CONSOLE,
-    conditions: [usesExternalTouch],
-    qty: 1,
-    _description: "Box for external console",
-  },
-  {
-    pn: PART_NUMBERS.POST_FOR_EXTERNAL_CONSOLE,
+    pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH,
     conditions: [
-      usesExternalTouch,
-      (config) => config.touch_fixing_type === $Enums.TouchFixingType.POST,
-    ],
-    qty: 1,
-    _description: "Post for external console",
-  },
-  {
-    pn: PART_NUMBERS.WALL_KIT_FOR_EXTERNAL_CONSOLE,
-    conditions: [
-      usesExternalTouch,
+      uses1ExternalTouch,
       (config) => config.touch_fixing_type === $Enums.TouchFixingType.WALL,
     ],
     qty: 1,
-    _description: "Wall fixing kit for external console",
+    _description: "External console wall, one touch",
+  },
+  {
+    pn: PART_NUMBERS.EXTERNAL_CONSOLE_POST_ONE_TOUCH,
+    conditions: [
+      uses1ExternalTouch,
+      (config) => config.touch_fixing_type === $Enums.TouchFixingType.POST,
+    ],
+    qty: 1,
+    _description: "External console post, one touch",
+  },
+  {
+    pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH,
+    conditions: [
+      usesDualTouch,
+      (config) => config.touch_fixing_type === $Enums.TouchFixingType.WALL,
+    ],
+    qty: 1,
+    _description: "External console wall, dual touch",
+  },
+  {
+    pn: PART_NUMBERS.EXTERNAL_CONSOLE_POST_ONE_TOUCH,
+    conditions: [
+      usesDualTouch,
+      (config) => config.touch_fixing_type === $Enums.TouchFixingType.POST,
+    ],
+    qty: 1,
+    _description: "External console post, dual touch",
   },
 ];

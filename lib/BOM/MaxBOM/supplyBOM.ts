@@ -15,12 +15,12 @@ const PART_NUMBERS: Record<string, string> = {
   ANCHOR_KIT: "1100.049.010",
   BOOM: "450.29.000",
   BOOM_HP: "450.39.000",
-  CHAIN_150: "CP-150", // TODO Creare codici in TSE
-  CHAIN_200: "CP-200",
-  CHAIN_250: "CP-250",
-  CHAIN_300: "CP-300",
-  REINFORCED_SHELF_L: "1100.019.XXX", // TODO Create a group that contains also a fixing plate support
-  REINFORCED_SHELF_R: "1100.019.XXX",
+  CHAIN_150: "CP-150", // TODO Create in TSE
+  CHAIN_200: "CP-200", // TODO Create in TSE
+  CHAIN_250: "CP-250", // TODO Create in TSE
+  CHAIN_300: "CP-300", // TODO Create in TSE
+  REINFORCED_SHELF_ASSY_L: "1100.019.016",
+  REINFORCED_SHELF_ASSY_R: "1100.019.017",
 };
 
 const usesStraightShelf = (config: Configuration): boolean => {
@@ -210,7 +210,7 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
     _description: "Cable chain (300mm)",
   },
   {
-    pn: PART_NUMBERS.REINFORCED_SHELF_L,
+    pn: PART_NUMBERS.REINFORCED_SHELF_ASSY_L,
     conditions: [
       usesCableChain,
       (config) => config.supply_side === $Enums.SupplySide.LEFT,
@@ -219,7 +219,7 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
     _description: "Reinforced shelf (L)",
   },
   {
-    pn: PART_NUMBERS.REINFORCED_SHELF_R,
+    pn: PART_NUMBERS.REINFORCED_SHELF_ASSY_R,
     conditions: [
       usesCableChain,
       (config) => config.supply_side === $Enums.SupplySide.RIGHT,
