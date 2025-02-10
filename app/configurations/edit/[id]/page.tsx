@@ -8,10 +8,11 @@ const ConfigForm = dynamic(() => import("@/components/ConfigForm"), {
 });
 
 interface EditConfigProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-const EditConfiguration = async ({ params }: EditConfigProps) => {
+const EditConfiguration = async (props: EditConfigProps) => {
+  const params = await props.params;
   const configuration = await getConfiguration(params.id);
 
   if (!configuration) {

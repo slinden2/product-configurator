@@ -11,10 +11,11 @@ import Link from "next/link";
 import { Fragment } from "react";
 
 interface BOMViewProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-const BOMView = async ({ params }: BOMViewProps) => {
+const BOMView = async (props: BOMViewProps) => {
+  const params = await props.params;
   const bom = await getBOM(params.id);
 
   if (!bom) return <div>Unable to find BOM</div>;

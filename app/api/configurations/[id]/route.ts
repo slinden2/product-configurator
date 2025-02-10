@@ -4,10 +4,11 @@ import prisma from "@/prisma/db";
 import { differenceInTwoArrays } from "@/lib/utils";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export async function PATCH(request: NextRequest, { params }: Props) {
+export async function PATCH(request: NextRequest, props: Props) {
+  const params = await props.params;
   const body = await request.json();
   const validation = configSchema.safeParse(body);
 
