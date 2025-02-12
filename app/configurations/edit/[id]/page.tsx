@@ -2,10 +2,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { getConfiguration } from "@/prisma/db";
 import { configSchema } from "@/validation/configSchema";
-
-const ConfigForm = dynamic(() => import("@/components/ConfigForm"), {
-  ssr: false,
-});
+import ConfigForm from "@/components/ConfigForm";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
