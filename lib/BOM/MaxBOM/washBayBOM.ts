@@ -1,6 +1,6 @@
-import { WithSupplyData } from "@/lib/BOM/BOM";
+import { WashBay } from "@/db/schemas";
+import { WithSupplyData } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, WashBay } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   // TODO Create all these in TSE. Remember also chains in supplyBOM.
@@ -25,16 +25,14 @@ const PART_NUMBERS: Record<string, string> = {
 };
 
 const usesCableChain = (config: WashBay & WithSupplyData) =>
-  config.supply_type === $Enums.SupplyType.CABLE_CHAIN &&
-  config.supply_fixing_type === $Enums.SupplyFixingType.POST;
+  config.supply_type === "CABLE_CHAIN" && config.supply_fixing_type === "POST";
 
 const hasCableChain = (config: WashBay & WithSupplyData) =>
   usesCableChain(config) &&
   (config.has_gantry || config.uses_cable_chain_without_washbay);
 
 const usesCentralPost = (config: WashBay & WithSupplyData) =>
-  hasCableChain(config) &&
-  config.cable_chain_width !== $Enums.CableChainWidth.L150;
+  hasCableChain(config) && config.energy_chain_width !== "L150";
 
 const uses2500posts = (config: WashBay & WithSupplyData) =>
   (config.hp_lance_qty + config.det_lance_qty === 2 &&
@@ -51,7 +49,7 @@ const usesPanels = (config: WashBay & WithSupplyData) =>
   config.has_bay_dividers;
 
 const usesSlidingBrackets = (config: WashBay & WithSupplyData) =>
-  config.supply_type === $Enums.SupplyType.BOOM && config.has_gantry;
+  config.supply_type === "BOOM" && config.has_gantry;
 
 const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
   if (config.is_first_bay && hasCableChain(config) && usesCentralPost(config))

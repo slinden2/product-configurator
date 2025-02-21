@@ -1,5 +1,5 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   DOWELED_RAIL_TERMINALS: "450.45.031",
@@ -20,14 +20,14 @@ const calculate1mRailQty = (config: Configuration): number =>
 export const railBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.DOWELED_RAIL_TERMINALS,
-    conditions: [(config) => config.rail_type === $Enums.RailType.DOWELED],
+    conditions: [(config) => config.rail_type === "DOWELED"],
     qty: 1,
     _description: "Dowelled rail terminals",
   },
   {
     pn: PART_NUMBERS.DOWELED_RAILS_3M,
     conditions: [
-      (config) => config.rail_type === $Enums.RailType.DOWELED,
+      (config) => config.rail_type === "DOWELED",
       (config) => config.rail_length > 7,
     ],
     qty: calculate3mRailQty,
@@ -36,7 +36,7 @@ export const railBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.DOWELED_RAILS_1M,
     conditions: [
-      (config) => config.rail_type === $Enums.RailType.DOWELED,
+      (config) => config.rail_type === "DOWELED",
       (config) => !!(config.rail_length % 3),
     ],
     qty: calculate1mRailQty,
@@ -44,14 +44,14 @@ export const railBOM: MaxBOMItem<Configuration>[] = [
   },
   {
     pn: PART_NUMBERS.WELDED_RAIL_TERMINALS,
-    conditions: [(config) => config.rail_type === $Enums.RailType.WELDED],
+    conditions: [(config) => config.rail_type === "WELDED"],
     qty: 1,
     _description: "Welded rail terminals",
   },
   {
     pn: PART_NUMBERS.WELDED_RAILS_3M,
     conditions: [
-      (config) => config.rail_type === $Enums.RailType.WELDED,
+      (config) => config.rail_type === "WELDED",
       (config) => config.rail_length > 7,
     ],
     qty: calculate3mRailQty,
@@ -59,7 +59,7 @@ export const railBOM: MaxBOMItem<Configuration>[] = [
   },
   {
     pn: PART_NUMBERS.WELDED_RAILS_1M,
-    conditions: [(config) => config.rail_type === $Enums.RailType.WELDED],
+    conditions: [(config) => config.rail_type === "WELDED"],
     qty: calculate1mRailQty,
     _description: "Welded rail 3m",
   },

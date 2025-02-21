@@ -1,5 +1,5 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { Configuration } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   ZERO_BRUSHES: "450.0E.GRU0",

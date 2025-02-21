@@ -1,4 +1,5 @@
-import { WithSupplyData } from "@/lib/BOM/BOM";
+import { Configuration, WashBay, WaterTank } from "@/db/schemas";
+import { WithSupplyData } from "@/lib/BOM";
 import { brushBOM } from "@/lib/BOM/MaxBOM/brushBOM";
 import { dosingPumpBOM } from "@/lib/BOM/MaxBOM/dosingPumpBOM";
 import { electricBOM } from "@/lib/BOM/MaxBOM/electricBOM";
@@ -11,7 +12,6 @@ import { supplyBOM } from "@/lib/BOM/MaxBOM/supplyBOM";
 import { washBayBOM } from "@/lib/BOM/MaxBOM/washBayBOM";
 import { waterSupplyBOM } from "@/lib/BOM/MaxBOM/waterSupplyBOM";
 import { waterTankBOM } from "@/lib/BOM/MaxBOM/waterTankBOM";
-import { Configuration, WashBay, WaterTank } from "@prisma/client";
 
 export interface ValidationFn<T> {
   (config: T): boolean;

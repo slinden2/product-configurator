@@ -1,14 +1,14 @@
+import { Water1PumpType, Water2PumpType, WaterType } from "@/types";
 import { waterSupplySchema } from "@/validation/configuration/waterSupplySchema";
-import { $Enums } from "@prisma/client";
 import { describe, test, expect } from "vitest";
 
-type WaterType = $Enums.WaterType | null | undefined;
+type TWaterType = WaterType | null | undefined;
 
 function createWaterSupplyObject(
-  water1Type: WaterType,
-  water1Pump: $Enums.Water1PumpType | null | undefined,
-  water2Type: WaterType,
-  water2Pump: $Enums.Water2PumpType | null | undefined,
+  water1Type: TWaterType,
+  water1Pump: Water1PumpType | null | undefined,
+  water2Type: TWaterType,
+  water2Pump: Water2PumpType | null | undefined,
   hasAntifreeze: boolean,
   outlets = { inv_pump_outlet_pw_qty: 0, inv_pump_outlet_dosatron_qty: 0 }
 ) {
@@ -26,10 +26,10 @@ describe("waterSupplySchema", () => {
   describe("General schema tests", () => {
     test("should validate successfully with all fields correctly set", () => {
       const validData = createWaterSupplyObject(
-        $Enums.WaterType.NETWORK,
-        $Enums.Water1PumpType.BOOST_15KW,
-        $Enums.WaterType.RECYCLED,
-        $Enums.Water2PumpType.BOOST_22KW,
+        "NETWORK",
+        "BOOST_15KW",
+        "RECYCLED",
+        "BOOST_22KW",
         true
       );
       expect(() => waterSupplySchema.parse(validData)).not.toThrow();
@@ -38,7 +38,7 @@ describe("waterSupplySchema", () => {
     test("should throw if water_1_type is missing", () => {
       const invalidData = createWaterSupplyObject(
         null,
-        $Enums.Water1PumpType.BOOST_15KW,
+        "BOOST_15KW",
         undefined,
         undefined,
         false
@@ -49,7 +49,7 @@ describe("waterSupplySchema", () => {
 
   test("should validate successfully with water_1_type set and water_1_pump undefined", () => {
     const validData = createWaterSupplyObject(
-      $Enums.WaterType.DEMINERALIZED,
+      "DEMINERALIZED",
       undefined,
       undefined,
       undefined,
@@ -61,8 +61,8 @@ describe("waterSupplySchema", () => {
   describe("Inverter pump tests", () => {
     test("should throw if inverter pump is selected but less than two outlets are configured", () => {
       const invalidData = createWaterSupplyObject(
-        $Enums.WaterType.DEMINERALIZED,
-        $Enums.Water1PumpType.INV_3KW_200L,
+        "DEMINERALIZED",
+        "INV_3KW_200L",
         null,
         null,
         false,
@@ -73,8 +73,8 @@ describe("waterSupplySchema", () => {
 
     test("should validate if inverter pump is selected with at least two outlets configured", () => {
       const validData = createWaterSupplyObject(
-        $Enums.WaterType.RECYCLED,
-        $Enums.Water1PumpType.INV_3KW_250L,
+        "RECYCLED",
+        "INV_3KW_250L",
         null,
         null,
         false,
@@ -85,8 +85,8 @@ describe("waterSupplySchema", () => {
 
     test("should throw if outlets are selected without an inverter pump", () => {
       const invalidData = createWaterSupplyObject(
-        $Enums.WaterType.NETWORK,
-        $Enums.Water1PumpType.BOOST_15KW,
+        "NETWORK",
+        "BOOST_15KW",
         null,
         null,
         false,
@@ -97,8 +97,8 @@ describe("waterSupplySchema", () => {
 
     test("should throw if number of either outlet exceeds two", () => {
       const invalidData = createWaterSupplyObject(
-        $Enums.WaterType.NETWORK,
-        $Enums.Water1PumpType.INV_3KW_250L,
+        "NETWORK",
+        "INV_3KW_250L",
         null,
         null,
         false,
@@ -107,8 +107,8 @@ describe("waterSupplySchema", () => {
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
 
       const invalidData2 = createWaterSupplyObject(
-        $Enums.WaterType.NETWORK,
-        $Enums.Water1PumpType.INV_3KW_250L,
+        "NETWORK",
+        "INV_3KW_250L",
         null,
         null,
         false,
@@ -121,7 +121,7 @@ describe("waterSupplySchema", () => {
   describe("Edge cases for water and pump configurations", () => {
     test("should validate with only water_1_type and no pump or outlets", () => {
       const validData = createWaterSupplyObject(
-        $Enums.WaterType.NETWORK,
+        "NETWORK",
         undefined,
         undefined,
         undefined,
@@ -132,10 +132,10 @@ describe("waterSupplySchema", () => {
 
     test("should throw if water_2_pump is set without water_2_type", () => {
       const invalidData = createWaterSupplyObject(
-        $Enums.WaterType.RECYCLED,
-        $Enums.Water1PumpType.BOOST_15KW,
+        "RECYCLED",
+        "BOOST_15KW",
         undefined,
-        $Enums.Water2PumpType.BOOST_15KW,
+        "BOOST_15KW",
         false
       );
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
@@ -145,17 +145,17 @@ describe("waterSupplySchema", () => {
   describe("Antifreeze tests", () => {
     test("should validate when antifreeze is true or false", () => {
       const validDataWithAntifreeze = createWaterSupplyObject(
-        $Enums.WaterType.DEMINERALIZED,
-        $Enums.Water1PumpType.BOOST_22KW,
-        $Enums.WaterType.RECYCLED,
-        $Enums.Water2PumpType.BOOST_15KW,
+        "DEMINERALIZED",
+        "BOOST_22KW",
+        "RECYCLED",
+        "BOOST_15KW",
         true
       );
       const validDataWithoutAntifreeze = createWaterSupplyObject(
-        $Enums.WaterType.DEMINERALIZED,
-        $Enums.Water1PumpType.BOOST_22KW,
-        $Enums.WaterType.RECYCLED,
-        $Enums.Water2PumpType.BOOST_15KW,
+        "DEMINERALIZED",
+        "BOOST_22KW",
+        "RECYCLED",
+        "BOOST_15KW",
         false
       );
       expect(() =>

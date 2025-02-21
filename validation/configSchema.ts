@@ -28,7 +28,7 @@ export const configSchema = baseSchema
   .and(washBaySchema)
   .superRefine((data, ctx) => {
     // Limit rail length to 25 if cable chain width is set
-    if (data.cable_chain_width && data.rail_length < 25) {
+    if (data.energy_chain_width && data.rail_length < 25) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:

@@ -1,6 +1,7 @@
+import "dotenv/config";
 import sql, { ConnectionPool } from "mssql";
-import "../../envConfig";
-import { PartNumber } from "@prisma/client";
+// import "../../envConfig";
+import { PartNumber } from "@/db/schemas";
 
 const user = process.env.TSE_USER; // SQL Server username
 const password = process.env.TSE_PW; // SQL Server password

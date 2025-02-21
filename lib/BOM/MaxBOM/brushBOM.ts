@@ -1,10 +1,11 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
+import { BrushColorType, BrushType } from "@/types";
 
 // TODO Add part numbers where missing
 const PART_NUMBERS: Record<
-  $Enums.BrushColor,
-  Record<$Enums.BrushType, Record<"VERTICAL" | "HORIZONTAL", string>>
+  BrushColorType,
+  Record<BrushType, Record<"VERTICAL" | "HORIZONTAL", string>>
 > = {
   BLUE_SILVER: {
     THREAD: {
@@ -70,8 +71,8 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.BLUE_SILVER.THREAD.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.BLUE_SILVER,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 2,
     _description: "Vertical brush, thread, blue-silver",
@@ -80,8 +81,8 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.BLUE_SILVER.THREAD.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.BLUE_SILVER,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 1,
     _description: "Horizontal brush, thread, blue-silver",
@@ -91,8 +92,8 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.BLUE_SILVER.MIXED.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.BLUE_SILVER,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 2,
     _description: "Vertical brush, mixed, blue-silver",
@@ -101,8 +102,8 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.BLUE_SILVER.MIXED.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.BLUE_SILVER,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 1,
     _description: "Horizontal brush, mixed, blue-silver",
@@ -112,8 +113,8 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.BLUE_SILVER.CARLITE.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.BLUE_SILVER,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 2,
     _description: "Vertical brush, carlite, blue-silver",
@@ -122,8 +123,8 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.BLUE_SILVER.CARLITE.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.BLUE_SILVER,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 1,
     _description: "Horizontal brush, carlite, blue-silver",
@@ -136,8 +137,8 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_BLACK.THREAD.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_BLACK,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 2,
     _description: "Vertical brush, thread, green-black",
@@ -146,8 +147,8 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_BLACK.THREAD.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_BLACK,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 1,
     _description: "Horizontal brush, thread, green-black",
@@ -157,8 +158,8 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_BLACK.MIXED.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_BLACK,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 2,
     _description: "Vertical brush, mixed, green-black",
@@ -167,8 +168,8 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_BLACK.MIXED.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_BLACK,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 1,
     _description: "Horizontal brush, mixed, green-black",
@@ -178,8 +179,8 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_BLACK.CARLITE.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_BLACK,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 2,
     _description: "Vertical brush, carlite, green-black",
@@ -189,8 +190,8 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_BLACK.CARLITE.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_BLACK,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 1,
     _description: "Horizontal brush, carlite, green-black",
@@ -203,8 +204,8 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_SILVER.THREAD.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_SILVER,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 2,
     _description: "Vertical brush, thread, green-silver",
@@ -213,8 +214,8 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_SILVER.THREAD.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_SILVER,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 1,
     _description: "Horizontal brush, thread, green-silver",
@@ -224,8 +225,8 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_SILVER.MIXED.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_SILVER,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 2,
     _description: "Vertical brush, mixed, green-silver",
@@ -234,8 +235,8 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_SILVER.MIXED.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_SILVER,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 1,
     _description: "Horizontal brush, mixed, green-silver",
@@ -245,8 +246,8 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_SILVER.CARLITE.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_SILVER,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 2,
     _description: "Vertical brush, carlite, green-silver",
@@ -255,8 +256,8 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.GREEN_SILVER.CARLITE.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.GREEN_SILVER,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 1,
     _description: "Horizontal brush, carlite, green-silver",
@@ -269,8 +270,8 @@ const red: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.RED.THREAD.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.RED,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "RED",
     ],
     qty: 2,
     _description: "Vertical brush, thread, red",
@@ -279,8 +280,8 @@ const red: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.RED.THREAD.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.THREAD,
-      (config) => config.brush_color === $Enums.BrushColor.RED,
+      (config) => config.brush_type === "THREAD",
+      (config) => config.brush_color === "RED",
     ],
     qty: 1,
     _description: "Horizontal brush, thread, red",
@@ -290,8 +291,8 @@ const red: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.RED.MIXED.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.RED,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "RED",
     ],
     qty: 2,
     _description: "Vertical brush, mixed, red",
@@ -300,8 +301,8 @@ const red: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.RED.MIXED.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.MIXED,
-      (config) => config.brush_color === $Enums.BrushColor.RED,
+      (config) => config.brush_type === "MIXED",
+      (config) => config.brush_color === "RED",
     ],
     qty: 1,
     _description: "Horizontal brush, mixed, red",
@@ -311,8 +312,8 @@ const red: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.RED.CARLITE.VERTICAL,
     conditions: [
       (config) => config.brush_qty > 0,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.RED,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "RED",
     ],
     qty: 2,
     _description: "Vertical brush, carlite, red",
@@ -321,8 +322,8 @@ const red: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.RED.CARLITE.HORIZONTAL,
     conditions: [
       (config) => config.brush_qty === 3,
-      (config) => config.brush_type === $Enums.BrushType.CARLITE,
-      (config) => config.brush_color === $Enums.BrushColor.RED,
+      (config) => config.brush_type === "CARLITE",
+      (config) => config.brush_color === "RED",
     ],
     qty: 1,
     _description: "Horizontal brush, carlite, red",

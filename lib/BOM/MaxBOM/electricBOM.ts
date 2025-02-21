@@ -1,6 +1,5 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
-import { config } from "process";
 
 const PART_NUMBERS: Record<string, string> = {
   RFID_READER: "890.10.003",
@@ -51,9 +50,8 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     conditions: [
       (config) => config.has_omz_pump,
       (config) =>
-        config.pump_outlet_omz === $Enums.HpPumpOMZOutletType.HP_ROOF_BAR ||
-        config.pump_outlet_omz ===
-          $Enums.HpPumpOMZOutletType.HP_ROOF_BAR_SPINNERS,
+        config.pump_outlet_omz === "HP_ROOF_BAR" ||
+        config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS",
     ],
     qty: 1,
     _description: "HP roof bar commands",
@@ -98,7 +96,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH,
     conditions: [
       uses1ExternalTouch,
-      (config) => config.touch_fixing_type === $Enums.TouchFixingType.WALL,
+      (config) => config.touch_fixing_type === "WALL",
     ],
     qty: 1,
     _description: "External console wall, one touch",
@@ -107,7 +105,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.EXTERNAL_CONSOLE_POST_ONE_TOUCH,
     conditions: [
       uses1ExternalTouch,
-      (config) => config.touch_fixing_type === $Enums.TouchFixingType.POST,
+      (config) => config.touch_fixing_type === "POST",
     ],
     qty: 1,
     _description: "External console post, one touch",
@@ -116,7 +114,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH,
     conditions: [
       usesDualTouch,
-      (config) => config.touch_fixing_type === $Enums.TouchFixingType.WALL,
+      (config) => config.touch_fixing_type === "WALL",
     ],
     qty: 1,
     _description: "External console wall, dual touch",
@@ -125,7 +123,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.EXTERNAL_CONSOLE_POST_ONE_TOUCH,
     conditions: [
       usesDualTouch,
-      (config) => config.touch_fixing_type === $Enums.TouchFixingType.POST,
+      (config) => config.touch_fixing_type === "POST",
     ],
     qty: 1,
     _description: "External console post, dual touch",

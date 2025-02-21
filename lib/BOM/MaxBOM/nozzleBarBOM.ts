@@ -1,5 +1,5 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   PREWASH_ARCH: "450.36.000",
@@ -35,8 +35,8 @@ const PART_NUMBERS: Record<string, string> = {
 };
 
 const hasHpRoofBar = (config: Configuration): boolean =>
-  config.pump_outlet_omz === $Enums.HpPumpOMZOutletType.HP_ROOF_BAR ||
-  config.pump_outlet_omz === $Enums.HpPumpOMZOutletType.HP_ROOF_BAR_SPINNERS;
+  config.pump_outlet_omz === "HP_ROOF_BAR" ||
+  config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS";
 
 const hasChemicalRoofBar = (config: Configuration): boolean =>
   hasHpRoofBar(config) && config.has_chemical_roof_bar;
@@ -160,7 +160,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ABOARD,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.chemical_pump_pos === "ABOARD",
       (config) => !hasChemicalRoofBar(config),
     ],
     qty: (config) => config.chemical_qty || 1,
@@ -170,7 +170,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ABOARD,
     conditions: [
       hasTwoChemicals,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.chemical_pump_pos === "ABOARD",
       hasChemicalRoofBar,
     ],
     qty: 1,
@@ -181,7 +181,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ABOARD,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.chemical_pump_pos === "ABOARD",
       hasChemicalRoofBar,
     ],
     qty: 1,
@@ -191,7 +191,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
       (config) => !hasChemicalRoofBar(config),
     ],
     qty: (config) => config.chemical_qty || 1,
@@ -201,7 +201,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY,
     conditions: [
       hasTwoChemicals,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
       hasChemicalRoofBar,
     ],
     qty: 1,
@@ -212,7 +212,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
       hasChemicalRoofBar,
     ],
     qty: 1,
@@ -230,7 +230,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ABOARD_INOX,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.acid_pump_pos === "ABOARD",
     ],
     qty: 1,
     _description: "Acid solenoid (acid onboard)",
@@ -239,7 +239,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.acid_pump_pos === "WASH_BAY",
     ],
     qty: 1,
     _description: "Fittings for acid (acid in wash bay)",
@@ -257,7 +257,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_DOUBLE_SUPPLY,
     conditions: [
       (config) => !!config.water_2_type,
-      (config) => config.supply_type !== $Enums.SupplyType.CABLE_CHAIN,
+      (config) => config.supply_type !== "CABLE_CHAIN",
     ],
     qty: 1,
     _description: "Fittings for double supply",

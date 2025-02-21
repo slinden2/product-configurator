@@ -9,13 +9,13 @@ import {
 import React from "react";
 import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
 import ConfigurationStatusBadge from "@/components/ConfigurationStatusBadge";
-import { ConfigurationsForDataTable } from "@/prisma/db";
 import { Button } from "@/components/ui/button";
 import { Pencil, ScrollText } from "lucide-react";
 import Link from "next/link";
+import { AllConfigurations } from "@/db/queries";
 
 interface DataTableProps {
-  configurations: ConfigurationsForDataTable;
+  configurations: AllConfigurations;
 }
 
 const DataTable = ({ configurations }: DataTableProps) => {

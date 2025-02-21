@@ -1,11 +1,11 @@
+import { BrushColorType, BrushType } from "@/types";
 import { brushSchema } from "@/validation/configuration/brushSchema";
-import { $Enums } from "@prisma/client";
 import { describe, test, expect } from "vitest";
 
 function createBrushObject(
   brushQty: number | string | null | undefined,
-  brushType: $Enums.BrushType | null | undefined,
-  brushColor: $Enums.BrushColor | null | undefined
+  brushType: BrushType | null | undefined,
+  brushColor: BrushColorType | null | undefined
 ) {
   return {
     brush_qty: brushQty,
@@ -17,11 +17,7 @@ function createBrushObject(
 describe("brushSchema", () => {
   describe("General schema tests", () => {
     test("should validate successfully with all fields correctly set", () => {
-      const validData = createBrushObject(
-        "2",
-        $Enums.BrushType.THREAD,
-        $Enums.BrushColor.GREEN_SILVER
-      );
+      const validData = createBrushObject("2", "THREAD", "GREEN_SILVER");
       expect(() => brushSchema.parse(validData)).not.toThrow();
     });
 
@@ -31,18 +27,10 @@ describe("brushSchema", () => {
     });
 
     test("should throw if brush_qty is 0 and brush_type or brush_color is set", () => {
-      const invalidData = createBrushObject(
-        "0",
-        $Enums.BrushType.THREAD,
-        undefined
-      );
+      const invalidData = createBrushObject("0", "THREAD", undefined);
       expect(() => brushSchema.parse(invalidData)).toThrow();
 
-      const invalidData2 = createBrushObject(
-        "0",
-        undefined,
-        $Enums.BrushColor.GREEN_SILVER
-      );
+      const invalidData2 = createBrushObject("0", undefined, "GREEN_SILVER");
       expect(() => brushSchema.parse(invalidData2)).toThrow();
     });
   });

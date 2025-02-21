@@ -1,5 +1,6 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
+import { Water1PumpType, Water2PumpType } from "@/types";
 
 const PART_NUMBERS: Record<string, string> = {
   WASH_BAY_SOLENOID_WITH_ANTIFREEZE: "1100.060.001",
@@ -25,23 +26,28 @@ const hasWater2Solenoid = (config: Configuration): boolean => {
 
 const uses15kwPump = (config: Configuration): boolean => {
   return (
-    config.water_1_pump === $Enums.Water1PumpType.BOOST_15KW ||
-    config.water_2_pump === $Enums.Water1PumpType.BOOST_15KW
+    config.water_1_pump === "BOOST_15KW" || config.water_2_pump === "BOOST_15KW"
   );
 };
 
 const uses22kwPump = (config: Configuration): boolean => {
   return (
-    config.water_1_pump === $Enums.Water1PumpType.BOOST_22KW ||
-    config.water_2_pump === $Enums.Water1PumpType.BOOST_22KW
+    config.water_1_pump === "BOOST_22KW" || config.water_2_pump === "BOOST_22KW"
   );
 };
 
 const needsTwoPumps = (
   config: Configuration,
-  pumpType: $Enums.Water1PumpType | $Enums.Water2PumpType
+  pumpType: Water1PumpType | Water2PumpType
 ): boolean => {
-  return config.water_1_pump === pumpType && config.water_2_pump === pumpType;
+  if (config.water_2_pump === null) {
+    return false;
+  }
+
+  return (
+    config.water_1_pump?.toString() === pumpType.toString() &&
+    config.water_2_pump.toString() === pumpType.toString()
+  );
 };
 
 export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
@@ -76,44 +82,36 @@ export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.BOOST_PUMP_15KW,
     conditions: [uses15kwPump],
-    qty: (config) =>
-      needsTwoPumps(config, $Enums.Water1PumpType.BOOST_15KW) ? 2 : 1,
+    qty: (config) => (needsTwoPumps(config, "BOOST_15KW") ? 2 : 1),
     _description: "Boost pump 1.5kW",
   },
   {
     pn: PART_NUMBERS.ELECTRIC_PANEL_15KW,
     conditions: [uses15kwPump],
-    qty: (config) =>
-      needsTwoPumps(config, $Enums.Water1PumpType.BOOST_15KW) ? 2 : 1,
+    qty: (config) => (needsTwoPumps(config, "BOOST_15KW") ? 2 : 1),
     _description: "Electric panel 1.5kW",
   },
   {
     pn: PART_NUMBERS.BOOST_PUMP_22KW,
     conditions: [uses22kwPump],
-    qty: (config) =>
-      needsTwoPumps(config, $Enums.Water1PumpType.BOOST_22KW) ? 2 : 1,
+    qty: (config) => (needsTwoPumps(config, "BOOST_22KW") ? 2 : 1),
     _description: "Boost pump 2.2kW",
   },
   {
     pn: PART_NUMBERS.ELECTRIC_PANEL_22KW,
     conditions: [uses22kwPump],
-    qty: (config) =>
-      needsTwoPumps(config, $Enums.Water1PumpType.BOOST_22KW) ? 2 : 1,
+    qty: (config) => (needsTwoPumps(config, "BOOST_22KW") ? 2 : 1),
     _description: "Electric panel 2.2kW",
   },
   {
     pn: PART_NUMBERS.INV_3KW_200L,
-    conditions: [
-      (config) => config.water_1_pump === $Enums.Water1PumpType.INV_3KW_200L,
-    ],
+    conditions: [(config) => config.water_1_pump === "INV_3KW_200L"],
     qty: 1,
     _description: "Inverter pump 3kW 200l/min",
   },
   {
     pn: PART_NUMBERS.INV_3KW_250L,
-    conditions: [
-      (config) => config.water_1_pump === $Enums.Water1PumpType.INV_3KW_250L,
-    ],
+    conditions: [(config) => config.water_1_pump === "INV_3KW_250L"],
     qty: 1,
     _description: "Inverter pump 3kW 250l/min",
   },
@@ -121,8 +119,8 @@ export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.OUTLET_DOSATRON,
     conditions: [
       (config) =>
-        config.water_1_pump === $Enums.Water1PumpType.INV_3KW_200L ||
-        config.water_1_pump === $Enums.Water1PumpType.INV_3KW_250L,
+        config.water_1_pump === "INV_3KW_200L" ||
+        config.water_1_pump === "INV_3KW_250L",
       (config) => !!config.inv_pump_outlet_dosatron_qty,
     ],
     qty: (config) =>
@@ -135,8 +133,8 @@ export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.OUTLET_DOSATRON,
     conditions: [
       (config) =>
-        config.water_1_pump === $Enums.Water1PumpType.INV_3KW_200L ||
-        config.water_1_pump === $Enums.Water1PumpType.INV_3KW_250L,
+        config.water_1_pump === "INV_3KW_200L" ||
+        config.water_1_pump === "INV_3KW_250L",
       (config) => !!config.inv_pump_outlet_pw_qty,
     ],
     qty: (config) =>

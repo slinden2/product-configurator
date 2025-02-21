@@ -1,11 +1,17 @@
+import { db } from "@/db";
+import {
+  Configuration,
+  ConfigurationWithWaterTanksAndWashBays,
+  partNumbers,
+  WashBay,
+} from "@/db/schemas";
 import {
   GeneralMaxBOM,
   MaxBOMItem,
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/MaxBOM";
-import prisma from "@/prisma/db";
-import { Prisma, Configuration, WashBay, $Enums } from "@prisma/client";
+import { eq } from "drizzle-orm";
 
 export interface BOMItem {
   pn: string;
@@ -23,23 +29,11 @@ export interface BOMItemWithDescription extends BOMItem {
 
 export type WithSupplyData = Pick<
   Configuration,
-  "supply_side" | "supply_type" | "supply_fixing_type" | "cable_chain_width"
+  "supply_side" | "supply_type" | "supply_fixing_type" | "energy_chain_width"
 > & {
   uses_3000_posts: boolean;
   uses_cable_chain_without_washbay: boolean;
 };
-
-const configurationWithWaterTanksAndWashBays =
-  Prisma.validator<Prisma.ConfigurationDefaultArgs>()({
-    include: {
-      water_tanks: true,
-      wash_bays: true,
-    },
-  });
-
-type ConfigurationWithWaterTanksAndWashBays = Prisma.ConfigurationGetPayload<
-  typeof configurationWithWaterTanksAndWashBays
->;
 
 export class BOM {
   configuration: ConfigurationWithWaterTanksAndWashBays;
@@ -52,7 +46,7 @@ export class BOM {
     this.configuration = configuration;
     this.usesCableChainWithoutWashBay =
       configuration.wash_bays.length === 0 &&
-      configuration.supply_type === $Enums.SupplyType.CABLE_CHAIN;
+      configuration.supply_type === "CABLE_CHAIN";
   }
 
   static async init(
@@ -115,7 +109,7 @@ export class BOM {
       supply_side: this.configuration.supply_side,
       supply_type: this.configuration.supply_type,
       supply_fixing_type: this.configuration.supply_fixing_type,
-      cable_chain_width: this.configuration.cable_chain_width,
+      energy_chain_width: this.configuration.energy_chain_width,
       uses_3000_posts: uses3000posts,
       uses_cable_chain_without_washbay: this.usesCableChainWithoutWashBay,
     };
@@ -130,8 +124,8 @@ export class BOM {
     // because in that case the posts are needed.
     if (
       this.configuration.wash_bays.length === 0 &&
-      this.configuration.supply_type === $Enums.SupplyType.CABLE_CHAIN &&
-      this.configuration.supply_fixing_type === $Enums.SupplyFixingType.POST
+      this.configuration.supply_type === "CABLE_CHAIN" &&
+      this.configuration.supply_fixing_type === "POST"
     ) {
       const washBayWithSupplyData: WashBay & WithSupplyData =
         this._generateWashBayObjectWithSupplyData({} as WashBay, {
@@ -163,8 +157,8 @@ export class BOM {
           item.conditions.every((conditionFn) => conditionFn(configuration))
         )
         .map(async (item) => {
-          const partNumber = await prisma.partNumber.findUnique({
-            where: { pn: item.pn },
+          const partNumber = await db.query.partNumbers.findFirst({
+            where: eq(partNumbers.pn, item.pn),
           });
           return {
             pn: item.pn,

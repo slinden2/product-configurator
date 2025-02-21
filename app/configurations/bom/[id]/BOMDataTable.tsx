@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BOMItemWithDescription } from "@/lib/BOM/BOM";
+import { BOMItemWithDescription } from "@/lib/BOM";
 import { ArrowDownUp } from "lucide-react";
 import { useState } from "react";
 

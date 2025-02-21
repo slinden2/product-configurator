@@ -34,7 +34,7 @@ const SupplySection = () => {
                 },
                 {
                   triggerValue: zodEnums.SupplyTypeEnum.enum.CABLE_CHAIN,
-                  fieldsToReset: ["cable_chain_width"],
+                  fieldsToReset: ["energy_chain_width"],
                   invertTrigger: true,
                 },
                 {
@@ -46,7 +46,7 @@ const SupplySection = () => {
             />
             {supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.CABLE_CHAIN && (
               <SelectField
-                name="cable_chain_width"
+                name="energy_chain_width"
                 label="Larghezza catena"
                 items={selectFieldOptions.cableChainWidths}
               />

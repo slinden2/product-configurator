@@ -1,5 +1,5 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   SHAMPOO_PUMP_NO_ALARM: "450.03.022",
@@ -59,7 +59,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.CHEMICAL_PUMP_NO_ALARM,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.chemical_pump_pos === "ABOARD",
       (config) => !config.has_itecoweb,
     ],
     qty: (config) => config.chemical_qty || 0,
@@ -69,7 +69,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.CHEMICAL_PUMP_WITH_ALARM,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.chemical_pump_pos === "ABOARD",
       (config) => config.has_itecoweb,
     ],
     qty: (config) => config.chemical_qty || 0,
@@ -79,7 +79,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.ACID_PUMP_WITH_ALARM,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.ABOARD,
+      (config) => config.acid_pump_pos === "ABOARD",
     ],
     qty: 1,
     _description: "Acid pump, with alarm",
@@ -88,7 +88,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.DOSATRON_NO_ANTIFREEZE,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
       (config) => !config.has_antifreeze,
     ],
     qty: (config) => config.chemical_qty || 0,
@@ -98,7 +98,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.DOSATRON_WITH_ANTIFREEZE,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
       (config) => config.has_antifreeze,
     ],
     qty: (config) => config.chemical_qty || 0,
@@ -108,7 +108,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.DOSATRON_ACID_NO_ANTIFREEZE,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.acid_pump_pos === "WASH_BAY",
       (config) => !config.has_antifreeze,
     ],
     qty: 1,
@@ -118,7 +118,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.DOSATRON_ACID_WITH_ANTIFREEZE,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+      (config) => config.acid_pump_pos === "WASH_BAY",
       (config) => config.has_antifreeze,
     ],
     qty: 1,
@@ -128,24 +128,18 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.FLOAT_SWITCH_FOR_DOSATRON,
     conditions: [
       (config) =>
-        config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY ||
-        config.acid_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY,
+        config.chemical_pump_pos === "WASH_BAY" ||
+        config.acid_pump_pos === "WASH_BAY",
       (config) => config.has_itecoweb,
     ],
     qty: (config) => {
       let qty = 0;
 
-      if (
-        config.has_chemical_pump &&
-        config.chemical_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY
-      ) {
+      if (config.has_chemical_pump && config.chemical_pump_pos === "WASH_BAY") {
         qty = config.chemical_qty || 0;
       }
 
-      if (
-        config.has_acid_pump &&
-        config.acid_pump_pos === $Enums.ChemicalPumpPos.WASH_BAY
-      ) {
+      if (config.has_acid_pump && config.acid_pump_pos === "WASH_BAY") {
         qty = qty + 1;
       }
 

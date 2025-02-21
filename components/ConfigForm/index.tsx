@@ -6,7 +6,6 @@ import { z } from "zod";
 import { configSchema } from "@/validation/configSchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import GeneralSection from "@/components/ConfigForm/GeneralSection";
 import BrushSection from "@/components/ConfigForm/BrushSection";
 import ChemPumpSection from "@/components/ConfigForm/ChemPumpSection";

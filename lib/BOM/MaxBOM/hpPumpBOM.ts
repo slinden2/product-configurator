@@ -1,5 +1,6 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
+import { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 
 const PART_NUMBERS: Record<string, string> = {
   PUMP_15KW: "1100.024.030",
@@ -45,19 +46,17 @@ const usesOMZPump = (config: Configuration): boolean => config.has_omz_pump;
 const usesHPRoofBar = (config: Configuration): boolean => {
   return (
     usesOMZPump(config) &&
-    (config.pump_outlet_omz === $Enums.HpPumpOMZOutletType.HP_ROOF_BAR ||
-      config.pump_outlet_omz ===
-        $Enums.HpPumpOMZOutletType.HP_ROOF_BAR_SPINNERS)
+    (config.pump_outlet_omz === "HP_ROOF_BAR" ||
+      config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS")
   );
 };
 const usesHPDeviationValveKit = (config: Configuration) => {
   return (
-    usesOMZPump(config) &&
-    config.pump_outlet_omz === $Enums.HpPumpOMZOutletType.HP_ROOF_BAR_SPINNERS
+    usesOMZPump(config) && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"
   );
 };
 
-type TOutlet = $Enums.HpPump15kwOutletType | $Enums.HpPump30kwOutletType | null;
+type TOutlet = HpPump15kwOutletType | HpPump30kwOutletType | null;
 const hasOneOutlet = (outlet1: TOutlet, outlet2: TOutlet): boolean => {
   const boolA = !!outlet1;
   const boolB = !!outlet2;
@@ -186,7 +185,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.CHASSIS_WASH
+          "CHASSIS_WASH"
         ),
     ],
     qty: 1,
@@ -199,7 +198,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL
+          "CHASSIS_WASH_HORIZONTAL"
         ),
     ],
     qty: 1,
@@ -212,7 +211,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH_LATERAL_HORIZONTAL
+          "CHASSIS_WASH_LATERAL_HORIZONTAL"
         ),
     ],
     qty: 1,
@@ -225,15 +224,15 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump15kwOutletType.CHASSIS_WASH
+          "CHASSIS_WASH"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH_HORIZONTAL
+          "CHASSIS_WASH_HORIZONTAL"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.CHASSIS_WASH_LATERAL_HORIZONTAL
+          "CHASSIS_WASH_LATERAL_HORIZONTAL"
         ),
     ],
     qty: 1,
@@ -246,7 +245,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.LOW_BARS
+          "LOW_BARS"
         ),
     ],
     qty: 1,
@@ -259,7 +258,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.HIGH_BARS
+          "HIGH_BARS"
         ),
     ],
     qty: 1,
@@ -272,7 +271,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.LOW_SPINNERS
+          "LOW_SPINNERS"
         ),
     ],
     qty: 1,
@@ -285,7 +284,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.LOW_SPINNERS_HIGH_BARS
+          "LOW_SPINNERS_HIGH_BARS"
         ),
     ],
     qty: 1,
@@ -298,7 +297,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.LOW_MEDIUM_SPINNERS
+          "LOW_MEDIUM_SPINNERS"
         ),
     ],
     qty: 1,
@@ -311,7 +310,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.HIGH_MEDIUM_SPINNERS
+          "HIGH_MEDIUM_SPINNERS"
         ),
     ],
     qty: 1,
@@ -334,9 +333,8 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     conditions: [
       usesOMZPump,
       (config) =>
-        config.pump_outlet_omz ===
-          $Enums.HpPumpOMZOutletType.HP_ROOF_BAR_SPINNERS ||
-        config.pump_outlet_omz === $Enums.HpPumpOMZOutletType.SPINNERS,
+        config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS" ||
+        config.pump_outlet_omz === "SPINNERS",
     ],
     qty: 1,
     _description: "High spinners (4x43l)",
@@ -351,7 +349,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
     conditions: [
       usesHPDeviationValveKit,
-      (config) => config.supply_side === $Enums.SupplySide.RIGHT,
+      (config) => config.supply_side === "RIGHT",
     ],
     qty: 1,
     _description: "Hose from right shelf to valve assy (4 spinners)",
@@ -360,7 +358,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
     conditions: [
       usesHPDeviationValveKit,
-      (config) => config.supply_side === $Enums.SupplySide.LEFT,
+      (config) => config.supply_side === "LEFT",
     ],
     qty: 1,
     _description: "Hose from left shelf to valve assy (4 spinners)",
@@ -372,27 +370,27 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.LOW_SPINNERS
+          "LOW_SPINNERS"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.HIGH_BARS
+          "HIGH_BARS"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          $Enums.HpPump15kwOutletType.LOW_BARS
+          "LOW_BARS"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.HIGH_MEDIUM_SPINNERS
+          "HIGH_MEDIUM_SPINNERS"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.LOW_MEDIUM_SPINNERS
+          "LOW_MEDIUM_SPINNERS"
         ) ||
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          $Enums.HpPump30kwOutletType.LOW_SPINNERS_HIGH_BARS
+          "LOW_SPINNERS_HIGH_BARS"
         ),
     ],
     qty: (config) => (uses30kwPump(config) ? 2 : 1),

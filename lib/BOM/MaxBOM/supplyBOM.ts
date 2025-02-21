@@ -1,5 +1,6 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, Configuration } from "@prisma/client";
+import { EnergyChainWidthType } from "@/types";
 
 const PART_NUMBERS: Record<string, string> = {
   STRAIGH_SHELF: "1100.019.000",
@@ -24,29 +25,28 @@ const PART_NUMBERS: Record<string, string> = {
 };
 
 const usesStraightShelf = (config: Configuration): boolean => {
-  return config.supply_type === $Enums.SupplyType.STRAIGHT_SHELF;
+  return config.supply_type === "STRAIGHT_SHELF";
 };
 
 const usesBoom = (config: Configuration): boolean => {
-  return config.supply_type === $Enums.SupplyType.BOOM;
+  return config.supply_type === "BOOM";
 };
 
 const usesPost = (config: Configuration): boolean => {
-  return config.supply_fixing_type === $Enums.SupplyFixingType.POST;
+  return config.supply_fixing_type === "POST";
 };
 
 const usesShelf = (config: Configuration): boolean => {
-  return config.supply_fixing_type === $Enums.SupplyFixingType.WALL;
+  return config.supply_fixing_type === "WALL";
 };
 
 const usesCableChain = (
   config: Configuration,
-  width?: $Enums.CableChainWidth
+  width?: EnergyChainWidthType
 ): boolean => {
-  if (!width) return config.supply_type === $Enums.SupplyType.CABLE_CHAIN;
+  if (!width) return config.supply_type === "CABLE_CHAIN";
   return (
-    config.supply_type === $Enums.SupplyType.CABLE_CHAIN &&
-    config.cable_chain_width === width
+    config.supply_type === "CABLE_CHAIN" && config.energy_chain_width === width
   );
 };
 
@@ -58,13 +58,11 @@ const has15kWPump = (config: Configuration): boolean => {
   return (
     config.has_15kw_pump &&
     ((config.pump_outlet_1_15kw !== null &&
-      config.pump_outlet_1_15kw !== $Enums.HpPump15kwOutletType.CHASSIS_WASH) ||
+      config.pump_outlet_1_15kw !== "CHASSIS_WASH") ||
       (config.pump_outlet_2_15kw !== null &&
-        config.pump_outlet_2_15kw !== $Enums.HpPump15kwOutletType.CHASSIS_WASH))
+        config.pump_outlet_2_15kw !== "CHASSIS_WASH"))
   );
 };
-
-type test = Omit<$Enums.HpPump15kwOutletType, "CHASSIS_WASH">;
 
 export const supplyBOM: MaxBOMItem<Configuration>[] = [
   // Straight shelf
@@ -179,51 +177,37 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
   },
   {
     pn: PART_NUMBERS.CHAIN_150,
-    conditions: [
-      (config) => usesCableChain(config, $Enums.CableChainWidth.L150),
-    ],
+    conditions: [(config) => usesCableChain(config, "L150")],
     qty: 1,
     _description: "Cable chain (150mm)",
   },
   {
     pn: PART_NUMBERS.CHAIN_200,
-    conditions: [
-      (config) => usesCableChain(config, $Enums.CableChainWidth.L200),
-    ],
+    conditions: [(config) => usesCableChain(config, "L200")],
     qty: 1,
     _description: "Cable chain (200mm)",
   },
   {
     pn: PART_NUMBERS.CHAIN_250,
-    conditions: [
-      (config) => usesCableChain(config, $Enums.CableChainWidth.L250),
-    ],
+    conditions: [(config) => usesCableChain(config, "L250")],
     qty: 1,
     _description: "Cable chain (250mm)",
   },
   {
     pn: PART_NUMBERS.CHAIN_300,
-    conditions: [
-      (config) => usesCableChain(config, $Enums.CableChainWidth.L300),
-    ],
+    conditions: [(config) => usesCableChain(config, "L300")],
     qty: 1,
     _description: "Cable chain (300mm)",
   },
   {
     pn: PART_NUMBERS.REINFORCED_SHELF_ASSY_L,
-    conditions: [
-      usesCableChain,
-      (config) => config.supply_side === $Enums.SupplySide.LEFT,
-    ],
+    conditions: [usesCableChain, (config) => config.supply_side === "LEFT"],
     qty: 1,
     _description: "Reinforced shelf (L)",
   },
   {
     pn: PART_NUMBERS.REINFORCED_SHELF_ASSY_R,
-    conditions: [
-      usesCableChain,
-      (config) => config.supply_side === $Enums.SupplySide.RIGHT,
-    ],
+    conditions: [usesCableChain, (config) => config.supply_side === "RIGHT"],
     qty: 1,
     _description: "Reinforced shelf (R)",
   },

@@ -1,12 +1,12 @@
 import DataTable from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
-import { getConfigurationsForDataTable } from "@/prisma/db";
+import { getAllConfigurations } from "@/db/queries";
 import { CirclePlus } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 const Configurations = async () => {
-  const configurations = await getConfigurationsForDataTable();
+  const configurations = await getAllConfigurations();
 
   return (
     <div className="space-y-3">

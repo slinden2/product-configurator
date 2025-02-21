@@ -2,6 +2,14 @@ import { SelectOption } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+type WithId = { id: number };
+
+export type ArrayDifferenceOutput<T> = {
+  added: Omit<T, "id" | "created_at" | "updated_at">[];
+  same: T[];
+  removed: T[];
+};
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -23,12 +31,10 @@ export function formatDateDDMMYYHHMMSS(date: Date): string {
   });
 }
 
-type WithId = { id: number };
-
-export function differenceInTwoArrays<K, T>(
+export function differenceInTwoArrays<T>(
   prevArray: T[],
   newArray: T[]
-): { added: Omit<T, "id">[]; same: T[]; removed: T[] } {
+): ArrayDifferenceOutput<T> {
   const isWithId = (item: T): item is T & WithId => {
     return (item as WithId).id !== undefined;
   };

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { configSchema } from "@/validation/configSchema";
-import prisma from "@/prisma/db";
 import { differenceInTwoArrays } from "@/lib/utils";
+import { getOneConfiguration, updateConfiguration } from "@/db/queries";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -16,10 +16,7 @@ export async function PATCH(request: NextRequest, props: Props) {
     return NextResponse.json(validation.error.format(), { status: 400 });
   }
 
-  const configuration = await prisma.configuration.findUnique({
-    where: { id: parseInt(params.id) },
-    include: { water_tanks: true, wash_bays: true },
-  });
+  const configuration = await getOneConfiguration(parseInt(params.id));
 
   if (!configuration) {
     return NextResponse.json(
@@ -40,57 +37,14 @@ export async function PATCH(request: NextRequest, props: Props) {
     body.wash_bays as typeof configuration.wash_bays
   );
 
-  await prisma.$transaction([
-    prisma.configuration.update({
-      where: { id: configuration.id },
-      data: {
-        ...configurationData,
-        water_tanks: {
-          create: waterTankData.added,
-          deleteMany: waterTankData.removed.map((item) => ({ id: item.id })),
-        },
-        wash_bays: {
-          create: washBayData.added,
-          deleteMany: washBayData.removed.map((item) => ({ id: item.id })),
-        },
-      },
-      select: null,
-    }),
-    ...waterTankData.same.map((item) => {
-      return prisma.waterTank.update({
-        where: {
-          id: item.id,
-        },
-        data: item,
-        select: null,
-      });
-    }),
-    ...washBayData.same.map((item) => {
-      return prisma.washBay.update({
-        where: {
-          id: item.id,
-        },
-        data: item,
-        select: null,
-      });
-    }),
-  ]);
+  const response = await updateConfiguration(
+    configurationData,
+    waterTankData,
+    washBayData
+  );
 
-  const response = await prisma.configuration.findUnique({
-    where: { id: configuration.id },
-    include: {
-      water_tanks: {
-        orderBy: {
-          id: "asc",
-        },
-      },
-      wash_bays: {
-        orderBy: {
-          id: "asc",
-        },
-      },
-    },
-  });
-
-  return NextResponse.json(response, { status: 201 });
+  return NextResponse.json(
+    { message: `Configurazione (id=${response.id}) aggiornata` },
+    { status: 201 }
+  );
 }

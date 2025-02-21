@@ -1,43 +1,32 @@
+import { db } from "@/db";
+import { partNumbers } from "@/db/schemas";
 import { fetchPartNumbersFromTSE } from "@/lib/dbSync/tse";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { sql } from "drizzle-orm";
 
 async function batchUpsert() {
   console.log("Starting batchUpsert function...");
 
   console.time("Fetch records from TSE");
-  const partNumbers = await fetchPartNumbersFromTSE();
+  const rawPartNumbers = await fetchPartNumbersFromTSE();
   console.timeEnd("Fetch records from TSE");
 
-  if (partNumbers) {
-    const values = partNumbers
-      .map(
-        (item) =>
-          `('${item.pn.trim()}', '${item.description
-            .trim()
-            .replaceAll("'", "''")}')`
-      )
-      .join(",");
-
-    const sql = `
-      INSERT INTO "part_numbers" (pn, description)
-      VALUES ${values}
-      ON CONFLICT (pn) DO UPDATE SET description = EXCLUDED.description;
-    `;
-
-    // console.log(sql);
+  if (rawPartNumbers) {
+    const cleanPartNumbers = rawPartNumbers.map((obj) => ({
+      pn: obj.pn.trim(),
+      description: obj.description.trim(),
+    }));
 
     console.time("Update records in Supabase");
-    await prisma.$executeRawUnsafe(sql);
+    await db
+      .insert(partNumbers)
+      .values(cleanPartNumbers)
+      .onConflictDoUpdate({
+        target: partNumbers.pn,
+        set: { description: sql`excluded.description` },
+      });
     console.timeEnd("Update records in Supabase");
     console.log("Bulk upsert completed using raw SQL.");
   }
 }
 
-batchUpsert()
-  .then(() => prisma.$disconnect())
-  .catch((error) => {
-    console.error(error);
-    prisma.$disconnect();
-  });
+await batchUpsert();

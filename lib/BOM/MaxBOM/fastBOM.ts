@@ -1,5 +1,5 @@
+import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { Configuration } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   ADDITIONAL_LATERAL_RINSE_BARS: "450.65.000",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { configSchema } from "@/validation/configSchema";
-import prisma from "@/prisma/db";
+import { insertConfiguration } from "@/db/queries";
+import { DatabaseError } from "pg";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -16,17 +17,25 @@ export async function POST(request: NextRequest) {
     ...configurationData
   } = body;
 
-  const newConfiguration = await prisma.configuration.create({
-    data: {
-      ...configurationData,
-      water_tanks: { create: waterTankData },
-      wash_bays: { create: washBayData },
-    },
-    include: {
-      water_tanks: true,
-      wash_bays: true,
-    },
-  });
+  try {
+    const response = await insertConfiguration(
+      configurationData,
+      waterTankData,
+      washBayData
+    );
+    return NextResponse.json(response, { status: 201 });
+  } catch (err) {
+    if (err instanceof DatabaseError) {
+      console.error(err);
+      return NextResponse.json(
+        { code: err.code, message: err.message },
+        { status: 500 }
+      );
+    }
 
-  return NextResponse.json(newConfiguration, { status: 201 });
+    if (err instanceof Error) {
+      console.error("Unknown error: ", err);
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+  }
 }

@@ -1,5 +1,5 @@
+import { WaterTank } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/MaxBOM";
-import { $Enums, WaterTank } from "@prisma/client";
 
 const PART_NUMBERS: Record<string, string> = {
   WATER_TANK_2000L: "921.00.201",
@@ -17,31 +17,30 @@ const PART_NUMBERS: Record<string, string> = {
   BLOWER: "1100.064.009",
 };
 
-const usesJolly = (config: WaterTank) =>
-  config.type === $Enums.WaterTankType.L2000_JOLLY;
+const usesJolly = (config: WaterTank) => config.type === "L2000_JOLLY";
 
 export const waterTankBOM: MaxBOMItem<WaterTank>[] = [
   {
     pn: PART_NUMBERS.WATER_TANK_2000L,
-    conditions: [(config) => config.type === $Enums.WaterTankType.L2000],
+    conditions: [(config) => config.type === "L2000"],
     qty: 1,
     _description: "Water tank, 2000L",
   },
   {
     pn: PART_NUMBERS.WATER_TANK_JOLLY,
-    conditions: [(config) => config.type === $Enums.WaterTankType.L2000_JOLLY],
+    conditions: [(config) => config.type === "L2000_JOLLY"],
     qty: 1,
     _description: "Water tank, Jolly",
   },
   {
     pn: PART_NUMBERS.WATER_TANK_2500L,
-    conditions: [(config) => config.type === $Enums.WaterTankType.L2500],
+    conditions: [(config) => config.type === "L2500"],
     qty: 1,
     _description: "Water tank, 2500L",
   },
   {
     pn: PART_NUMBERS.WATER_TANK_4500L,
-    conditions: [(config) => config.type === $Enums.WaterTankType.L4500],
+    conditions: [(config) => config.type === "L4500"],
     qty: 1,
     _description: "Water tank, 4500L",
   },

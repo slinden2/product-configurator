@@ -58,19 +58,19 @@ const supplyTypeDiscriminatedUnion = z.discriminatedUnion("supply_type", [
     supply_type: z.literal(SupplyTypeEnum.enum.STRAIGHT_SHELF),
     supply_fixing_type: SupplyFixingTypeEnum.nullable(),
     has_post_frame: z.coerce.boolean(),
-    cable_chain_width: mustBeUndefined(),
+    energy_chain_width: mustBeUndefined(),
   }),
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.BOOM),
     supply_fixing_type: SupplyFixingTypeEnum,
     has_post_frame: z.coerce.boolean(),
-    cable_chain_width: mustBeUndefined(),
+    energy_chain_width: mustBeUndefined(),
   }),
   z.object({
     supply_type: z.literal(SupplyTypeEnum.enum.CABLE_CHAIN),
     supply_fixing_type: SupplyFixingTypeEnum,
     has_post_frame: mustBeFalse(),
-    cable_chain_width: CableChainWidthEnum,
+    energy_chain_width: CableChainWidthEnum,
   }),
 ]);
 

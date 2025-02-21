@@ -5,7 +5,7 @@ import HeaderH2 from "@/components/HeaderH2";
 import HeaderH3 from "@/components/HeaderH3";
 import HeaderH4 from "@/components/HeaderH4";
 import { Button } from "@/components/ui/button";
-import { getBOM } from "@/prisma/db";
+import { getBOM } from "@/db/queries";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react";
@@ -16,7 +16,7 @@ interface BOMViewProps {
 
 const BOMView = async (props: BOMViewProps) => {
   const params = await props.params;
-  const bom = await getBOM(params.id);
+  const bom = await getBOM(parseInt(params.id));
 
   if (!bom) return <div>Unable to find BOM</div>;
 
