@@ -1,0 +1,852 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.water_tanks": {
+      "name": "water_tanks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "water_tanks_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "water_tank_type": {
+          "name": "water_tank_type",
+          "type": "water_tank_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inlet_w_float_qty": {
+          "name": "inlet_w_float_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inlet_no_float_qty": {
+          "name": "inlet_no_float_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outlet_w_valve_qty": {
+          "name": "outlet_w_valve_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outlet_no_valve_qty": {
+          "name": "outlet_no_valve_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_blower": {
+          "name": "has_blower",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "configuration_id": {
+          "name": "configuration_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "water_tanks_configuration_id_configurations_id_fk": {
+          "name": "water_tanks_configuration_id_configurations_id_fk",
+          "tableFrom": "water_tanks",
+          "tableTo": "configurations",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "configuration_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.part_numbers": {
+      "name": "part_numbers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "part_numbers_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "pn": {
+          "name": "pn",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "part_numbers_pn_unique": {
+          "columns": [
+            "pn"
+          ],
+          "nullsNotDistinct": false,
+          "name": "part_numbers_pn_unique"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.configurations": {
+      "name": "configurations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "configurations_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "brush_qty": {
+          "name": "brush_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "brush_type": {
+          "name": "brush_type",
+          "type": "brush_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "brush_color": {
+          "name": "brush_color",
+          "type": "brush_color",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_shampoo_pump": {
+          "name": "has_shampoo_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_wax_pump": {
+          "name": "has_wax_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_chemical_pump": {
+          "name": "has_chemical_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chemical_qty": {
+          "name": "chemical_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chemical_pump_pos": {
+          "name": "chemical_pump_pos",
+          "type": "chemical_pump_pos",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_foam": {
+          "name": "has_foam",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_acid_pump": {
+          "name": "has_acid_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "acid_pump_pos": {
+          "name": "acid_pump_pos",
+          "type": "chemical_pump_pos",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_1_type": {
+          "name": "water_1_type",
+          "type": "water_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "water_1_pump_type": {
+          "name": "water_1_pump_type",
+          "type": "water_1_pump_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inv_pump_outlet_dosatron_qty": {
+          "name": "inv_pump_outlet_dosatron_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inv_pump_outlet_pw_qty": {
+          "name": "inv_pump_outlet_pw_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_2_type": {
+          "name": "water_2_type",
+          "type": "water_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_2_pump_type": {
+          "name": "water_2_pump_type",
+          "type": "water_2_pump_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_antifreeze": {
+          "name": "has_antifreeze",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supply_type": {
+          "name": "supply_type",
+          "type": "supply_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supply_fix_type": {
+          "name": "supply_fix_type",
+          "type": "supply_fix_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supply_side": {
+          "name": "supply_side",
+          "type": "supply_side",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_post_frame": {
+          "name": "has_post_frame",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "energy_chain_width": {
+          "name": "energy_chain_width",
+          "type": "energy_chain_width",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rail_type": {
+          "name": "rail_type",
+          "type": "rail_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rail_length": {
+          "name": "rail_length",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rail_guide_qty": {
+          "name": "rail_guide_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touch_qty": {
+          "name": "touch_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touch_pos": {
+          "name": "touch_pos",
+          "type": "touch_pos",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "touch_fix_type": {
+          "name": "touch_fix_type",
+          "type": "touch_fix_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_itecoweb": {
+          "name": "has_itecoweb",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_card_reader": {
+          "name": "has_card_reader",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_fast": {
+          "name": "is_fast",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "card_qty": {
+          "name": "card_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_15kw_pump": {
+          "name": "has_15kw_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pump_outlet_1_15kw": {
+          "name": "pump_outlet_1_15kw",
+          "type": "hp_pump_15kw_outlet_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pump_outlet_2_15kw": {
+          "name": "pump_outlet_2_15kw",
+          "type": "hp_pump_15kw_outlet_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_30kw_pump": {
+          "name": "has_30kw_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pump_outlet_1_30kw": {
+          "name": "pump_outlet_1_30kw",
+          "type": "hp_pump_30kw_outlet_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pump_outlet_2_30kw": {
+          "name": "pump_outlet_2_30kw",
+          "type": "hp_pump_30kw_outlet_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_omz_pump": {
+          "name": "has_omz_pump",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pump_outlet_omz": {
+          "name": "pump_outlet_omz",
+          "type": "hp_pump_omz_outlet_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_chemical_roof_bar": {
+          "name": "has_chemical_roof_bar",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "configuration_status": {
+          "name": "configuration_status",
+          "type": "configuration_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DRAFT'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.wash_bays": {
+      "name": "wash_bays",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "wash_bays_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "hp_lance_qty": {
+          "name": "hp_lance_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "det_lance_qty": {
+          "name": "det_lance_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hose_reel_qty": {
+          "name": "hose_reel_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pressure_washer_type": {
+          "name": "pressure_washer_type",
+          "type": "pressure_washer_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pressure_washer_qty": {
+          "name": "pressure_washer_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_gantry": {
+          "name": "has_gantry",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_first_bay": {
+          "name": "is_first_bay",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "has_bay_dividers": {
+          "name": "has_bay_dividers",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "configuration_id": {
+          "name": "configuration_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wash_bays_configuration_id_configurations_id_fk": {
+          "name": "wash_bays_configuration_id_configurations_id_fk",
+          "tableFrom": "wash_bays",
+          "tableTo": "configurations",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "configuration_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.user_profiles": {
+      "name": "user_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "auth.uid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_profiles_email_key": {
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false,
+          "name": "user_profiles_email_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {
+    "public.brush_color": {
+      "name": "brush_color",
+      "values": [
+        "BLUE_SILVER",
+        "GREEN_SILVER",
+        "RED",
+        "GREEN_BLACK"
+      ],
+      "schema": "public"
+    },
+    "public.brush_type": {
+      "name": "brush_type",
+      "values": [
+        "THREAD",
+        "MIXED",
+        "CARLITE"
+      ],
+      "schema": "public"
+    },
+    "public.chemical_pump_pos": {
+      "name": "chemical_pump_pos",
+      "values": [
+        "ABOARD",
+        "WASH_BAY"
+      ],
+      "schema": "public"
+    },
+    "public.configuration_status": {
+      "name": "configuration_status",
+      "values": [
+        "DRAFT",
+        "OPEN",
+        "LOCKED",
+        "CLOSED"
+      ],
+      "schema": "public"
+    },
+    "public.energy_chain_width": {
+      "name": "energy_chain_width",
+      "values": [
+        "L150",
+        "L200",
+        "L250",
+        "L300"
+      ],
+      "schema": "public"
+    },
+    "public.hp_pump_15kw_outlet_type": {
+      "name": "hp_pump_15kw_outlet_type",
+      "values": [
+        "CHASSIS_WASH",
+        "LOW_SPINNERS",
+        "LOW_BARS",
+        "HIGH_BARS"
+      ],
+      "schema": "public"
+    },
+    "public.hp_pump_30kw_outlet_type": {
+      "name": "hp_pump_30kw_outlet_type",
+      "values": [
+        "CHASSIS_WASH_HORIZONTAL",
+        "CHASSIS_WASH_LATERAL_HORIZONTAL",
+        "LOW_SPINNERS_HIGH_BARS",
+        "LOW_MEDIUM_SPINNERS",
+        "HIGH_MEDIUM_SPINNERS"
+      ],
+      "schema": "public"
+    },
+    "public.hp_pump_omz_outlet_type": {
+      "name": "hp_pump_omz_outlet_type",
+      "values": [
+        "HP_ROOF_BAR",
+        "SPINNERS",
+        "HP_ROOF_BAR_SPINNERS"
+      ],
+      "schema": "public"
+    },
+    "public.pressure_washer_type": {
+      "name": "pressure_washer_type",
+      "values": [
+        "L21_150BAR",
+        "L21_200BAR"
+      ],
+      "schema": "public"
+    },
+    "public.rail_type": {
+      "name": "rail_type",
+      "values": [
+        "DOWELED",
+        "WELDED"
+      ],
+      "schema": "public"
+    },
+    "public.supply_fix_type": {
+      "name": "supply_fix_type",
+      "values": [
+        "POST",
+        "WALL"
+      ],
+      "schema": "public"
+    },
+    "public.supply_side": {
+      "name": "supply_side",
+      "values": [
+        "TBD",
+        "LEFT",
+        "RIGHT"
+      ],
+      "schema": "public"
+    },
+    "public.supply_type": {
+      "name": "supply_type",
+      "values": [
+        "STRAIGHT_SHELF",
+        "BOOM",
+        "CABLE_CHAIN"
+      ],
+      "schema": "public"
+    },
+    "public.touch_fix_type": {
+      "name": "touch_fix_type",
+      "values": [
+        "POST",
+        "WALL"
+      ],
+      "schema": "public"
+    },
+    "public.touch_pos": {
+      "name": "touch_pos",
+      "values": [
+        "INTERNAL",
+        "EXTERNAL"
+      ],
+      "schema": "public"
+    },
+    "public.water_1_pump_type": {
+      "name": "water_1_pump_type",
+      "values": [
+        "BOOST_15KW",
+        "BOOST_22KW",
+        "INV_3KW_200L",
+        "INV_3KW_250L"
+      ],
+      "schema": "public"
+    },
+    "public.water_2_pump_type": {
+      "name": "water_2_pump_type",
+      "values": [
+        "BOOST_15KW",
+        "BOOST_22KW"
+      ],
+      "schema": "public"
+    },
+    "public.water_tank_type": {
+      "name": "water_tank_type",
+      "values": [
+        "L2000",
+        "L2000_JOLLY",
+        "L2500",
+        "L4500"
+      ],
+      "schema": "public"
+    },
+    "public.water_type": {
+      "name": "water_type",
+      "values": [
+        "NETWORK",
+        "RECYCLED",
+        "DEMINERALIZED"
+      ],
+      "schema": "public"
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}

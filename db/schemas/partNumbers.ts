@@ -14,4 +14,4 @@ export const partNumbers = pgTable("part_numbers", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}).enableRLS();

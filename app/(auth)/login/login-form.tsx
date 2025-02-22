@@ -10,7 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/InputField";
 import CheckboxField from "@/components/CheckboxField";
 import { LoginFormData, loginSchema } from "@/validation/authSchema";
-import { redirect } from "next/navigation";
+import { signIn } from "@/app/actions/auth";
+import { useRouter } from "next/navigation";
 
 const initialState = {
   success: "",
@@ -25,11 +26,12 @@ const LoginForm = () => {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+  const router = useRouter();
 
   const onSubmit = async (formData: LoginFormData) => {
-    const response = await login(formData);
-    if (response.success) {
-      redirect("/configurations");
+    const response = await signIn(formData);
+    if (response.status === "success") {
+      router.push("/configurations");
     } else {
       console.error(response);
     }

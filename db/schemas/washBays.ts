@@ -37,7 +37,7 @@ export const washBays = pgTable("wash_bays", {
   configuration_id: integer("configuration_id")
     .references(() => configurations.id, { onDelete: "cascade" })
     .notNull(),
-});
+}).enableRLS();
 
 export const washBaysRelations = relations(washBays, ({ one }) => ({
   configuration: one(configurations, {

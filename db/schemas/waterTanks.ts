@@ -32,7 +32,7 @@ export const waterTanks = pgTable("water_tanks", {
   configuration_id: integer("configuration_id")
     .references(() => configurations.id, { onDelete: "cascade" })
     .notNull(),
-});
+}).enableRLS();
 
 export const waterTanksRelations = relations(waterTanks, ({ one }) => ({
   configuration: one(configurations, {

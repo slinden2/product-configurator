@@ -129,7 +129,7 @@ export const configurations = pgTable("configurations", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}).enableRLS();
 
 export const configurationsRelations = relations(
   configurations,

@@ -9,8 +9,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/InputField";
 import { SignupFormData, signupSchema } from "@/validation/authSchema";
-import { redirect } from "next/navigation";
-import { signup } from "@/app/actions/signup";
+import { useRouter } from "next/navigation";
+import { signUp } from "@/app/actions/auth";
 
 const initialState = {
   success: "",
@@ -25,11 +25,12 @@ const SignupForm = () => {
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
+  const router = useRouter();
 
   const onSubmit = async (formData: SignupFormData) => {
-    const response = await signup(formData);
-    if (response.success) {
-      redirect("/login");
+    const response = await signUp(formData);
+    if (response.status === "success") {
+      router.push("/login");
     } else {
       console.error(response);
     }
