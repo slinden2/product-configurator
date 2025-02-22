@@ -7,11 +7,12 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
+import { LoginFormData } from "@/validation/authSchema";
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
 interface CheckboxFieldProps {
-  name: keyof ConfigFormData;
+  name: keyof ConfigFormData | keyof LoginFormData;
   label: string;
   description?: string;
   fieldsToResetOnUncheck?: Array<keyof ConfigFormData>;
@@ -27,7 +28,7 @@ const CheckboxField = ({
   return (
     <FormField
       control={control}
-      name={name}
+      name={name.toString()}
       render={({ field }) => {
         if (field.value === undefined) field.value = false;
         return (

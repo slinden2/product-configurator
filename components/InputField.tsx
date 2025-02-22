@@ -11,26 +11,32 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ConfigFormData } from "@/components/ConfigForm";
+import { LoginFormData } from "@/validation/authSchema";
 
 interface InputFieldProps {
-  name: keyof ConfigFormData;
+  name: keyof ConfigFormData | keyof LoginFormData;
   label: string;
   placeholder: string;
+  type?: string;
 }
 
-const InputField = ({ name, label, placeholder }: InputFieldProps) => {
+const InputField = ({ name, label, placeholder, type }: InputFieldProps) => {
   const { control } = useFormContext();
   return (
     <FormField
       control={control}
-      name={name}
+      name={name.toString()}
       defaultValue=""
       render={({ field }) => {
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <FormControl>
-              <Input placeholder={placeholder} {...field} />
+              <Input
+                type={type ? type : "text"}
+                placeholder={placeholder}
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

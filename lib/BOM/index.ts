@@ -11,7 +11,7 @@ import {
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/MaxBOM";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export interface BOMItem {
   pn: string;
@@ -151,25 +151,26 @@ export class BOM {
     maxBOM: MaxBOMItem<T>[],
     configuration: T
   ): Promise<BOMItemWithDescription[]> {
+    const filteredBOMItems = maxBOM.filter((item) =>
+      item.conditions.every((conditionFn) => conditionFn(configuration))
+    );
+
+    const pns = filteredBOMItems.map((item) => item.pn);
+    const pnData = await db.query.partNumbers.findMany({
+      where: inArray(partNumbers.pn, pns),
+    });
+
     return await Promise.all(
-      maxBOM
-        .filter((item) =>
-          item.conditions.every((conditionFn) => conditionFn(configuration))
-        )
-        .map(async (item) => {
-          const partNumber = await db.query.partNumbers.findFirst({
-            where: eq(partNumbers.pn, item.pn),
-          });
-          return {
-            pn: item.pn,
-            qty:
-              typeof item.qty === "function"
-                ? item.qty(configuration)
-                : item.qty,
-            _description: item._description,
-            description: partNumber?.description || "N/A",
-          };
-        })
+      filteredBOMItems.map(async (item) => {
+        return {
+          pn: item.pn,
+          qty:
+            typeof item.qty === "function" ? item.qty(configuration) : item.qty,
+          _description: item._description,
+          description:
+            pnData.find((pn) => pn.pn === item.pn)?.description || "N/A",
+        };
+      })
     );
   }
 

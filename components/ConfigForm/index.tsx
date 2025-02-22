@@ -17,7 +17,7 @@ import HPPumpSection from "@/components/ConfigForm/HPPumpSection";
 import WaterTankSection from "@/components/ConfigForm/WaterTankSection";
 import WashBaySection from "@/components/ConfigForm/WashBaySection";
 import BackButton from "@/components/BackButton";
-import { redirectTo } from "@/app/actions";
+import { redirectTo } from "@/app/actions/redirectTo";
 import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
 import { Save } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
