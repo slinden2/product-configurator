@@ -1,5 +1,8 @@
+import { db } from "@/db";
 import { insertConfiguration } from "@/db/queries";
+import { userProfiles } from "@/db/schemas";
 import { configSchema } from "@/validation/configSchema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const configurationSimple: z.infer<typeof configSchema> = {
@@ -192,7 +195,22 @@ async function seedDb() {
     configurationFast,
   ];
 
-  for (const conf of confArr) {
+  const user = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.email, "samu@itecosrl.com"),
+  });
+
+  if (!user) {
+    throw new Error("Admin user not found.");
+  }
+
+  const confArrWithUserId = confArr.map(
+    (conf): z.infer<typeof configSchema> & { user_id: string } => ({
+      ...conf,
+      user_id: user.id,
+    })
+  );
+
+  for (const conf of confArrWithUserId) {
     await insertConfiguration(conf, conf.water_tanks, conf.wash_bays);
   }
 }

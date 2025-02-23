@@ -1,4 +1,5 @@
-import { sql } from "drizzle-orm";
+import { configurations } from "@/db/schemas/configurations";
+import { relations, sql } from "drizzle-orm";
 import {
   pgPolicy,
   pgTable,
@@ -32,3 +33,7 @@ export const userProfiles = pgTable(
     }),
   ]
 );
+
+export const usersProfilesRelations = relations(userProfiles, ({ many }) => ({
+  configurations: many(configurations),
+}));

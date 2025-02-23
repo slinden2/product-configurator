@@ -1,3 +1,4 @@
+import { userProfiles } from "@/db/schemas/userProfiles";
 import { WashBay, washBays } from "@/db/schemas/washBays";
 import { WaterTank, waterTanks } from "@/db/schemas/waterTanks";
 import {
@@ -26,6 +27,7 @@ import {
   pgEnum,
   pgTable,
   timestamp,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -122,6 +124,9 @@ export const configurations = pgTable("configurations", {
   status: configurationStatusEnum("configuration_status")
     .default("DRAFT")
     .notNull(),
+  user_id: uuid("user_id")
+    .references(() => userProfiles.id, { onDelete: "cascade" })
+    .notNull(),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()
     .defaultNow(),
@@ -133,7 +138,11 @@ export const configurations = pgTable("configurations", {
 
 export const configurationsRelations = relations(
   configurations,
-  ({ many }) => ({
+  ({ many, one }) => ({
+    user: one(userProfiles, {
+      fields: [configurations.user_id],
+      references: [userProfiles.id],
+    }),
     water_tanks: many(waterTanks),
     wash_bays: many(washBays),
   })

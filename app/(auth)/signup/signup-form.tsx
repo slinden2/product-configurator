@@ -43,6 +43,12 @@ const SignupForm = () => {
           placeholder="Inserire la password"
           type="password"
         />
+        <InputField
+          name="confirmPassword"
+          label="Password"
+          placeholder="Inserire la password"
+          type="password"
+        />
         <Button>
           {form.formState.isSubmitting ? <Spinner /> : "Registra"}
         </Button>
