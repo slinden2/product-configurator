@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.includes("/login") &&
     !request.nextUrl.pathname.includes("/signup") &&
     !request.nextUrl.pathname.includes("/recupera-password") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !request.nextUrl.pathname.includes("/resetta-password")
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();

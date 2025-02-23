@@ -7,18 +7,22 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/InputField";
-import { SignupFormData, signupSchema } from "@/validation/authSchema";
-import { useRouter } from "next/navigation";
-import { signUp } from "@/app/actions/auth";
+import {
+  NewPassWordFormData,
+  newPassWordSchema,
+} from "@/validation/authSchema";
+import { useRouter, useSearchParams } from "next/navigation";
+import { resetPassword } from "@/app/actions/auth";
 
-const SignupForm = () => {
-  const form = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
+const ResetPasswordForm = () => {
+  const form = useForm<NewPassWordFormData>({
+    resolver: zodResolver(newPassWordSchema),
   });
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const onSubmit = async (formData: SignupFormData) => {
-    const response = await signUp(formData);
+  const onSubmit = async (formData: NewPassWordFormData) => {
+    const response = await resetPassword(formData, searchParams.get("code"));
     if (response.status === "success") {
       router.push("/login");
     } else {
@@ -32,23 +36,23 @@ const SignupForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6">
         <InputField
-          name="email"
-          label="Email"
-          placeholder="Inserire la email"
-          type="email"
-        />
-        <InputField
           name="password"
           label="Password"
           placeholder="Inserire la password"
           type="password"
         />
+        <InputField
+          name="confirmPassword"
+          label="Password"
+          placeholder="Inserire la password"
+          type="password"
+        />
         <Button>
-          {form.formState.isSubmitting ? <Spinner /> : "Registra"}
+          {form.formState.isSubmitting ? <Spinner /> : "Resetta la password"}
         </Button>
       </form>
     </Form>
   );
 };
 
-export default SignupForm;
+export default ResetPasswordForm;

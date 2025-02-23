@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ConfigFormData } from "@/components/ConfigForm";
-import { LoginFormData } from "@/validation/authSchema";
+import { LoginFormData, NewPassWordFormData } from "@/validation/authSchema";
 
 interface InputFieldProps {
-  name: keyof ConfigFormData | keyof LoginFormData;
+  name: keyof ConfigFormData | keyof LoginFormData | keyof NewPassWordFormData;
   label: string;
   placeholder: string;
   type?: string;

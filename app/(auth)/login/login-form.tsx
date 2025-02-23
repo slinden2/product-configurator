@@ -1,6 +1,5 @@
 "use client";
 
-import { login } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
@@ -54,7 +53,7 @@ const LoginForm = () => {
           placeholder="Inserire la password"
           type="password"
         />
-        <CheckboxField name="rememberme" label="Ricordami" />
+        <CheckboxField name="rememberMe" label="Ricordami" />
         <Button>{form.formState.isSubmitting ? <Spinner /> : "Accedi"}</Button>
       </form>
     </Form>

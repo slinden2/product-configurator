@@ -1,6 +1,5 @@
 "use client";
 
-import { login } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,8 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/InputField";
 import { AuthFormData, authSchema } from "@/validation/authSchema";
-import { redirect } from "next/navigation";
-import { forogtPassword } from "@/app/actions/forgot-password";
+import { useRouter } from "next/navigation";
+import { forgotPassword } from "@/app/actions/auth";
 
 const initialState = {
   success: "",
@@ -25,11 +24,13 @@ const ForgotPasswordForm = () => {
   const form = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
   });
+  const router = useRouter();
 
   const onSubmit = async (formData: AuthFormData) => {
-    const response = await forogtPassword(formData);
-    if (response.success) {
-      redirect("/login");
+    const response = await forgotPassword(formData);
+    if (response.status === "success") {
+      alert("Email per resettare la password inviata.");
+      router.push("/login");
     } else {
       console.error(response);
     }

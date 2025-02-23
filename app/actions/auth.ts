@@ -5,10 +5,29 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
-import { LoginFormData, SignupFormData } from "@/validation/authSchema";
+import {
+  AuthFormData,
+  LoginFormData,
+  NewPassWordFormData,
+  SignupFormData,
+} from "@/validation/authSchema";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { userProfiles } from "@/db/schemas";
+
+export async function getUserSession() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    return null;
+  }
+
+  return {
+    status: "success",
+    user: data?.user,
+  };
+}
 
 export async function signUp(formData: SignupFormData) {
   const supabase = await createClient();
@@ -102,4 +121,56 @@ export async function signOut() {
 
   revalidatePath("/", "layout");
   redirect("/login");
+}
+
+export async function forgotPassword(formData: AuthFormData) {
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin");
+
+  const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+    redirectTo: `${origin}/resetta-password`,
+  });
+
+  if (error) {
+    return {
+      status: error.message,
+      user: null,
+    };
+  }
+
+  return {
+    status: "success",
+  };
+}
+
+export async function resetPassword(
+  formData: NewPassWordFormData,
+  code: string | null
+) {
+  if (!code) {
+    return {
+      status: "Codice mancante",
+    };
+  }
+
+  const supabase = await createClient();
+  const { error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (codeError) {
+    return {
+      status: codeError.message,
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: formData.password,
+  });
+
+  if (error) {
+    return {
+      status: error.message,
+    };
+  }
+
+  return { status: "success" };
 }
