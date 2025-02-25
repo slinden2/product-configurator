@@ -90,6 +90,9 @@ export const ConfigurationStatus = [
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 
+export const Roles = ["ADMIN", "INTERNAL", "EXTERNAL"] as const;
+export type Role = (typeof Roles)[number];
+
 export interface SelectOption {
   value: string | number;
   label: string;

@@ -16,7 +16,6 @@ export const newPassWordSchema = z
 
 export const loginSchema = authSchema.extend({
   password: z.string(),
-  rememberMe: z.boolean().default(false),
 });
 
 export const signupSchema = authSchema.and(newPassWordSchema);

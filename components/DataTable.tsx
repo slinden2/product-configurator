@@ -37,46 +37,52 @@ const DataTable = ({ configurations }: DataTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {configurations
-              ? configurations.map((configuration) => (
-                  <TableRow key={configuration.id}>
-                    <TableCell className="text-center">
-                      {configuration.id}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <ConfigurationStatusBadge status={configuration.status} />
-                    </TableCell>
-                    <TableCell>{configuration.name}</TableCell>
-                    <TableCell>{configuration.description}</TableCell>
-                    <TableCell className="text-center">
-                      {formatDateDDMMYYHHMMSS(configuration.created_at)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {formatDateDDMMYYHHMMSS(configuration.updated_at)}
-                    </TableCell>
-                    <TableCell className="flex gap-2">
-                      <Link href={`/configurations/edit/${configuration.id}`}>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="hover:bg-background"
-                          title="Modifica configurazione">
-                          <Pencil />
-                        </Button>
-                      </Link>
-                      <Link href={`/configurations/bom/${configuration.id}`}>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="hover:bg-background"
-                          title="Visualizza distinta">
-                          <ScrollText />
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
-              : null}
+            {configurations && configurations.length > 0 ? (
+              configurations.map((configuration) => (
+                <TableRow key={configuration.id}>
+                  <TableCell className="text-center">
+                    {configuration.id}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <ConfigurationStatusBadge status={configuration.status} />
+                  </TableCell>
+                  <TableCell>{configuration.name}</TableCell>
+                  <TableCell>{configuration.description}</TableCell>
+                  <TableCell className="text-center">
+                    {formatDateDDMMYYHHMMSS(configuration.created_at)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {formatDateDDMMYYHHMMSS(configuration.updated_at)}
+                  </TableCell>
+                  <TableCell className="flex gap-2">
+                    <Link href={`/configurations/edit/${configuration.id}`}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="hover:bg-background"
+                        title="Modifica configurazione">
+                        <Pencil />
+                      </Button>
+                    </Link>
+                    <Link href={`/configurations/bom/${configuration.id}`}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="hover:bg-background"
+                        title="Visualizza distinta">
+                        <ScrollText />
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7}>
+                  Non hai ancora configurazioni.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

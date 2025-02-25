@@ -84,13 +84,11 @@ export async function signIn(formData: LoginFormData) {
     });
 
     if (!existingUser) {
-      const test = await db
-        .insert(userProfiles)
-        .values({
-          id: data.user.id,
-          email: credentials.email,
-        })
-        .returning({ id: userProfiles.id });
+      await db.insert(userProfiles).values({
+        id: data.user.id,
+        email: credentials.email,
+        role: "EXTERNAL",
+      });
     }
   } catch (err) {
     console.error(err);

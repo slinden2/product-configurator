@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { configSchema } from "@/validation/configSchema";
 import { differenceInTwoArrays } from "@/lib/utils";
-import { getOneConfiguration, updateConfiguration } from "@/db/queries";
+import {
+  getOneConfiguration,
+  QueryError,
+  updateConfiguration,
+} from "@/db/queries";
+import { DatabaseError } from "pg";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,14 +42,41 @@ export async function PATCH(request: NextRequest, props: Props) {
     body.wash_bays as typeof configuration.wash_bays
   );
 
-  const response = await updateConfiguration(
-    configurationData,
-    waterTankData,
-    washBayData
-  );
+  try {
+    const response = await updateConfiguration(
+      configurationData,
+      waterTankData,
+      washBayData
+    );
 
-  return NextResponse.json(
-    { message: `Configurazione (id=${response.id}) aggiornata` },
-    { status: 201 }
-  );
+    return NextResponse.json(
+      {
+        message: `Configurazione (id=${response.id}) aggiornata.`,
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    if (err instanceof QueryError) {
+      return NextResponse.json(
+        {
+          message: err.message,
+        },
+        { status: err.errorCode }
+      );
+    }
+
+    if (err instanceof DatabaseError) {
+      return NextResponse.json(
+        { code: err.code, message: err.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        message: "Errore sconosciuto",
+      },
+      { status: 500 }
+    );
+  }
 }

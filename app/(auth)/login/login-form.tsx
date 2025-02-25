@@ -53,7 +53,6 @@ const LoginForm = () => {
           placeholder="Inserire la password"
           type="password"
         />
-        <CheckboxField name="rememberMe" label="Ricordami" />
         <Button>{form.formState.isSubmitting ? <Spinner /> : "Accedi"}</Button>
       </form>
     </Form>

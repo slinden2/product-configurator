@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { configSchema } from "@/validation/configSchema";
-import { insertConfiguration } from "@/db/queries";
+import { insertConfiguration, QueryError } from "@/db/queries";
 import { DatabaseError } from "pg";
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     water_tanks: waterTankData,
     wash_bays: washBayData,
     ...configurationData
-  } = body;
+  } = validation.data;
 
   try {
     const response = await insertConfiguration(
@@ -25,8 +25,16 @@ export async function POST(request: NextRequest) {
     );
     return NextResponse.json(response, { status: 201 });
   } catch (err) {
+    if (err instanceof QueryError) {
+      return NextResponse.json(
+        {
+          message: err.message,
+        },
+        { status: err.errorCode }
+      );
+    }
+
     if (err instanceof DatabaseError) {
-      console.error(err);
       return NextResponse.json(
         { code: err.code, message: err.message },
         { status: 500 }

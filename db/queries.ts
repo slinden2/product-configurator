@@ -9,11 +9,13 @@ import {
   type NewWashBay,
   type WaterTank,
   type WashBay,
+  userProfiles,
 } from "@/db/schemas";
 import { ArrayDifferenceOutput } from "@/lib/utils";
 import { BOM } from "@/lib/BOM";
-import { desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
 import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
+import { createClient } from "@/utils/supabase/server";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -26,8 +28,57 @@ export type AllConfigurations = Awaited<
 
 export type OneConfiguration = Awaited<ReturnType<typeof getOneConfiguration>>;
 
+export class QueryError extends Error {
+  errorCode: number;
+
+  constructor(message: string, errorCode: number) {
+    super(message);
+    this.name = "QueryError";
+    this.errorCode = errorCode;
+
+    Object.setPrototypeOf(this, QueryError.prototype);
+  }
+}
+
+export async function getUserData() {
+  const supabase = await createClient();
+  const { error, data } = await supabase.auth.getUser();
+
+  if (error) {
+    return null;
+  }
+
+  if (!data.user) {
+    return null;
+  }
+
+  const userProfile = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.id, data.user.id),
+    columns: { role: true },
+  });
+
+  if (!userProfile) {
+    return null;
+  }
+
+  return {
+    id: data.user.id,
+    role: userProfile.role,
+  };
+}
+
 export async function getAllConfigurations() {
+  const user = await getUserData();
+
+  if (!user) {
+    return null;
+  }
+
   const response = await db.query.configurations.findMany({
+    where:
+      user.role === "EXTERNAL"
+        ? eq(configurations.user_id, user.id)
+        : undefined,
     columns: {
       id: true,
       status: true,
@@ -54,14 +105,20 @@ export async function getOneConfiguration(id: number) {
 }
 
 export const insertConfiguration = async (
-  newConfiguration: NewConfiguration,
+  newConfiguration: Omit<NewConfiguration, "user_id">,
   newWaterTanks: Omit<NewWaterTank, "configuration_id">[],
   newWashBays: Omit<NewWashBay, "configuration_id">[]
 ) => {
-  const result = await db.transaction(async (tx) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const response = await db.transaction(async (tx) => {
     const [createdConfiguration] = await tx
       .insert(configurations)
-      .values(newConfiguration)
+      .values({ ...newConfiguration, user_id: user.id })
       .returning({ id: configurations.id });
 
     let createdWaterTanks: { id: number }[] | null = null;
@@ -97,7 +154,7 @@ export const insertConfiguration = async (
     };
   });
 
-  return result;
+  return response;
 };
 
 async function insertRows<T>(
@@ -187,19 +244,35 @@ export const updateConfiguration = async (
   waterTankData: ArrayDifferenceOutput<WaterTank>,
   washBayData: ArrayDifferenceOutput<WashBay>
 ): Promise<{ id: number }> => {
-  const updatedConfiguration = await db.transaction(async (tx) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const response = await db.transaction(async (tx) => {
     const {
       id,
       ...configurationDataWithoutId
     }: { id: number } & Omit<Configuration, "id"> = configurationData;
 
+    const condition =
+      user.role !== "ADMIN"
+        ? and(eq(configurations.id, id), eq(configurations.user_id, user.id))
+        : eq(configurations.id, id);
+
     const [updatedConfiguration] = await tx
       .update(configurations)
       .set(configurationDataWithoutId)
-      .where(eq(configurations.id, id))
+      .where(condition)
       .returning({ id: configurations.id });
 
-    console.log("updatedConfiguration :>> ", updatedConfiguration);
+    if (!updatedConfiguration) {
+      throw new QueryError(
+        "Configurazione non trovata. Impossibile aggiornare.",
+        403
+      );
+    }
 
     await insertRows(
       tx,
@@ -217,7 +290,8 @@ export const updateConfiguration = async (
 
     return updatedConfiguration;
   });
-  return updatedConfiguration;
+
+  return response;
 };
 
 export async function getBOM(id: number) {

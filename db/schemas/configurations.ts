@@ -38,11 +38,7 @@ export type ConfigurationWithWaterTanksAndWashBays = Configuration & {
   wash_bays: WashBay[];
 };
 
-export const brushTypeEnum = pgEnum("brush_type", [
-  "THREAD",
-  "MIXED",
-  "CARLITE",
-]);
+export const brushTypeEnum = pgEnum("brush_type", BrushTypes);
 export const brushColorEnum = pgEnum("brush_color", BrushColors);
 export const chemPumpPosEnum = pgEnum("chemical_pump_pos", ChemPumpPos);
 export const waterTypeEnum = pgEnum("water_type", WaterTypes);
