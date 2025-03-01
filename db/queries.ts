@@ -28,6 +28,8 @@ export type AllConfigurations = Awaited<
 
 export type OneConfiguration = Awaited<ReturnType<typeof getOneConfiguration>>;
 
+export type AuthUser = Awaited<ReturnType<typeof getAuthUser>>;
+
 export class QueryError extends Error {
   errorCode: number;
 
@@ -86,6 +88,15 @@ export async function getAllConfigurations() {
       description: true,
       created_at: true,
       updated_at: true,
+    },
+    with: {
+      user: {
+        columns: {
+          id: true,
+          email: true,
+          initials: true,
+        },
+      },
     },
     orderBy: [desc(configurations.updated_at)],
   });
@@ -300,4 +311,25 @@ export async function getBOM(id: number) {
     const bom = await BOM.init(configuration);
     return bom;
   }
+}
+
+export async function getAuthUser() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error("Error fetching user:", error.message);
+    return null;
+  }
+
+  if (!data.user) {
+    console.error("Utente non trovato.");
+    return null;
+  }
+
+  const user = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.id, data.user.id),
+  });
+
+  return user || null;
 }

@@ -1,4 +1,4 @@
-import DataTable from "@/components/DataTable";
+import AllConfigurationsTable from "@/components/AllConfigurationsTable";
 import { Button } from "@/components/ui/button";
 import { getAllConfigurations } from "@/db/queries";
 import { CirclePlus } from "lucide-react";
@@ -10,7 +10,7 @@ const Configurations = async () => {
 
   return (
     <div className="space-y-3">
-      <DataTable configurations={configurations} />
+      <AllConfigurationsTable configurations={configurations} />
       <div>
         <Link href="/configurations/new">
           <Button variant="default" size="icon" title="Nuova configurazione">

@@ -29,6 +29,7 @@ export const userProfiles = pgTable(
       .defaultNow(),
     email: varchar().notNull().unique(),
     role: roleEnum().notNull(),
+    initials: varchar({ length: 3 }),
   },
   () => [
     pgPolicy("Enable all operations for authenticated users only", {
