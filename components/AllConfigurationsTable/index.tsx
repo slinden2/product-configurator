@@ -15,6 +15,17 @@ interface AllConfigurationsTableProps {
   configurations: AllConfigurations;
 }
 
+const headers = [
+  "id",
+  "stato",
+  "utente",
+  "cliente",
+  "descrizione",
+  "data creazione",
+  "ultimo aggiornamento",
+  "azioni",
+];
+
 const AllConfigurationsTable = async ({
   configurations,
 }: AllConfigurationsTableProps) => {
@@ -29,17 +40,12 @@ const AllConfigurationsTable = async ({
       <div className="rounded-md sm:border">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="text-center">ID</TableHead>
-              <TableHead className="text-center">Stato</TableHead>
-              <TableHead className="text-center">Utente</TableHead>
-              <TableHead>Nome del cliente</TableHead>
-              <TableHead>Descrizione</TableHead>
-              <TableHead className="text-center">Data creazione</TableHead>
-              <TableHead className="text-center">
-                Ultimo aggiornamento
-              </TableHead>
-              <TableHead />
+            <TableRow className="bg-muted/50">
+              {headers.map((header) => (
+                <TableHead key={header} className="uppercase text-xs">
+                  {header}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>

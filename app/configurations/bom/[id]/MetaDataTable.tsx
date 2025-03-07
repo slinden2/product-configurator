@@ -1,10 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import React from "react";
 
 interface MetaDataTableProps {
@@ -14,22 +8,27 @@ interface MetaDataTableProps {
 
 const MetaDataTable = ({ clientName, description }: MetaDataTableProps) => {
   return (
-    <Table className="mb-3 rounded-lg font-mono">
-      <TableBody>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="table-cell w-44">Nome del cliente:</TableHead>
-          <TableCell>{clientName}</TableCell>
-        </TableRow>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="table-cell w-44 align-text-top p-4">
-            Descrizione:
-          </TableHead>
-          <TableCell className="align-text-top p-4 whitespace-pre">
-            {description}
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="text-2xl">Dettagli</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-sm font-medium text-muted-foreground mb-1">
+              Nome del cliente
+            </div>
+            <div className="text-lg">{clientName}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-muted-foreground mb-1">
+              Descrizione
+            </div>
+            <div className="text-lg">{description}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

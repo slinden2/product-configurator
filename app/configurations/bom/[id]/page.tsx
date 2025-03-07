@@ -1,12 +1,11 @@
 import BOMDataTable from "@/app/configurations/bom/[id]/BOMDataTable";
 import MetaDataTable from "@/app/configurations/bom/[id]/MetaDataTable";
 import BackButton from "@/components/BackButton";
-import HeaderH2 from "@/components/HeaderH2";
-import HeaderH3 from "@/components/HeaderH3";
-import HeaderH4 from "@/components/HeaderH4";
+import BOMCard from "@/components/BOMCard";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBOM } from "@/db/queries";
-import { Pencil } from "lucide-react";
+import { Edit } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react";
 
@@ -18,7 +17,7 @@ const BOMView = async (props: BOMViewProps) => {
   const params = await props.params;
   const bom = await getBOM(parseInt(params.id));
 
-  if (!bom) return <div>Unable to find BOM</div>;
+  if (!bom) return <div>La distinta non è disponibile.</div>;
 
   const clientName = bom.getClientName();
   const description = bom.getDescription();
@@ -27,40 +26,64 @@ const BOMView = async (props: BOMViewProps) => {
 
   return (
     <div className="space-y-6">
-      <HeaderH2>Distinta</HeaderH2>
-      <MetaDataTable clientName={clientName} description={description || ""} />
-      <HeaderH3>Distinta generale</HeaderH3>
-      <BOMDataTable items={generalBOM} />
-      {waterTankBOMs.length > 0 && (
-        <>
-          <HeaderH3>Serbatoi (n. {waterTankBOMs.length})</HeaderH3>
-          {waterTankBOMs.map((bom, key) => (
-            <Fragment key={key}>
-              <HeaderH4>{`Distinta serbatoio ${key + 1}`}</HeaderH4>
-              <BOMDataTable items={bom} />
-            </Fragment>
-          ))}
-        </>
-      )}
-      {washBayBOMs.length > 0 && (
-        <>
-          <HeaderH3>Piste (n. {washBayBOMs.length})</HeaderH3>
-          {washBayBOMs.map((bom, key) => (
-            <Fragment key={key}>
-              <HeaderH4>{`Distinta pista ${key + 1}`}</HeaderH4>
-              <BOMDataTable items={bom} />
-            </Fragment>
-          ))}
-        </>
-      )}
-      <div className="space-x-6">
-        <BackButton fallbackPath={"/configurations"} />
-        <Link href={`/configurations/edit/${params.id}`}>
-          <Button variant="default" size="icon">
-            <Pencil />
-          </Button>
-        </Link>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <BackButton fallbackPath={"/configurations"} />
+          <h1 className="inline-block">Distinta</h1>
+        </div>
+        <Button asChild variant="outline">
+          <Link href={`/configurations/edit/${params.id}`}>
+            <Edit />
+            <span>Modifica configurazione</span>
+          </Link>
+        </Button>
       </div>
+      <MetaDataTable clientName={clientName} description={description || ""} />
+      <BOMCard title="Distinta generale">
+        <BOMDataTable items={generalBOM} />
+      </BOMCard>
+
+      <Card>
+        {waterTankBOMs.length > 0 && (
+          <>
+            <CardHeader>
+              <CardTitle className="text-2xl">
+                Serbatoi (n. {waterTankBOMs.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {waterTankBOMs.map((bom, key) => (
+                <Fragment key={key}>
+                  <BOMCard title={`Distinta serbatoio ${key + 1}`}>
+                    <BOMDataTable items={bom} />
+                  </BOMCard>
+                </Fragment>
+              ))}
+            </CardContent>
+          </>
+        )}
+      </Card>
+      <Card>
+        {washBayBOMs.length > 0 && (
+          <>
+            <CardHeader>
+              <CardTitle className="text-2xl">
+                Piste (n. {washBayBOMs.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {washBayBOMs.map((bom, key) => (
+                <Fragment key={key}>
+                  <BOMCard title={`Distinta pista ${key + 1}`}>
+                    <BOMDataTable items={bom} />
+                  </BOMCard>
+                </Fragment>
+              ))}
+            </CardContent>
+          </>
+        )}
+      </Card>
+      <div className="space-x-6"></div>
     </div>
   );
 };

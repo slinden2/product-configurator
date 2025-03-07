@@ -7,7 +7,7 @@ import IconButton from "@/components/AllConfigurationsTable/IconButton";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { AllConfigurations, AuthUser } from "@/db/queries";
 import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
-import { Pencil, ScrollText, Trash } from "lucide-react";
+import { Edit, ScrollText, Trash2 } from "lucide-react";
 import React from "react";
 
 interface ConfigurationRowProps {
@@ -40,8 +40,8 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
 
   return (
     <TableRow key={configuration.id}>
-      <TableCell className="text-center">{configuration.id}</TableCell>
-      <TableCell className="text-center">
+      <TableCell>{configuration.id}</TableCell>
+      <TableCell>
         <ConfigurationStatusBadge status={configuration.status} />
       </TableCell>
       <TableCell title={configuration.user.email || ""}>
@@ -49,33 +49,33 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       </TableCell>
       <TableCell>{configuration.name}</TableCell>
       <TableCell>{configuration.description}</TableCell>
-      <TableCell className="text-center">
-        {formatDateDDMMYYHHMMSS(configuration.created_at)}
-      </TableCell>
-      <TableCell className="text-center">
-        {formatDateDDMMYYHHMMSS(configuration.updated_at)}
-      </TableCell>
+      <TableCell>{formatDateDDMMYYHHMMSS(configuration.created_at)}</TableCell>
+      <TableCell>{formatDateDDMMYYHHMMSS(configuration.updated_at)}</TableCell>
       <TableCell className="flex gap-3">
         <IconButton
-          Icon={Pencil}
+          className="w-8 h-8"
+          Icon={Edit}
           linkTo={`/configurations/edit/${configuration.id}`}
           title="Modifica configurazione"
-          variant="outline"
+          variant="ghost"
           disabled={!canEdit}
         />
         <IconButton
+          className="w-8 h-8"
           Icon={ScrollText}
           linkTo={`/configurations/bom/${configuration.id}`}
           title="Visualizza distinta"
-          variant="outline"
+          variant="ghost"
           disabled={false}
         />
         <IconButton
-          Icon={Trash}
+          className="w-8 h-8"
+          Icon={Trash2}
           title="Elimina configurazione"
-          variant="destructive"
+          variant="ghost"
           disabled={!canEdit}
           onClick={handleDelete}
+          color="red-500"
         />
       </TableCell>
     </TableRow>

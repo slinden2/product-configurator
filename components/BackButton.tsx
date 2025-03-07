@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Undo2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface BackButtonProps {
@@ -21,12 +21,13 @@ export default function BackButton({ fallbackPath }: BackButtonProps) {
 
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="icon"
       onClick={handleBack}
-      title="Indietro"
+      title="Torna indietro"
       type="button">
-      <Undo2 />
+      <ArrowLeft />
+      <span className="sr-only">Torna indietro</span>
     </Button>
   );
 }

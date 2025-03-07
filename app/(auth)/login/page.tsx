@@ -1,4 +1,3 @@
-import HeaderH2 from "@/components/HeaderH2";
 import React from "react";
 import LoginForm from "@/app/(auth)/login/login-form";
 import Link from "next/link";
@@ -7,7 +6,7 @@ const Login = () => {
   return (
     <section className="flex h-screen justify-center">
       <div className="w-2/3 flex flex-col gap-4">
-        <HeaderH2>Accedi al tuo account</HeaderH2>
+        <h2>Accedi al tuo account</h2>
         <LoginForm />
         <p>
           Non hai ancora un account?{" "}
