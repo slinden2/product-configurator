@@ -1,4 +1,5 @@
 import BOMDataTable from "@/app/configurations/bom/[id]/BOMDataTable";
+import ExportButton from "@/app/configurations/bom/[id]/ExportButton";
 import MetaDataTable from "@/app/configurations/bom/[id]/MetaDataTable";
 import BackButton from "@/components/BackButton";
 import BOMCard from "@/components/BOMCard";
@@ -23,6 +24,11 @@ const BOMView = async (props: BOMViewProps) => {
   const description = bom.getDescription();
   const { generalBOM, waterTankBOMs, washBayBOMs } =
     await bom.buildCompleteBOM();
+  const exportData = bom.generateExportData(
+    generalBOM,
+    waterTankBOMs,
+    washBayBOMs
+  );
 
   return (
     <div className="space-y-6">
@@ -31,20 +37,23 @@ const BOMView = async (props: BOMViewProps) => {
           <BackButton fallbackPath={"/configurations"} />
           <h1 className="inline-block">Distinta</h1>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/configurations/edit/${params.id}`}>
-            <Edit />
-            <span>Modifica configurazione</span>
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/configurations/edit/${params.id}`}>
+              <Edit />
+              <span>Modifica</span>
+            </Link>
+          </Button>
+          <ExportButton exportData={exportData} />
+        </div>
       </div>
       <MetaDataTable clientName={clientName} description={description || ""} />
       <BOMCard title="Distinta generale">
         <BOMDataTable items={generalBOM} />
       </BOMCard>
 
-      <Card>
-        {waterTankBOMs.length > 0 && (
+      {waterTankBOMs.length > 0 && (
+        <Card>
           <>
             <CardHeader>
               <CardTitle className="text-2xl">
@@ -61,10 +70,11 @@ const BOMView = async (props: BOMViewProps) => {
               ))}
             </CardContent>
           </>
-        )}
-      </Card>
-      <Card>
-        {washBayBOMs.length > 0 && (
+        </Card>
+      )}
+
+      {washBayBOMs.length > 0 && (
+        <Card>
           <>
             <CardHeader>
               <CardTitle className="text-2xl">
@@ -81,9 +91,8 @@ const BOMView = async (props: BOMViewProps) => {
               ))}
             </CardContent>
           </>
-        )}
-      </Card>
-      <div className="space-x-6"></div>
+        </Card>
+      )}
     </div>
   );
 };

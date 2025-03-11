@@ -11,7 +11,8 @@ import {
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/MaxBOM";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
+import * as XLSX from "xlsx";
 
 export interface BOMItem {
   pn: string;
@@ -184,5 +185,18 @@ export class BOM {
 
   getDescription() {
     return this.configuration.description;
+  }
+
+  generateExportData(
+    generalBOM: BOMItemWithDescription[],
+    waterTankBOMs: BOMItemWithDescription[][],
+    washBayBOMs: BOMItemWithDescription[][]
+  ): BOMItemWithDescription[] {
+    return [...generalBOM, ...waterTankBOMs.flat(), ...washBayBOMs.flat()];
+
+    // const worksheet = XLSX.utils.json_to_sheet(generalBOM);
+    // const workbook = XLSX.utils.book_new();
+    // XLSX.utils.book_append_sheet(workbook, worksheet);
+    // XLSX.writeFile(workbook, "BOM.xlsx");
   }
 }
