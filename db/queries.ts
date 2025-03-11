@@ -23,12 +23,12 @@ export type TransactionType = Parameters<
 >[0];
 
 export type AllConfigurations = Awaited<
-  ReturnType<typeof getAllConfigurations>
+  ReturnType<typeof getUserConfigurations>
 >;
 
 export type OneConfiguration = Awaited<ReturnType<typeof getOneConfiguration>>;
 
-export type AuthUser = Awaited<ReturnType<typeof getAuthUser>>;
+export type UserData = Awaited<ReturnType<typeof getUserData>>;
 
 export class QueryError extends Error {
   errorCode: number;
@@ -69,7 +69,7 @@ export async function getUserData() {
   };
 }
 
-export async function getAllConfigurations() {
+export async function getUserConfigurations() {
   const user = await getUserData();
 
   if (!user) {
@@ -311,25 +311,4 @@ export async function getBOM(id: number) {
     const bom = await BOM.init(configuration);
     return bom;
   }
-}
-
-export async function getAuthUser() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error) {
-    console.error("Error fetching user:", error.message);
-    return null;
-  }
-
-  if (!data.user) {
-    console.error("Utente non trovato.");
-    return null;
-  }
-
-  const user = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.id, data.user.id),
-  });
-
-  return user || null;
 }

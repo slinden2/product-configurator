@@ -5,7 +5,7 @@ import { redirectTo } from "@/app/actions/redirectTo";
 import ConfigurationStatusBadge from "@/components/AllConfigurationsTable/ConfigurationStatusBadge";
 import IconButton from "@/components/AllConfigurationsTable/IconButton";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { AllConfigurations, AuthUser } from "@/db/queries";
+import { AllConfigurations, UserData } from "@/db/queries";
 import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
 import { Edit, ScrollText, Trash2 } from "lucide-react";
 import React from "react";
@@ -14,7 +14,7 @@ interface ConfigurationRowProps {
   configuration: NonNullable<AllConfigurations> extends Array<infer T>
     ? T
     : never;
-  user: NonNullable<AuthUser>;
+  user: NonNullable<UserData>;
 }
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {

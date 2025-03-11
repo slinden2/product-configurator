@@ -7,7 +7,6 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/InputField";
-import CheckboxField from "@/components/CheckboxField";
 import { LoginFormData, loginSchema } from "@/validation/authSchema";
 import { signIn } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";

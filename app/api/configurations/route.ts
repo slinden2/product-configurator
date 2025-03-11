@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { configSchema } from "@/validation/configSchema";
-import { insertConfiguration, QueryError } from "@/db/queries";
+import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
 import { DatabaseError } from "pg";
 
 export async function POST(request: NextRequest) {
+  const user = await getUserData();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
   const validation = configSchema.safeParse(body);
 

@@ -3,6 +3,7 @@ import { configSchema } from "@/validation/configSchema";
 import { differenceInTwoArrays } from "@/lib/utils";
 import {
   getOneConfiguration,
+  getUserData,
   QueryError,
   updateConfiguration,
 } from "@/db/queries";
@@ -13,6 +14,12 @@ interface Props {
 }
 
 export async function PATCH(request: NextRequest, props: Props) {
+  const user = await getUserData();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const params = await props.params;
   const body = await request.json();
   const validation = configSchema.safeParse(body);
@@ -28,6 +35,10 @@ export async function PATCH(request: NextRequest, props: Props) {
       { error: "Configurazione non trovata" },
       { status: 404 }
     );
+  }
+
+  if (configuration.user_id !== user.id && user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { water_tanks, wash_bays, ...configurationData } = body;

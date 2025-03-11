@@ -20,6 +20,7 @@ interface SortState {
   key: "pn" | "description" | null;
   direction: "asc" | "desc";
 }
+
 const BOMDataTable = ({ items }: BOMDataTableProps) => {
   const [dataArr, setDataArr] = useState<BOMItemWithDescription[]>(items);
   const [sorting, setSorting] = useState<SortState>({
@@ -51,7 +52,10 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
     <Table className="mb-3 rounded-lg font-mono">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="table-cell w-32 py-2 cursor-pointer">
+          <TableHead>POS</TableHead>
+          <TableHead
+            className="table-cell w-32 py-2 cursor-pointer"
+            onClick={() => sortTable("pn")}>
             <span className="flex items-center">
               Codice <ArrowDownUp size={16} className="ml-1" />
             </span>
@@ -71,6 +75,7 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
       <TableBody className="text-sm">
         {dataArr.map((item, key) => (
           <TableRow key={key}>
+            <TableCell>{key + 1}</TableCell>
             <TableCell className="table-cell w-24 py-2">{item.pn}</TableCell>
             <TableCell className="table-cell flex-1 py-2">
               {item.description}

@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import React from "react";
-import { AllConfigurations, getAuthUser } from "@/db/queries";
+import { AllConfigurations, getUserData } from "@/db/queries";
 import { redirect } from "next/navigation";
 import ConfigurationRow from "@/components/AllConfigurationsTable/ConfigurationRow";
 
@@ -29,7 +29,7 @@ const headers = [
 const AllConfigurationsTable = async ({
   configurations,
 }: AllConfigurationsTableProps) => {
-  const user = await getAuthUser();
+  const user = await getUserData();
 
   if (!user) {
     redirect("/login");

@@ -1,12 +1,12 @@
 "use server";
 
 import { db } from "@/db";
-import { getAuthUser } from "@/db/queries";
+import { getUserData } from "@/db/queries";
 import { configurations } from "@/db/schemas";
 import { eq } from "drizzle-orm";
 
 export const deleteConfiguration = async (id: number, userId: string) => {
-  const user = await getAuthUser();
+  const user = await getUserData();
 
   if (!user) {
     return { success: false, error: "User not found." };
