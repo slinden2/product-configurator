@@ -7,8 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import React from "react";
-import { AllConfigurations, getUserData } from "@/db/queries";
-import { redirect } from "next/navigation";
+import { AllConfigurations } from "@/db/queries";
 import ConfigurationRow from "@/components/AllConfigurationsTable/ConfigurationRow";
 
 interface AllConfigurationsTableProps {
@@ -29,12 +28,6 @@ const headers = [
 const AllConfigurationsTable = async ({
   configurations,
 }: AllConfigurationsTableProps) => {
-  const user = await getUserData();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   return (
     <div className="w-full mt-5">
       <div className="rounded-md sm:border">

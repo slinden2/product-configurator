@@ -1,7 +1,6 @@
 "use client";
 
-import { deleteConfiguration } from "@/app/actions/deleteConfiguration";
-import { redirectTo } from "@/app/actions/redirectTo";
+import { deleteConfiguration, redirectTo } from "@/app/actions";
 import ConfigurationStatusBadge from "@/components/AllConfigurationsTable/ConfigurationStatusBadge";
 import IconButton from "@/components/AllConfigurationsTable/IconButton";
 import { TableCell, TableRow } from "@/components/ui/table";

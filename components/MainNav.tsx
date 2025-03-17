@@ -3,8 +3,8 @@
 import Logout from "@/components/Logout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -12,19 +12,10 @@ import { usePathname } from "next/navigation";
 import React from "react";
 
 const MainNav = () => {
+  const { isAuthenticated, getUser } = useKindeBrowserClient();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const [user, setUser] = React.useState<User | null>(null);
-
-  React.useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-
-    fetchUser();
-  }, [user]);
+  const user = getUser();
 
   const routes = [
     {
@@ -63,7 +54,9 @@ const MainNav = () => {
       </nav>
 
       <div className="flex items-center space-x-4">
-        <p className="text-sm text-muted-foreground">samu@itecosrl.com</p>
+        {isAuthenticated && (
+          <p className="text-sm text-muted-foreground">{user.email}</p>
+        )}
         <Button
           variant="ghost"
           size="icon"
@@ -75,7 +68,12 @@ const MainNav = () => {
             <Moon className="h-5 w-5" />
           )}
         </Button>
-        <Logout />
+        <Button asChild variant="destructive" size="sm">
+          <LogoutLink className="flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            <span>Esci</span>
+          </LogoutLink>
+        </Button>
       </div>
     </div>
   );

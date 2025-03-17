@@ -16,6 +16,7 @@ import { BOM } from "@/lib/BOM";
 import { and, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
 import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
 import { createClient } from "@/utils/supabase/server";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -70,17 +71,17 @@ export async function getUserData() {
 }
 
 export async function getUserConfigurations() {
-  const user = await getUserData();
+  const { isAuthenticated } = getKindeServerSession();
 
-  if (!user) {
+  if (!(await isAuthenticated())) {
     return null;
   }
 
   const response = await db.query.configurations.findMany({
-    where:
-      user.role === "EXTERNAL"
-        ? eq(configurations.user_id, user.id)
-        : undefined,
+    // where:
+    //   user.role === "EXTERNAL"
+    //     ? eq(configurations.user_id, user.id)
+    //     : undefined,
     columns: {
       id: true,
       status: true,
