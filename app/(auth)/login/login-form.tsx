@@ -10,26 +10,20 @@ import InputField from "@/components/InputField";
 import { LoginFormData, loginSchema } from "@/validation/authSchema";
 import { signIn } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
-
-const initialState = {
-  success: "",
-  apiError: "",
-  errors: {
-    email: "",
-    password: "",
-  },
-};
+import { useUser } from "@/state/UserContext";
 
 const LoginForm = () => {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
   const router = useRouter();
+  const { setUser } = useUser();
 
   const onSubmit = async (formData: LoginFormData) => {
     const response = await signIn(formData);
     if (response.status === "success") {
       router.push("/configurations");
+      setUser(response.user);
     } else {
       console.error(response);
     }

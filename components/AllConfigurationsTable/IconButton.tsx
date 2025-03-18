@@ -10,8 +10,6 @@ interface IconButtonProps {
   title: string;
   variant: ButtonProps["variant"];
   disabled: boolean;
-  color?: string;
-
   onClick?: () => Promise<void>;
 }
 
@@ -22,16 +20,13 @@ const IconButton: React.FC<IconButtonProps> = ({
   title,
   variant,
   disabled = false,
-  color,
   onClick,
 }) => {
   const isLink = Boolean(linkTo) && !disabled;
 
   return (
     <Button
-      className={`${className} ${
-        color ? `text-${color} hover:text-${color}` : ""
-      }`}
+      className={className}
       asChild={isLink}
       variant={variant}
       size="icon"
@@ -41,11 +36,11 @@ const IconButton: React.FC<IconButtonProps> = ({
       aria-label={title}>
       {isLink ? (
         <Link href={linkTo as string}>
-          <Icon aria-hidden="true" className={`text-current text-${color}`} />
+          <Icon aria-hidden="true" className={`text-current`} />
         </Link>
       ) : (
         <span>
-          <Icon aria-hidden="true" className={`text-current text-${color}`} />
+          <Icon aria-hidden="true" className={`text-current`} />
         </span>
       )}
     </Button>

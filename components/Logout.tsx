@@ -3,17 +3,25 @@
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useUser } from "@/state/UserContext";
 import { LogOut } from "lucide-react";
 import React from "react";
 
 const Logout = () => {
   const [loading, setLoading] = React.useState(false);
+  const { setUser } = useUser();
 
   const handleLogout = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await signOut();
-    setLoading(false);
+    try {
+      setUser(null);
+      await signOut();
+    } catch (error) {
+      console.error("Logout failed: ", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

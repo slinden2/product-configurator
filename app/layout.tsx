@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import MainNav from "@/components/MainNav";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { UserProvider } from "@/state/UserContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,22 +25,24 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
-            <header className="top-0 z-50 border-b bg-background/95">
-              <div className="container py-3">
-                <MainNav />
-              </div>
-            </header>
-            <main className="flex-1 container py-6">{children}</main>
-          </div>
-          <footer className="border-t py-6 md:py-0">
-            <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
-              <p className="text-sm text-muted-foreground">
-                &copy; 2024-{new Date().getFullYear()} ITECO SRL. Tutti i
-                diritti riservati.
-              </p>
+          <UserProvider>
+            <div className="flex min-h-screen flex-col">
+              <header className="top-0 z-50 border-b bg-background/95">
+                <div className="container py-3">
+                  <MainNav />
+                </div>
+              </header>
+              <main className="flex-1 container py-6">{children}</main>
             </div>
-          </footer>
+            <footer className="border-t py-6 md:py-0">
+              <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
+                <p className="text-sm text-muted-foreground">
+                  &copy; 2024-{new Date().getFullYear()} ITECO SRL. Tutti i
+                  diritti riservati.
+                </p>
+              </div>
+            </footer>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

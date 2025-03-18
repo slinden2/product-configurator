@@ -69,13 +69,12 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
           disabled={false}
         />
         <IconButton
-          className="w-8 h-8"
+          className="w-8 h-8 text-red-500 hover:text-red-500"
           Icon={Trash2}
           title="Elimina configurazione"
           variant="ghost"
           disabled={!canEdit}
           onClick={handleDelete}
-          color="red-500"
         />
       </TableCell>
     </TableRow>
