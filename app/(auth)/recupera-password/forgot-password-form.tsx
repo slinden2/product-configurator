@@ -6,8 +6,8 @@ import { Spinner } from "@/components/ui/spinner";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import InputField from "@/components/InputField";
-import { AuthFormData, authSchema } from "@/validation/authSchema";
+import InputField from "@/components/input-field";
+import { AuthFormData, authSchema } from "@/validation/auth-schema";
 import { useRouter } from "next/navigation";
 import { forgotPassword } from "@/app/actions/auth";
 

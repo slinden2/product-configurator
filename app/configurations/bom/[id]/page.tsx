@@ -1,8 +1,8 @@
-import BOMDataTable from "@/app/configurations/bom/[id]/BOMDataTable";
-import ExportButton from "@/app/configurations/bom/[id]/ExportButton";
-import MetaDataTable from "@/app/configurations/bom/[id]/MetaDataTable";
-import BackButton from "@/components/BackButton";
-import BOMCard from "@/components/BOMCard";
+import BOMDataTable from "@/app/configurations/bom/[id]/bom-data-table";
+import ExportButton from "@/app/configurations/bom/[id]/export-button";
+import MetaDataTable from "@/app/configurations/bom/[id]/meta-data-table";
+import BackButton from "@/components/back-button";
+import BOMCard from "@/components/bom-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBOM } from "@/db/queries";

@@ -1,6 +1,6 @@
-import { userProfiles } from "@/db/schemas/userProfiles";
-import { WashBay, washBays } from "@/db/schemas/washBays";
-import { WaterTank, waterTanks } from "@/db/schemas/waterTanks";
+import { userProfiles } from "@/db/schemas/user-profiles";
+import { WashBay, washBays } from "@/db/schemas/wash-bays";
+import { WaterTank, waterTanks } from "@/db/schemas/water-tanks";
 import {
   BrushColors,
   BrushTypes,

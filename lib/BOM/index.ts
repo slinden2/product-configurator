@@ -10,7 +10,7 @@ import {
   MaxBOMItem,
   WashBayMaxBOM,
   WaterTankMaxBOM,
-} from "@/lib/BOM/MaxBOM";
+} from "@/lib/BOM/max-bom";
 import { inArray } from "drizzle-orm";
 import * as XLSX from "xlsx";
 

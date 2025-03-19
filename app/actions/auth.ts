@@ -10,7 +10,7 @@ import {
   LoginFormData,
   NewPassWordFormData,
   SignupFormData,
-} from "@/validation/authSchema";
+} from "@/validation/auth-schema";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { userProfiles } from "@/db/schemas";
