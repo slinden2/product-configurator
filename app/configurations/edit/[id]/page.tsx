@@ -1,7 +1,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
-import { configSchema } from "@/validation/configSchema";
-import ConfigForm from "@/components/ConfigForm";
+import { configSchema } from "@/validation/config-schema";
+import ConfigForm from "@/components/config-form";
 import { getOneConfiguration } from "@/db/queries";
 
 interface EditConfigProps {

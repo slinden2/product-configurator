@@ -1,4 +1,4 @@
-import ConfigForm from "@/components/ConfigForm";
+import ConfigForm from "@/components/config-form";
 import React from "react";
 
 const NewConfiguration = () => {

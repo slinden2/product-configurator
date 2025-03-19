@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { configSchema } from "@/validation/configSchema";
+import { configSchema } from "@/validation/config-schema";
 import { differenceInTwoArrays } from "@/lib/utils";
 import {
   getOneConfiguration,

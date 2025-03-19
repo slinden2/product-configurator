@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { insertConfiguration } from "@/db/queries";
 import { userProfiles } from "@/db/schemas";
-import { configSchema } from "@/validation/configSchema";
+import { configSchema } from "@/validation/config-schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 

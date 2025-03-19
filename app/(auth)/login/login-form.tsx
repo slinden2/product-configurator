@@ -6,11 +6,11 @@ import { Spinner } from "@/components/ui/spinner";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import InputField from "@/components/InputField";
-import { LoginFormData, loginSchema } from "@/validation/authSchema";
+import InputField from "@/components/input-field";
+import { LoginFormData, loginSchema } from "@/validation/auth-schema";
 import { signIn } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/state/UserContext";
+import { useUser } from "@/state/user-context";
 
 const LoginForm = () => {
   const form = useForm<LoginFormData>({

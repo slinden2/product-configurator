@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { configSchema } from "@/validation/configSchema";
+import { configSchema } from "@/validation/config-schema";
 import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
 import { DatabaseError } from "pg";
 
