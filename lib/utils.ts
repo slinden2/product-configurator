@@ -1,6 +1,7 @@
 import { SelectOption } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { z } from "zod";
 
 type WithId = { id: number };
 
@@ -74,3 +75,7 @@ export const NOT_SELECTED_LABEL = "---";
 export const withNoSelection = (items: SelectOption[]): SelectOption[] => {
   return [{ value: NOT_SELECTED_VALUE, label: NOT_SELECTED_LABEL }, ...items];
 };
+
+export function isZodBoolean(schema: z.ZodTypeAny): schema is z.ZodBoolean {
+  return schema instanceof z.ZodBoolean;
+}

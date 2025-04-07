@@ -23,6 +23,7 @@ export async function PATCH(request: NextRequest, props: Props) {
   const params = await props.params;
   const body = await request.json();
   const validation = configSchema.safeParse(body);
+  console.log(validation.error);
 
   if (!validation.success) {
     return NextResponse.json(validation.error.format(), { status: 400 });

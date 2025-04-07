@@ -74,7 +74,7 @@ export const configurationStatusEnum = pgEnum(
 export const configurations = pgTable("configurations", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),
-  description: varchar({ length: 255 }),
+  description: varchar({ length: 255 }).notNull().default(""),
   brush_qty: integer().notNull(),
   brush_type: brushTypeEnum(),
   brush_color: brushColorEnum("brush_color"),
