@@ -6,12 +6,11 @@ import {
   QueryError,
   updateConfiguration,
 } from "@/db/queries";
-import { differenceInTwoArrays } from "@/lib/utils";
-import { configSchema } from "@/validation/config-schema";
+import { updateConfigSchema } from "@/validation/config-schema";
 import { DatabaseError } from "pg";
 
-export const editConfiguration = async (formData: unknown) => {
-  const validation = configSchema.safeParse(formData);
+export const editConfiguration = async (confId: number, formData: unknown) => {
+  const validation = updateConfigSchema.safeParse(formData);
 
   if (!validation.success) {
     throw new Error(validation.error?.message);
@@ -23,30 +22,35 @@ export const editConfiguration = async (formData: unknown) => {
     throw new Error("User not found.");
   }
 
-  if (user.id !== validation.data.user_id && user.role !== "ADMIN") {
+  if (user.id !== validation.data.user_id || user.role !== "ADMIN") {
     throw new Error("Unauthorized.");
   }
 
-  const { water_tanks, wash_bays, ...configurationData } = validation.data;
+  // const { water_tanks, wash_bays, ...configurationData } = validation.data;
 
-  const configuration = await getOneConfiguration(validation.data.id);
+  const configuration = await getOneConfiguration(confId);
 
   if (!configuration) {
     throw new Error("Configuration not found.");
   }
 
-  const waterTankData = differenceInTwoArrays(
-    configuration.water_tanks,
-    validation.data.water_tanks
-  );
+  // const waterTankData = differenceInTwoArrays(
+  //   configuration.water_tanks,
+  //   validation.data.water_tanks
+  // );
 
-  const washBayData = differenceInTwoArrays(
-    configuration.wash_bays,
-    validation.data.wash_bays
-  );
+  // const washBayData = differenceInTwoArrays(
+  //   configuration.wash_bays,
+  //   validation.data.wash_bays
+  // );
 
   try {
-    // await updateConfiguration(configurationData, waterTankData, washBayData);
+    await updateConfiguration(
+      confId,
+      validation.data
+      // waterTankData,
+      // washBayData
+    );
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
       throw new Error(err.message);

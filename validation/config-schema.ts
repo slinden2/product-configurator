@@ -49,19 +49,46 @@ export const baseSchema = z.object({
 //     }
 //   });
 
-const { createInsertSchema, createSelectSchema } = createSchemaFactory({
-  coerce: {
-    number: true,
-  },
-});
+const { createInsertSchema, createSelectSchema, createUpdateSchema } =
+  createSchemaFactory({
+    coerce: {
+      number: true,
+    },
+  });
 
-export const insertConfigSchema = createInsertSchema(configurations);
 export const selectConfigSchema = createSelectSchema(configurations);
+export const insertConfigSchema = createInsertSchema(configurations);
+export const updateConfigSchema = createUpdateSchema(configurations);
+export type UpdateConfigSchema = z.infer<typeof updateConfigSchema>;
 
 export const selectWaterTankSchema = createSelectSchema(waterTanks);
-export const selectWashBaysSchema = createSelectSchema(washBays);
+export const insertWaterTankSchema = createInsertSchema(waterTanks);
+export const updateWaterTankSchema = createUpdateSchema(waterTanks);
+// export const waterTankEditUnionSchema = z.union([
+//   selectWaterTankSchema,
+//   insertWaterTankSchema,
+// ]);
+// export type WaterTankEditUnionType = z.infer<typeof waterTankEditUnionSchema>;
+
+export const selectWashBaySchema = createSelectSchema(washBays);
+export const insertWashBaySchema = createInsertSchema(washBays);
+export const updateWashBaySchema = createUpdateSchema(washBays);
+// export const washBayEditUnionSchema = z.union([
+//   selectWashBaySchema,
+//   insertWashBaySchema,
+// ]);
+// export type WashBayEditUnionType = z.infer<typeof washBayEditUnionSchema>;
+
+// export const editConfigWithTanksAndBaysSchema = updateConfigSchema.extend({
+//   water_tanks: z.array(waterTankEditUnionSchema).default([]),
+//   wash_bays: z.array(washBayEditUnionSchema).default([]),
+// });
+
+// export type EditConfigWithTanksAndBaysData = z.infer<
+//   typeof editConfigWithTanksAndBaysSchema
+// >;
 
 export const configSchema = selectConfigSchema.extend({
   water_tanks: z.array(selectWaterTankSchema),
-  wash_bays: z.array(selectWashBaysSchema),
+  wash_bays: z.array(selectWashBaySchema),
 });

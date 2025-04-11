@@ -4,18 +4,15 @@ import {
   waterTanks,
   washBays,
   type NewConfiguration,
-  type Configuration,
   type NewWaterTank,
   type NewWashBay,
-  type WaterTank,
-  type WashBay,
   userProfiles,
 } from "@/db/schemas";
-import { ArrayDifferenceOutput } from "@/lib/utils";
 import { BOM } from "@/lib/BOM";
 import { and, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
 import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
 import { createClient } from "@/utils/supabase/server";
+import { UpdateConfigSchema } from "@/validation/config-schema";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -251,9 +248,10 @@ async function deleteRows<T extends { id: number }>(
 }
 
 export const updateConfiguration = async (
-  configurationData: Configuration,
-  waterTankData: ArrayDifferenceOutput<WaterTank>,
-  washBayData: ArrayDifferenceOutput<WashBay>
+  confId: number,
+  configurationData: UpdateConfigSchema
+  // waterTankData: ArrayDifferenceOutput<WaterTankEditUnionType>,
+  // washBayData: ArrayDifferenceOutput<WashBayEditUnionType>
 ): Promise<{ id: number }> => {
   const user = await getUserData();
 
@@ -262,19 +260,17 @@ export const updateConfiguration = async (
   }
 
   const response = await db.transaction(async (tx) => {
-    const {
-      id,
-      ...configurationDataWithoutId
-    }: { id: number } & Omit<Configuration, "id"> = configurationData;
-
     const condition =
       user.role !== "ADMIN"
-        ? and(eq(configurations.id, id), eq(configurations.user_id, user.id))
-        : eq(configurations.id, id);
+        ? and(
+            eq(configurations.id, confId),
+            eq(configurations.user_id, user.id)
+          )
+        : eq(configurations.id, confId);
 
     const [updatedConfiguration] = await tx
       .update(configurations)
-      .set(configurationDataWithoutId)
+      .set(configurationData)
       .where(condition)
       .returning({ id: configurations.id });
 
@@ -285,19 +281,19 @@ export const updateConfiguration = async (
       );
     }
 
-    await insertRows(
-      tx,
-      waterTanks,
-      waterTankData.added,
-      updatedConfiguration.id
-    );
-    await insertRows(tx, washBays, washBayData.added, updatedConfiguration.id);
+    //   await insertRows(
+    //     tx,
+    //     waterTanks,
+    //     waterTankData.added,
+    //     updatedConfiguration.id
+    //   );
+    //   await insertRows(tx, washBays, washBayData.added, updatedConfiguration.id);
 
-    await deleteRows(tx, waterTanks, waterTankData.removed, waterTanks.id);
-    await deleteRows(tx, washBays, washBayData.removed, washBays.id);
+    //   await deleteRows(tx, waterTanks, waterTankData.removed, waterTanks.id);
+    //   await deleteRows(tx, washBays, washBayData.removed, washBays.id);
 
-    await updateRows(tx, waterTanks, waterTankData.same);
-    await updateRows(tx, washBays, washBayData.same);
+    //   await updateRows(tx, waterTanks, waterTankData.same);
+    //   await updateRows(tx, washBays, washBayData.same);
 
     return updatedConfiguration;
   });

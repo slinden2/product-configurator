@@ -43,12 +43,13 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
 
   async function onSubmit(values: ConfigFormData) {
     console.log("🚀 ~ onSubmit ~ values:", values);
+    const { id } = values;
     try {
       setIsSubmitting(true);
       setError("");
 
       if (configuration?.id) {
-        await editConfiguration(values);
+        await editConfiguration(id, values);
       } else {
         // await fetch("/api/configurations", {
         //   method: "POST",
