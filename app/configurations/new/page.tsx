@@ -1,8 +1,8 @@
-import ConfigForm from "@/components/config-form";
+import FormContainer from "@/components/form-container";
 import React from "react";
 
 const NewConfiguration = () => {
-  return <ConfigForm />;
+  return <FormContainer />;
 };
 
 export default NewConfiguration;

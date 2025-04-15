@@ -25,13 +25,5 @@ describe("brushSchema", () => {
       const validData = createBrushObject("0", undefined, undefined);
       expect(() => brushSchema.parse(validData)).not.toThrow();
     });
-
-    test("should throw if brush_qty is 0 and brush_type or brush_color is set", () => {
-      const invalidData = createBrushObject("0", "THREAD", undefined);
-      expect(() => brushSchema.parse(invalidData)).toThrow();
-
-      const invalidData2 = createBrushObject("0", undefined, "GREEN_SILVER");
-      expect(() => brushSchema.parse(invalidData2)).toThrow();
-    });
   });
 });

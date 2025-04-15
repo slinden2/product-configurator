@@ -1,18 +1,13 @@
 import { db } from "@/db";
-import {
-  configurations,
-  waterTanks,
-  washBays,
-  type NewConfiguration,
-  type NewWaterTank,
-  type NewWashBay,
-  userProfiles,
-} from "@/db/schemas";
+import { configurations, userProfiles } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { and, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
 import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
 import { createClient } from "@/utils/supabase/server";
-import { UpdateConfigSchema } from "@/validation/config-schema";
+import {
+  UpdateConfigSchema,
+  type ConfigSchema,
+} from "@/validation/config-schema";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -22,8 +17,6 @@ export type TransactionType = Parameters<
 export type AllConfigurations = Awaited<
   ReturnType<typeof getUserConfigurations>
 >;
-
-export type OneConfiguration = Awaited<ReturnType<typeof getOneConfiguration>>;
 
 export type UserData = Awaited<ReturnType<typeof getUserData>>;
 
@@ -101,7 +94,7 @@ export async function getUserConfigurations() {
   return response;
 }
 
-export async function getOneConfiguration(id: number) {
+export async function getConfigurationWithTanksAndBays(id: number) {
   const response = await db.query.configurations.findFirst({
     where: eq(configurations.id, id),
     with: {
@@ -112,55 +105,16 @@ export async function getOneConfiguration(id: number) {
   return response;
 }
 
-export const insertConfiguration = async (
-  newConfiguration: Omit<NewConfiguration, "user_id">,
-  newWaterTanks: Omit<NewWaterTank, "configuration_id">[],
-  newWashBays: Omit<NewWashBay, "configuration_id">[]
-) => {
+export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
   const user = await getUserData();
 
   if (!user) {
     throw new QueryError("Utente non trovato.", 401);
   }
 
-  const response = await db.transaction(async (tx) => {
-    const [createdConfiguration] = await tx
-      .insert(configurations)
-      .values({ ...newConfiguration, user_id: user.id })
-      .returning({ id: configurations.id });
-
-    let createdWaterTanks: { id: number }[] | null = null;
-    if (newWaterTanks.length > 0) {
-      const newWaterTanksWithConfId = newWaterTanks.map((wt) => ({
-        ...wt,
-        configuration_id: createdConfiguration.id,
-      }));
-
-      createdWaterTanks = await tx
-        .insert(waterTanks)
-        .values(newWaterTanksWithConfId)
-        .returning({ id: waterTanks.id });
-    }
-
-    let createdWashBays: { id: number }[] | null = null;
-    if (newWashBays.length > 0) {
-      const newWashBaysWithConfId = newWashBays.map((wb) => ({
-        ...wb,
-        configuration_id: createdConfiguration.id,
-      }));
-
-      createdWashBays = await tx
-        .insert(washBays)
-        .values(newWashBaysWithConfId)
-        .returning({ id: washBays.id });
-    }
-
-    return {
-      createdConfiguration,
-      createdWaterTanks,
-      createdWashBays,
-    };
-  });
+  const response = await db
+    .insert(configurations)
+    .values({ ...newConfiguration, user_id: user.id });
 
   return response;
 };
@@ -250,8 +204,6 @@ async function deleteRows<T extends { id: number }>(
 export const updateConfiguration = async (
   confId: number,
   configurationData: UpdateConfigSchema
-  // waterTankData: ArrayDifferenceOutput<WaterTankEditUnionType>,
-  // washBayData: ArrayDifferenceOutput<WashBayEditUnionType>
 ): Promise<{ id: number }> => {
   const user = await getUserData();
 
@@ -281,20 +233,6 @@ export const updateConfiguration = async (
       );
     }
 
-    //   await insertRows(
-    //     tx,
-    //     waterTanks,
-    //     waterTankData.added,
-    //     updatedConfiguration.id
-    //   );
-    //   await insertRows(tx, washBays, washBayData.added, updatedConfiguration.id);
-
-    //   await deleteRows(tx, waterTanks, waterTankData.removed, waterTanks.id);
-    //   await deleteRows(tx, washBays, washBayData.removed, washBays.id);
-
-    //   await updateRows(tx, waterTanks, waterTankData.same);
-    //   await updateRows(tx, washBays, washBayData.same);
-
     return updatedConfiguration;
   });
 
@@ -302,7 +240,7 @@ export const updateConfiguration = async (
 };
 
 export async function getBOM(id: number) {
-  const configuration = await getOneConfiguration(id);
+  const configuration = await getConfigurationWithTanksAndBays(id);
   if (configuration) {
     const bom = await BOM.init(configuration);
     return bom;

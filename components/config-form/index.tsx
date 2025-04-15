@@ -2,9 +2,12 @@
 
 import React, { useState } from "react";
 import { Form } from "@/components/ui/form";
-import { z } from "zod";
-import { configSchema } from "@/validation/config-schema";
-import { FieldErrors, useForm } from "react-hook-form";
+import {
+  ConfigSchema,
+  configSchema,
+  UpdateConfigSchema,
+} from "@/validation/config-schema";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import GeneralSection from "@/components/config-form/general-section";
 import BrushSection from "@/components/config-form/brush-section";
@@ -14,50 +17,44 @@ import WaterSupplySection from "@/components/config-form/water-supply-section";
 import RailSection from "@/components/config-form/rail-section";
 import TouchSection from "@/components/config-form/touch-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
-import WaterTankSection from "@/components/config-form/water-tank-section";
-import WashBaySection from "@/components/config-form/wash-bay-section";
 import BackButton from "@/components/back-button";
-import { redirectTo } from "@/app/actions/redirect-to";
 import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
 import { Save } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { editConfiguration } from "@/app/actions/edit-configuration";
-import { isZodBoolean } from "@/lib/utils";
+import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { useRouter } from "next/navigation";
-
-export type ConfigFormData = z.infer<typeof configSchema>;
+import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
 
 interface ConfigurationFormProps {
-  configuration?: ConfigFormData;
+  id?: number;
+  configuration?: UpdateConfigSchema;
 }
 
-const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
+const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  const form = useForm<ConfigFormData>({
+  const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
     defaultValues: configuration,
   });
 
-  async function onSubmit(values: ConfigFormData) {
+  async function onSubmit(values: ConfigSchema) {
     console.log("🚀 ~ onSubmit ~ values:", values);
-    const { id } = values;
     try {
       setIsSubmitting(true);
       setError("");
 
-      if (configuration?.id) {
-        await editConfiguration(id, values);
+      if (id) {
+        if (!configuration || !("user_id" in configuration)) {
+          setError("Dati incompleti per l'aggiornamento.");
+          setIsSubmitting(false);
+          return;
+        }
+        await editConfigurationAction(id, configuration.user_id, values);
       } else {
-        // await fetch("/api/configurations", {
-        //   method: "POST",
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        //   body: JSON.stringify(values),
-        // });
+        await insertConfigurationAction(values);
       }
       setIsSubmitting(false);
       // router.push("/configurations");
@@ -70,37 +67,11 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
     }
   }
 
-  // This is needed to convert empty string values to false or null depending on the field type.
-  // For example, when chem pump checkbox is unchecked, it reset other field values to empty strings.
-  // This causes the validation to throw an error, but this function fixes it and revalidates after conversion.
-  async function onError(errors: FieldErrors<ConfigFormData>) {
-    const formData = form.getValues();
-
-    for (const key in errors) {
-      if (Object.prototype.hasOwnProperty.call(errors, key)) {
-        const typedKey = key as keyof ConfigFormData;
-        const fieldSchema = configSchema.shape[typedKey];
-
-        if (formData[typedKey] === "") {
-          if (isZodBoolean(fieldSchema)) {
-            form.setValue(typedKey, false);
-            form.trigger(typedKey);
-          } else {
-            form.setValue(typedKey, null);
-            form.trigger(typedKey);
-          }
-        }
-      }
-    }
-
-    await onSubmit(form.getValues());
-  }
-
   return (
     <div>
       {/* <DevTool control={form.control} /> */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onError)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <GeneralSection />
           <BrushSection />
           <ChemPumpSection />
@@ -109,8 +80,6 @@ const ConfigForm = ({ configuration }: ConfigurationFormProps) => {
           <RailSection />
           <TouchSection />
           <HPPumpSection />
-          <WaterTankSection />
-          <WashBaySection />
           <div className="space-x-6">
             <BackButton fallbackPath="/configurations" />
             <LoadingButton

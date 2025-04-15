@@ -41,25 +41,18 @@ export const brushNums: SelectOption[] = [
 
 export const brushSchema = z
   .object({
-    brush_qty: z.coerce.number({ invalid_type_error: genericRequiredMessage }),
+    brush_qty: z.coerce
+      .number({ invalid_type_error: genericRequiredMessage })
+      .refine((val) => val === 0 || val === 2 || val === 3, {
+        message: "Numero di spazzole deve essere 0, 2 o 3.",
+      }),
+    brush_type: BrushTypeEnum.nullish(),
+    brush_color: BrushColorEnum.nullish(),
   })
-  .passthrough()
-  .pipe(
-    z.discriminatedUnion("brush_qty", [
-      z.object({
-        brush_qty: z.literal(0),
-        brush_type: mustBeUndefined(),
-        brush_color: mustBeUndefined(),
-      }),
-      z.object({
-        brush_qty: z.literal(2),
-        brush_type: BrushTypeEnum,
-        brush_color: BrushColorEnum,
-      }),
-      z.object({
-        brush_qty: z.literal(3),
-        brush_type: BrushTypeEnum,
-        brush_color: BrushColorEnum,
-      }),
-    ])
-  );
+  .transform((data) => {
+    if (data.brush_qty === 0) {
+      data.brush_type = null;
+      data.brush_color = null;
+    }
+    return data;
+  });

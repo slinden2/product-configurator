@@ -1,8 +1,7 @@
 import React from "react";
-import dynamic from "next/dynamic";
-import { configSchema } from "@/validation/config-schema";
-import ConfigForm from "@/components/config-form";
-import { getOneConfiguration } from "@/db/queries";
+import { updateConfigSchema } from "@/validation/config-schema";
+import { getConfigurationWithTanksAndBays } from "@/db/queries";
+import FormContainer from "@/components/form-container";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -10,15 +9,18 @@ interface EditConfigProps {
 
 const EditConfiguration = async (props: EditConfigProps) => {
   const params = await props.params;
-  const configuration = await getOneConfiguration(parseInt(params.id));
+  const id = parseInt(params.id);
+  const configurationData = await getConfigurationWithTanksAndBays(id);
 
-  if (!configuration) {
+  if (!configurationData) {
     return <p className="text-destructive">Configurazione non trovata!</p>;
   }
 
-  const parsedConfiguration = configSchema.parse(configuration);
+  const { water_tanks, wash_bays, ...configuration } = configurationData;
 
-  return <ConfigForm configuration={parsedConfiguration} />;
+  const validatedConfiguration = updateConfigSchema.parse(configuration);
+
+  return <FormContainer id={id} configuration={validatedConfiguration} />;
 };
 
 export default EditConfiguration;
