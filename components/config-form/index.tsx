@@ -17,7 +17,6 @@ import WaterSupplySection from "@/components/config-form/water-supply-section";
 import RailSection from "@/components/config-form/rail-section";
 import TouchSection from "@/components/config-form/touch-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
-import BackButton from "@/components/back-button";
 import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
 import { Save } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -81,7 +80,6 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
           <TouchSection />
           <HPPumpSection />
           <div className="space-x-6">
-            <BackButton fallbackPath="/configurations" />
             <LoadingButton
               type="submit"
               variant="default"

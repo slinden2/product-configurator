@@ -4,9 +4,7 @@ import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
 import { touchSchema } from "@/validation/configuration/touch-schema";
 import { railSchema } from "@/validation/configuration/rail-schema";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
-import { washBaySchema } from "@/validation/configuration/wash-bay-schema";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
-import { waterTankSchema } from "@/validation/configuration/water-tank-schema";
 import { z } from "zod";
 
 export const baseSchema = z.object({

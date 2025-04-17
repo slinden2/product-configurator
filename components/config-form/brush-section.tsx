@@ -1,15 +1,15 @@
-import { ConfigFormData } from "@/components/config-form";
 import Fieldset from "@/components/fieldset";
 import FieldsetContent from "@/components/fieldset-content";
 import FieldsetItem from "@/components/fieldset-item";
 import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
+import { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
 import React from "react";
 import { useWatch } from "react-hook-form";
 
 const BrushSection = () => {
-  const brushNumWatch = useWatch<ConfigFormData>({ name: "brush_qty" });
+  const brushNumWatch = useWatch<ConfigSchema>({ name: "brush_qty" });
 
   return (
     <Fieldset title="Spazzole">

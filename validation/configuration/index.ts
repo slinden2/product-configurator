@@ -56,10 +56,7 @@ import {
   waterPump2Opts,
   WaterPump2Enum,
 } from "@/validation/configuration/water-supply-schema";
-import {
-  WaterTankTypeEnum,
-  waterTankOpts,
-} from "@/validation/configuration/water-tank-schema";
+import { waterTankOpts } from "@/validation/water-tank-schema";
 
 export const zodEnums = {
   BrushTypeEnum,
@@ -78,7 +75,6 @@ export const zodEnums = {
   OMZPumpOutletEnum,
   TouchPosEnum,
   TouchFixingType,
-  WaterTankTypeEnum,
   PressureWasherTypeEnum,
 };
 
@@ -106,6 +102,6 @@ export const selectFieldOptions: SelectOptionGroup = {
   touchPositionOpts,
   touchFixingTypeOpts,
   cardQtyOpts,
-  waterTankOpts,
   pressureWasherOpts,
+  waterTankOpts,
 };

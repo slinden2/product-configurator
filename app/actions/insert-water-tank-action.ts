@@ -1,11 +1,14 @@
 "use server";
 
-import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
-import { configSchema } from "@/validation/config-schema";
+import { getUserData, insertWaterTank, QueryError } from "@/db/queries";
+import { waterTankSchema } from "@/validation/water-tank-schema";
 import { DatabaseError } from "pg";
 
-export const insertConfigurationAction = async (formData: unknown) => {
-  const validation = configSchema.safeParse(formData);
+export const insertWaterTankAction = async (
+  confId: number,
+  formData: unknown
+) => {
+  const validation = waterTankSchema.safeParse(formData);
 
   if (!validation.success) {
     throw new Error(validation.error?.message);
@@ -18,7 +21,7 @@ export const insertConfigurationAction = async (formData: unknown) => {
   }
 
   try {
-    await insertConfiguration(validation.data);
+    await insertWaterTank(confId, validation.data);
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
       throw new Error(err.message);

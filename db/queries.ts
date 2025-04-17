@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { configurations, userProfiles } from "@/db/schemas";
+import { configurations, userProfiles, waterTanks } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { and, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
 import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
@@ -8,6 +8,7 @@ import {
   UpdateConfigSchema,
   type ConfigSchema,
 } from "@/validation/config-schema";
+import { WaterTankSchema } from "@/validation/water-tank-schema";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -105,6 +106,13 @@ export async function getConfigurationWithTanksAndBays(id: number) {
   return response;
 }
 
+export async function getConfiguration(id: number) {
+  const response = await db.query.configurations.findFirst({
+    where: eq(configurations.id, id),
+  });
+  return response;
+}
+
 export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
   const user = await getUserData();
 
@@ -115,6 +123,33 @@ export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
   const response = await db
     .insert(configurations)
     .values({ ...newConfiguration, user_id: user.id });
+
+  return response;
+};
+
+export const insertWaterTank = async (
+  confId: number,
+  newWaterTank: WaterTankSchema
+) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const configuration = await getConfiguration(confId);
+
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
+
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
+
+  const response = await db
+    .insert(waterTanks)
+    .values({ ...newWaterTank, configuration_id: confId });
 
   return response;
 };
