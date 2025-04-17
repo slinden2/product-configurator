@@ -17,13 +17,11 @@ const LoginForm = () => {
     resolver: zodResolver(loginSchema),
   });
   const router = useRouter();
-  const { setUser } = useUser();
 
   const onSubmit = async (formData: LoginFormData) => {
     const response = await signIn(formData);
     if (response.status === "success") {
       router.push("/configurations");
-      setUser(response.user);
     } else {
       console.error(response);
     }

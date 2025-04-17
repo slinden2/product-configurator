@@ -9,13 +9,11 @@ import React from "react";
 
 const Logout = () => {
   const [loading, setLoading] = React.useState(false);
-  const { setUser } = useUser();
 
   const handleLogout = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      setUser(null);
       await signOut();
     } catch (error) {
       console.error("Logout failed: ", error);
