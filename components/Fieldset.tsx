@@ -1,33 +1,29 @@
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import React, { HTMLAttributes } from "react";
 
 interface Props extends HTMLAttributes<HTMLFieldSetElement> {
   children: React.ReactNode;
   title: string;
-  className?: string;
-  legendClassName?: string;
+  description?: string;
 }
 
-const Fieldset = ({
-  children,
-  title,
-  className,
-  legendClassName,
-  ...rest
-}: Props) => {
+const Fieldset = ({ children, title, description }: Props) => {
   return (
-    <fieldset className={className} {...rest}>
-      <legend
-        className={cn(
-          "text-muted-foreground text-1xl font-bold mb-4",
-          legendClassName
-        )}>
-        {title}
-      </legend>
-      {children}
-      <Separator className="my-6" />
-    </fieldset>
+    <Card className="overflow-hidden shadow-lg mb-8">
+      <CardHeader className="border-b bg-card-foreground/5">
+        <CardTitle className="text-xl text-foreground">{title}</CardTitle>
+        <CardDescription className="text-muted-foreground">
+          {description || ""}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">{children}</CardContent>
+    </Card>
   );
 };
 

@@ -79,11 +79,11 @@ const SelectField = ({
               }}
               disabled={disabled}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder={NOT_SELECTED_LABEL} />
                 </SelectTrigger>
               </FormControl>
-              <SelectContent>
+              <SelectContent className="bg-background">
                 {items.map((item) => {
                   return (
                     <SelectItem key={item.value} value={item.value.toString()}>

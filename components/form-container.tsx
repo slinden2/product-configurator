@@ -15,7 +15,7 @@ interface WaterTankState extends UpdateWaterTankSchema {
 interface ConfigurationFormProps {
   confId?: number; // ID of the parent configuration
   configuration?: UpdateConfigSchema;
-  existingWaterTanks: UpdateWaterTankSchema[];
+  existingWaterTanks?: UpdateWaterTankSchema[];
 }
 
 const createDefaultWaterTank = (
@@ -114,7 +114,7 @@ const FormContainer = ({
   };
 
   return (
-    <div>
+    <>
       {/* Configuration Form */}
       <ConfigForm id={confId} configuration={configuration} />
 
@@ -158,7 +158,7 @@ const FormContainer = ({
           Rimozione serbatoio in corso...
         </p>
       )}
-    </div>
+    </>
   );
 };
 

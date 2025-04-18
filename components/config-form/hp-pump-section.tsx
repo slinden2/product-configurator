@@ -16,7 +16,9 @@ const HPPumpSection = () => {
   const omzPumpOutletWatch = useWatch({ name: "pump_outlet_omz" });
 
   return (
-    <Fieldset title="Pompe HP">
+    <Fieldset
+      title="Pompe HP"
+      description="Seleziona le pompe alta pressione e le tipologie di uscite da includere nella configurazione">
       <FieldsetContent className="space-y-6 md:space-y-3">
         <FieldsetRow>
           <FieldsetItem className="md:self-end md:pb-3">

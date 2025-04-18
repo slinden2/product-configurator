@@ -18,7 +18,9 @@ const SupplySection = () => {
     supplyFixingTypeWatch === zodEnums.SupplyFixingTypeEnum.enum.POST;
 
   return (
-    <Fieldset title="Alimentazione portale">
+    <Fieldset
+      title="Alimentazione portale"
+      description="Configura le impostazioni per la tipologia di alimentazione del portale e il lato">
       <FieldsetContent>
         <FieldsetRow>
           <FieldsetItem>

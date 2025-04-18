@@ -6,7 +6,9 @@ import React from "react";
 
 const GeneralSection = () => {
   return (
-    <Fieldset title="Informazioni generali">
+    <Fieldset
+      title="Informazioni generali"
+      description="Compila i dati del cliente e la descrizione dell'impianto">
       <FieldsetContent>
         <InputField
           name="name"

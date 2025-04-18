@@ -11,7 +11,9 @@ const ChemPumpSection = () => {
   const hasAcidPumpWatch = useWatch({ name: "has_acid_pump" });
 
   return (
-    <Fieldset title="Pompe dosatrici">
+    <Fieldset
+      title="Pompe dosatrici"
+      description="Seleziona le pompe da includere nella configurazione">
       <FieldsetContent>
         <div className="grid grid-rows-2 grid-cols-2 md:grid-rows-1 md:grid-cols-4">
           <div className="order-1 my-1 md:my-0">

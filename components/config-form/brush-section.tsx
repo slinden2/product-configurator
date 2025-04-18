@@ -12,7 +12,9 @@ const BrushSection = () => {
   const brushNumWatch = useWatch<ConfigSchema>({ name: "brush_qty" });
 
   return (
-    <Fieldset title="Spazzole">
+    <Fieldset
+      title="Spazzole"
+      description="Compila i dati relativi alle spazzole">
       <FieldsetContent>
         <FieldsetRow>
           <FieldsetItem>

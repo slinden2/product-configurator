@@ -28,7 +28,11 @@ const TextareaField = ({ name, label, placeholder }: TextareaFieldProps) => {
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <FormControl>
-              <Textarea placeholder={placeholder} {...field} />
+              <Textarea
+                className="bg-background"
+                placeholder={placeholder}
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

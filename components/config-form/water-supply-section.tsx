@@ -15,7 +15,9 @@ const WaterSupplySection = () => {
   const hasInvPump = waterPump1Watch?.startsWith("INV_3KW");
 
   return (
-    <Fieldset title="Alimentazione acqua">
+    <Fieldset
+      title="Alimentazione acqua"
+      description="Configura le impostazioni per l'alimentazione dell'acqua e le pompe di rilancio">
       <FieldsetContent>
         <FieldsetRow className="md:items-start">
           <FieldsetItem>

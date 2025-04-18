@@ -25,7 +25,9 @@ const TouchSection = () => {
   }, [hasItecowebWatch, hasCardReaderWatch, setValue]);
 
   return (
-    <Fieldset title="Configurazione quadro elettrico">
+    <Fieldset
+      title="Configurazione quadro elettrico"
+      description="Configura il quadro elettrico e i touch screen del portale">
       <FieldsetContent>
         <FieldsetRow>
           <FieldsetItem>

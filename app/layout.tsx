@@ -32,7 +32,9 @@ export default function RootLayout({
                   <MainNav />
                 </div>
               </header>
-              <main className="flex-1 container py-6">{children}</main>
+              <main className="container mx-auto px-4 py-8 max-w-5xl">
+                {children}
+              </main>
             </div>
             <footer className="border-t py-6 md:py-0">
               <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">

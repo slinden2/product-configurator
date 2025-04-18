@@ -35,6 +35,7 @@ const InputField = ({ name, label, placeholder, type }: InputFieldProps) => {
               <Input
                 type={type ? type : "text"}
                 placeholder={placeholder}
+                className="bg-background"
                 {...field}
               />
             </FormControl>

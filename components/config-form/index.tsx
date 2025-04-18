@@ -17,12 +17,12 @@ import WaterSupplySection from "@/components/config-form/water-supply-section";
 import RailSection from "@/components/config-form/rail-section";
 import TouchSection from "@/components/config-form/touch-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
-import { DevTool } from "@hookform/devtools"; // TODO Remove dev tools
+import { DevTool } from "@hookform/devtools"; // DEBUG
 import { Save } from "lucide-react";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
-import { useRouter } from "next/navigation";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ConfigurationFormProps {
   id?: number;
@@ -32,7 +32,6 @@ interface ConfigurationFormProps {
 const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const router = useRouter();
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
@@ -40,7 +39,7 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
   });
 
   async function onSubmit(values: ConfigSchema) {
-    console.log("🚀 ~ onSubmit ~ values:", values);
+    console.log("🚀 ~ onSubmit ~ values:", values); // DEBUG
     try {
       setIsSubmitting(true);
       setError("");
@@ -56,7 +55,6 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
         await insertConfigurationAction(values);
       }
       setIsSubmitting(false);
-      // router.push("/configurations");
     } catch (err) {
       console.log("🚀 ~ onSubmit ~ err:", err);
       if (err instanceof Error) {
@@ -68,7 +66,8 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
 
   return (
     <div>
-      {/* <DevTool control={form.control} /> */}
+      {/* DEBUG */}
+      <DevTool control={form.control} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <GeneralSection />
@@ -79,16 +78,21 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
           <RailSection />
           <TouchSection />
           <HPPumpSection />
-          <div className="space-x-6">
-            <LoadingButton
-              type="submit"
-              variant="default"
-              title="Salva configurazione"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              size="icon">
-              {!isSubmitting && <Save />}
-            </LoadingButton>
+          <div className="flex gap-4">
+            <Button
+              className="ml-auto"
+              variant="destructive"
+              onClick={() => form.reset({})}>
+              Annulla
+            </Button>
+            <Button className="flex items-center gap-2" type="submit">
+              {isSubmitting ? (
+                <Spinner className="h-4 w-4 text-foreground" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              <span>Salva configurazione</span>
+            </Button>
           </div>
         </form>
       </Form>

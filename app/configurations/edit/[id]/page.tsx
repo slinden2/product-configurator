@@ -25,11 +25,19 @@ const EditConfiguration = async (props: EditConfigProps) => {
   );
 
   return (
-    <FormContainer
-      confId={id}
-      configuration={validatedConfiguration}
-      existingWaterTanks={validatedWaterTanks}
-    />
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>
+        <p className="text-muted-foreground">
+          Modifica con il form sottostante la configurazione del tuo cliente.
+        </p>
+      </div>
+      <FormContainer
+        confId={id}
+        configuration={validatedConfiguration}
+        existingWaterTanks={validatedWaterTanks}
+      />
+    </div>
   );
 };
 

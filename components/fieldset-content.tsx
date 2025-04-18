@@ -8,7 +8,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 
 const FieldsetContent = ({ children, className, ...rest }: Props) => {
   return (
-    <div {...rest} className={cn("space-y-3", className)}>
+    <div {...rest} className={cn("space-y-4", className)}>
       {children}
     </div>
   );
