@@ -5,30 +5,43 @@ import FieldsetItem from "@/components/fieldset-item";
 import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
+import { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
-import { useWatch } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 const WaterSupplySection = () => {
-  const water2TypeWatch = useWatch({ name: "water_2_type" });
-  const waterPump1Watch = useWatch({ name: "water_1_pump" });
-  const hasInvPump = waterPump1Watch?.startsWith("INV_3KW");
+  const { control } = useFormContext<ConfigSchema>();
 
+  // Watch relevant fields
+  const water1PumpWatch = useWatch({ control, name: "water_1_pump" });
+  const water2TypeWatch = useWatch({ control, name: "water_2_type" });
+
+  // Determine if an inverter pump is selected for water 1
+  const isInvPump1Selected =
+    water1PumpWatch === zodEnums.WaterPump1Enum.enum.INV_3KW_200L ||
+    water1PumpWatch === zodEnums.WaterPump1Enum.enum.INV_3KW_250L;
+
+  // Determine if water pump 2 should be disabled (if type 2 is not selected/undefined)
+  const isWater2PumpDisabled = water2TypeWatch === undefined; // Simplified check
   return (
     <Fieldset
       title="Alimentazione acqua"
-      description="Configura le impostazioni per l'alimentazione dell'acqua e le pompe di rilancio">
+      description="Configura le impostazioni per l'alimentazione dell'acqua e le pompe di rilancio"
+    >
       <FieldsetContent>
         <FieldsetRow className="md:items-start">
           <FieldsetItem>
             <div className="space-y-3">
-              <SelectField
+              <SelectField<ConfigSchema>
                 name="water_1_type"
+                dataType="string"
                 label="Tipo acqua 1"
-                items={selectFieldOptions.waterTypes}
+                items={withNoSelection(selectFieldOptions.waterTypes)}
               />
-              <SelectField
+              <SelectField<ConfigSchema>
                 name="water_1_pump"
+                dataType="string"
                 label="Pompa di rilancio"
                 items={withNoSelection(selectFieldOptions.waterPump1Opts)}
                 fieldsToResetOnValue={[
@@ -47,16 +60,18 @@ const WaterSupplySection = () => {
               />
             </div>
           </FieldsetItem>
-          {hasInvPump && (
+          {isInvPump1Selected && (
             <FieldsetItem>
               <>
-                <SelectField
+                <SelectField<ConfigSchema>
                   name="inv_pump_outlet_dosatron_qty"
+                  dataType="number"
                   label="Uscite Dosatron"
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
-                <SelectField
+                <SelectField<ConfigSchema>
                   name="inv_pump_outlet_pw_qty"
+                  dataType="number"
                   label="Uscite idropulitrice"
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
@@ -65,8 +80,9 @@ const WaterSupplySection = () => {
           )}
           <FieldsetItem>
             <div className="space-y-3">
-              <SelectField
+              <SelectField<ConfigSchema>
                 name="water_2_type"
+                dataType="string"
                 label="Tipo acqua 2"
                 items={withNoSelection(selectFieldOptions.waterTypes)}
                 fieldsToResetOnValue={[
@@ -76,15 +92,16 @@ const WaterSupplySection = () => {
                   },
                 ]}
               />
-              <SelectField
+              <SelectField<ConfigSchema>
                 name="water_2_pump"
+                dataType="string"
                 label="Pompa di rilancio"
-                disabled={!(water2TypeWatch in zodEnums.WaterTypeEnum.enum)}
+                disabled={isWater2PumpDisabled}
                 items={withNoSelection(selectFieldOptions.waterPump2Opts)}
               />
             </div>
           </FieldsetItem>
-          {!hasInvPump && <FieldsetItem />}
+          {!isInvPump1Selected && <FieldsetItem />}
         </FieldsetRow>
         <div className="">
           <CheckboxField name="has_antifreeze" label="Scarico invernale" />

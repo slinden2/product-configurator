@@ -38,13 +38,15 @@ export const railGuideNum: SelectOption[] = [
 ];
 
 export const railSchema = z.object({
-  rail_type: RailTypeEnum,
+  rail_type: RailTypeEnum.optional(),
   rail_length: z.coerce
     .number({ message: genericRequiredMessage })
     .min(7)
-    .max(26),
+    .max(26)
+    .optional(),
   rail_guide_qty: z.coerce
     .number({ message: genericRequiredMessage })
     .min(0)
-    .max(2),
+    .max(2)
+    .default(0),
 });

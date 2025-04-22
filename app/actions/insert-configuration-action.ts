@@ -18,7 +18,7 @@ export const insertConfigurationAction = async (formData: unknown) => {
   }
 
   try {
-    await insertConfiguration(validation.data);
+    // await insertConfiguration(validation.data);
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
       throw new Error(err.message);

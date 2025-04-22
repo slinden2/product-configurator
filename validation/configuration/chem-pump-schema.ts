@@ -1,9 +1,7 @@
 import { SelectOption } from "@/types";
 import {
-  mustBeUndefined,
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
-  mustBeFalse,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -20,11 +18,11 @@ export const chemicalPumpPositions: SelectOption[] =
 // Number of chem pumps
 export const chemicalNum: SelectOption[] = [
   {
-    value: "1",
+    value: 1,
     label: "Una pompa di prelavaggio",
   },
   {
-    value: "2",
+    value: 2,
     label: "Due pompe di prelavaggio",
   },
 ];
@@ -34,30 +32,33 @@ const detergentPumpDiscriminatedUnion = z.discriminatedUnion(
   [
     z.object({
       has_chemical_pump: z.literal(false),
-      chemical_qty: mustBeUndefined(),
-      chemical_pump_pos: mustBeUndefined(),
-      has_foam: mustBeFalse(),
+      chemical_qty: z.undefined(),
+      chemical_pump_pos: z.undefined(),
+      has_foam: z.literal(false),
     }),
     z.object({
       has_chemical_pump: z.literal(true),
-      chemical_qty: z.coerce
-        .number({ message: genericRequiredMessage })
+      chemical_qty: z
+        .number({
+          invalid_type_error: "Quantità invalida",
+          required_error: genericRequiredMessage,
+        })
         .refine(
-          (value) =>
-            chemicalNum.map((item) => item.value).includes(value.toString()),
+          (value) => chemicalNum.map((item) => item.value).includes(value),
           {
             message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
           }
         ),
       chemical_pump_pos: ChemicalPumpPosEnum,
-      has_foam: z.coerce.boolean().default(false),
+      has_foam: z.boolean().default(false),
     }),
   ]
 );
 
 const detergentPumpSchema = z
   .object({
-    has_chemical_pump: z.coerce.boolean().default(false),
+    has_chemical_pump: z.boolean().default(false),
+    has_foam: z.boolean().default(false),
   })
   .passthrough()
   .pipe(detergentPumpDiscriminatedUnion);
@@ -65,7 +66,7 @@ const detergentPumpSchema = z
 const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
   z.object({
     has_acid_pump: z.literal(false),
-    acid_pump_pos: mustBeUndefined(),
+    acid_pump_pos: z.undefined(),
   }),
   z.object({
     has_acid_pump: z.literal(true),
@@ -75,7 +76,7 @@ const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
 
 const acidPumpSchema = z
   .object({
-    has_acid_pump: z.coerce.boolean().default(false),
+    has_acid_pump: z.boolean().default(false),
   })
   .passthrough()
   .pipe(acidPumpDiscriminatedUnion);
@@ -95,7 +96,7 @@ export const chemPumpSchema = z
       data.has_acid_pump &&
       data.acid_pump_pos === ChemicalPumpPosEnum.enum.ABOARD
     ) {
-      const fieldNames: Array<keyof typeof data> = [
+      const fieldNames: Array<"chemical_pump_pos" | "acid_pump_pos"> = [
         "chemical_pump_pos",
         "acid_pump_pos",
       ];

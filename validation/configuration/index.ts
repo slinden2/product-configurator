@@ -19,7 +19,6 @@ import {
   OMZPumpOutletEnum,
   omzPumpOutletTypes,
 } from "@/validation/configuration/hp-pump-schema";
-import { inverterPumpOutletOpts } from "@/validation/configuration/inveter-pump-schema";
 import {
   TouchFixingType,
   TouchPosEnum,
@@ -55,6 +54,7 @@ import {
   waterTypes,
   waterPump2Opts,
   WaterPump2Enum,
+  inverterPumpOutletOpts,
 } from "@/validation/configuration/water-supply-schema";
 import { waterTankOpts } from "@/validation/water-tank-schema";
 
