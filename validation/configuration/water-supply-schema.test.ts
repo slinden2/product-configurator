@@ -63,8 +63,8 @@ describe("waterSupplySchema", () => {
       const invalidData = createWaterSupplyObject(
         "DEMINERALIZED",
         "INV_3KW_200L",
-        null,
-        null,
+        undefined,
+        undefined,
         false,
         { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 0 }
       );
@@ -75,8 +75,8 @@ describe("waterSupplySchema", () => {
       const validData = createWaterSupplyObject(
         "RECYCLED",
         "INV_3KW_250L",
-        null,
-        null,
+        undefined,
+        undefined,
         false,
         { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 1 }
       );

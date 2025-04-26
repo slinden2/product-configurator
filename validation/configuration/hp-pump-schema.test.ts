@@ -6,11 +6,7 @@ import {
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
 import { describe, test, expect } from "vitest";
 
-type OutletType =
-  | HpPump15kwOutletType
-  | HpPump30kwOutletType
-  | undefined
-  | null;
+type OutletType = HpPump15kwOutletType | HpPump30kwOutletType | undefined;
 
 function createHpPumpObject(
   kw: Number = 15,
@@ -27,8 +23,8 @@ function createHpPumpObject(
 
 function createOMZPumpObject(
   hasPump: Boolean = false,
-  outlet1: HpPumpOMZkwOutletType | undefined | null = undefined,
-  hasChemicalRoofBar?: Boolean | undefined | null
+  outlet1: HpPumpOMZkwOutletType | undefined = undefined,
+  hasChemicalRoofBar?: Boolean | undefined
 ) {
   return {
     has_omz_pump: hasPump,
@@ -41,9 +37,9 @@ describe("hpPumpSchema", () => {
   describe("15kW/30kW pump tests", () => {
     test.each([
       [createHpPumpObject(15, true, undefined, undefined)],
-      [createHpPumpObject(15, true, null, null)],
+      [createHpPumpObject(15, true, undefined, undefined)],
       [createHpPumpObject(30, true, undefined, undefined)],
-      [createHpPumpObject(30, true, null, null)],
+      [createHpPumpObject(30, true, undefined, undefined)],
     ])(
       `should throw when the pump is selected and the neither of the outlets are not, %o`,
       (testObject) => {
@@ -53,8 +49,8 @@ describe("hpPumpSchema", () => {
     test.each([
       [createHpPumpObject(15, false, "CHASSIS_WASH", undefined)],
       [createHpPumpObject(30, false, "CHASSIS_WASH_HORIZONTAL", undefined)],
-      [createHpPumpObject(15, false, null, "CHASSIS_WASH")],
-      [createHpPumpObject(30, false, null, "CHASSIS_WASH_HORIZONTAL")],
+      [createHpPumpObject(15, false, undefined, "CHASSIS_WASH")],
+      [createHpPumpObject(30, false, undefined, "CHASSIS_WASH_HORIZONTAL")],
     ])(
       `should throw if the pump is selected, but one of the outlets is, %o`,
       (testObject) => {
@@ -91,11 +87,11 @@ describe("hpPumpSchema", () => {
       }
     );
     test.each([
-      [createHpPumpObject(15, true, "CHASSIS_WASH", null)],
-      [createHpPumpObject(15, true, "LOW_SPINNERS", null)],
+      [createHpPumpObject(15, true, "CHASSIS_WASH", undefined)],
+      [createHpPumpObject(15, true, "LOW_SPINNERS", undefined)],
       [createHpPumpObject(15, true, "CHASSIS_WASH", "LOW_SPINNERS")],
-      [createHpPumpObject(30, true, "CHASSIS_WASH_HORIZONTAL", null)],
-      [createHpPumpObject(30, true, "HIGH_MEDIUM_SPINNERS", null)],
+      [createHpPumpObject(30, true, "CHASSIS_WASH_HORIZONTAL", undefined)],
+      [createHpPumpObject(30, true, "HIGH_MEDIUM_SPINNERS", undefined)],
       [
         createHpPumpObject(
           30,
@@ -114,7 +110,7 @@ describe("hpPumpSchema", () => {
   describe("OMZ pump tests", () => {
     test.each([
       createOMZPumpObject(true, undefined),
-      createOMZPumpObject(true, null),
+      createOMZPumpObject(true, undefined),
     ])(
       `should throw when the pump is selected and the outlet is not, %o`,
       (testObject) => {

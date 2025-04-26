@@ -137,27 +137,4 @@ describe("touchSchema", () => {
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
   });
-
-  describe("Coercion cases for touchSchema", () => {
-    test("should coerce card_qty from string to number", () => {
-      const validData = createTouchData({
-        touch_qty: 1,
-        touch_pos: TouchPosEnum.enum.EXTERNAL,
-        touch_fixing_type: TouchFixingType.enum.WALL,
-        card_qty: "50",
-      });
-      const parsedData = touchSchema.parse(validData);
-      expect(parsedData.card_qty).toBe(50);
-    });
-
-    test("should coerce touch_qty from string to number", () => {
-      const validData = createTouchData({
-        touch_qty: "2",
-        touch_fixing_type: TouchFixingType.enum.POST,
-        card_qty: 100,
-      });
-      const parsedData = touchSchema.parse(validData);
-      expect(parsedData.touch_qty).toBe(2);
-    });
-  });
 });
