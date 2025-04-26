@@ -24,7 +24,8 @@ const HPPumpSection = () => {
   return (
     <Fieldset
       title="Pompe HP"
-      description="Seleziona le pompe alta pressione e le tipologie di uscite da includere nella configurazione">
+      description="Seleziona le pompe alta pressione e le tipologie di uscite da includere nella configurazione"
+    >
       <FieldsetContent className="space-y-6 md:space-y-3">
         <FieldsetRow>
           <FieldsetItem className="md:self-end md:pb-3">
@@ -116,13 +117,15 @@ const HPPumpSection = () => {
                 {
                   triggerValue: zodEnums.OMZPumpOutletEnum.enum.SPINNERS,
                   fieldsToReset: ["has_chemical_roof_bar"],
+                  resetToValue: false,
                 },
               ]}
             />
             <div
               className={`md:mt-2 ${
                 showChemicalRoofBar ? "opacity-100" : "opacity-0"
-              }`}>
+              }`}
+            >
               <CheckboxField<ConfigSchema>
                 name="has_chemical_roof_bar"
                 label="Con barra di prelavaggio"

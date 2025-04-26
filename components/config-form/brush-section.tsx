@@ -10,13 +10,14 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 const BrushSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const brushNumWatch = useWatch<ConfigSchema>({control, name: "brush_qty" });
+  const brushNumWatch = useWatch<ConfigSchema>({ control, name: "brush_qty" });
   const isDisabled = brushNumWatch === undefined || brushNumWatch === 0;
 
   return (
     <Fieldset
       title="Spazzole"
-      description="Compila i dati relativi alle spazzole">
+      description="Compila i dati relativi alle spazzole"
+    >
       <FieldsetContent>
         <FieldsetRow>
           <FieldsetItem>

@@ -4,6 +4,7 @@ import {
   FieldValues,
   FieldPath,
   PathValue,
+  useWatch,
 } from "react-hook-form";
 import {
   FormControl,
@@ -86,9 +87,15 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
 }: SelectFieldProps<TFieldValues>) => {
   const { control, setValue, trigger } = useFormContext<TFieldValues>();
 
-  // --- Internal Type Parsing Logic ---
+  // This is needed, because when resetting fields the UI
+  // doesn't update until correctly using the field object
+  // in the FormField component. There was a weird bug, where
+  // the fields would reset (in RHF dev tools value was undefined),
+  // but the UI would not update with the empty placeholder.
+  const watchedValue = useWatch({ control, name });
+
   const parseValue = (
-    val: string // Value from Select is always string
+    val: string
   ): PathValue<TFieldValues, FieldPath<TFieldValues>> | undefined => {
     if (val === NOT_SELECTED_VALUE) {
       return undefined;
@@ -117,11 +124,9 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
       control={control}
       name={name}
       render={({ field }) => {
-        // Map RHF undefined/null state to "" for the main Select component value.
-        // This allows the <SelectValue placeholder> to show correctly.
         const stringValueForSelectTrigger =
-          field.value !== null && field.value !== undefined
-            ? field.value.toString()
+          watchedValue !== null && watchedValue !== undefined
+            ? watchedValue.toString()
             : ""; // Use "" ONLY for the trigger state when RHF value is undefined/null
 
         return (
@@ -152,6 +157,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                       setValue(fieldToReset, valueToSet, {
                         shouldValidate: false,
                         shouldDirty: true,
+                        shouldTouch: false,
                       });
                     });
                   }
@@ -161,7 +167,8 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                   trigger(fieldToRevalidate);
                 });
               }}
-              disabled={disabled}>
+              disabled={disabled}
+            >
               <FormControl>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder={NOT_SELECTED_LABEL} />

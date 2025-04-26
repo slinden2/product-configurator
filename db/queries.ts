@@ -9,7 +9,10 @@ import {
   type ConfigSchema,
 } from "@/validation/config-schema";
 import { WaterTankSchema } from "@/validation/water-tank-schema";
-import { transformConfigToDbInsert } from "./transformations";
+import {
+  transformConfigToDbInsert,
+  transformConfigToDbUpdate,
+} from "./transformations";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -122,9 +125,9 @@ export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
   }
 
   const dbData = transformConfigToDbInsert(newConfiguration, user.id);
+  console.log("dbData :>> ", dbData); // DEBUG
 
   const response = await db.insert(configurations).values(dbData);
-
   return response;
 };
 
@@ -247,6 +250,9 @@ export const updateConfiguration = async (
     throw new QueryError("Utente non trovato.", 401);
   }
 
+  const setData = transformConfigToDbUpdate(configurationData);
+  console.log("setData :>> ", setData); // DEBUG
+
   const response = await db.transaction(async (tx) => {
     const condition =
       user.role !== "ADMIN"
@@ -258,14 +264,14 @@ export const updateConfiguration = async (
 
     const [updatedConfiguration] = await tx
       .update(configurations)
-      .set(configurationData)
+      .set(setData)
       .where(condition)
       .returning({ id: configurations.id });
 
     if (!updatedConfiguration) {
       throw new QueryError(
-        "Configurazione non trovata. Impossibile aggiornare.",
-        403
+        "Configurazione non trovata o non autorizzata per l'aggiornamento.",
+        404
       );
     }
 

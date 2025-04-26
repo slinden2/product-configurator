@@ -1,18 +1,22 @@
 import { ConfigSchema } from "@/validation/config-schema";
 import { configurations } from "@/db/schemas"; // Import Drizzle schema
 
-// Define the return type based on Drizzle's insert type inference
+// Type for Drizzle insert
 type DbConfigInsert = typeof configurations.$inferInsert;
+// Type for Drizzle update set object
+type DbConfigSet = Partial<typeof configurations.$inferSelect>;
 
-export function transformConfigToDbInsert(
-  values: ConfigSchema,
-  userId: string
-): DbConfigInsert {
-  const dbData: DbConfigInsert = {
+// Helper function for common field mapping (Zod -> DB compatible values)
+// Returns a type suitable for Drizzle's .set() or as a base for .values()
+type MappedConfigData = Partial<typeof configurations.$inferSelect>;
+
+function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
+  return {
     name: values.name,
     description: values.description,
 
     // --- NOT NULL in DB (Zod refinement must ensure value exists) ---
+    // Assert type as Zod refine guarantees it's not undefined
     brush_qty: values.brush_qty as number,
     has_shampoo_pump: values.has_shampoo_pump,
     has_wax_pump: values.has_wax_pump,
@@ -63,8 +67,32 @@ export function transformConfigToDbInsert(
     pump_outlet_1_30kw: values.pump_outlet_1_30kw ?? null,
     pump_outlet_2_30kw: values.pump_outlet_2_30kw ?? null,
     pump_outlet_omz: values.pump_outlet_omz ?? null,
-
-    user_id: userId,
   };
-  return dbData;
+}
+
+export function transformConfigToDbInsert(
+  values: ConfigSchema,
+  userId: string
+): DbConfigInsert {
+  const commonData = mapConfigSchemaToDbCompatible(values);
+  return {
+    ...commonData,
+    user_id: userId,
+  } as DbConfigInsert;
+}
+
+// Public function for UPDATE transformation
+export function transformConfigToDbUpdate(values: ConfigSchema): DbConfigSet {
+  const commonData = mapConfigSchemaToDbCompatible(values);
+  return commonData;
+}
+
+export function transformDbNullToUndefined(data: Record<string, unknown>) {
+  const newDataObj = { ...data };
+  for (const key in newDataObj) {
+    if (data[key] === null) {
+      data[key] = undefined;
+    }
+  }
+  return data;
 }
