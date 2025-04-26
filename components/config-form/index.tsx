@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Form } from "@/components/ui/form";
 import {
+  configDefaults,
   ConfigSchema,
   configSchema,
   UpdateConfigSchema,
@@ -35,7 +36,7 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
-    defaultValues: configuration,
+    defaultValues: configuration ?? configDefaults,
   });
 
   async function onSubmit(values: ConfigSchema) {
@@ -82,7 +83,8 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
             <Button
               className="ml-auto"
               variant="destructive"
-              onClick={() => form.reset({})}>
+              onClick={() => form.reset({})}
+            >
               Annulla
             </Button>
             <Button className="flex items-center gap-2" type="submit">

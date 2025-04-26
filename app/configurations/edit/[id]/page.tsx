@@ -13,6 +13,8 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const id = parseInt(params.id);
   const configurationData = await getConfigurationWithTanksAndBays(id);
 
+  console.log("configurationData :>> ", configurationData);
+
   if (!configurationData) {
     return <p className="text-destructive">Configurazione non trovata!</p>;
   }

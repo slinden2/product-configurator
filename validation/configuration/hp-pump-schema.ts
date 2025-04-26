@@ -2,8 +2,6 @@ import { SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
-  mustBeFalse,
-  mustBeUndefined,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -55,18 +53,18 @@ export const omzPumpOutletTypes: SelectOption[] =
 // Validation function for 15kw and 30kw logic
 function validatePumpOutlets<T>(
   hasPump: boolean,
-  pumpOutlet1: T,
-  pumpOutlet2: T,
+  pumpOutlet1: T | undefined,
+  pumpOutlet2: T | undefined,
   ctx: z.RefinementCtx,
   chassisWashOption: T | T[],
   errorPaths: string[]
 ) {
   if (!hasPump) {
-    return true;
+    return;
   }
 
-  // Check if both outlets are not selected
-  if (!pumpOutlet1 && !pumpOutlet2) {
+  // Check if both outlets are undefined
+  if (pumpOutlet1 === undefined && pumpOutlet2 === undefined) {
     errorPaths.forEach((path) => {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -74,11 +72,11 @@ function validatePumpOutlets<T>(
         path: [path],
       });
     });
-    return false;
+    return; // No further checks needed if no outlets selected
   }
 
-  // Check if outlets are the same
-  if (pumpOutlet1 === pumpOutlet2) {
+  // Check if outlets are the same (and not undefined)
+  if (pumpOutlet1 !== undefined && pumpOutlet1 === pumpOutlet2) {
     errorPaths.forEach((path) => {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -86,11 +84,14 @@ function validatePumpOutlets<T>(
         path: [path],
       });
     });
-    return false;
   }
 
-  // Check if both outlets are chassis wash (chassisWashOption can be an array)
-  if (Array.isArray(chassisWashOption)) {
+  // Check if both outlets are chassis wash options
+  if (
+    Array.isArray(chassisWashOption) &&
+    pumpOutlet1 !== undefined &&
+    pumpOutlet2 !== undefined
+  ) {
     if (
       chassisWashOption.includes(pumpOutlet1) &&
       chassisWashOption.includes(pumpOutlet2)
@@ -105,16 +106,16 @@ function validatePumpOutlets<T>(
     }
   }
 
-  // Check if at least one outlet is for chassis wash
-  if (pumpOutlet1 && pumpOutlet2) {
-    if (
-      (Array.isArray(chassisWashOption)
-        ? !chassisWashOption.includes(pumpOutlet1)
-        : pumpOutlet1 !== chassisWashOption) &&
-      (Array.isArray(chassisWashOption)
-        ? !chassisWashOption.includes(pumpOutlet2)
-        : pumpOutlet2 !== chassisWashOption)
-    ) {
+  // Check if at least one outlet is for chassis wash (only if BOTH are selected)
+  if (pumpOutlet1 !== undefined && pumpOutlet2 !== undefined) {
+    const outlet1IsChassis = Array.isArray(chassisWashOption)
+      ? chassisWashOption.includes(pumpOutlet1)
+      : pumpOutlet1 === chassisWashOption;
+    const outlet2IsChassis = Array.isArray(chassisWashOption)
+      ? chassisWashOption.includes(pumpOutlet2)
+      : pumpOutlet2 === chassisWashOption;
+
+    if (!outlet1IsChassis && !outlet2IsChassis) {
       errorPaths.forEach((path) => {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -123,25 +124,24 @@ function validatePumpOutlets<T>(
         });
       });
     }
-    return false;
   }
-
-  return true;
 }
 
-function transformPumpOutlets<T>(
-  data: T,
-  pumpOutlet1Key: keyof T,
-  pumpOutlet2Key: keyof T
-): typeof data {
+// --- Transform Helper Updated for Undefined ---
+// Swaps outlets if outlet1 is empty and outlet2 is selected
+function transformPumpOutlets<
+  TData extends Partial<Record<TKey1 | TKey2, unknown>>, // Ensure keys exist
+  TKey1 extends keyof TData,
+  TKey2 extends keyof TData
+>(data: TData, pumpOutlet1Key: TKey1, pumpOutlet2Key: TKey2): TData {
   const pumpOutlet1 = data[pumpOutlet1Key];
   const pumpOutlet2 = data[pumpOutlet2Key];
 
-  // Check if the first outlet is not selected and the second one is
-  if (!pumpOutlet1 && pumpOutlet2) {
+  // Check if the first outlet is undefined and the second one is not
+  if (pumpOutlet1 === undefined && pumpOutlet2 !== undefined) {
     // Swap values
-    data[pumpOutlet1Key] = pumpOutlet2;
-    data[pumpOutlet2Key] = null as T[keyof T];
+    data[pumpOutlet1Key] = pumpOutlet2 as TData[TKey1];
+    data[pumpOutlet2Key] = undefined as TData[TKey2]; // Set to undefined
   }
 
   return data;
@@ -149,7 +149,7 @@ function transformPumpOutlets<T>(
 
 const hpPump15kwDiscriminatedUnion = z
   .object({
-    has_15kw_pump: z.coerce.boolean(),
+    has_15kw_pump: z.boolean().default(false),
   })
   .passthrough()
   .pipe(
@@ -157,13 +157,13 @@ const hpPump15kwDiscriminatedUnion = z
       .discriminatedUnion("has_15kw_pump", [
         z.object({
           has_15kw_pump: z.literal(false),
-          pump_outlet_1_15kw: mustBeUndefined(),
-          pump_outlet_2_15kw: mustBeUndefined(),
+          pump_outlet_1_15kw: z.undefined(),
+          pump_outlet_2_15kw: z.undefined(),
         }),
         z.object({
           has_15kw_pump: z.literal(true),
-          pump_outlet_1_15kw: HPPumpOutlet15kwEnum.nullable(),
-          pump_outlet_2_15kw: HPPumpOutlet15kwEnum.nullable(),
+          pump_outlet_1_15kw: HPPumpOutlet15kwEnum.optional(),
+          pump_outlet_2_15kw: HPPumpOutlet15kwEnum.optional(),
         }),
       ])
       .superRefine((data, ctx) =>
@@ -177,17 +177,13 @@ const hpPump15kwDiscriminatedUnion = z
         )
       )
       .transform((data) =>
-        transformPumpOutlets<typeof data>(
-          data,
-          "pump_outlet_1_15kw",
-          "pump_outlet_2_15kw"
-        )
+        transformPumpOutlets(data, "pump_outlet_1_15kw", "pump_outlet_2_15kw")
       )
   );
 
 const hpPump30kwDiscriminatedUnion = z
   .object({
-    has_30kw_pump: z.coerce.boolean(),
+    has_30kw_pump: z.boolean().default(false),
   })
   .passthrough()
   .pipe(
@@ -195,13 +191,13 @@ const hpPump30kwDiscriminatedUnion = z
       .discriminatedUnion("has_30kw_pump", [
         z.object({
           has_30kw_pump: z.literal(false),
-          pump_outlet_1_30kw: mustBeUndefined(),
-          pump_outlet_2_30kw: mustBeUndefined(),
+          pump_outlet_1_30kw: z.undefined(),
+          pump_outlet_2_30kw: z.undefined(),
         }),
         z.object({
           has_30kw_pump: z.literal(true),
-          pump_outlet_1_30kw: HPPumpOutlet30kwEnum.nullable(),
-          pump_outlet_2_30kw: HPPumpOutlet30kwEnum.nullable(),
+          pump_outlet_1_30kw: HPPumpOutlet30kwEnum.optional(),
+          pump_outlet_2_30kw: HPPumpOutlet30kwEnum.optional(),
         }),
       ])
       .superRefine((data, ctx) =>
@@ -218,17 +214,13 @@ const hpPump30kwDiscriminatedUnion = z
         )
       )
       .transform((data) =>
-        transformPumpOutlets<typeof data>(
-          data,
-          "pump_outlet_1_30kw",
-          "pump_outlet_2_30kw"
-        )
+        transformPumpOutlets(data, "pump_outlet_1_30kw", "pump_outlet_2_30kw")
       )
   );
 
 const hpPumpOmzDiscriminatedUnion = z
   .object({
-    has_omz_pump: z.coerce.boolean(),
+    has_omz_pump: z.boolean().default(false),
   })
   .passthrough()
   .pipe(
@@ -236,45 +228,64 @@ const hpPumpOmzDiscriminatedUnion = z
       .discriminatedUnion("has_omz_pump", [
         z.object({
           has_omz_pump: z.literal(false),
-          pump_outlet_omz: mustBeUndefined(),
-          has_chemical_roof_bar: mustBeFalse(),
+          pump_outlet_omz: z.undefined(),
+          has_chemical_roof_bar: z.boolean().default(false),
         }),
         z.object({
           has_omz_pump: z.literal(true),
-          pump_outlet_omz: OMZPumpOutletEnum,
-          has_chemical_roof_bar: z.boolean().default(false).or(mustBeFalse()),
+          pump_outlet_omz: OMZPumpOutletEnum.optional(),
+          has_chemical_roof_bar: z.boolean().default(false),
         }),
       ])
-      .refine(
-        (data) => {
-          if (
-            data.pump_outlet_omz !== OMZPumpOutletEnum.enum.HP_ROOF_BAR &&
-            data.pump_outlet_omz !==
-              OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS &&
-            data.has_chemical_roof_bar
-          ) {
-            return false;
-          }
-          return true;
-        },
-        {
-          message:
-            "Non puoi selezionare la nebulizzazione sulla barra oscillante se la barra oscillante non è stata selezionata.",
+      .superRefine((data, ctx) => {
+        // Check if OMZ pump selected but outlet is not
+        if (data.has_omz_pump && data.pump_outlet_omz === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: genericRequiredMessage,
+            path: ["pump_outlet_omz"],
+          });
+          return;
         }
-      )
+
+        // Check chemical roof bar dependency
+        if (data.has_chemical_roof_bar) {
+          // Allow chemical bar only if outlet includes HP_ROOF_BAR
+          const outletAllowsChemBar =
+            data.pump_outlet_omz === OMZPumpOutletEnum.enum.HP_ROOF_BAR ||
+            data.pump_outlet_omz ===
+              OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS;
+          if (!outletAllowsChemBar) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "Barra nebulizzazione disponibile solo con barra oscillante.",
+              path: ["has_chemical_roof_bar"],
+            });
+          }
+        }
+      })
   );
 
+// --- Final Combined Schema ---
 export const hpPumpSchema = hpPump15kwDiscriminatedUnion
-  .and(hpPump30kwDiscriminatedUnion)
+  .and(hpPump30kwDiscriminatedUnion) // Merge 30kW logic
+  .and(hpPumpOmzDiscriminatedUnion) // Merge OMZ logic
   .superRefine((data, ctx) => {
+    // Final check: cannot have both 15kW and 30kW pumps
     if (data.has_15kw_pump && data.has_30kw_pump) {
-      ["has_15kw_pump", "has_30kw_pump"].forEach((path) => {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Non puoi selezionare entrambe le pompe",
-          path: [path],
-        });
+      // Add issue to both checkboxes
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
+        path: ["has_15kw_pump"],
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
+        path: ["has_30kw_pump"],
       });
     }
-  })
-  .and(hpPumpOmzDiscriminatedUnion);
+  });
+
+export type HPPumpSchema = z.infer<typeof hpPumpSchema>;

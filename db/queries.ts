@@ -9,6 +9,7 @@ import {
   type ConfigSchema,
 } from "@/validation/config-schema";
 import { WaterTankSchema } from "@/validation/water-tank-schema";
+import { transformConfigToDbInsert } from "./transformations";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -120,9 +121,9 @@ export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
     throw new QueryError("Utente non trovato.", 401);
   }
 
-  const response = await db
-    .insert(configurations)
-    .values({ ...newConfiguration, user_id: user.id });
+  const dbData = transformConfigToDbInsert(newConfiguration, user.id);
+
+  const response = await db.insert(configurations).values(dbData);
 
   return response;
 };

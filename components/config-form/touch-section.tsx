@@ -4,35 +4,45 @@ import FieldsetContent from "@/components/fieldset-content";
 import FieldsetItem from "@/components/fieldset-item";
 import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
+import { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import React from "react";
+import React, { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const TouchSection = () => {
-  const { setValue } = useFormContext();
-  const touchQtyWatch = useWatch({ name: "touch_qty" });
-  const touchPosWatch = useWatch({ name: "touch_pos" });
-  const hasItecowebWatch = useWatch({ name: "has_itecoweb" });
-  const hasCardReaderWatch = useWatch({ name: "has_card_reader" });
+  const { control, resetField } = useFormContext<ConfigSchema>();
+  const touchQtyWatch = useWatch({ control, name: "touch_qty" });
+  const touchPosWatch = useWatch({ control, name: "touch_pos" });
+  const hasItecowebWatch = useWatch({ control, name: "has_itecoweb" });
+  const hasCardReaderWatch = useWatch({ control, name: "has_card_reader" });
 
-  const touchQtyAsNum = parseInt(touchQtyWatch, 10);
-
-  React.useEffect(() => {
+  useEffect(() => {
     // Resetting card_qty when itecoweb and card_reader are unchecked
     if (!hasItecowebWatch && !hasCardReaderWatch) {
-      setValue("card_qty", "");
+      resetField("card_qty");
     }
-  }, [hasItecowebWatch, hasCardReaderWatch, setValue]);
+  }, [hasItecowebWatch, hasCardReaderWatch, resetField]);
+
+  useEffect(() => {
+    if (
+      touchQtyWatch === 1 &&
+      touchPosWatch === zodEnums.TouchPosEnum.enum.INTERNAL
+    ) {
+      resetField("touch_fixing_type");
+    }
+  }, [touchQtyWatch, touchPosWatch, resetField]);
 
   return (
     <Fieldset
       title="Configurazione quadro elettrico"
-      description="Configura il quadro elettrico e i touch screen del portale">
+      description="Configura il quadro elettrico e i touch screen del portale"
+    >
       <FieldsetContent>
         <FieldsetRow>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="touch_qty"
+              dataType="number"
               label="Numero di pannelli"
               items={selectFieldOptions.touchQtyOpts}
               fieldsToResetOnValue={[
@@ -40,14 +50,19 @@ const TouchSection = () => {
                   triggerValue: 2,
                   fieldsToReset: ["touch_pos"],
                 },
+                {
+                  triggerValue: 1,
+                  fieldsToReset: ["touch_fixing_type"],
+                },
               ]}
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="touch_pos"
+              dataType="string"
               label="Posizione touch"
-              disabled={touchQtyAsNum !== 1}
+              disabled={touchQtyWatch !== 1}
               items={selectFieldOptions.touchPositionOpts}
               fieldsToResetOnValue={[
                 {
@@ -59,10 +74,11 @@ const TouchSection = () => {
             {/* )} */}
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="touch_fixing_type"
+              dataType="string"
               label="Fissaggio touch esterno"
-              disabled={touchQtyAsNum !== 2 && touchPosWatch !== "EXTERNAL"}
+              disabled={touchQtyWatch !== 2 && touchPosWatch !== "EXTERNAL"}
               items={selectFieldOptions.touchFixingTypeOpts}
             />
           </FieldsetItem>
@@ -82,6 +98,7 @@ const TouchSection = () => {
           <div className="w-1/2 md:w-1/3">
             <SelectField
               name="card_qty"
+              dataType="number"
               label="Numero di schede"
               items={selectFieldOptions.cardQtyOpts}
             />

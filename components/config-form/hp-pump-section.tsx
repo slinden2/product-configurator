@@ -4,16 +4,22 @@ import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
-import { useWatch } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import FieldsetItem from "@/components/fieldset-item";
 import FieldsetContent from "@/components/fieldset-content";
 import { withNoSelection } from "@/lib/utils";
+import { ConfigSchema } from "@/validation/config-schema";
 
 const HPPumpSection = () => {
-  const has15kwPumpWatch = useWatch({ name: "has_15kw_pump" });
-  const has30kwPumpWatch = useWatch({ name: "has_30kw_pump" });
-  const hasOMZPumpWatch = useWatch({ name: "has_omz_pump" });
-  const omzPumpOutletWatch = useWatch({ name: "pump_outlet_omz" });
+  const { control } = useFormContext<ConfigSchema>();
+  const has15kwPumpWatch = useWatch({ control, name: "has_15kw_pump" });
+  const has30kwPumpWatch = useWatch({ control, name: "has_30kw_pump" });
+  const hasOMZPumpWatch = useWatch({ control, name: "has_omz_pump" });
+  const omzPumpOutletWatch = useWatch({ control, name: "pump_outlet_omz" });
+
+  const showChemicalRoofBar =
+    omzPumpOutletWatch === zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR ||
+    omzPumpOutletWatch === zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS;
 
   return (
     <Fieldset
@@ -22,26 +28,29 @@ const HPPumpSection = () => {
       <FieldsetContent className="space-y-6 md:space-y-3">
         <FieldsetRow>
           <FieldsetItem className="md:self-end md:pb-3">
-            <CheckboxField
+            <CheckboxField<ConfigSchema>
               name="has_15kw_pump"
               label="Pompa 15kW"
               fieldsToResetOnUncheck={[
-                "pump_outlet_1_15kw",
-                "pump_outlet_2_15kw",
+                {
+                  fieldsToReset: ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
+                },
               ]}
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="pump_outlet_1_15kw"
+              dataType="string"
               label="Uscita 1"
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="pump_outlet_2_15kw"
+              dataType="string"
               label="Uscita 2"
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
@@ -50,46 +59,56 @@ const HPPumpSection = () => {
         </FieldsetRow>
         <FieldsetRow>
           <FieldsetItem className="md:self-end md:pb-3">
-            <CheckboxField
+            <CheckboxField<ConfigSchema>
               name="has_30kw_pump"
               label="Pompa 30kW"
               fieldsToResetOnUncheck={[
-                "pump_outlet_1_30kw",
-                "pump_outlet_2_30kw",
+                {
+                  fieldsToReset: ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
+                },
               ]}
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="pump_outlet_1_30kw"
+              dataType="string"
               label="Uscita 1"
               disabled={!has30kwPumpWatch}
-              items={selectFieldOptions.hpPumpOutlet30kwTypes}
+              items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="pump_outlet_2_30kw"
+              dataType="string"
               label="Uscita 2"
               disabled={!has30kwPumpWatch}
-              items={selectFieldOptions.hpPumpOutlet30kwTypes}
+              items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
             />
           </FieldsetItem>
         </FieldsetRow>
         <FieldsetRow>
           <FieldsetItem className="md:self-center md:mt-1">
-            <CheckboxField
+            <CheckboxField<ConfigSchema>
               name="has_omz_pump"
               label="Pompa OMZ"
               fieldsToResetOnUncheck={[
-                "pump_outlet_omz",
-                "has_chemical_roof_bar",
+                {
+                  fieldsToReset: ["pump_outlet_omz"],
+                  resetToValue: undefined,
+                },
+                {
+                  fieldsToReset: ["has_chemical_roof_bar"],
+                  resetToValue: false,
+                },
               ]}
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="pump_outlet_omz"
+              dataType="string"
               label="Uscita 1"
               disabled={!hasOMZPumpWatch}
               items={selectFieldOptions.omzPumpOutletTypes}
@@ -102,14 +121,9 @@ const HPPumpSection = () => {
             />
             <div
               className={`md:mt-2 ${
-                omzPumpOutletWatch ===
-                  zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR ||
-                omzPumpOutletWatch ===
-                  zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS
-                  ? "opacity-100"
-                  : "opacity-0"
+                showChemicalRoofBar ? "opacity-100" : "opacity-0"
               }`}>
-              <CheckboxField
+              <CheckboxField<ConfigSchema>
                 name="has_chemical_roof_bar"
                 label="Con barra di prelavaggio"
               />

@@ -16,7 +16,7 @@ export function generateSelectOptionsFromZodEnum<T extends string>(
 
 export const getNumericSelectOptions = (numArr: number[]): SelectOption[] => {
   return numArr.map((num) => ({
-    value: num.toString(),
+    value: num,
     label: num.toString(),
   }));
 };
