@@ -24,6 +24,8 @@ import { editConfigurationAction } from "@/app/actions/edit-configuration-action
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ConfigurationFormProps {
   id?: number;
@@ -33,6 +35,7 @@ interface ConfigurationFormProps {
 const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const router = useRouter();
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
@@ -48,12 +51,16 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
       if (id) {
         if (!configuration || !("user_id" in configuration)) {
           setError("Dati incompleti per l'aggiornamento.");
+          toast.error("Dati incompleti per l'aggiornamento.");
           setIsSubmitting(false);
           return;
         }
         await editConfigurationAction(id, configuration.user_id, values);
+        toast.success("Configurazione aggiornata.");
       } else {
-        await insertConfigurationAction(values);
+        const { id } = await insertConfigurationAction(values);
+        toast.success("Configurazione creata.");
+        router.push(`/configurations/edit/${id}`);
       }
       setIsSubmitting(false);
     } catch (err) {

@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { getConfiguration, getUserData } from "@/db/queries";
 import { waterTanks } from "@/db/schemas";
 import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 export const deleteWaterTankAction = async (confId: number, tankId: number) => {
   const user = await getUserData();
@@ -28,7 +29,8 @@ export const deleteWaterTankAction = async (confId: number, tankId: number) => {
       .where(
         and(eq(waterTanks.id, tankId), eq(waterTanks.configuration_id, confId))
       );
-    return { success: true };
+    revalidatePath("/configurations");
+    return { success: true, id: tankId };
   } catch (error) {
     console.error("Failed to delete water tank:", error);
     return { success: false, error: "Failed to delete water tank." };

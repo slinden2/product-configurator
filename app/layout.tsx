@@ -4,6 +4,7 @@ import "./globals.css";
 import MainNav from "@/components/main-nav";
 import { ThemeProvider } from "@/components/theme-provider";
 import { UserProvider } from "@/state/user-context";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,8 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange>
+          disableTransitionOnChange
+        >
           <UserProvider>
             <div className="flex min-h-screen flex-col">
               <header className="top-0 z-50 border-b bg-background/95">
@@ -45,6 +47,7 @@ export default function RootLayout({
               </div>
             </footer>
           </UserProvider>
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
     </html>

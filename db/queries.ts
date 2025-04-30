@@ -12,6 +12,7 @@ import { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
   transformConfigToDbInsert,
   transformConfigToDbUpdate,
+  transformWaterTankSchemaToDbData,
 } from "./transformations";
 
 export type DatabaseType = typeof db;
@@ -125,10 +126,17 @@ export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
   }
 
   const dbData = transformConfigToDbInsert(newConfiguration, user.id);
-  console.log("dbData :>> ", dbData); // DEBUG
 
-  const response = await db.insert(configurations).values(dbData);
-  return response;
+  const [insertedConfiguration] = await db
+    .insert(configurations)
+    .values(dbData)
+    .returning({ id: configurations.id });
+
+  if (!insertedConfiguration) {
+    throw new QueryError("Impossibile creare la configurazione.", 500);
+  }
+
+  return insertedConfiguration;
 };
 
 export const insertWaterTank = async (
@@ -151,11 +159,46 @@ export const insertWaterTank = async (
     throw new QueryError("Utente non autorizzato.", 403);
   }
 
-  const response = await db
-    .insert(waterTanks)
-    .values({ ...newWaterTank, configuration_id: confId });
+  const dbData = transformWaterTankSchemaToDbData(newWaterTank);
 
-  return response;
+  const [id] = await db
+    .insert(waterTanks)
+    .values({ ...dbData, configuration_id: confId })
+    .returning({ id: waterTanks.id });
+
+  return { success: true, id };
+};
+
+export const updateWaterTank = async (
+  confId: number,
+  waterTankId: number,
+  waterTank: WaterTankSchema
+) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const configuration = await getConfiguration(confId);
+
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
+
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
+
+  const dbData = transformWaterTankSchemaToDbData(waterTank);
+
+  const [id] = await db
+    .update(waterTanks)
+    .set(dbData)
+    .where(eq(waterTanks.id, waterTankId))
+    .returning({ id: waterTanks.id });
+
+  return { success: true, id };
 };
 
 async function insertRows<T>(

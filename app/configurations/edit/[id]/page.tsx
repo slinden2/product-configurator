@@ -14,7 +14,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const id = parseInt(params.id);
   const configurationData = await getConfigurationWithTanksAndBays(id);
 
-  console.log("configurationData :>> ", configurationData);
+  console.log("configurationData :>> ", configurationData); // DEBUG
 
   if (!configurationData) {
     return <p className="text-destructive">Configurazione non trovata!</p>;
@@ -29,7 +29,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
     transformedConfigurationData
   );
   const validatedWaterTanks = water_tanks.map((wt) =>
-    updateWaterTankSchema.parse(wt)
+    updateWaterTankSchema.parse(transformDbNullToUndefined(wt))
   );
 
   return (
@@ -43,7 +43,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
       <FormContainer
         confId={id}
         configuration={validatedConfiguration}
-        existingWaterTanks={validatedWaterTanks}
+        initialWaterTanks={validatedWaterTanks}
       />
     </div>
   );

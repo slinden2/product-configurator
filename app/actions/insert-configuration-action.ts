@@ -2,6 +2,7 @@
 
 import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
 import { configSchema } from "@/validation/config-schema";
+import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 
 export const insertConfigurationAction = async (formData: unknown) => {
@@ -18,10 +19,12 @@ export const insertConfigurationAction = async (formData: unknown) => {
   }
 
   try {
-    await insertConfiguration(validation.data);
+    const newConfig = await insertConfiguration(validation.data);
+    revalidatePath("/configurations");
+    return { success: true, id: newConfig.id };
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
-      throw new Error(err.message);
+      throw err;
     }
 
     throw new Error("Unknown Error.");

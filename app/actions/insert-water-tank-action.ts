@@ -2,6 +2,7 @@
 
 import { getUserData, insertWaterTank, QueryError } from "@/db/queries";
 import { waterTankSchema } from "@/validation/water-tank-schema";
+import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 
 export const insertWaterTankAction = async (
@@ -22,9 +23,10 @@ export const insertWaterTankAction = async (
 
   try {
     await insertWaterTank(confId, validation.data);
+    revalidatePath("/configurations");
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
-      throw new Error(err.message);
+      throw err;
     }
 
     throw new Error("Unknown Error.");

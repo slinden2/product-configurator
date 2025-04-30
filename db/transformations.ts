@@ -1,5 +1,6 @@
 import { ConfigSchema } from "@/validation/config-schema";
 import { configurations } from "@/db/schemas"; // Import Drizzle schema
+import { WaterTankSchema } from "@/validation/water-tank-schema";
 
 // Type for Drizzle insert
 type DbConfigInsert = typeof configurations.$inferInsert;
@@ -95,4 +96,11 @@ export function transformDbNullToUndefined(data: Record<string, unknown>) {
     }
   }
   return data;
+}
+
+export function transformWaterTankSchemaToDbData(values: WaterTankSchema) {
+  return {
+    ...values,
+    type: values.type as "L2000" | "L2000_JOLLY" | "L2500" | "L4500",
+  };
 }

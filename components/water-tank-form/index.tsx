@@ -5,105 +5,185 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 // import { DevTool } from "@hookform/devtools"; // Keep commented out for production
-import { Save, Trash2 } from "lucide-react";
-import { LoadingButton } from "@/components/ui/loading-button";
-import WaterTankSection from "@/components/water-tank-form/water-tank-section";
+import { RotateCcw, Save, Trash2 } from "lucide-react";
+import WaterTankFields from "@/components/water-tank-form/water-tank-fields";
 import {
+  UpdateWaterTankSchema,
+  waterTankDefaults,
   waterTankSchema,
   WaterTankSchema,
 } from "@/validation/water-tank-schema";
 import { insertWaterTankAction } from "@/app/actions/insert-water-tank-action";
+import { Button } from "../ui/button";
+import { Spinner } from "../ui/spinner";
+import { toast } from "sonner";
+import { editWaterTankAction } from "@/app/actions/edit-water-tank-action";
+import { deleteWaterTankAction } from "@/app/actions/delete-water-tank-action";
+import Fieldset from "@/components/fieldset";
 
 interface WaterTankFormProps {
   confId: number;
-  waterTank?: WaterTankSchema & { tempId?: string };
-  onRemove: () => void;
-  isRemoving?: boolean;
+  waterTank?: UpdateWaterTankSchema;
+  waterTankIndex?: number;
+  onDelete?: (tankId: number) => void;
+  onSaveSuccess: () => void;
 }
 
 const WaterTankForm = ({
   confId,
   waterTank,
-  onRemove,
-  isRemoving = false,
+  waterTankIndex,
+  onDelete,
+  onSaveSuccess,
 }: WaterTankFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<"submit" | "delete" | false>(
+    false
+  );
   const [error, setError] = useState<string>("");
 
   const form = useForm<WaterTankSchema>({
     resolver: zodResolver(waterTankSchema),
-    defaultValues: waterTank || {},
+    defaultValues: waterTank ?? waterTankDefaults,
   });
 
-  async function onSubmit(values: WaterTankSchema) {
-    if (isRemoving) return;
+  const { handleSubmit, reset, formState, control } = form;
 
+  const isEditing = !!waterTank?.id;
+  // Disable Save/Update and Cancel if loading OR if editing and form isn't dirty
+  const isSaveOrCancelDisabled =
+    !!isLoading || (isEditing && !formState.isDirty);
+  // Disable Delete if loading
+  const isDeleteDisabled = !!isLoading;
+
+  async function handleSaveSubmit(values: WaterTankSchema) {
     console.log("🚀 ~ onSubmit ~ values:", values); // DEBUG
-    const dataToSave: WaterTankSchema & { configuration_id: number } = {
-      type: values.type,
-      inlet_w_float_qty: values.inlet_w_float_qty,
-      inlet_no_float_qty: values.inlet_no_float_qty,
-      outlet_w_valve_qty: values.outlet_w_valve_qty,
-      outlet_no_valve_qty: values.outlet_no_valve_qty,
-      has_blower: values.has_blower,
-      configuration_id: confId, // Ensure configuration_id is included if needed by action/schema
-      // Explicitly include id if it's part of the schema and you are updating
-      id: waterTank?.id,
-    };
-
+    setIsLoading("submit");
+    setError("");
     try {
-      setIsSubmitting(true);
-      setError("");
-      // Pass the potentially cleaned 'dataToSave' object
-      await insertWaterTankAction(confId, dataToSave);
-      // Maybe reset form state or show success?
-      setIsSubmitting(false);
-    } catch (err) {
-      console.log("🚀 ~ onSubmit ~ err:", err); // DEBUG
-      if (err instanceof Error) {
-        setError(err.message);
+      if (isEditing) {
+        await editWaterTankAction(confId, waterTank.id, values);
+        toast.success(`Serbatoio ${waterTankIndex} aggiornato.`);
+        reset(values);
       } else {
-        setError("An unknown error occurred during save.");
+        await insertWaterTankAction(confId, values);
+        toast.success("Nuovo serbatoio creato.");
+        reset(waterTankDefaults);
+        onSaveSuccess();
       }
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error("Save Water Tank Error:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Un errore sconosciuto durante il salvataggio.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  // Prevent removal if save is in progress
-  const handleRemoveClick = () => {
-    if (isSubmitting) return;
-    onRemove();
+  const handleDelete = async () => {
+    if (!isEditing || !onDelete) return;
+
+    const confirmMessage = `Sei sicuro di voler eliminare il Serbatoio ${
+      waterTankIndex ?? ""
+    }?`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsLoading("delete");
+    setError("");
+    try {
+      const result = await deleteWaterTankAction(confId, waterTank.id);
+      if (result.success) {
+        toast.success(`Serbatoio ${waterTankIndex} eliminato.`);
+        onDelete(waterTank.id);
+      } else {
+        throw new Error(result.error || "Impossibile eliminare il serbatoio.");
+      }
+    } catch (err) {
+      console.error("Delete Water Tank Error:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unknown error occurred during delete.";
+      setError(message);
+      toast.error(message);
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    reset(waterTank ?? waterTankDefaults);
+
+    // When adding a tank notify parent of cancel and hide form.
+    if (!isEditing) {
+      onSaveSuccess();
+    }
   };
 
   return (
     <div>
-      {/* <DevTool control={form.control} /> */}
+      {/* <DevTool control={control} /> */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <WaterTankSection />
-          <div className="space-x-6 mt-4">
-            <LoadingButton
-              type="submit"
-              variant="default"
-              title="Salva serbatoio"
-              loading={isSubmitting}
-              // Disable if saving OR removing
-              disabled={isSubmitting || isRemoving}
-              size="icon">
-              {!isSubmitting && <Save size={18} />}
-            </LoadingButton>
-            <LoadingButton
-              type="button"
-              variant="destructive"
-              title="Rimuovi serbatoio"
-              size="icon"
-              onClick={handleRemoveClick}
-              loading={isRemoving}
-              disabled={isSubmitting || isRemoving}>
-              {!isRemoving && <Trash2 size={18} />}
-            </LoadingButton>
-          </div>
-        </form>
+        <fieldset disabled={!!isLoading} className="group">
+          <form onSubmit={handleSubmit(handleSaveSubmit)}>
+            <Fieldset
+              title={
+                isEditing
+                  ? `Serbatoio ${waterTankIndex}`
+                  : "Aggiungi Nuovo Serbatoio"
+              }>
+              <WaterTankFields />
+              <div className="flex items-center gap-4 pt-4 border-t border-border mt-4 group-disabled:opacity-50">
+                {/* Delete Button */}
+                {isEditing && onDelete && (
+                  <Button
+                    className="ml-auto"
+                    type="button"
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={isDeleteDisabled}
+                    aria-label={`Elimina Serbatoio ${waterTankIndex}`}>
+                    {isLoading === "delete" ? (
+                      <Spinner className="h-4 w-4" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">Elimina</span>
+                  </Button>
+                )}
+                {/* Cancel Button */}
+                <Button
+                  className={!isEditing ? "ml-auto" : ""}
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSaveOrCancelDisabled}>
+                  <RotateCcw />
+                  <span className="hidden sm:inline">Annulla</span>
+                </Button>
+                {/* Save/Add Button */}
+                <Button
+                  type="submit"
+                  disabled={isSaveOrCancelDisabled}
+                  className="gap-1.5 min-w-[100px] sm:min-w-[140px]">
+                  {isLoading === "submit" ? (
+                    <Spinner className="h-4 w-4 text-foreground" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {isEditing ? "Salva" : "Aggiungi"}
+                  </span>
+                </Button>
+              </div>
+            </Fieldset>
+          </form>
+        </fieldset>
       </Form>
       {error && <p className="text-destructive mt-2">{error}</p>}{" "}
     </div>

@@ -20,27 +20,38 @@ export const waterTankOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
 
 export const waterTankSchema = z
   .object({
-    id: z.number().optional(),
-    type: WaterTankTypeEnum,
-    inlet_w_float_qty: z.coerce
+    type: WaterTankTypeEnum.optional(),
+    inlet_w_float_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2),
-    inlet_no_float_qty: z.coerce
+      .max(2)
+      .default(0),
+    inlet_no_float_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2),
-    outlet_w_valve_qty: z.coerce
+      .max(2)
+      .default(0),
+    outlet_w_valve_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2),
-    outlet_no_valve_qty: z.coerce
+      .max(2)
+      .default(0),
+    outlet_no_valve_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2),
+      .max(2)
+      .default(0),
     has_blower: z.boolean().default(false).or(mustBeFalse()),
   })
   .superRefine((data, ctx) => {
+    if (data.type === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["type"],
+      });
+    }
+
     if (data.outlet_no_valve_qty + data.outlet_w_valve_qty < 1) {
       Object.keys(data)
         .filter((field) => field.startsWith("outlet"))
@@ -57,6 +68,15 @@ export const waterTankSchema = z
 export type WaterTankSchema = z.infer<typeof waterTankSchema>;
 
 export const updateWaterTankSchema = waterTankSchema.and(
-  z.object({ configuration_id: z.number() })
+  z.object({ id: z.number(), configuration_id: z.number() })
 );
 export type UpdateWaterTankSchema = z.infer<typeof updateWaterTankSchema>;
+
+export const waterTankDefaults: WaterTankSchema = {
+  type: undefined,
+  inlet_w_float_qty: 0,
+  inlet_no_float_qty: 0,
+  outlet_w_valve_qty: 0,
+  outlet_no_valve_qty: 0,
+  has_blower: false,
+};
