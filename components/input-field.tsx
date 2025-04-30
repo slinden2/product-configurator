@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, FieldValues, FieldPath } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -10,33 +10,40 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ConfigFormData } from "@/components/config-form";
-import { LoginFormData, NewPassWordFormData } from "@/validation/auth-schema";
 
-interface InputFieldProps {
-  name: keyof ConfigFormData | keyof LoginFormData | keyof NewPassWordFormData;
+interface InputFieldProps<TFieldValues extends FieldValues = FieldValues> {
+  name: FieldPath<TFieldValues>;
   label: string;
-  placeholder: string;
-  type?: string;
+  placeholder?: string;
+  type?: React.HTMLInputTypeAttribute;
+  disabled?: boolean;
 }
 
-const InputField = ({ name, label, placeholder, type }: InputFieldProps) => {
-  const { control } = useFormContext();
+const InputField = <TFieldValues extends FieldValues = FieldValues>({
+  name,
+  label,
+  placeholder,
+  type = "text",
+  disabled,
+}: InputFieldProps<TFieldValues>) => {
+  const { control } = useFormContext<TFieldValues>();
+
   return (
     <FormField
       control={control}
-      name={name.toString()}
-      defaultValue=""
+      name={name}
       render={({ field }) => {
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Input
-                type={type ? type : "text"}
+                type={type}
                 placeholder={placeholder}
                 className="bg-background"
+                disabled={disabled}
                 {...field}
+                value={field.value ?? ""}
               />
             </FormControl>
             <FormMessage />

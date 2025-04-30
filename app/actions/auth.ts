@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import {
-  AuthFormData,
-  LoginFormData,
-  NewPassWordFormData,
-  SignupFormData,
+  AuthSchema,
+  LoginSchema,
+  NewPasswordSchema,
+  SignupSchema,
 } from "@/validation/auth-schema";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
@@ -29,7 +29,7 @@ export async function getUserSession() {
   };
 }
 
-export async function signUp(formData: SignupFormData) {
+export async function signUp(formData: SignupSchema) {
   const supabase = await createClient();
 
   const credentials = {
@@ -61,7 +61,7 @@ export async function signUp(formData: SignupFormData) {
   };
 }
 
-export async function signIn(formData: LoginFormData) {
+export async function signIn(formData: LoginSchema) {
   const supabase = await createClient();
 
   const credentials = {
@@ -121,7 +121,7 @@ export async function signOut() {
   redirect("/login");
 }
 
-export async function forgotPassword(formData: AuthFormData) {
+export async function forgotPassword(formData: AuthSchema) {
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
@@ -142,7 +142,7 @@ export async function forgotPassword(formData: AuthFormData) {
 }
 
 export async function resetPassword(
-  formData: NewPassWordFormData,
+  formData: NewPasswordSchema,
   code: string | null
 ) {
   if (!code) {

@@ -7,26 +7,17 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/input-field";
-import { AuthFormData, authSchema } from "@/validation/auth-schema";
+import { AuthSchema, authSchema } from "@/validation/auth-schema";
 import { useRouter } from "next/navigation";
 import { forgotPassword } from "@/app/actions/auth";
 
-const initialState = {
-  success: "",
-  apiError: "",
-  errors: {
-    email: "",
-    password: "",
-  },
-};
-
 const ForgotPasswordForm = () => {
-  const form = useForm<AuthFormData>({
+  const form = useForm<AuthSchema>({
     resolver: zodResolver(authSchema),
   });
   const router = useRouter();
 
-  const onSubmit = async (formData: AuthFormData) => {
+  const onSubmit = async (formData: AuthSchema) => {
     const response = await forgotPassword(formData);
     if (response.status === "success") {
       alert("Email per resettare la password inviata.");
@@ -41,7 +32,7 @@ const ForgotPasswordForm = () => {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6">
-        <InputField
+        <InputField<AuthSchema>
           name="email"
           label="Email"
           placeholder="Inserire la email"

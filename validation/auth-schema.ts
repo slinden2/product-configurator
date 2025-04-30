@@ -20,7 +20,7 @@ export const loginSchema = authSchema.extend({
 
 export const signupSchema = authSchema.and(newPassWordSchema);
 
-export type AuthFormData = z.infer<typeof authSchema>;
-export type NewPassWordFormData = z.infer<typeof newPassWordSchema>;
-export type LoginFormData = z.infer<typeof loginSchema>;
-export type SignupFormData = z.infer<typeof signupSchema>;
+export type AuthSchema = z.infer<typeof authSchema>;
+export type NewPasswordSchema = z.infer<typeof newPassWordSchema>;
+export type LoginSchema = z.infer<typeof loginSchema>;
+export type SignupSchema = z.infer<typeof signupSchema>;

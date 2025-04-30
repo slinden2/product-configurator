@@ -7,17 +7,17 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/input-field";
-import { SignupFormData, signupSchema } from "@/validation/auth-schema";
+import { SignupSchema, signupSchema } from "@/validation/auth-schema";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/app/actions/auth";
 
 const SignupForm = () => {
-  const form = useForm<SignupFormData>({
+  const form = useForm<SignupSchema>({
     resolver: zodResolver(signupSchema),
   });
   const router = useRouter();
 
-  const onSubmit = async (formData: SignupFormData) => {
+  const onSubmit = async (formData: SignupSchema) => {
     const response = await signUp(formData);
     if (response.status === "success") {
       router.push("/login");
@@ -31,19 +31,19 @@ const SignupForm = () => {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6">
-        <InputField
+        <InputField<SignupSchema>
           name="email"
           label="Email"
           placeholder="Inserire la email"
           type="email"
         />
-        <InputField
+        <InputField<SignupSchema>
           name="password"
           label="Password"
           placeholder="Inserire la password"
           type="password"
         />
-        <InputField
+        <InputField<SignupSchema>
           name="confirmPassword"
           label="Password"
           placeholder="Inserire la password"

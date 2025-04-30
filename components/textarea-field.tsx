@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, FieldValues, FieldPath } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -11,14 +11,27 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
-interface TextareaFieldProps {
-  name: string;
+interface TextareaFieldProps<TFieldValues extends FieldValues = FieldValues> {
+  name: FieldPath<TFieldValues>;
   label: string;
-  placeholder: string;
+  placeholder?: string;
+  disabled?: boolean;
+  rows?: number;
 }
 
-const TextareaField = ({ name, label, placeholder }: TextareaFieldProps) => {
-  const { control } = useFormContext();
+/**
+ * A reusable TextareaField component integrated with React Hook Form.
+ * Uses generics for type safety.
+ */
+const TextareaField = <TFieldValues extends FieldValues = FieldValues>({
+  name,
+  label,
+  placeholder,
+  disabled,
+  rows,
+}: TextareaFieldProps<TFieldValues>) => {
+  const { control } = useFormContext<TFieldValues>();
+
   return (
     <FormField
       control={control}
@@ -29,9 +42,12 @@ const TextareaField = ({ name, label, placeholder }: TextareaFieldProps) => {
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Textarea
-                className="bg-background"
                 placeholder={placeholder}
+                className="bg-background resize-y"
+                disabled={disabled}
+                rows={rows}
                 {...field}
+                value={field.value ?? ""}
               />
             </FormControl>
             <FormMessage />
