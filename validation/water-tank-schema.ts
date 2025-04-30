@@ -2,7 +2,6 @@ import { SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
-  mustBeFalse,
 } from "@/validation/common";
 import { z } from "zod";
 
@@ -41,7 +40,7 @@ export const waterTankSchema = z
       .min(0)
       .max(2)
       .default(0),
-    has_blower: z.boolean().default(false).or(mustBeFalse()),
+    has_blower: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     if (data.type === undefined) {

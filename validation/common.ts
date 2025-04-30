@@ -20,25 +20,3 @@ export const getNumericSelectOptions = (numArr: number[]): SelectOption[] => {
     label: num.toString(),
   }));
 };
-
-export function mustBeUndefined() {
-  return z.coerce
-    .boolean()
-    .refine((val) => !val, { message: "Opzione invalida" })
-    .transform(() => null)
-    .or(z.null());
-}
-
-export function mustBeFalse() {
-  return z.coerce
-    .boolean()
-    .refine((val) => !val)
-    .transform(() => false);
-}
-
-export function mustBeZero() {
-  return z.coerce
-    .boolean()
-    .refine((val) => !val)
-    .transform(() => 0);
-}

@@ -1,9 +1,7 @@
-import { EnergyChainWidths, SelectOption } from "@/types";
+import { SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
-  mustBeFalse,
-  mustBeUndefined,
 } from "@/validation/common";
 import { z } from "zod";
 
