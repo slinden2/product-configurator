@@ -45,7 +45,8 @@ const MainNav = () => {
               route.active
                 ? "text-primary font-semibold"
                 : "text-muted-foreground"
-            )}>
+            )}
+          >
             {route.label}
           </Link>
         ))}
@@ -57,7 +58,8 @@ const MainNav = () => {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label="Toggle theme">
+          aria-label="Toggle theme"
+        >
           {theme === "dark" ? (
             <Sun className="h-5 w-5" />
           ) : (
