@@ -1,7 +1,12 @@
 import { db } from "@/db";
-import { configurations, userProfiles, waterTanks } from "@/db/schemas";
+import {
+  configurations,
+  userProfiles,
+  washBays,
+  waterTanks,
+} from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
-import { and, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
 import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -12,8 +17,10 @@ import { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
   transformConfigToDbInsert,
   transformConfigToDbUpdate,
+  transformWashBaySchemaToDbData,
   transformWaterTankSchemaToDbData,
 } from "./transformations";
+import { WashBaySchema } from "@/validation/wash-bay-schema";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -104,8 +111,12 @@ export async function getConfigurationWithTanksAndBays(id: number) {
   const response = await db.query.configurations.findFirst({
     where: eq(configurations.id, id),
     with: {
-      water_tanks: true,
-      wash_bays: true,
+      water_tanks: {
+        orderBy: [asc(waterTanks.id)],
+      },
+      wash_bays: {
+        orderBy: [asc(washBays.id)],
+      },
     },
   });
   return response;
@@ -137,6 +148,47 @@ export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
   }
 
   return insertedConfiguration;
+};
+
+export const updateConfiguration = async (
+  confId: number,
+  configurationData: UpdateConfigSchema
+): Promise<{ id: number }> => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const setData = transformConfigToDbUpdate(configurationData);
+  console.log("setData :>> ", setData); // DEBUG
+
+  const response = await db.transaction(async (tx) => {
+    const condition =
+      user.role !== "ADMIN"
+        ? and(
+            eq(configurations.id, confId),
+            eq(configurations.user_id, user.id)
+          )
+        : eq(configurations.id, confId);
+
+    const [updatedConfiguration] = await tx
+      .update(configurations)
+      .set(setData)
+      .where(condition)
+      .returning({ id: configurations.id });
+
+    if (!updatedConfiguration) {
+      throw new QueryError(
+        "Configurazione non trovata o non autorizzata per l'aggiornamento.",
+        404
+      );
+    }
+
+    return updatedConfiguration;
+  });
+
+  return response;
 };
 
 export const insertWaterTank = async (
@@ -201,127 +253,126 @@ export const updateWaterTank = async (
   return { success: true, id };
 };
 
-async function insertRows<T>(
-  tx: TransactionType,
-  table: any,
-  itemsToCreate: T[],
-  configurationId: number
-) {
-  if (itemsToCreate.length === 0) return null;
-
-  const itemsToCreateWithConfId = itemsToCreate.map((item) => ({
-    ...item,
-    configuration_id: configurationId,
-  }));
-  await tx.insert(table).values(itemsToCreateWithConfId);
-}
-
-async function updateRows<T extends { id: number }>(
-  tx: TransactionType,
-  table: any,
-  itemsToModify: T[]
-) {
-  if (itemsToModify.length === 0) return null;
-
-  const ids: number[] = [];
-  const columnsToUpdate = Object.keys(itemsToModify[0]).filter(
-    (col) => col !== "id"
-  );
-  const setClauses: Record<string, SQL> = {};
-
-  columnsToUpdate.forEach((col) => {
-    const sqlChunks: SQL[] = [sql`(case`];
-
-    const isEnumColumn = is(table[col], PgEnumColumn);
-    const isIntegerColumn = is(table[col], PgInteger);
-    const isBooleanColumn = is(table[col], PgBoolean);
-
-    itemsToModify.forEach((item) => {
-      let value: SQL;
-      const columnValue = (item as any)[col];
-
-      if (isEnumColumn) {
-        const enumName = table[col].enum.enumName;
-        value = sql.raw(`'${columnValue}'::${enumName}`);
-      } else if (isIntegerColumn) {
-        value = sql.raw(`${columnValue}::int`);
-      } else if (isBooleanColumn) {
-        value = sql.raw(`${columnValue}::boolean`);
-      } else {
-        value = sql`${columnValue}`;
-      }
-
-      sqlChunks.push(sql`when ${table.id} = ${item.id} then ${value}`);
-
-      ids.push(item.id);
-    });
-
-    sqlChunks.push(sql`end)`);
-
-    setClauses[col] = sql.join(sqlChunks, sql.raw(" "));
-  });
-
-  await tx
-    .update(table)
-    .set(setClauses)
-    .where(inArray(table.id, [...new Set(ids)]));
-}
-
-async function deleteRows<T extends { id: number }>(
-  tx: TransactionType,
-  table: any,
-  itemsToRemove: T[],
-  idField: any
-) {
-  if (itemsToRemove.length === 0) return null;
-
-  await tx.delete(table).where(
-    inArray(
-      idField,
-      itemsToRemove.map((item) => item.id)
-    )
-  );
-}
-
-export const updateConfiguration = async (
-  confId: number,
-  configurationData: UpdateConfigSchema
-): Promise<{ id: number }> => {
+export const deleteWaterTank = async (confId: number, waterTankId: number) => {
   const user = await getUserData();
 
   if (!user) {
     throw new QueryError("Utente non trovato.", 401);
   }
 
-  const setData = transformConfigToDbUpdate(configurationData);
-  console.log("setData :>> ", setData); // DEBUG
+  const configuration = await getConfiguration(confId);
 
-  const response = await db.transaction(async (tx) => {
-    const condition =
-      user.role !== "ADMIN"
-        ? and(
-            eq(configurations.id, confId),
-            eq(configurations.user_id, user.id)
-          )
-        : eq(configurations.id, confId);
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
 
-    const [updatedConfiguration] = await tx
-      .update(configurations)
-      .set(setData)
-      .where(condition)
-      .returning({ id: configurations.id });
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
 
-    if (!updatedConfiguration) {
-      throw new QueryError(
-        "Configurazione non trovata o non autorizzata per l'aggiornamento.",
-        404
-      );
-    }
+  const [id] = await db
+    .delete(waterTanks)
+    .where(
+      and(
+        eq(waterTanks.id, waterTankId),
+        eq(waterTanks.configuration_id, confId)
+      )
+    )
+    .returning({ id: waterTanks.id });
 
-    return updatedConfiguration;
-  });
+  return { success: true, id };
+};
 
-  return response;
+export const insertWashBay = async (
+  confId: number,
+  newWashBay: WashBaySchema
+) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const configuration = await getConfiguration(confId);
+
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
+
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
+
+  const dbData = transformWashBaySchemaToDbData(newWashBay);
+
+  const [id] = await db
+    .insert(washBays)
+    .values({ ...dbData, configuration_id: confId })
+    .returning({ id: washBays.id });
+
+  return { success: true, id };
+};
+
+export const updateWashBay = async (
+  confId: number,
+  washBayId: number,
+  washBay: WashBaySchema
+) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const configuration = await getConfiguration(confId);
+
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
+
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
+
+  const dbData = transformWashBaySchemaToDbData(washBay);
+
+  const [id] = await db
+    .update(washBays)
+    .set(dbData)
+    .where(eq(washBays.id, washBayId))
+    .returning({ id: washBays.id });
+
+  return { success: true, id };
+};
+
+export const deleteWashBay = async (confId: number, washBayId: number) => {
+  const user = await getUserData();
+
+  if (!user) {
+    throw new QueryError("Utente non trovato.", 401);
+  }
+
+  const configuration = await getConfiguration(confId);
+
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
+
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
+
+  const [id] = await db
+    .delete(washBays)
+    .where(
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId))
+    )
+    .returning({ id: washBays.id });
+
+  return {
+    success: true,
+    id,
+  };
 };
 
 export async function getBOM(id: number) {

@@ -46,7 +46,7 @@ import {
 import {
   PressureWasherTypeEnum,
   pressureWasherOpts,
-} from "@/validation/configuration/wash-bay-schema";
+} from "@/validation/wash-bay-schema";
 import {
   WaterTypeEnum,
   WaterPump1Enum,

@@ -1,6 +1,7 @@
 import { ConfigSchema } from "@/validation/config-schema";
 import { configurations } from "@/db/schemas"; // Import Drizzle schema
 import { WaterTankSchema } from "@/validation/water-tank-schema";
+import { WashBaySchema } from "@/validation/wash-bay-schema";
 
 // Type for Drizzle insert
 type DbConfigInsert = typeof configurations.$inferInsert;
@@ -102,5 +103,14 @@ export function transformWaterTankSchemaToDbData(values: WaterTankSchema) {
   return {
     ...values,
     type: values.type as "L2000" | "L2000_JOLLY" | "L2500" | "L4500",
+  };
+}
+
+export function transformWashBaySchemaToDbData(values: WashBaySchema) {
+  return {
+    ...values,
+    pressure_washer_type: values.pressure_washer_type as
+      | "L21_150BAR"
+      | "L21_200BAR",
   };
 }

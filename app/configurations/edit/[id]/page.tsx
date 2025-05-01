@@ -4,6 +4,7 @@ import { getConfigurationWithTanksAndBays } from "@/db/queries";
 import FormContainer from "@/components/form-container";
 import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
+import { updateWashBaySchema } from "@/validation/wash-bay-schema";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -31,6 +32,9 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const validatedWaterTanks = water_tanks.map((wt) =>
     updateWaterTankSchema.parse(transformDbNullToUndefined(wt))
   );
+  const validatedWashBays = wash_bays.map((wb) =>
+    updateWashBaySchema.parse(transformDbNullToUndefined(wb))
+  );
 
   return (
     <div>
@@ -44,6 +48,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
         confId={id}
         configuration={validatedConfiguration}
         initialWaterTanks={validatedWaterTanks}
+        initialWashBays={validatedWashBays}
       />
     </div>
   );
