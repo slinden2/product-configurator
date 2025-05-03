@@ -24,18 +24,18 @@ export const washBaySchema = z
       .refine((val) => val === 0 || val === 2, {
         message: lanceErrMsg,
       })
-      .optional(),
+      .default(0),
     det_lance_qty: z
       .number({ message: genericRequiredMessage })
       .refine((val) => val === 0 || val === 2, {
         message: lanceErrMsg,
       })
-      .optional(),
+      .default(0),
     hose_reel_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
       .max(2)
-      .optional(),
+      .default(0),
     pressure_washer_type: PressureWasherTypeEnum.optional(),
     pressure_washer_qty: z
       .number({ message: genericRequiredMessage })
@@ -47,33 +47,9 @@ export const washBaySchema = z
     has_bay_dividers: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
-    if (data.hp_lance_qty === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: genericRequiredMessage,
-        path: ["hp_lance_qty"],
-      });
-    }
-
-    if (data.det_lance_qty === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: genericRequiredMessage,
-        path: ["det_lance_qty"],
-      });
-    }
-
-    if (data.hose_reel_qty === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: genericRequiredMessage,
-        path: ["hose_reel_qty"],
-      });
-    }
-
     if (
       data.pressure_washer_type !== undefined &&
-      data.pressure_washer_qty === 0
+      (data.pressure_washer_qty === 0 || data.pressure_washer_qty === undefined)
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -91,9 +67,9 @@ export const updateWashBaySchema = washBaySchema.and(
 export type UpdateWashBaySchema = z.infer<typeof updateWashBaySchema>;
 
 export const washBayDefaults: WashBaySchema = {
-  hp_lance_qty: undefined,
-  det_lance_qty: undefined,
-  hose_reel_qty: undefined,
+  hp_lance_qty: 0,
+  det_lance_qty: 0,
+  hose_reel_qty: 0,
   pressure_washer_type: undefined,
   pressure_washer_qty: undefined,
   has_gantry: false,

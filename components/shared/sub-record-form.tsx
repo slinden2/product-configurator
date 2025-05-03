@@ -172,7 +172,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     if (!isEditing) {
       onSaveSuccess(entityName);
     }
-  }, [reset, entityData, entityDefaults, isEditing, onSaveSuccess]);
+  }, [reset, entityData, entityDefaults, isEditing, onSaveSuccess, entityName]);
 
   return (
     <div>
