@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { getUserData } from "@/db/queries";
 import { configurations } from "@/db/schemas";
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 export const deleteConfiguration = async (id: number, userId: string) => {
   const user = await getUserData();
@@ -18,9 +19,13 @@ export const deleteConfiguration = async (id: number, userId: string) => {
 
   try {
     await db.delete(configurations).where(eq(configurations.id, id));
+    revalidatePath("/configurations");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete configuration:", error);
-    return { success: false, error: "Failed to delete configuration." };
+    return {
+      success: false,
+      error: "Si è verificato un errore durante la eliminazione.",
+    };
   }
 };

@@ -1,7 +1,6 @@
 "use client";
 
 import { deleteConfiguration } from "@/app/actions/delete-configuration-action";
-import { redirectTo } from "@/app/actions/redirect-to";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import IconButton from "@/components/all-configuration-table/icon-button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -9,6 +8,7 @@ import { AllConfigurations, UserData } from "@/db/queries";
 import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
 import { Edit, ScrollText, Trash2 } from "lucide-react";
 import React from "react";
+import { toast } from "sonner";
 
 interface ConfigurationRowProps {
   configuration: NonNullable<AllConfigurations> extends Array<infer T>
@@ -31,10 +31,9 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
     const response = await deleteConfiguration(configuration.id, user.id);
 
     if (!response.success) {
-      alert(response.error);
+      toast.error(response.error);
     } else {
-      alert("Configurazione eliminata con successo.");
-      redirectTo("/configurations");
+      toast.success("Configurazione eliminata con successo.");
     }
   };
 
