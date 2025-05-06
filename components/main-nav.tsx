@@ -3,17 +3,20 @@
 import Logout from "@/components/logout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/state/user-context";
+import { User } from "@supabase/supabase-js";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 
-const MainNav = () => {
+interface MainNavProps {
+  user: User | null;
+}
+
+const MainNav = ({ user }: MainNavProps) => {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user } = useUser();
 
   const routes = [
     {
