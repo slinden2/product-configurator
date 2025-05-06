@@ -16,29 +16,7 @@ export function generateSelectOptionsFromZodEnum<T extends string>(
 
 export const getNumericSelectOptions = (numArr: number[]): SelectOption[] => {
   return numArr.map((num) => ({
-    value: num.toString(),
+    value: num,
     label: num.toString(),
   }));
 };
-
-export function mustBeUndefined() {
-  return z.coerce
-    .boolean()
-    .refine((val) => !val, { message: "Opzione invalida" })
-    .transform(() => null)
-    .or(z.null());
-}
-
-export function mustBeFalse() {
-  return z.coerce
-    .boolean()
-    .refine((val) => !val)
-    .transform(() => false);
-}
-
-export function mustBeZero() {
-  return z.coerce
-    .boolean()
-    .refine((val) => !val)
-    .transform(() => 0);
-}

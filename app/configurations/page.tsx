@@ -1,4 +1,4 @@
-import AllConfigurationsTable from "@/components/AllConfigurationsTable";
+import AllConfigurationsTable from "@/components/all-configuration-table";
 import { Button } from "@/components/ui/button";
 import { getUserConfigurations } from "@/db/queries";
 import { PlusCircle } from "lucide-react";

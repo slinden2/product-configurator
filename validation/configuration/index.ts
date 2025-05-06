@@ -5,12 +5,12 @@ import {
   brushColors,
   brushNums,
   brushTypes,
-} from "@/validation/configuration/brushSchema";
+} from "@/validation/configuration/brush-schema";
 import {
   ChemicalPumpPosEnum,
   chemicalNum,
   chemicalPumpPositions,
-} from "@/validation/configuration/chemPumpSchema";
+} from "@/validation/configuration/chem-pump-schema";
 import {
   HPPumpOutlet15kwEnum,
   hpPumpOutlet15kwTypes,
@@ -18,8 +18,7 @@ import {
   hpPumpOutlet30kwTypes,
   OMZPumpOutletEnum,
   omzPumpOutletTypes,
-} from "@/validation/configuration/hpPumpSchema";
-import { inverterPumpOutletOpts } from "@/validation/configuration/invertPumpSchema";
+} from "@/validation/configuration/hp-pump-schema";
 import {
   TouchFixingType,
   TouchPosEnum,
@@ -27,13 +26,13 @@ import {
   touchFixingTypeOpts,
   touchQtyOpts,
   touchPositionOpts,
-} from "@/validation/configuration/touchSchema";
+} from "@/validation/configuration/touch-schema";
 import {
   RailTypeEnum,
   railGuideNum,
   railLengths,
   railTypes,
-} from "@/validation/configuration/railSchema";
+} from "@/validation/configuration/rail-schema";
 import {
   CableChainWidthEnum,
   SupplyFixingTypeEnum,
@@ -43,11 +42,11 @@ import {
   supplyFixingTypes,
   supplySides,
   supplyTypes,
-} from "@/validation/configuration/supplyTypeSchema";
+} from "@/validation/configuration/supply-type-schema";
 import {
   PressureWasherTypeEnum,
   pressureWasherOpts,
-} from "@/validation/configuration/washBaySchema";
+} from "@/validation/wash-bay-schema";
 import {
   WaterTypeEnum,
   WaterPump1Enum,
@@ -55,11 +54,9 @@ import {
   waterTypes,
   waterPump2Opts,
   WaterPump2Enum,
-} from "@/validation/configuration/waterSupplySchema";
-import {
-  WaterTankTypeEnum,
-  waterTankOpts,
-} from "@/validation/configuration/waterTankSchema";
+  inverterPumpOutletOpts,
+} from "@/validation/configuration/water-supply-schema";
+import { waterTankOpts } from "@/validation/water-tank-schema";
 
 export const zodEnums = {
   BrushTypeEnum,
@@ -78,7 +75,6 @@ export const zodEnums = {
   OMZPumpOutletEnum,
   TouchPosEnum,
   TouchFixingType,
-  WaterTankTypeEnum,
   PressureWasherTypeEnum,
 };
 
@@ -106,6 +102,6 @@ export const selectFieldOptions: SelectOptionGroup = {
   touchPositionOpts,
   touchFixingTypeOpts,
   cardQtyOpts,
-  waterTankOpts,
   pressureWasherOpts,
+  waterTankOpts,
 };

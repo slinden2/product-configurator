@@ -1,8 +1,10 @@
 import React from "react";
-import dynamic from "next/dynamic";
-import { configSchema } from "@/validation/configSchema";
-import ConfigForm from "@/components/ConfigForm";
-import { getOneConfiguration } from "@/db/queries";
+import { updateConfigSchema } from "@/validation/config-schema";
+import { getConfigurationWithTanksAndBays } from "@/db/queries";
+import FormContainer from "@/components/form-container";
+import { updateWaterTankSchema } from "@/validation/water-tank-schema";
+import { transformDbNullToUndefined } from "@/db/transformations";
+import { updateWashBaySchema } from "@/validation/wash-bay-schema";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -10,15 +12,46 @@ interface EditConfigProps {
 
 const EditConfiguration = async (props: EditConfigProps) => {
   const params = await props.params;
-  const configuration = await getOneConfiguration(parseInt(params.id));
+  const id = parseInt(params.id);
+  const configurationData = await getConfigurationWithTanksAndBays(id);
 
-  if (!configuration) {
+  console.log("configurationData :>> ", configurationData); // DEBUG
+
+  if (!configurationData) {
     return <p className="text-destructive">Configurazione non trovata!</p>;
   }
 
-  const parsedConfiguration = configSchema.parse(configuration);
+  const { water_tanks, wash_bays, ...configuration } = configurationData;
 
-  return <ConfigForm configuration={parsedConfiguration} />;
+  const transformedConfigurationData =
+    transformDbNullToUndefined(configuration);
+
+  const validatedConfiguration = updateConfigSchema.parse(
+    transformedConfigurationData
+  );
+  const validatedWaterTanks = water_tanks.map((wt) =>
+    updateWaterTankSchema.parse(transformDbNullToUndefined(wt))
+  );
+  const validatedWashBays = wash_bays.map((wb) =>
+    updateWashBaySchema.parse(transformDbNullToUndefined(wb))
+  );
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>
+        <p className="text-muted-foreground">
+          Modifica con il form sottostante la configurazione del tuo cliente.
+        </p>
+      </div>
+      <FormContainer
+        confId={id}
+        configuration={validatedConfiguration}
+        initialWaterTanks={validatedWaterTanks}
+        initialWashBays={validatedWashBays}
+      />
+    </div>
+  );
 };
 
 export default EditConfiguration;
