@@ -6,8 +6,7 @@ import {
   waterTanks,
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
-import { and, asc, desc, eq, inArray, is, sql, SQL } from "drizzle-orm";
-import { PgBoolean, PgEnumColumn, PgInteger } from "drizzle-orm/pg-core";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import {
   UpdateConfigSchema,
@@ -21,6 +20,7 @@ import {
   transformWaterTankSchemaToDbData,
 } from "./transformations";
 import { WashBaySchema } from "@/validation/wash-bay-schema";
+import { ConfigStatusSchema } from "@/validation/config-status.schema";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -187,6 +187,48 @@ export const updateConfiguration = async (
 
     return updatedConfiguration;
   });
+
+  return response;
+};
+
+export const updateConfigStatus = async (
+  confId: number,
+  user: NonNullable<UserData>,
+  statusData: ConfigStatusSchema
+) => {
+  const configuration = await getConfiguration(confId);
+
+  if (!configuration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
+
+  if (configuration.status === statusData.status) {
+    throw new QueryError("Stato già aggiornato.", 400);
+  }
+
+  // TODO Need extentive rules for different status changes/validations
+
+  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+    throw new QueryError("Utente non autorizzato.", 403);
+  }
+
+  const condition =
+    user.role !== "ADMIN"
+      ? and(eq(configurations.id, confId), eq(configurations.user_id, user.id))
+      : eq(configurations.id, confId);
+
+  const [response] = await db
+    .update(configurations)
+    .set({ status: statusData.status })
+    .where(condition)
+    .returning({ id: configurations.id });
+
+  if (!response) {
+    throw new QueryError(
+      "Configurazione non trovata o non autorizzata per l'aggiornamento.",
+      404
+    );
+  }
 
   return response;
 };

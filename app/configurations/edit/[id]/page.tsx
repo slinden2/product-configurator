@@ -5,6 +5,7 @@ import FormContainer from "@/components/form-container";
 import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import { updateWashBaySchema } from "@/validation/wash-bay-schema";
+import StatusForm from "@/components/status-form";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -38,11 +39,16 @@ const EditConfiguration = async (props: EditConfigProps) => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>
-        <p className="text-muted-foreground">
-          Modifica con il form sottostante la configurazione del tuo cliente.
-        </p>
+      <div className="flex mb-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>
+          <p className="text-muted-foreground">
+            Modifica con il form sottostante la configurazione del tuo cliente.
+          </p>
+        </div>
+        <div className="ml-auto flex justify-center items-center">
+          <StatusForm confId={id} initialStatus={configuration.status} />
+        </div>
       </div>
       <FormContainer
         confId={id}

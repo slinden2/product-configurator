@@ -75,7 +75,7 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
   return (
     <div>
       {/* DEBUG */}
-      <DevTool control={form.control} />
+      {/* <DevTool control={form.control} /> */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <GeneralSection />
@@ -90,8 +90,7 @@ const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
             <Button
               className="ml-auto"
               variant="destructive"
-              onClick={() => form.reset({})}
-            >
+              onClick={() => form.reset({})}>
               Annulla
             </Button>
             <Button className="flex items-center gap-2" type="submit">
