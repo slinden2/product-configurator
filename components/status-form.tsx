@@ -18,9 +18,8 @@ import {
   SelectValue,
 } from "./ui/select";
 import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
-import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { DevTool } from "@hookform/devtools"; // DEBUG
+import { Loader2 } from "lucide-react";
 
 interface StatusFormProps {
   confId: number;
@@ -56,8 +55,6 @@ const StatusForm = ({ confId, initialStatus }: StatusFormProps) => {
 
   return (
     <div>
-      {/* DEBUG */}
-      {/* <DevTool control={form.control} /> */}
       <Form {...form}>
         <fieldset disabled={isLoading}>
           <form onSubmit={form.handleSubmit((data) => console.log(data))}>
@@ -66,12 +63,12 @@ const StatusForm = ({ confId, initialStatus }: StatusFormProps) => {
               name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-">
-                    <span className="py-2">Stato</span>
-                    <Spinner
-                      size={"small"}
-                      className="ml-2 inline"
-                      show={isLoading}
+                  <FormLabel className="flex items-center relative">
+                    <span>Stato</span>
+                    <Loader2
+                      className={`ml-2 inline animate-spin h-6 w-6 text-primary absolute left-8 ${
+                        isLoading ? "" : "hidden"
+                      }`}
                     />
                   </FormLabel>
                   <Select
@@ -80,7 +77,7 @@ const StatusForm = ({ confId, initialStatus }: StatusFormProps) => {
                       form.handleSubmit((data) => handleSubmit(data))();
                     }}
                     value={statusValueWatch}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>

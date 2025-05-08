@@ -16,8 +16,6 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const id = parseInt(params.id);
   const configurationData = await getConfigurationWithTanksAndBays(id);
 
-  console.log("configurationData :>> ", configurationData); // DEBUG
-
   if (!configurationData) {
     return <p className="text-destructive">Configurazione non trovata!</p>;
   }
@@ -39,14 +37,14 @@ const EditConfiguration = async (props: EditConfigProps) => {
 
   return (
     <div>
-      <div className="flex mb-6">
-        <div>
+      <div className="mb-6 sm:flex sm:gap-2">
+        <div className="mb-6 sm:mb-0">
           <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>
           <p className="text-muted-foreground">
             Modifica con il form sottostante la configurazione del tuo cliente.
           </p>
         </div>
-        <div className="ml-auto flex justify-center items-center">
+        <div className="sm:ml-auto sm:flex sm:justify-center sm:items-center">
           <StatusForm confId={id} initialStatus={configuration.status} />
         </div>
       </div>

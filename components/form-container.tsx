@@ -10,6 +10,15 @@ import { PlusCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
 import WashBayForm from "./wash-bay-form.tsx";
+import useMediaQuery from "@/hooks/use-media-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FormLabel } from "@/components/ui/form";
 
 interface ConfigurationFormProps {
   confId?: number;
@@ -17,6 +26,12 @@ interface ConfigurationFormProps {
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
 }
+
+const TABS_CONFIG = [
+  { value: "config", label: "Configurazione" },
+  { value: "tanks", label: "Serbatoi" },
+  { value: "bays", label: "Piste Lavaggio" },
+];
 
 const FormContainer = ({
   confId,
@@ -34,6 +49,7 @@ const FormContainer = ({
     useState<boolean>(false);
   const [showAddWashBayForm, setShowAddWashBayForm] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("config");
+  const isDesktop = useMediaQuery("(min-width: 640px)");
 
   useEffect(() => {
     setWaterTanks(initialWaterTanks || []);
@@ -68,13 +84,35 @@ const FormContainer = ({
       value={activeTab}
       onValueChange={setActiveTab}
       defaultValue="config"
-      className="w-full space-y-4"
-    >
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="config">Configurazione</TabsTrigger>
-        <TabsTrigger value="tanks">Serbatoi</TabsTrigger>
-        <TabsTrigger value="bays">Piste Lavaggio (WIP)</TabsTrigger>
-      </TabsList>
+      className="w-full space-y-4">
+      {/* Conditionally render TabsList or Select */}
+      {isDesktop ? (
+        // Desktop: Render horizontal tabs
+        <TabsList className="w-full grid grid-cols-3">
+          {TABS_CONFIG.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      ) : (
+        // Mobile: Render Select dropdown
+        <div className="space-y-2 mb-6">
+          <span className="block text-sm">Sezione attiva</span>
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Seleziona sezione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {TABS_CONFIG.map((tab) => (
+                <SelectItem key={tab.value} value={tab.value}>
+                  {tab.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <TabsContent value="config">
         <ConfigForm id={confId} configuration={configuration} />
@@ -112,8 +150,7 @@ const FormContainer = ({
             <Button
               className="ml-auto"
               variant="outline"
-              onClick={() => setShowAddWaterTankForm(true)}
-            >
+              onClick={() => setShowAddWaterTankForm(true)}>
               <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Serbatoio
             </Button>
           </div>
@@ -150,8 +187,7 @@ const FormContainer = ({
             <Button
               className="ml-auto"
               variant="outline"
-              onClick={() => setShowAddWashBayForm(true)}
-            >
+              onClick={() => setShowAddWashBayForm(true)}>
               <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Pista
             </Button>
           </div>
