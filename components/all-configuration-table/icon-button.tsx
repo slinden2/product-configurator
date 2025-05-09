@@ -10,7 +10,7 @@ interface IconButtonProps {
   title: string;
   variant: ButtonProps["variant"];
   disabled: boolean;
-  onClick?: () => Promise<void>;
+  onClick?: () => Promise<void> | void;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({

@@ -6,7 +6,7 @@ import { configurations } from "@/db/schemas";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export const deleteConfiguration = async (id: number, userId: string) => {
+export const deleteConfigurationAction = async (id: number, userId: string) => {
   const user = await getUserData();
 
   if (!user) {
