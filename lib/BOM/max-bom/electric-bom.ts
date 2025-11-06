@@ -35,7 +35,7 @@ const usesExternalTouch = (config: Configuration): boolean =>
 export const electricBOM: MaxBOMItem<Configuration>[] = [
   {
     pn: PART_NUMBERS.RFID_READER,
-    conditions: [(config) => config.has_card_reader],
+    conditions: [(config) => config.has_card_reader || config.has_itecoweb],
     qty: 1,
     _description: "RFID reader",
   },
