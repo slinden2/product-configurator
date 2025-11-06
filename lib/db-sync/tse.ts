@@ -1,7 +1,7 @@
 import "dotenv/config";
 import sql, { ConnectionPool } from "mssql";
 // import "../../envConfig";
-import { PartNumber } from "@/db/schemas";
+import fs from 'fs';
 
 const user = process.env.TSE_USER; // SQL Server username
 const password = process.env.TSE_PW; // SQL Server password
@@ -27,26 +27,36 @@ const config = {
 
 let conn: ConnectionPool | undefined;
 
+export interface DBData {
+  pn: string;
+  description: string;
+  pn_type: 1 | 2;
+  is_phantom: 0 | 1;
+  cost: number | null;
+}
+
+function isDBDataArray(array: any[]): array is DBData[] {
+  return array.every(item =>
+    typeof item.pn === 'string' &&
+    typeof item.description === 'string' &&
+    (item.pn_type === 1 || item.pn_type === 2) &&
+    (item.is_phantom === 0 || item.is_phantom === 1) &&
+    typeof item.cost === 'number' || item.cost === null
+  );
+}
+
 export const fetchPartNumbersFromTSE = async (): Promise<
-  PartNumber[] | undefined
+  DBData[] | undefined
 > => {
-  let data: PartNumber[] = [];
+  let data: DBData[] = [];
   try {
     conn = await sql.connect(config);
 
-    const result = await sql.query`SELECT
-    t1.MG66_CODART AS pn, 
-    t2.MG87_DESCART AS description
-FROM 
-    MG66_ANAGRART AS t1
-INNER JOIN 
-    MG87_ARTDESC AS t2 
-ON 
-    t1.MG66_CODART = t2.MG87_CODART_MG66
-WHERE 
-    (t2.MG87_LINGUA_MG52 IS NULL OR t2.MG87_LINGUA_MG52 = '') AND (MG87_OPZIONE_MG5E IS NULL OR MG87_OPZIONE_MG5E = '')`;
+    const fetchPartNumbersQuery = fs.readFileSync('./lib/db-sync/fetch-part-numbers-query.sql', 'utf8');
+    const result = await sql.query(fetchPartNumbersQuery);
 
-    data = result.recordset;
+    data = isDBDataArray(result.recordset) ? result.recordset : [];
+
   } catch (err) {
     console.error("Error connecting to the database:", err);
   } finally {
