@@ -85,7 +85,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
   fieldsToResetOnValue,
   fieldsToRevalidate,
 }: SelectFieldProps<TFieldValues>) => {
-  const { control, setValue, trigger } = useFormContext<TFieldValues>();
+  const { control, setValue, trigger, formState } = useFormContext<TFieldValues>();
 
   // This is needed, because when resetting fields the UI
   // doesn't update until correctly using the field object
@@ -167,7 +167,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                   trigger(fieldToRevalidate);
                 });
               }}
-              disabled={disabled}
+              disabled={disabled || formState.disabled}
             >
               <FormControl>
                 <SelectTrigger className="bg-background">

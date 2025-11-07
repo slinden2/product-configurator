@@ -51,6 +51,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
       <FormContainer
         confId={id}
         configuration={validatedConfiguration}
+        confStatus={configuration.status}
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}
       />

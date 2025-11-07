@@ -13,9 +13,11 @@ import {
   editWaterTankAction,
   insertWaterTankAction,
 } from "@/app/actions/water-tank-actions";
+import { ConfigurationStatusType } from "@/types";
 
 interface WaterTankFormProps {
   confId: number;
+  confStatus: ConfigurationStatusType;
   waterTank?: UpdateWaterTankSchema;
   waterTankIndex?: number;
   onDelete?: (tankId: number) => void;
@@ -31,6 +33,7 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       entityName="Serbatoio"
       entityIndex={props.waterTankIndex}
       parentId={props.confId}
+      parentStatus={props.confStatus}
       onDelete={props.onDelete}
       onSaveSuccess={props.onSaveSuccess}
       insertAction={insertWaterTankAction}

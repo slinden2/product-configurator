@@ -19,10 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormLabel } from "@/components/ui/form";
+import { ConfigurationStatusType } from "@/types";
 
 interface ConfigurationFormProps {
   confId?: number;
   configuration?: UpdateConfigSchema;
+  confStatus?: ConfigurationStatusType;
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
 }
@@ -36,6 +38,7 @@ const TABS_CONFIG = [
 const FormContainer = ({
   confId,
   configuration,
+  confStatus,
   initialWaterTanks,
   initialWashBays,
 }: ConfigurationFormProps) => {
@@ -50,6 +53,7 @@ const FormContainer = ({
   const [showAddWashBayForm, setShowAddWashBayForm] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("config");
   const isDesktop = useMediaQuery("(min-width: 640px)");
+  const showAddEntityButton = confStatus === "DRAFT" || confStatus === "OPEN";
 
   useEffect(() => {
     setWaterTanks(initialWaterTanks || []);
@@ -76,6 +80,11 @@ const FormContainer = ({
 
   // If no confId, it's the "New Configuration" page - only show ConfigForm
   if (!confId) {
+    return <ConfigForm />;
+  }
+
+  // If no confStatus, it means that the data is not ok in the db.
+  if (!confStatus) {
     return <ConfigForm />;
   }
 
@@ -115,7 +124,7 @@ const FormContainer = ({
       )}
 
       <TabsContent value="config">
-        <ConfigForm id={confId} configuration={configuration} />
+        <ConfigForm id={confId} configuration={configuration} status={confStatus} />
       </TabsContent>
 
       <TabsContent value="tanks" className="space-y-4">
@@ -128,6 +137,7 @@ const FormContainer = ({
           <WaterTankForm
             key={wt.id} // Use stable ID as key
             confId={confId}
+            confStatus={confStatus}
             waterTank={wt} // Pass existing tank data
             waterTankIndex={index + 1}
             onDelete={handleDeleteWaterTank} // Pass the delete handler
@@ -139,18 +149,20 @@ const FormContainer = ({
         {showAddWaterTankForm && (
           <WaterTankForm
             confId={confId}
+            confStatus={confStatus}
             onSaveSuccess={handleSaveSuccess} // Pass save handler
-            // Optional: Add a cancel button specific to hiding this form
+          // Optional: Add a cancel button specific to hiding this form
           />
         )}
 
         {/* Button to Add New Tank */}
-        {!showAddWaterTankForm && (
+        {!showAddWaterTankForm && showAddEntityButton && (
           <div className="flex">
             <Button
               className="ml-auto"
               variant="outline"
-              onClick={() => setShowAddWaterTankForm(true)}>
+              onClick={() => setShowAddWaterTankForm(true)}
+              disabled={confStatus !== "DRAFT" && confStatus !== "OPEN"}>
               <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Serbatoio
             </Button>
           </div>
@@ -165,6 +177,7 @@ const FormContainer = ({
           <WashBayForm
             key={wb.id} // Use stable ID as key
             confId={confId}
+            confStatus={confStatus}
             washBay={wb} // Pass existing tank data
             washBayIndex={index + 1}
             onDelete={handleDeleteWaterTank} // Pass the delete handler
@@ -176,13 +189,14 @@ const FormContainer = ({
         {showAddWashBayForm && (
           <WashBayForm
             confId={confId}
+            confStatus={confStatus}
             onSaveSuccess={handleSaveSuccess} // Pass save handler
-            // Optional: Add a cancel button specific to hiding this form
+          // Optional: Add a cancel button specific to hiding this form
           />
         )}
 
         {/* Button to Add New Bay */}
-        {!showAddWashBayForm && (
+        {!showAddWashBayForm && showAddEntityButton && (
           <div className="flex">
             <Button
               className="ml-auto"

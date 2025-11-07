@@ -26,20 +26,25 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ConfigurationStatusType } from "@/types";
 
 interface ConfigurationFormProps {
   id?: number;
   configuration?: UpdateConfigSchema;
+  status?: ConfigurationStatusType;
 }
 
-const ConfigForm = ({ id, configuration }: ConfigurationFormProps) => {
+const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
+  const formIsDisabled = isSubmitting || status === "LOCKED" || status === "CLOSED";
+
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
     defaultValues: configuration ?? configDefaults,
+    disabled: formIsDisabled,
   });
 
   async function onSubmit(values: ConfigSchema) {

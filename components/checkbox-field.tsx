@@ -47,7 +47,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
   disabled,
   fieldsToResetOnUncheck, // Use the updated prop name
 }: CheckboxFieldProps<TFieldValues>) => {
-  const { control, setValue } = useFormContext<TFieldValues>();
+  const { control, setValue, formState } = useFormContext<TFieldValues>();
 
   return (
     <FormField
@@ -90,9 +90,9 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                     });
                   }
                 }}
-                disabled={disabled}
-                // Link label and checkbox implicitly via FormItem/FormLabel or explicitly via aria-labelledby if needed
-                // aria-label={label} // Can be used if label text isn't sufficient
+                disabled={disabled || formState.disabled}
+              // Link label and checkbox implicitly via FormItem/FormLabel or explicitly via aria-labelledby if needed
+              // aria-label={label} // Can be used if label text isn't sufficient
               />
             </FormControl>
             <div className="space-y-1 leading-none">

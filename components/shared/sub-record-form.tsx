@@ -11,10 +11,12 @@ import { toast } from "sonner";
 import Fieldset from "@/components/fieldset"; // Assuming Fieldset is general purpose
 import { z } from "zod";
 import { DevTool } from "@hookform/devtools";
+import { ConfigurationStatusType } from "@/types";
 
 // --- Generic Props Interface ---
 interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   parentId: number; // ID of the parent (e.g., confId)
+  parentStatus: ConfigurationStatusType;
   schema: TFormSchema; // Zod schema for validation
   entityDefaults: z.infer<TFormSchema>; // Default values for new entity
   entityData?: z.infer<TFormSchema> & { id: number }; // Optional existing data (must have id)
@@ -43,6 +45,7 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
 // Use ZodTypeAny for the generic constraint
 const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   parentId,
+  parentStatus,
   schema,
   entityDefaults,
   entityData,
@@ -64,17 +67,20 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   );
   const [error, setError] = useState<string>("");
 
+  const formIsDisabled = !!isLoading || parentStatus === "LOCKED" || parentStatus === "CLOSED";
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: entityData ?? entityDefaults,
+    disabled: formIsDisabled,
   });
   const { handleSubmit, reset, formState } = form;
 
   // --- Derived State ---
   const isEditing = !!entityData?.id;
   const isSaveOrCancelDisabled =
-    !!isLoading || (isEditing && !formState.isDirty);
-  const isDeleteDisabled = !!isLoading;
+    !!isLoading || (isEditing && !formState.isDirty) || formState.disabled;
+  const isDeleteDisabled = !!isLoading || formState.disabled;
 
   // --- Event Handlers ---
   const handleSaveSubmit = useCallback(
@@ -86,8 +92,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         if (isEditing) {
           await editAction(parentId, entityData.id, values);
           toast.success(
-            `${entityName} ${entityIndex ?? ""} aggiornat${
-              entityName === "Pista" ? "a" : "o"
+            `${entityName} ${entityIndex ?? ""} aggiornat${entityName === "Pista" ? "a" : "o"
             }.`
           );
           reset(values);
@@ -127,9 +132,8 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
 
   const handleDelete = useCallback(async () => {
     if (!isEditing || !onDelete) return;
-    const confirmMessage = `Sei sicuro di voler eliminare ${entityName} ${
-      entityIndex ?? ""
-    }?`;
+    const confirmMessage = `Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""
+      }?`;
     if (!window.confirm(confirmMessage)) return;
 
     setIsLoading("delete");
@@ -138,8 +142,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       const result = await deleteAction(parentId, entityData.id!);
       if (result.success) {
         toast.success(
-          `${entityName} ${entityIndex} eliminat${
-            entityName === "Pista" ? "a" : "o"
+          `${entityName} ${entityIndex} eliminat${entityName === "Pista" ? "a" : "o"
           }.`
         );
         onDelete(entityData.id!);
