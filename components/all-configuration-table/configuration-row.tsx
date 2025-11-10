@@ -13,13 +13,13 @@ import { toast } from "sonner";
 
 interface ConfigurationRowProps {
   configuration: NonNullable<AllConfigurations> extends Array<infer T>
-    ? T
-    : never;
+  ? T
+  : never;
   user: NonNullable<UserData>;
 }
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
-  const canEdit = user.role === "ADMIN" || configuration.user.id === user.id;
+  const canEdit = ["ADMIN", "INTERNAL"].includes(user.role) || configuration.user.id === user.id;
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 

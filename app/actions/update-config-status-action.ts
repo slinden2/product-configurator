@@ -23,7 +23,7 @@ export const updateConfigStatusAction = async (
 
   try {
     const updatedConf = await updateConfigStatus(confId, user, validation.data);
-    revalidatePath(`/configurations/edit/${confId}`);
+    revalidatePath(`/configurations/edit/${updatedConf.id}`);
     return { success: true, id: updatedConf.id };
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {

@@ -1,6 +1,6 @@
 import React from "react";
 import { updateConfigSchema } from "@/validation/config-schema";
-import { getConfigurationWithTanksAndBays } from "@/db/queries";
+import { getConfigurationWithTanksAndBays, getUserData } from "@/db/queries";
 import FormContainer from "@/components/form-container";
 import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
@@ -14,6 +14,12 @@ interface EditConfigProps {
 const EditConfiguration = async (props: EditConfigProps) => {
   const params = await props.params;
   const id = parseInt(params.id);
+  const user = await getUserData();
+
+  if (!user) {
+    return <p className="text-destructive">Utente non trovato!</p>;
+  }
+
   const configurationData = await getConfigurationWithTanksAndBays(id);
 
   if (!configurationData) {
@@ -45,7 +51,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
           </p>
         </div>
         <div className="sm:ml-auto sm:flex sm:justify-center sm:items-center">
-          <StatusForm confId={id} initialStatus={configuration.status} />
+          <StatusForm confId={id} initialStatus={configuration.status} userRole={user.role} />
         </div>
       </div>
       <FormContainer

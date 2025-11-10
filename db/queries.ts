@@ -21,6 +21,7 @@ import {
 } from "./transformations";
 import { WashBaySchema } from "@/validation/wash-bay-schema";
 import { ConfigStatusSchema } from "@/validation/config-status.schema";
+import { ConfigurationStatusType, Role } from "@/types";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
@@ -72,6 +73,8 @@ export async function getUserData() {
   };
 }
 
+// Gets all configurations for the user if the role is EXTERNAL.
+// For INTERNAL and ADMIN, gets all configurations
 export async function getUserConfigurations() {
   const user = await getUserData();
 
@@ -108,6 +111,12 @@ export async function getUserConfigurations() {
 }
 
 export async function getConfigurationWithTanksAndBays(id: number) {
+  const user = await getUserData();
+
+  if (!user) {
+    return null;
+  }
+
   const response = await db.query.configurations.findFirst({
     where: eq(configurations.id, id),
     with: {
@@ -119,6 +128,14 @@ export async function getConfigurationWithTanksAndBays(id: number) {
       },
     },
   });
+
+  // EXTERNAL users can only view/edit their own configurations
+  if (user.role === "EXTERNAL") {
+    if (response?.user_id !== user.id) {
+      return null;
+    }
+  }
+
   return response;
 }
 
@@ -167,9 +184,9 @@ export const updateConfiguration = async (
     const condition =
       user.role !== "ADMIN"
         ? and(
-            eq(configurations.id, confId),
-            eq(configurations.user_id, user.id)
-          )
+          eq(configurations.id, confId),
+          eq(configurations.user_id, user.id)
+        )
         : eq(configurations.id, confId);
 
     const [updatedConfiguration] = await tx
@@ -191,6 +208,35 @@ export const updateConfiguration = async (
   return response;
 };
 
+function canTransition(role: Role, from: ConfigurationStatusType, to: ConfigurationStatusType): boolean {
+  if (from === to) return true;
+
+  if (role === "ADMIN") return true;
+
+  // External: only DRAFT <-> open
+  if (role === "EXTERNAL") {
+    const allowed =
+      (from === "DRAFT" && to === "OPEN") ||
+      (from === "OPEN" && to === "DRAFT");
+    return allowed;
+  }
+
+  // Internal: everything External can do plus
+  // DRAFT/OPEN <-> LOCKED (both directions)
+  if (role === "INTERNAL") {
+    const allowed =
+      (from === "DRAFT" && to === "OPEN") ||
+      (from === "OPEN" && to === "DRAFT") ||
+      (from === "DRAFT" && to === "LOCKED") ||
+      (from === "OPEN" && to === "LOCKED") ||
+      (from === "LOCKED" && to === "DRAFT") ||
+      (from === "LOCKED" && to === "OPEN");
+    return allowed;
+  }
+
+  return false;
+}
+
 export const updateConfigStatus = async (
   confId: number,
   user: NonNullable<UserData>,
@@ -206,21 +252,18 @@ export const updateConfigStatus = async (
     throw new QueryError("Stato già aggiornato.", 400);
   }
 
-  // TODO Need extentive rules for different status changes/validations
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
+  if (user.role === "EXTERNAL" && user.id !== configuration.user_id) {
     throw new QueryError("Utente non autorizzato.", 403);
   }
 
-  const condition =
-    user.role !== "ADMIN"
-      ? and(eq(configurations.id, confId), eq(configurations.user_id, user.id))
-      : eq(configurations.id, confId);
+  if (!canTransition(user.role, configuration.status, statusData.status)) {
+    throw new QueryError("Stato non autorizzato.", 403);
+  }
 
   const [response] = await db
     .update(configurations)
     .set({ status: statusData.status })
-    .where(condition)
+    .where(eq(configurations.id, confId))
     .returning({ id: configurations.id });
 
   if (!response) {
