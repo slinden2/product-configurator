@@ -162,7 +162,7 @@ const FormContainer = ({
               className="ml-auto"
               variant="outline"
               onClick={() => setShowAddWaterTankForm(true)}
-              disabled={confStatus !== "DRAFT" && confStatus !== "OPEN"}>
+              disabled={confStatus !== "DRAFT"}>
               <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Serbatoio
             </Button>
           </div>

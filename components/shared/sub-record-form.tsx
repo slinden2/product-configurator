@@ -67,7 +67,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   );
   const [error, setError] = useState<string>("");
 
-  const formIsDisabled = !!isLoading || parentStatus === "LOCKED" || parentStatus === "CLOSED";
+  const formIsDisabled = !!isLoading || parentStatus !== "DRAFT";
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),

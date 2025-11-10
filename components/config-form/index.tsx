@@ -39,7 +39,7 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  const formIsDisabled = isSubmitting || status === "LOCKED" || status === "CLOSED";
+  const formIsDisabled = isSubmitting || status !== "DRAFT";
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
@@ -95,10 +95,12 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
             <Button
               className="ml-auto"
               variant="destructive"
-              onClick={() => form.reset({})}>
+              onClick={() => form.reset({})}
+              disabled={formIsDisabled}
+            >
               Annulla
             </Button>
-            <Button className="flex items-center gap-2" type="submit">
+            <Button className="flex items-center gap-2" type="submit" disabled={formIsDisabled}>
               {isSubmitting ? (
                 <Spinner className="h-4 w-4 text-foreground" />
               ) : (
