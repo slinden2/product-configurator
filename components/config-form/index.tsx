@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ConfigurationStatusType } from "@/types";
+import BackButton from "../back-button";
 
 interface ConfigurationFormProps {
   id?: number;
@@ -39,7 +40,9 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  const formIsDisabled = isSubmitting || status !== "DRAFT";
+  const isNewConfiguration = !id && !configuration && !status;
+
+  const formIsDisabled = isSubmitting || status !== "DRAFT" && !isNewConfiguration;
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
@@ -92,11 +95,13 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
           <TouchSection />
           <HPPumpSection />
           <div className="flex gap-4">
+            <BackButton fallbackPath={"/configurations"} />
             <Button
               className="ml-auto"
               variant="destructive"
-              onClick={() => form.reset({})}
+              onClick={() => form.reset()}
               disabled={formIsDisabled}
+            // type="reset"
             >
               Annulla
             </Button>

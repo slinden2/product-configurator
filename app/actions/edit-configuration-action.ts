@@ -11,7 +11,7 @@ import { DatabaseError } from "pg";
 
 export const editConfigurationAction = async (
   confId: number,
-  userId: string,
+  ownerId: string,
   formData: unknown
 ) => {
   const validation = configSchema.safeParse(formData);
@@ -26,7 +26,8 @@ export const editConfigurationAction = async (
     throw new Error("User not found.");
   }
 
-  if (user.id !== userId || user.role !== "ADMIN") {
+  // TODO Also internal role must be able to edit
+  if (user.id !== ownerId && user.role !== "ADMIN") {
     throw new Error("Unauthorized.");
   }
 
@@ -37,7 +38,7 @@ export const editConfigurationAction = async (
   }
 
   try {
-    await updateConfiguration(confId, { ...validation.data, user_id: userId });
+    await updateConfiguration(confId, { ...validation.data, user_id: ownerId });
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
       throw new Error(err.message);
