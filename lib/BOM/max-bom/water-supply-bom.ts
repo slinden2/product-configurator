@@ -130,7 +130,7 @@ export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
     _description: "Dosatron outlet for inverter pump",
   },
   {
-    pn: PART_NUMBERS.OUTLET_DOSATRON,
+    pn: PART_NUMBERS.OUTLET_PW,
     conditions: [
       (config) =>
         config.water_1_pump === "INV_3KW_200L" ||
