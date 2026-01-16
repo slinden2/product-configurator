@@ -1,12 +1,13 @@
 import { db } from "@/db";
 import {
   configurations,
+  partNumbers,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import {
   UpdateConfigSchema,
@@ -60,7 +61,7 @@ export async function getUserData() {
 
   const userProfile = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.id, data.user.id),
-    columns: { role: true },
+    columns: { role: true, initials: true },
   });
 
   if (!userProfile) {
@@ -70,6 +71,7 @@ export async function getUserData() {
   return {
     id: data.user.id,
     role: userProfile.role,
+    initials: userProfile.initials,
   };
 }
 
@@ -466,4 +468,11 @@ export async function getBOM(id: number) {
     const bom = await BOM.init(configuration);
     return bom;
   }
+}
+
+export async function getPartNumbersByArray(array: string[]) {
+  const response = await db.query.partNumbers.findMany({
+    where: inArray(partNumbers.pn, array),
+  });
+  return response;
 }

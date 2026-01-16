@@ -5,16 +5,23 @@ import BackButton from "@/components/back-button";
 import BOMCard from "@/components/bom-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getBOM } from "@/db/queries";
+import { getBOM, getUserData } from "@/db/queries";
 import { Edit } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react";
+import ExportCostsButton from "./export-costs-button";
 
 interface BOMViewProps {
   params: Promise<{ id: string }>;
 }
 
 const BOMView = async (props: BOMViewProps) => {
+  const user = await getUserData();
+
+  if (!user) {
+    return <div>Utente non trovato.</div>;
+  }
+
   const params = await props.params;
   const bom = await getBOM(parseInt(params.id));
 
@@ -24,7 +31,14 @@ const BOMView = async (props: BOMViewProps) => {
   const description = bom.getDescription();
   const { generalBOM, waterTankBOMs, washBayBOMs } =
     await bom.buildCompleteBOM();
+
   const exportData = bom.generateExportData(
+    generalBOM,
+    waterTankBOMs,
+    washBayBOMs
+  );
+
+  const exportCostsData = await bom.generateCostExportData(
     generalBOM,
     waterTankBOMs,
     washBayBOMs
@@ -45,6 +59,7 @@ const BOMView = async (props: BOMViewProps) => {
             </Link>
           </Button>
           <ExportButton exportData={exportData} />
+          <ExportCostsButton exportData={exportCostsData} user={user} />
         </div>
       </div>
       <MetaDataTable clientName={clientName} description={description || ""} />

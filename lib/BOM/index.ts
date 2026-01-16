@@ -1,4 +1,5 @@
 import { db } from "@/db";
+import { getPartNumbersByArray } from "@/db/queries";
 import {
   Configuration,
   ConfigurationWithWaterTanksAndWashBays,
@@ -12,7 +13,6 @@ import {
   WaterTankMaxBOM,
 } from "@/lib/BOM/max-bom";
 import { inArray } from "drizzle-orm";
-import * as XLSX from "xlsx";
 
 export interface BOMItem {
   pn: string;
@@ -26,6 +26,10 @@ export interface WithBOMItems {
 
 export interface BOMItemWithDescription extends BOMItem {
   description: string;
+}
+
+export interface BOMItemWithCost extends BOMItemWithDescription {
+  cost: number;
 }
 
 export type WithSupplyData = Pick<
@@ -193,10 +197,48 @@ export class BOM {
     washBayBOMs: BOMItemWithDescription[][]
   ): BOMItemWithDescription[] {
     return [...generalBOM, ...waterTankBOMs.flat(), ...washBayBOMs.flat()];
+  }
 
-    // const worksheet = XLSX.utils.json_to_sheet(generalBOM);
-    // const workbook = XLSX.utils.book_new();
-    // XLSX.utils.book_append_sheet(workbook, worksheet);
-    // XLSX.writeFile(workbook, "BOM.xlsx");
+  async generateCostExportData(generalBOM: BOMItemWithDescription[],
+    waterTankBOMs: BOMItemWithDescription[][],
+    washBayBOMs: BOMItemWithDescription[][]): Promise<{
+      generalBOM: BOMItemWithCost[];
+      waterTankBOMs: BOMItemWithCost[][];
+      washBayBOMs: BOMItemWithCost[][];
+    }> {
+
+    const uniquePartNumbers = [...new Set([
+      ...generalBOM.map(item => item.pn),
+      ...waterTankBOMs.flat().map(item => item.pn),
+      ...washBayBOMs.flat().map(item => item.pn)
+    ])]
+
+    const partNumbers = await getPartNumbersByArray(uniquePartNumbers);
+
+    const pnToCostMap = new Map<string, string>();
+    partNumbers.forEach(row => {
+      pnToCostMap.set(row.pn, row.cost);
+    });
+
+    const addCostToItem = (item: BOMItemWithDescription) => ({
+      ...item,
+      cost: Number(pnToCostMap.get(item.pn)) || 0
+    });
+
+    const generalBOMWithCost = generalBOM.map(addCostToItem);
+
+    const waterTankBOMsWithCost = waterTankBOMs.map(innerArray =>
+      innerArray.map(addCostToItem)
+    );
+
+    const washBayBOMsWithCost = washBayBOMs.map(innerArray =>
+      innerArray.map(addCostToItem)
+    );
+
+    return {
+      generalBOM: generalBOMWithCost,
+      waterTankBOMs: waterTankBOMsWithCost,
+      washBayBOMs: washBayBOMsWithCost
+    };
   }
 }
