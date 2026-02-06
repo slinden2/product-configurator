@@ -12,9 +12,9 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
 
   // Columns and formatting
   sheet.columns = [
-    { header: "Codice", key: "pn", width: 15 },
-    { header: "Descrizione", key: "description", width: 60 },
-    { header: "Costo", key: "cost", width: 13 },
+    { key: "pn", width: 20 },
+    { key: "description", width: 60 },
+    { key: "cost", width: 13 },
   ]
 
   sheet.getColumn("description").alignment = { wrapText: true };
@@ -22,8 +22,8 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
   const costColumn = sheet.getColumn("cost")
   costColumn.numFmt = '€ #,##0.00';
 
-  const headers = sheet.columns.map(col => col.header)
-  const headerRowNums: number[] = [1] // First rowNum added here, the rest will be added later
+  const headers = ["Codice", "Descrizione", "Costo"]
+  const headerRowNums: number[] = []
 
   const rowBgColors = {
     light: "ffffff",
@@ -52,34 +52,155 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
     applyBorder(row, bgColor);
   };
 
-  const addBOMSection = (boms: BOM[]) => {
+  const calculateBOMCost = (bom: BOM): number => {
+    return bom.reduce((sum, item) => sum + (item.cost * item.qty), 0);
+  };
+
+  const addCostSummaryTable = (generalCost: number, waterTanksCost: number, washBaysCost: number) => {
+    const totalCost = generalCost + waterTanksCost + washBaysCost;
+
+    // Title
+    const titleRow = sheet.addRow(["Riepilogo Costi"]);
+    titleRow.getCell(1).font = { bold: true, size: 16 };
+    titleRow.height = 25;
+
+    sheet.addRow([]);
+
+    // Table header
+    const headerRow = sheet.addRow(["Sezione", "Costo"]);
+    headerRow.eachCell((cell, colNumber) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBgColors.dark } };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    // Data rows
+    const rows = [
+      ["Distinta Generale", generalCost],
+      ["Serbatoi", waterTanksCost],
+      ["Piste", washBaysCost],
+    ];
+
+    rows.forEach((rowData, index) => {
+      const row = sheet.addRow(rowData);
+      const bgColor = index % 2 === 0 ? rowBgColors.light : rowBgColors.dark;
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+        if (colNumber === 2) {
+          cell.numFmt = '€ #,##0.00';
+          cell.alignment = { horizontal: "right" };
+        }
+      });
+    });
+
+    // Total row
+    const totalRow = sheet.addRow(["TOTALE", totalCost]);
+    totalRow.eachCell((cell, colNumber) => {
+      cell.font = { bold: true };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD966" } };
+      if (colNumber === 2) {
+        cell.numFmt = '€ #,##0.00';
+        cell.alignment = { horizontal: "right" };
+      }
+    });
+  };
+
+  const addSectionTitle = (title: string, skipSpacing = false) => {
+    if (!skipSpacing) {
+      sheet.addRow([]);
+      sheet.addRow([]);
+    }
+    const titleRow = sheet.addRow([title]);
+
+    // Apply styling to cells A, B, and C
+    [1, 2, 3].forEach(col => {
+      const cell = titleRow.getCell(col);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "4472C4" }
+      };
+      cell.font = { bold: true, size: 14, color: { argb: "FFFFFF" } };
+      cell.alignment = { vertical: "middle", horizontal: "left", shrinkToFit: false };
+    });
+
+    // Set the text in the first cell only, but style all three
+    titleRow.getCell(1).value = title;
+    titleRow.height = 20;
+  };
+
+  const addBOMSection = (boms: BOM[], title: string, itemPrefix?: string) => {
     if (boms.length === 0) return;
 
-    sheet.addRow([]);
-    sheet.addRow([]);
+    addSectionTitle(title);
 
-    const headerRow = sheet.addRow(headers);
-    headerRowNums.push(headerRow.number);
+    boms.forEach((bom, index) => {
+      if (itemPrefix && boms.length > 1) {
+        sheet.addRow([]);
+        const subTitleRow = sheet.addRow([`${itemPrefix} ${index + 1}`]);
+        subTitleRow.getCell(1).font = { bold: true, size: 12 };
+        subTitleRow.getCell(1).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "D9E1F2" }
+        };
+      }
 
-    sheet.getCell(`${costColumn.letter}${headerRow.number}`).alignment = {
-      horizontal: "center",
-    };
+      sheet.addRow([]);
+      const headerRow = sheet.addRow(headers);
+      headerRowNums.push(headerRow.number);
 
-    boms.forEach(bom => {
+      sheet.getCell(`${costColumn.letter}${headerRow.number}`).alignment = {
+        horizontal: "center",
+      };
+
       bom.forEach((item, i) => {
         const bgColor = i % 2 === 0 ? rowBgColors.light : rowBgColors.dark;
-        addItemRow(item, bgColor)
-      })
-    }
-    );
+        addItemRow(item, bgColor);
+      });
+    });
   };
+
+  // Calculate costs for summary
+  const generalCost = calculateBOMCost(generalBOM);
+  const waterTanksCost = waterTankBOMs.reduce((sum, bom) => sum + calculateBOMCost(bom), 0);
+  const washBaysCost = washBayBOMs.reduce((sum, bom) => sum + calculateBOMCost(bom), 0);
+
+  // Add cost summary table at the top
+  addCostSummaryTable(generalCost, waterTanksCost, washBaysCost);
+
+  // General BOM
+  addSectionTitle("Distinta Generale");
+  sheet.addRow([]);
 
   generalBOM.forEach((item, i) => {
     const bgColor = i % 2 === 0 ? rowBgColors.light : rowBgColors.dark;
-    addItemRow(item, bgColor)
-  })
-  addBOMSection(waterTankBOMs);
-  addBOMSection(washBayBOMs);
+    addItemRow(item, bgColor);
+  });
+
+  // Water Tanks
+  addBOMSection(waterTankBOMs, "Serbatoi", "Serbatoio");
+
+  // Wash Bays
+  addBOMSection(washBayBOMs, "Piste", "Pista");
 
   // Header styling
   headerRowNums.forEach(rowNum => {
