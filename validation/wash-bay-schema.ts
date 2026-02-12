@@ -57,6 +57,18 @@ export const washBaySchema = z
         path: ["pressure_washer_qty"],
       });
     }
+
+    if (
+      data.pressure_washer_qty !== undefined &&
+      data.pressure_washer_qty > 0 &&
+      data.pressure_washer_type === undefined
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["pressure_washer_type"],
+      });
+    }
   });
 
 export type WashBaySchema = z.infer<typeof washBaySchema>;

@@ -42,8 +42,10 @@ export const railSchema = z
     rail_type: RailTypeEnum.optional(),
     rail_length: z.coerce
       .number({ message: genericRequiredMessage })
-      .min(7)
-      .max(26)
+      .refine(
+        (val) => railLengths.map((opt) => opt.value).includes(val),
+        { message: "Lunghezza rotaie non valida." }
+      )
       .optional(),
     rail_guide_qty: z.coerce
       .number({ message: genericRequiredMessage })
