@@ -98,6 +98,7 @@ export const configurations = pgTable("configurations", {
   supply_side: supplySideEnum("supply_side").notNull(),
   has_post_frame: boolean().notNull(),
   energy_chain_width: energyChainWidthEnum("energy_chain_width"),
+  has_shelf_extension: boolean().notNull(),
   rail_type: railTypeEnum("rail_type").notNull(),
   rail_length: integer().notNull(),
   rail_guide_qty: integer().notNull(),

@@ -83,6 +83,7 @@ export const configDefaults: ConfigSchema = {
   supply_fixing_type: undefined,
   has_post_frame: false,
   energy_chain_width: undefined,
+  has_shelf_extension: false,
   supply_side: undefined,
   // --- Rail Section ---
   rail_type: undefined,

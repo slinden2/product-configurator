@@ -47,19 +47,25 @@ const SupplySection = () => {
                 },
                 {
                   triggerValue: zodEnums.SupplyTypeEnum.enum.CABLE_CHAIN,
-                  fieldsToReset: ["energy_chain_width"],
+                  fieldsToReset: ["energy_chain_width", "has_shelf_extension"],
                   invertTrigger: true,
                 },
               ]}
               // fieldsToRevalidate={["supply_fixing_type"]}
             />
             {!isEnergyChainDisabled && (
-              <SelectField<ConfigSchema>
-                name="energy_chain_width"
-                dataType="string"
-                label="Larghezza catena"
-                items={selectFieldOptions.cableChainWidths}
-              />
+              <>
+                <SelectField<ConfigSchema>
+                  name="energy_chain_width"
+                  dataType="string"
+                  label="Larghezza catena"
+                  items={selectFieldOptions.cableChainWidths}
+                />
+                <CheckboxField<ConfigSchema>
+                  name="has_shelf_extension"
+                  label="Con prolunga per mensola alim."
+                />
+              </>
             )}
           </FieldsetItem>
           <FieldsetItem>
