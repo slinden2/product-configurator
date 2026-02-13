@@ -2,7 +2,7 @@ import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { Water1PumpType, Water2PumpType } from "@/types";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   WASH_BAY_SOLENOID_WITH_ANTIFREEZE: "1100.060.001",
   WASH_BAY_SOLENOID_NO_ANTIFREEZE: "1100.060.002",
   WASH_BAY_2ND_SOLENOID_WITH_ANTIFREEZE: "1100.060.003",
@@ -14,7 +14,7 @@ const PART_NUMBERS: Record<string, string> = {
   INV_3KW_250L: "1100.024.054",
   OUTLET_DOSATRON: "1100.024.055",
   OUTLET_PW: "1100.024.056",
-};
+} as const satisfies Record<string, string>;
 
 const hasWater1Solenoid = (config: Configuration): boolean => {
   return !!config.water_1_type;

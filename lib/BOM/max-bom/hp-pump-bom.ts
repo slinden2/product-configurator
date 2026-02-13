@@ -2,7 +2,7 @@ import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   PUMP_15KW: "1100.024.030",
   PUMP_15KW_WITH_SOFTSTART: "1100.024.032", // TODO Add this in the form
   PUMP_30KW: "1100.024.031",
@@ -36,7 +36,7 @@ const PART_NUMBERS: Record<string, string> = {
   HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.030",
   HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.031",
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS: "9000.530.024",
-};
+} as const satisfies Record<string, string>;
 
 const uses15kwPump = (config: Configuration): boolean => config.has_15kw_pump;
 const uses30kwPump = (config: Configuration): boolean => config.has_30kw_pump;

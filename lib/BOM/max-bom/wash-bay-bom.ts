@@ -2,7 +2,7 @@ import { WashBay } from "@/db/schemas";
 import { WithSupplyData } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   // TODO Create all these in TSE. Remember also chains in supplyBOM.
   LINE_POST_ASSY_H2500: "2500-PL",
   LINE_POST_ASSY_H2500_PANEL_READY: "2500-PL-PP",
@@ -22,7 +22,7 @@ const PART_NUMBERS: Record<string, string> = {
   SIDE_PANEL_ASSY: "PN",
   SIDE_PANEL_ASSY_FOR_CENTRAL_POST_LINE: "PN-PC",
   SLIDING_BRACKETS_FOR_FESTOON_LINE_WITH_BOOM: "AS",
-};
+} as const satisfies Record<string, string>;
 
 const usesCableChain = (config: WashBay & WithSupplyData) =>
   config.supply_type === "CABLE_CHAIN" && config.supply_fixing_type === "POST";

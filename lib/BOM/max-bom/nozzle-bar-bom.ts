@@ -1,7 +1,7 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   PREWASH_ARCH: "450.36.000",
   RINSE_ARCH: "450.36.001",
   RINSE_ARCH_INOX: "450.36.001IN", // TODO To be added in BOM.
@@ -33,7 +33,7 @@ const PART_NUMBERS: Record<string, string> = {
   FITTINGS_FOR_DOUBLE_SUPPLY: "450.36.078",
   SUPPLEMENTARY_RINSE_ARCH_FAST: "450.65.000",
   SUPPLEMENTARY_LATERAL_RINSE_BARS_FAST: "450.65.002",
-};
+} as const satisfies Record<string, string>;
 
 const hasHpRoofBar = (config: Configuration): boolean =>
   config.pump_outlet_omz === "HP_ROOF_BAR" ||

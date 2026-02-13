@@ -1,7 +1,7 @@
 import { WaterTank } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   WATER_TANK_2000L: "921.00.201",
   WATER_TANK_JOLLY: "921.00.200",
   WATER_TANK_2500L: "921.00.250",
@@ -15,7 +15,7 @@ const PART_NUMBERS: Record<string, string> = {
   OUTLET_WITH_VALVE_JOLLY: "1100.064.007",
   OUTLET_WITHOUT_VALVE_JOLLY: "1100.064.008",
   BLOWER: "1100.064.009",
-};
+} as const satisfies Record<string, string>;
 
 const usesJolly = (config: WaterTank) => config.type === "L2000_JOLLY";
 

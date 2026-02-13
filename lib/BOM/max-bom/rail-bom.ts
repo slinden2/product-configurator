@@ -1,7 +1,7 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   DOWELED_RAIL_TERMINALS: "450.45.031",
   DOWELED_RAILS_1M: "450.45.030",
   DOWELED_RAILS_3M: "450.45.035",
@@ -9,7 +9,7 @@ const PART_NUMBERS: Record<string, string> = {
   WELDED_RAILS_1M: "450.46.030",
   WELDED_RAILS_3M: "450.46.031",
   PROXIMITY_PLATES: "450.35.010",
-};
+} as const satisfies Record<string, string>;
 
 const calculate3mRailQty = (config: Configuration): number =>
   Math.floor((config.rail_length - 6) / 3);

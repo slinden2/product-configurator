@@ -1,7 +1,7 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   RFID_READER: "890.10.003",
   RFID_CARD: "890.10.005",
   HP_ROOF_BAR_COMMANDS: "890.10.013",
@@ -16,7 +16,7 @@ const PART_NUMBERS: Record<string, string> = {
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
-};
+} as const satisfies Record<string, string>;
 
 const uses1ExternalTouch = (config: Configuration): boolean => {
   return config.touch_qty === 1 && config.touch_pos === "EXTERNAL";
@@ -29,8 +29,6 @@ const usesOnboardTouch = (config: Configuration): boolean =>
   (config.touch_qty === 1 && config.touch_pos === "INTERNAL") ||
   config.touch_qty === 2;
 
-const usesExternalTouch = (config: Configuration): boolean =>
-  uses1ExternalTouch(config) || config.touch_qty === 2;
 
 export const electricBOM: MaxBOMItem<Configuration>[] = [
   {

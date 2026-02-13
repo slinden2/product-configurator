@@ -1,11 +1,11 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   ZERO_BRUSHES: "450.0E.GRU0",
   TWO_BRUSHES: "450.0E.GRU2",
   THREE_BRUSHES: "450.0E.GRU",
-};
+} as const satisfies Record<string, string>;
 
 export const gruBOM: MaxBOMItem<Configuration>[] = [
   {

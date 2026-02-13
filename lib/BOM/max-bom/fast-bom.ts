@@ -1,12 +1,12 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   ADDITIONAL_LATERAL_RINSE_BARS: "450.65.000",
   ADDITIONAL_RINSE_ARCH: "450.65.002",
   LONG_PHOTOCELL_SUPPORTS: "926.03.000",
   POSTERIOR_TRAFFIC_LIGHTS: "926.01.000",
-};
+} as const satisfies Record<string, string>;
 
 const isFast = (config: Configuration): boolean => config.is_fast;
 

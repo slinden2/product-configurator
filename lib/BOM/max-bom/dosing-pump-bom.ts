@@ -1,7 +1,7 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   SHAMPOO_PUMP_NO_ALARM: "450.03.022",
   SHAMPOO_PUMP_WITH_ALARM: "450.03.025",
   WAX_PUMP_NO_ALARM: "450.03.024",
@@ -16,7 +16,7 @@ const PART_NUMBERS: Record<string, string> = {
   DOSATRON_ACID_WITH_ANTIFREEZE: "1100.061.005",
   FLOAT_SWITCH_FOR_DOSATRON: "1100.061.002",
   FOAM_KIT: "852.00.000",
-};
+} as const satisfies Record<string, string>;
 
 export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
   {

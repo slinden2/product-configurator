@@ -2,7 +2,7 @@ import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { EnergyChainWidthType } from "@/types";
 
-const PART_NUMBERS: Record<string, string> = {
+const PART_NUMBERS = {
   STRAIGHT_SHELF: "1100.019.000",
   SUPPLY_POLE_1_WATER: "1100.049.001",
   SUPPLY_POLE_2_WATER: "1100.049.002",
@@ -22,7 +22,7 @@ const PART_NUMBERS: Record<string, string> = {
   CHAIN_300: "CP-300", // TODO Create in TSE
   REINFORCED_SHELF_ASSY_L: "1100.019.016",
   REINFORCED_SHELF_ASSY_R: "1100.019.017",
-};
+} as const satisfies Record<string, string>;
 
 const usesStraightShelf = (config: Configuration): boolean => {
   return config.supply_type === "STRAIGHT_SHELF";
