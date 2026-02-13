@@ -36,6 +36,9 @@ const PART_NUMBERS = {
   HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.030",
   HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.031",
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS: "9000.530.024",
+  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT: "9000.530.036", // W_EXT = with extension, meaning that these are used only if has_shelf_extenion is true.
+  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT: "9000.530.037",
+  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT: "9000.530.035",
 } as const satisfies Record<string, string>;
 
 const uses15kwPump = (config: Configuration): boolean => config.has_15kw_pump;
@@ -50,9 +53,39 @@ const usesHPRoofBar = (config: Configuration): boolean => {
       config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS")
   );
 };
+
 const usesHPDeviationValveKit = (config: Configuration) => {
   return (
     usesOMZPump(config) && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"
+  );
+};
+
+const usesHoseFromShelfToTFitting = (config: Configuration): boolean => {
+  return (
+    isOneOfOutlets(
+      [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
+      "LOW_SPINNERS"
+    ) ||
+    isOneOfOutlets(
+      [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
+      "HIGH_BARS"
+    ) ||
+    isOneOfOutlets(
+      [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
+      "LOW_BARS"
+    ) ||
+    isOneOfOutlets(
+      [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
+      "HIGH_MEDIUM_SPINNERS"
+    ) ||
+    isOneOfOutlets(
+      [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
+      "LOW_MEDIUM_SPINNERS"
+    ) ||
+    isOneOfOutlets(
+      [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
+      "LOW_SPINNERS_HIGH_BARS"
+    )
   );
 };
 
@@ -349,6 +382,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
     conditions: [
       usesHPDeviationValveKit,
+      (config) => !config.has_shelf_extension,
       (config) => config.supply_side === "RIGHT",
     ],
     qty: 1,
@@ -358,6 +392,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
     conditions: [
       usesHPDeviationValveKit,
+      (config) => !config.has_shelf_extension,
       (config) => config.supply_side === "LEFT",
     ],
     qty: 1,
@@ -367,33 +402,42 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS,
     conditions: [
       uses15kwOr30kwPump,
-      (config) =>
-        isOneOfOutlets(
-          [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "LOW_SPINNERS"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "HIGH_BARS"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "LOW_BARS"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "HIGH_MEDIUM_SPINNERS"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "LOW_MEDIUM_SPINNERS"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "LOW_SPINNERS_HIGH_BARS"
-        ),
+      (config) => !config.has_shelf_extension,
+      usesHoseFromShelfToTFitting,
     ],
     qty: (config) => (uses30kwPump(config) ? 2 : 1),
     _description: "Hose from shelf to T fitting (2 spinners)",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT,
+    conditions: [
+      usesHPDeviationValveKit,
+      (config) => config.has_shelf_extension,
+      (config) => config.supply_side === "RIGHT",
+    ],
+    qty: 1,
+    _description:
+      "Hose from right shelf to valve assy (4 spinners) with extension",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT,
+    conditions: [
+      usesHPDeviationValveKit,
+      (config) => config.has_shelf_extension,
+      (config) => config.supply_side === "LEFT",
+    ],
+    qty: 1,
+    _description:
+      "Hose from left shelf to valve assy (4 spinners) with extension",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT,
+    conditions: [
+      uses15kwOr30kwPump,
+      (config) => config.has_shelf_extension,
+      usesHoseFromShelfToTFitting,
+    ],
+    qty: (config) => (uses30kwPump(config) ? 2 : 1),
+    _description: "Hose from shelf to T fitting (2 spinners) with extension",
   },
 ];
