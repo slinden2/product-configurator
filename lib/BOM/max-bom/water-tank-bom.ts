@@ -72,6 +72,15 @@ export const waterTankBOM: MaxBOMItem<WaterTank>[] = [
     _description: "Inlet with float, Jolly",
   },
   {
+    pn: PART_NUMBERS.INLET_WITHOUT_FLOAT_JOLLY,
+    conditions: [
+      (config) => usesJolly(config),
+      (config) => config.inlet_no_float_qty > 0,
+    ],
+    qty: (config) => config.inlet_no_float_qty || 0,
+    _description: "Inlet without float, Jolly",
+  },
+  {
     pn: PART_NUMBERS.OUTLET_WITH_VALVE,
     conditions: [
       (config) => !usesJolly(config),

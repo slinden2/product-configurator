@@ -12,6 +12,7 @@ const PART_NUMBERS: Record<string, string> = {
   LATERAL_RINSE_BARS: "450.36.005",
   LOW_PREWASH_BARS: "450.36.006",
   LOW_POSTERIOR_PREWASH_BARS: "450.36.008", // TODO To be added in Excel or add form validation rules regarding this option
+  PREWASH_ARCH_7_NOZZLES: "NO_PN",
   POSTERIOR_LATERAL_PREWASH_BARS_7_NOZZLES: "450.36.009",
   FLOW_SWITCH: "450.36.060",
   FLOW_SWITCH_INOX: "450.36.060IN", // TODO To be added in BOM.

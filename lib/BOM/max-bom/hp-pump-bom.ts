@@ -223,7 +223,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
       uses15kwOr30kwPump,
       (config) =>
         isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
+          [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
           "CHASSIS_WASH"
         ) ||
         isOneOfOutlets(

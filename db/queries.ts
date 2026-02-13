@@ -465,7 +465,7 @@ export const deleteWashBay = async (confId: number, washBayId: number) => {
 export async function getBOM(id: number) {
   const configuration = await getConfigurationWithTanksAndBays(id);
   if (configuration) {
-    const bom = await BOM.init(configuration);
+    const bom = BOM.init(configuration);
     return bom;
   }
 }

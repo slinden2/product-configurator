@@ -54,9 +54,7 @@ export class BOM {
       configuration.supply_type === "CABLE_CHAIN";
   }
 
-  static async init(
-    configuration: ConfigurationWithWaterTanksAndWashBays
-  ): Promise<BOM> {
+  static init(configuration: ConfigurationWithWaterTanksAndWashBays): BOM {
     return new BOM(configuration);
   }
 

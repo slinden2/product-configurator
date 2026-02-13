@@ -111,7 +111,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     _description: "External console post, one touch",
   },
   {
-    pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH,
+    pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_DUAL_TOUCH,
     conditions: [
       usesDualTouch,
       (config) => config.touch_fixing_type === "WALL",
@@ -120,7 +120,7 @@ export const electricBOM: MaxBOMItem<Configuration>[] = [
     _description: "External console wall, dual touch",
   },
   {
-    pn: PART_NUMBERS.EXTERNAL_CONSOLE_POST_ONE_TOUCH,
+    pn: PART_NUMBERS.EXTERNAL_CONSOLE_POST_DUAL_TOUCH,
     conditions: [
       usesDualTouch,
       (config) => config.touch_fixing_type === "POST",

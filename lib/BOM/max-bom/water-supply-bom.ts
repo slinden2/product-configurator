@@ -123,10 +123,7 @@ export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
         config.water_1_pump === "INV_3KW_250L",
       (config) => !!config.inv_pump_outlet_dosatron_qty,
     ],
-    qty: (config) =>
-      (config.inv_pump_outlet_dosatron_qty &&
-        config.inv_pump_outlet_dosatron_qty) ||
-      0,
+    qty: (config) => config.inv_pump_outlet_dosatron_qty || 0,
     _description: "Dosatron outlet for inverter pump",
   },
   {
@@ -137,8 +134,7 @@ export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
         config.water_1_pump === "INV_3KW_250L",
       (config) => !!config.inv_pump_outlet_pw_qty,
     ],
-    qty: (config) =>
-      (config.inv_pump_outlet_pw_qty && config.inv_pump_outlet_pw_qty) || 0,
+    qty: (config) => config.inv_pump_outlet_pw_qty || 0,
     _description: "Pressure washer outlet for inverter pump",
   },
 ];

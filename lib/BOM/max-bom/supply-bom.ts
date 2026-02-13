@@ -3,7 +3,7 @@ import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { EnergyChainWidthType } from "@/types";
 
 const PART_NUMBERS: Record<string, string> = {
-  STRAIGH_SHELF: "1100.019.000",
+  STRAIGHT_SHELF: "1100.019.000",
   SUPPLY_POLE_1_WATER: "1100.049.001",
   SUPPLY_POLE_2_WATER: "1100.049.002",
   SUPPLY_POLE_1_WATER_HP: "1100.049.003",
@@ -67,7 +67,7 @@ const has15kWPump = (config: Configuration): boolean => {
 export const supplyBOM: MaxBOMItem<Configuration>[] = [
   // Straight shelf
   {
-    pn: PART_NUMBERS.STRAIGH_SHELF,
+    pn: PART_NUMBERS.STRAIGHT_SHELF,
     conditions: [usesStraightShelf],
     qty: 1,
     _description: "Straight shelf",
@@ -124,7 +124,7 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
     _description: "Wall shelf (1 water)",
   },
   {
-    pn: PART_NUMBERS.SUPPLY_POLE_2_WATER,
+    pn: PART_NUMBERS.WALL_SHELF_2_WATER,
     conditions: [
       usesBoom,
       usesShelf,
@@ -135,7 +135,7 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
     _description: "Wall shelf (2 waters)",
   },
   {
-    pn: PART_NUMBERS.SUPPLY_POLE_1_WATER_HP,
+    pn: PART_NUMBERS.WALL_SHELF_1_WATER_HP,
     conditions: [
       usesBoom,
       usesShelf,
@@ -146,7 +146,7 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
     _description: "Wall shelf (1 water + hp)",
   },
   {
-    pn: PART_NUMBERS.SUPPLY_POLE_2_WATER_HP,
+    pn: PART_NUMBERS.WALL_SHELF_2_WATER_HP,
     conditions: [usesBoom, usesShelf, hasDoubleWaterSupply, has15kWPump],
     qty: 1,
     _description: "Wall shelf (2 waters + hp)",

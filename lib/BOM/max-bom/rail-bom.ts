@@ -40,7 +40,7 @@ export const railBOM: MaxBOMItem<Configuration>[] = [
       (config) => !!(config.rail_length % 3),
     ],
     qty: calculate1mRailQty,
-    _description: "Dowelled rail 3m",
+    _description: "Dowelled rail 1m",
   },
   {
     pn: PART_NUMBERS.WELDED_RAIL_TERMINALS,
@@ -61,7 +61,7 @@ export const railBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.WELDED_RAILS_1M,
     conditions: [(config) => config.rail_type === "WELDED"],
     qty: calculate1mRailQty,
-    _description: "Welded rail 3m",
+    _description: "Welded rail 1m",
   },
   {
     pn: PART_NUMBERS.PROXIMITY_PLATES,
