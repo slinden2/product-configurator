@@ -60,7 +60,7 @@ type TOutlet = HpPump15kwOutletType | HpPump30kwOutletType | null;
 const hasOneOutlet = (outlet1: TOutlet, outlet2: TOutlet): boolean => {
   const boolA = !!outlet1;
   const boolB = !!outlet2;
-  return boolA !== boolB && (boolA || boolB);
+  return boolA !== boolB; // true if exactly one of them is truthy
 };
 
 const hasTwoOutlets = (outlet1: TOutlet, outlet2: TOutlet): boolean => {
@@ -314,7 +314,7 @@ export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
         ),
     ],
     qty: 1,
-    _description: "Low and medium spinners (4x150l)",
+    _description: "High and medium spinners (4x150l)",
   },
   {
     pn: PART_NUMBERS.HP_ROOF_BAR,

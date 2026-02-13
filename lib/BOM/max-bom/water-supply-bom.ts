@@ -45,8 +45,8 @@ const needsTwoPumps = (
   }
 
   return (
-    config.water_1_pump?.toString() === pumpType.toString() &&
-    config.water_2_pump.toString() === pumpType.toString()
+    config.water_1_pump === pumpType &&
+    config.water_2_pump === pumpType
   );
 };
 
