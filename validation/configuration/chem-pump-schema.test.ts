@@ -50,7 +50,7 @@ describe("chemPumpSchema", () => {
       const validData = createChemPumpObject({
         has_chemical_pump: true,
         chemical_qty: 1,
-        chemical_pump_pos: ChemicalPumpPosEnum.enum.ABOARD,
+        chemical_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
         has_acid_pump: false,
       });
       expect(() => chemPumpSchema.parse(validData)).not.toThrow();
@@ -70,7 +70,7 @@ describe("chemPumpSchema", () => {
       const invalidData = createChemPumpObject({
         has_chemical_pump: true,
         chemical_qty: 3,
-        chemical_pump_pos: ChemicalPumpPosEnum.enum.ABOARD,
+        chemical_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
         has_acid_pump: false,
       });
       expect(() => chemPumpSchema.parse(invalidData)).toThrow(
@@ -82,9 +82,9 @@ describe("chemPumpSchema", () => {
       const invalidData = createChemPumpObject({
         has_chemical_pump: true,
         chemical_qty: 2,
-        chemical_pump_pos: ChemicalPumpPosEnum.enum.ABOARD,
+        chemical_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
         has_acid_pump: true,
-        acid_pump_pos: ChemicalPumpPosEnum.enum.ABOARD,
+        acid_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
       });
       expect(() => chemPumpSchema.parse(invalidData)).toThrow(
         "A bordo impianto si possono montare solo due pompe di prelavaggio."
@@ -135,7 +135,7 @@ describe("chemPumpSchema", () => {
       const invalidData = createChemPumpObject({
         has_chemical_pump: true,
         chemical_qty: 1,
-        chemical_pump_pos: ChemicalPumpPosEnum.enum.ABOARD,
+        chemical_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
         has_acid_pump: true,
       });
       expect(() => chemPumpSchema.parse(invalidData)).toThrow();
@@ -145,7 +145,7 @@ describe("chemPumpSchema", () => {
       const validData = createChemPumpObject({
         has_chemical_pump: true,
         chemical_qty: 1,
-        chemical_pump_pos: ChemicalPumpPosEnum.enum.ABOARD,
+        chemical_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
         has_foam: false,
         has_acid_pump: true,
         acid_pump_pos: ChemicalPumpPosEnum.enum.WASH_BAY,

@@ -59,7 +59,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.CHEMICAL_PUMP_NO_ALARM,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === "ABOARD",
+      (config) => config.chemical_pump_pos === "ONBOARD",
       (config) => !config.has_itecoweb,
     ],
     qty: (config) => config.chemical_qty || 0,
@@ -69,7 +69,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.CHEMICAL_PUMP_WITH_ALARM,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === "ABOARD",
+      (config) => config.chemical_pump_pos === "ONBOARD",
       (config) => config.has_itecoweb,
     ],
     qty: (config) => config.chemical_qty || 0,
@@ -79,7 +79,7 @@ export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.ACID_PUMP_WITH_ALARM,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === "ABOARD",
+      (config) => config.acid_pump_pos === "ONBOARD",
     ],
     qty: 1,
     _description: "Acid pump, with alarm",

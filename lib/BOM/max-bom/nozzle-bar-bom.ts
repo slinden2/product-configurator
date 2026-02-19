@@ -16,14 +16,14 @@ const PART_NUMBERS = {
   POSTERIOR_LATERAL_PREWASH_BARS_7_NOZZLES: "450.36.009",
   FLOW_SWITCH: "450.36.060",
   FLOW_SWITCH_INOX: "450.36.060IN", // TODO To be added in BOM.
-  RINSE_SOLENOIDS_PREWASH_ABOARD: "450.36.070",
-  RINSE_SOLENOIDS_PREWASH_ABOARD_INOX: "450.36.070IN", // TODO To be added in BOM.
+  RINSE_SOLENOIDS_PREWASH_ONBOARD: "450.36.070",
+  RINSE_SOLENOIDS_PREWASH_ONBOARD_INOX: "450.36.070IN", // TODO To be added in BOM.
   RINSE_SOLENOID_PREWASH_WASH_BAY: "450.36.071",
   RINSE_SOLENOID_PREWASH_INOX: "450.36.071IN", // TODO To be added in BOM.
-  PREWASH_SOLENOID_PREWASH_ABOARD: "450.36.072",
-  PREWASH_SOLENOID_PREWASH_ABOARD_INOX: "450.36.072IN", // TODO To abe added in BOM.
-  PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ABOARD: "450.36.073",
-  PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ABOARD_INOX: "450.36.073IN", // TODO To be added in BOM.
+  PREWASH_SOLENOID_PREWASH_ONBOARD: "450.36.072",
+  PREWASH_SOLENOID_PREWASH_ONBOARD_INOX: "450.36.072IN", // TODO To abe added in BOM.
+  PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD: "450.36.073",
+  PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX: "450.36.073IN", // TODO To be added in BOM.
   FITTINGS_FOR_PREWASH_WASH_BAY: "450.36.074",
   FITTINGS_FOR_PREWASH_WASH_BAY_INOX: "450.36.074IN", // TODO To be added in BOM.
   PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY: "450.36.075",
@@ -43,7 +43,7 @@ const hasChemicalRoofBar = (config: Configuration): boolean =>
   hasHpRoofBar(config) && config.has_chemical_roof_bar;
 
 const hasPrewashOrAcidOnBoard = (config: Configuration): boolean =>
-  config.chemical_pump_pos === "ABOARD" || config.acid_pump_pos === "ABOARD";
+  config.chemical_pump_pos === "ONBOARD" || config.acid_pump_pos === "ONBOARD";
 
 const hasOneChemical = (config: Configuration): boolean =>
   config.has_chemical_pump && config.chemical_qty === 1;
@@ -66,7 +66,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     _description: "Lateral rinse bars",
   },
   {
-    pn: PART_NUMBERS.RINSE_SOLENOIDS_PREWASH_ABOARD,
+    pn: PART_NUMBERS.RINSE_SOLENOIDS_PREWASH_ONBOARD,
     conditions: [
       (config) => config.brush_qty > 0,
       (config) => config.has_chemical_pump || config.has_acid_pump,
@@ -158,20 +158,20 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     _description: "Float switch",
   },
   {
-    pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ABOARD,
+    pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === "ABOARD",
+      (config) => config.chemical_pump_pos === "ONBOARD",
       (config) => !hasChemicalRoofBar(config),
     ],
     qty: (config) => config.chemical_qty || 1,
     _description: "Prewash solenoid (prewash onboard)",
   },
   {
-    pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ABOARD,
+    pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD,
     conditions: [
       hasTwoChemicals,
-      (config) => config.chemical_pump_pos === "ABOARD",
+      (config) => config.chemical_pump_pos === "ONBOARD",
       hasChemicalRoofBar,
     ],
     qty: 1,
@@ -179,10 +179,10 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
       "Prewash solenoid (prewash onboard) (only when double prewash and hp roof bar with chemical)",
   },
   {
-    pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ABOARD,
+    pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD,
     conditions: [
       (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === "ABOARD",
+      (config) => config.chemical_pump_pos === "ONBOARD",
       hasChemicalRoofBar,
     ],
     qty: 1,
@@ -228,10 +228,10 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     _description: "Prewash Arch with acid",
   },
   {
-    pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ABOARD_INOX,
+    pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX,
     conditions: [
       (config) => config.has_acid_pump,
-      (config) => config.acid_pump_pos === "ABOARD",
+      (config) => config.acid_pump_pos === "ONBOARD",
     ],
     qty: 1,
     _description: "Acid solenoid (acid onboard)",

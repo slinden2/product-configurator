@@ -21,7 +21,7 @@ const configurationSimple: ConfigSchema = {
   has_wax_pump: true,
   has_chemical_pump: true,
   chemical_qty: 1,
-  chemical_pump_pos: "ABOARD",
+  chemical_pump_pos: "ONBOARD",
   has_foam: false,
   has_acid_pump: false,
   acid_pump_pos: undefined,

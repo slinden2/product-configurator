@@ -5,7 +5,7 @@ import {
 } from "@/validation/common";
 import { z } from "zod";
 
-export const ChemicalPumpPosEnum = z.enum(["ABOARD", "WASH_BAY"], {
+export const ChemicalPumpPosEnum = z.enum(["ONBOARD", "WASH_BAY"], {
   message: genericRequiredMessage,
 });
 
@@ -92,9 +92,9 @@ export const chemPumpSchema = z
     if (
       data.chemical_qty &&
       data.chemical_qty === 2 &&
-      data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ABOARD &&
+      data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ONBOARD &&
       data.has_acid_pump &&
-      data.acid_pump_pos === ChemicalPumpPosEnum.enum.ABOARD
+      data.acid_pump_pos === ChemicalPumpPosEnum.enum.ONBOARD
     ) {
       const fieldNames: Array<"chemical_pump_pos" | "acid_pump_pos"> = [
         "chemical_pump_pos",

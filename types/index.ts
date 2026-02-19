@@ -9,7 +9,7 @@ export const BrushColors = [
 ] as const;
 export type BrushColorType = (typeof BrushColors)[number];
 
-export const ChemPumpPos = ["ABOARD", "WASH_BAY"] as const;
+export const ChemPumpPos = ["ONBOARD", "WASH_BAY"] as const;
 export type ChemPumpPosType = (typeof ChemPumpPos)[number];
 
 export const WaterTypes = ["NETWORK", "RECYCLED", "DEMINERALIZED"] as const;
