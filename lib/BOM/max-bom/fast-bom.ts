@@ -4,6 +4,7 @@ import { MaxBOMItem } from "@/lib/BOM/max-bom";
 const PART_NUMBERS = {
   ADDITIONAL_LATERAL_RINSE_BARS: "450.65.000",
   ADDITIONAL_RINSE_ARCH: "450.65.002",
+  SHORT_PHOTOCELL_SUPPORTS: "925.00.000",
   LONG_PHOTOCELL_SUPPORTS: "926.03.000",
   POSTERIOR_TRAFFIC_LIGHTS: "926.01.000",
 } as const satisfies Record<string, string>;
@@ -22,6 +23,12 @@ export const fastBOM: MaxBOMItem<Configuration>[] = [
     conditions: [isFast, (config) => config.brush_qty === 3],
     qty: 1,
     _description: "Additional rinse arch",
+  },
+  {
+    pn: PART_NUMBERS.SHORT_PHOTOCELL_SUPPORTS,
+    conditions: [(config) => !isFast(config)],
+    qty: 1,
+    _description: "Short photocell supports",
   },
   {
     pn: PART_NUMBERS.LONG_PHOTOCELL_SUPPORTS,
