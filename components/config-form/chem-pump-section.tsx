@@ -57,6 +57,7 @@ const ChemPumpSection = () => {
                   ]
                 }
               ]}
+              disabled={brushNumWatch === 2}
             />
           </div>
         </div>
@@ -95,6 +96,7 @@ const ChemPumpSection = () => {
               dataType="string"
               label="Posizione della pompa acido"
               items={selectFieldOptions.chemicalPumpPositions}
+              disabled={brushNumWatch === 2}
             />
           </div>
         )}

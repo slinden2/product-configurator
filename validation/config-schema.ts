@@ -6,6 +6,7 @@ import { railSchema } from "@/validation/configuration/rail-schema";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
 import { z } from "zod";
+import { zodEnums } from "./configuration";
 
 export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
@@ -43,6 +44,20 @@ export const configSchema = baseSchema
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
+      })
+    }
+    // Disallow acid pump if brush quantity is 2
+    if (data.brush_qty === 2 && data.has_acid_pump) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
+      })
+    }
+    // Disallow OMZ pump for 2 brush configurations
+    if (data.brush_qty === 2 && data.has_omz_pump) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
       })
     }
   });
