@@ -38,6 +38,13 @@ export const configSchema = baseSchema
         path: ["rail_length"],
       });
     }
+    // Disallow chemical pump if brush quantity is 0
+    if (data.brush_qty === 0 && data.has_shampoo_pump) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
+      })
+    }
   });
 
 export type ConfigSchema = z.infer<typeof configSchema>;

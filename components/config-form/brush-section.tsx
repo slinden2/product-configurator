@@ -29,7 +29,7 @@ const BrushSection = () => {
               fieldsToResetOnValue={[
                 {
                   triggerValue: 0,
-                  fieldsToReset: ["brush_type", "brush_color"],
+                  fieldsToReset: ["brush_type", "brush_color", "has_shampoo_pump"],
                 },
               ]}
             />

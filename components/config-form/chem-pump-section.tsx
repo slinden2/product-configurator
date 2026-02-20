@@ -9,8 +9,9 @@ import { ConfigSchema } from "@/validation/config-schema";
 
 const ChemPumpSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const hasChemicalPumpWatch = useWatch({control, name: "has_chemical_pump" });
-  const hasAcidPumpWatch = useWatch({control, name: "has_acid_pump" });
+  const brushNumWatch = useWatch<ConfigSchema>({ control, name: "brush_qty" });
+  const hasChemicalPumpWatch = useWatch({ control, name: "has_chemical_pump" });
+  const hasAcidPumpWatch = useWatch({ control, name: "has_acid_pump" });
 
   return (
     <Fieldset
@@ -19,7 +20,7 @@ const ChemPumpSection = () => {
       <FieldsetContent>
         <div className="grid grid-rows-2 grid-cols-2 md:grid-rows-1 md:grid-cols-4">
           <div className="order-1 my-1 md:my-0">
-            <CheckboxField<ConfigSchema> name="has_shampoo_pump" label="Pompa sapone" />
+            <CheckboxField<ConfigSchema> name="has_shampoo_pump" label="Pompa sapone" disabled={brushNumWatch === 0} />
           </div>
           <div className="order-3 my-1 md:my-0 md:order-2">
             <CheckboxField<ConfigSchema> name="has_wax_pump" label="Pompa cera" />
@@ -61,9 +62,8 @@ const ChemPumpSection = () => {
         </div>
       </FieldsetContent>
       <div
-        className={`${
-          hasChemicalPumpWatch || hasAcidPumpWatch ? "space-y-6 pt-10" : "pt-3"
-        }`}>
+        className={`${hasChemicalPumpWatch || hasAcidPumpWatch ? "space-y-6 pt-10" : "pt-3"
+          }`}>
         {hasChemicalPumpWatch && (
           <div>
             <div className="md:flex md:gap-4">
