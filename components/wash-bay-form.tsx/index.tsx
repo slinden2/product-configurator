@@ -22,6 +22,9 @@ interface WashBayFormProps {
   washBayIndex?: number;
   onDelete?: (tankId: number) => void;
   onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void;
+  formKey?: string;
+  onDirtyChange?: (key: string, isDirty: boolean) => void;
+  onSaved?: (key: string) => void;
 }
 
 const WashBayForm = (props: WashBayFormProps) => {
@@ -40,6 +43,9 @@ const WashBayForm = (props: WashBayFormProps) => {
       editAction={editWashBayAction}
       deleteAction={deleteWashBayAction}
       FieldsComponent={WashBayFields}
+      formKey={props.formKey}
+      onDirtyChange={props.onDirtyChange}
+      onSaved={props.onSaved}
     />
   );
 };

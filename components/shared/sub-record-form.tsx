@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { useForm, FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +24,9 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   entityIndex?: number; // Optional index for titles
   onDelete?: (id: number) => void; // Callback after delete
   onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void; // Callback after save/update
+  formKey?: string;
+  onDirtyChange?: (key: string, isDirty: boolean) => void;
+  onSaved?: (key: string) => void;
   // Server Actions (adjust signatures as needed)
   insertAction: (
     parentId: number,
@@ -53,6 +56,9 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   entityIndex,
   onDelete,
   onSaveSuccess,
+  formKey,
+  onDirtyChange,
+  onSaved,
   insertAction,
   editAction,
   deleteAction,
@@ -69,12 +75,19 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
 
   const formIsDisabled = !!isLoading || parentStatus !== "DRAFT";
 
+  console.log("formKey: " + formKey);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: entityData ?? entityDefaults,
     disabled: formIsDisabled,
   });
   const { handleSubmit, reset, formState } = form;
+
+  const isTouched = Object.keys(formState.touchedFields).length > 0;
+  useEffect(() => {
+    if (formKey) onDirtyChange?.(formKey, isTouched);
+  }, [isTouched, formKey, onDirtyChange]);
 
   // --- Derived State ---
   const isEditing = !!entityData?.id;
@@ -96,12 +109,14 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
             }.`
           );
           reset(values);
+          if (formKey) onSaved?.(formKey);
         } else {
           await insertAction(parentId, values);
           toast.success(
             `${entityName} creat${entityName === "Pista" ? "a" : "o"}.`
           );
           reset(entityDefaults);
+          if (formKey) onSaved?.(formKey);
           onSaveSuccess(entityName);
         }
       } catch (err) {
@@ -182,7 +197,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       <DevTool control={form.control} />
       <Form {...form}>
         <fieldset disabled={!!isLoading} className="group">
-          <form onSubmit={handleSubmit(handleSaveSubmit)}>
+          <form id={formKey ? `form-${formKey}` : undefined} onSubmit={handleSubmit(handleSaveSubmit)}>
             <Fieldset
               title={
                 isEditing

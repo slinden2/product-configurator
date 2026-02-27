@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form } from "@/components/ui/form";
 import {
   configDefaults,
@@ -33,9 +33,12 @@ interface ConfigurationFormProps {
   id?: number;
   configuration?: UpdateConfigSchema;
   status?: ConfigurationStatusType;
+  formKey?: string;
+  onDirtyChange?: (key: string, isDirty: boolean) => void;
+  onSaved?: (key: string) => void;
 }
 
-const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
+const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
@@ -49,6 +52,11 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
     defaultValues: configuration ?? configDefaults,
     disabled: formIsDisabled,
   });
+
+  const isTouched = Object.keys(form.formState.touchedFields).length > 0;
+  useEffect(() => {
+    if (formKey) onDirtyChange?.(formKey, isTouched);
+  }, [isTouched, formKey, onDirtyChange]);
 
   async function onSubmit(values: ConfigSchema) {
     console.log("🚀 ~ onSubmit ~ values:", values); // DEBUG
@@ -65,6 +73,7 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
         }
         await editConfigurationAction(id, configuration.user_id, values);
         toast.success("Configurazione aggiornata.");
+        if (formKey) onSaved?.(formKey);
       } else {
         const { id } = await insertConfigurationAction(values);
         toast.success("Configurazione creata.");
@@ -85,7 +94,7 @@ const ConfigForm = ({ id, configuration, status }: ConfigurationFormProps) => {
       {/* DEBUG */}
       {/* <DevTool control={form.control} /> */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit)}>
           <GeneralSection />
           <BrushSection />
           <ChemPumpSection />

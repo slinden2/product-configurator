@@ -22,6 +22,9 @@ interface WaterTankFormProps {
   waterTankIndex?: number;
   onDelete?: (tankId: number) => void;
   onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void;
+  formKey?: string;
+  onDirtyChange?: (key: string, isDirty: boolean) => void;
+  onSaved?: (key: string) => void;
 }
 
 const WaterTankForm = (props: WaterTankFormProps) => {
@@ -40,6 +43,9 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       editAction={editWaterTankAction}
       deleteAction={deleteWaterTankAction}
       FieldsComponent={WaterTankFields}
+      formKey={props.formKey}
+      onDirtyChange={props.onDirtyChange}
+      onSaved={props.onSaved}
     />
   );
 };
