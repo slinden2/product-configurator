@@ -137,6 +137,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
               onValueChange={(selectedValueString) => {
                 const parsedTypedValue = parseValue(selectedValueString);
                 field.onChange(parsedTypedValue);
+                field.onBlur();
 
                 fieldsToResetOnValue?.forEach((item) => {
                   const triggerValues = Array.isArray(item.triggerValue)

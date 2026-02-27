@@ -7,6 +7,7 @@ import {
   updateConfiguration,
 } from "@/db/queries";
 import { configSchema } from "@/validation/config-schema";
+import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 
 export const editConfigurationAction = async (
@@ -39,6 +40,7 @@ export const editConfigurationAction = async (
 
   try {
     await updateConfiguration(confId, { ...validation.data, user_id: ownerId });
+    revalidatePath(`/configurations/edit/${confId}`);
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
       throw new Error(err.message);
