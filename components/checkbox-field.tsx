@@ -71,6 +71,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
 
                   // Update the current field's state with the definite boolean value
                   field.onChange(newValue);
+                  field.onBlur(); // Mark field as touched for validation
 
                   // --- Reset Logic ---
                   // If the new value is false (meaning checkbox was unchecked)
