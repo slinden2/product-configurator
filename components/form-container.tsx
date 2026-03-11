@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FormLabel } from "@/components/ui/form";
 import { ConfigurationStatusType } from "@/types";
 import {
   ResponsiveModal,
@@ -125,6 +124,11 @@ const FormContainer = ({
   const handleDeleteWaterTank = (tankId: number) => {
     const updatedWaterTanks = waterTanks.filter((wt) => wt.id !== tankId);
     setWaterTanks(updatedWaterTanks);
+  };
+
+  const handleDeleteWashBay = (bayId: number) => {
+    const updatedWashBays = washBays.filter((wb) => wb.id !== bayId);
+    setWashBays(updatedWashBays);
   };
 
   const handleSaveSuccess = (entityName: "Serbatoio" | "Pista") => {
@@ -244,15 +248,24 @@ const FormContainer = ({
         <TabsContent value="bays" className="space-y-4">
           <h2 className="text-xl font-semibold border-b pb-2">Gestione Piste</h2>
 
+          {/* Warning: energy chain config requires a gantry wash bay with chain width set */}
+          {configuration?.supply_type === "ENERGY_CHAIN" &&
+            !washBays.some((wb) => wb.has_gantry && wb.energy_chain_width) && (
+              <p className="text-sm text-destructive border border-destructive/40 rounded-md px-3 py-2">
+                Con la catena portacavi è obbligatoria almeno una pista con portale e larghezza catena configurata.
+              </p>
+            )}
+
           {/* List Existing Wash Bays */}
           {washBays.map((wb, index) => (
             <WashBayForm
               key={wb.id}
               confId={confId}
               confStatus={confStatus}
+              supplyType={configuration?.supply_type}
               washBay={wb}
               washBayIndex={index + 1}
-              onDelete={handleDeleteWaterTank}
+              onDelete={handleDeleteWashBay}
               onSaveSuccess={handleSaveSuccess}
               formKey={wb.id?.toString() ?? `bay-${index}`}
               onDirtyChange={handleDirtyChange}
@@ -265,6 +278,7 @@ const FormContainer = ({
             <WashBayForm
               confId={confId}
               confStatus={confStatus}
+              supplyType={configuration?.supply_type}
               onSaveSuccess={handleSaveSuccess}
               formKey="new-bay"
               onDirtyChange={handleDirtyChange}

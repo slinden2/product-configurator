@@ -75,8 +75,6 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
 
   const formIsDisabled = !!isLoading || parentStatus !== "DRAFT";
 
-  console.log("formKey: " + formKey);
-
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: entityData ?? entityDefaults,

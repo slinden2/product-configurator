@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 
@@ -104,7 +104,7 @@ const isOneOfOutlets = (outletArray: TOutlet[], value: TOutlet): boolean => {
   return outletArray.some((outlet) => outlet === value);
 };
 
-export const hpPumpBOM: MaxBOMItem<Configuration>[] = [
+export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.PUMP_15KW,
     conditions: [uses15kwPump],

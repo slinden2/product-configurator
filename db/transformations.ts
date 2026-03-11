@@ -33,10 +33,9 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     supply_type: values.supply_type as
       | "STRAIGHT_SHELF"
       | "BOOM"
-      | "CABLE_CHAIN",
+      | "ENERGY_CHAIN",
     supply_side: values.supply_side as "TBD" | "LEFT" | "RIGHT",
     has_post_frame: values.has_post_frame,
-    has_shelf_extension: values.has_shelf_extension,
     rail_type: values.rail_type as "DOWELED" | "WELDED",
     rail_length: values.rail_length as number,
     rail_guide_qty: values.rail_guide_qty,
@@ -62,7 +61,6 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     water_2_type: values.water_2_type ?? null,
     water_2_pump: values.water_2_pump ?? null,
     supply_fixing_type: values.supply_fixing_type ?? null,
-    energy_chain_width: values.energy_chain_width ?? null,
     touch_pos: values.touch_pos ?? null,
     touch_fixing_type: values.touch_fixing_type ?? null,
     pump_outlet_1_15kw: values.pump_outlet_1_15kw ?? null,
@@ -113,5 +111,7 @@ export function transformWashBaySchemaToDbData(values: WashBaySchema) {
     pressure_washer_type: values.pressure_washer_type as
       | "L21_150BAR"
       | "L21_200BAR",
+    energy_chain_width: values.energy_chain_width ?? null,
+    has_shelf_extension: values.has_shelf_extension ?? false,
   };
 }

@@ -1,5 +1,4 @@
 import CheckboxField from "@/components/checkbox-field";
-import Fieldset from "@/components/fieldset";
 import FieldsetContent from "@/components/fieldset-content";
 import FieldsetItem from "@/components/fieldset-item";
 import FieldsetRow from "@/components/fieldset-row";
@@ -11,12 +10,20 @@ import { WashBaySchema } from "@/validation/wash-bay-schema";
 import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
-const WashBayFields = () => {
+interface WashBayFieldsProps {
+  supplyType?: string;
+}
+
+const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
   const { control } = useFormContext<WashBaySchema>();
   const pressureWashTypeWatch = useWatch({
     control,
     name: "pressure_washer_type",
   });
+  const hasGantryWatch = useWatch({ control, name: "has_gantry" });
+
+  const showEnergyChainFields =
+    hasGantryWatch && supplyType === "ENERGY_CHAIN";
 
   return (
     <FieldsetContent>
@@ -76,6 +83,12 @@ const WashBayFields = () => {
           <CheckboxField<WashBaySchema>
             name="has_gantry"
             label="Pista con portale"
+            fieldsToResetOnUncheck={[
+              {
+                fieldsToReset: ["energy_chain_width", "has_shelf_extension"],
+                resetToValue: undefined,
+              },
+            ]}
           />
         </FieldsetItem>
         <FieldsetItem>
@@ -91,6 +104,24 @@ const WashBayFields = () => {
           />
         </FieldsetItem>
       </FieldsetRow>
+      {showEnergyChainFields && (
+        <FieldsetRow>
+          <FieldsetItem>
+            <SelectField<WashBaySchema>
+              name="energy_chain_width"
+              dataType="string"
+              label="Larghezza catena"
+              items={selectFieldOptions.cableChainWidths}
+            />
+          </FieldsetItem>
+          <FieldsetItem>
+            <CheckboxField<WashBaySchema>
+              name="has_shelf_extension"
+              label="Con prolunga per mensola alim."
+            />
+          </FieldsetItem>
+        </FieldsetRow>
+      )}
     </FieldsetContent>
   );
 };

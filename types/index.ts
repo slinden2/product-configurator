@@ -26,7 +26,7 @@ export type Water1PumpType = (typeof Water1Pumps)[number];
 export const Water2Pumps = ["BOOST_15KW", "BOOST_22KW"] as const;
 export type Water2PumpType = (typeof Water2Pumps)[number];
 
-export const SupplyTypes = ["STRAIGHT_SHELF", "BOOM", "CABLE_CHAIN"] as const;
+export const SupplyTypes = ["STRAIGHT_SHELF", "BOOM", "ENERGY_CHAIN"] as const;
 export type SupplyType = (typeof SupplyTypes)[number];
 
 export const SupplySides = ["TBD", "LEFT", "RIGHT"] as const;

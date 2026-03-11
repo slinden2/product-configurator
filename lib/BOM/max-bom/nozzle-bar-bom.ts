@@ -258,7 +258,7 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_DOUBLE_SUPPLY,
     conditions: [
       (config) => !!config.water_2_type,
-      (config) => config.supply_type !== "CABLE_CHAIN",
+      (config) => config.supply_type !== "ENERGY_CHAIN",
     ],
     qty: 1,
     _description: "Fittings for double supply",

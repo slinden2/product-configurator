@@ -12,7 +12,8 @@
     "type-check": "npx tsc --noEmit",
     "BOM": "npx tsx ./lib/BOM/BOM.ts",
     "job": "npx tsx ./lib//db-sync/job.ts",
-    "seed": "npx tsx ./db/seed.ts"
+    "seed": "npx tsx ./db/seed.ts",
+    "seed:reset": "npx tsx ./db/seed.ts --reset"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.0.0",

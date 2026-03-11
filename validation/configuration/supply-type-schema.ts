@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 
 export const SupplyTypeEnum = z.enum(
-  ["STRAIGHT_SHELF", "BOOM", "CABLE_CHAIN"],
+  ["STRAIGHT_SHELF", "BOOM", "ENERGY_CHAIN"],
   {
     message: genericRequiredMessage,
   }
@@ -60,8 +60,6 @@ export const supplyTypeSchema = z
       supply_side: SupplySideEnum.optional(),
       supply_fixing_type: SupplyFixingTypeEnum.optional(),
       has_post_frame: z.literal(false).default(false),
-      energy_chain_width: CableChainWidthEnum.optional(),
-      has_shelf_extension: z.literal(false).default(false),
     }),
 
     z.object({
@@ -69,8 +67,6 @@ export const supplyTypeSchema = z
       supply_side: SupplySideEnum.optional(),
       supply_fixing_type: SupplyFixingTypeEnum.optional(),
       has_post_frame: z.boolean().default(false),
-      energy_chain_width: z.undefined(),
-      has_shelf_extension: z.literal(false).default(false),
     }),
 
     z.object({
@@ -78,17 +74,13 @@ export const supplyTypeSchema = z
       supply_side: SupplySideEnum.optional(),
       supply_fixing_type: SupplyFixingTypeEnum.optional(),
       has_post_frame: z.boolean().default(false),
-      energy_chain_width: z.undefined(),
-      has_shelf_extension: z.literal(false).default(false),
     }),
 
     z.object({
-      supply_type: z.literal(SupplyTypeEnum.enum.CABLE_CHAIN),
+      supply_type: z.literal(SupplyTypeEnum.enum.ENERGY_CHAIN),
       supply_side: SupplySideEnum.optional(),
       supply_fixing_type: SupplyFixingTypeEnum.optional(),
       has_post_frame: z.literal(false).default(false),
-      energy_chain_width: CableChainWidthEnum.optional(),
-      has_shelf_extension: z.boolean().default(false),
     }),
   ])
   .superRefine((data, ctx) => {
@@ -127,19 +119,12 @@ export const supplyTypeSchema = z
           path: ["supply_fixing_type"],
         });
       }
-    } else if (data.supply_type === SupplyTypeEnum.enum.CABLE_CHAIN) {
+    } else if (data.supply_type === SupplyTypeEnum.enum.ENERGY_CHAIN) {
       if (data.supply_fixing_type === undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: genericRequiredMessage,
           path: ["supply_fixing_type"],
-        });
-      }
-      if (data.energy_chain_width === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: genericRequiredMessage,
-          path: ["energy_chain_width"],
         });
       }
     } // For STRAIGHT_SHELF, fixing type is optional/nullable, only check post frame dependency

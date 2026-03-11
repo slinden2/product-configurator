@@ -1,6 +1,5 @@
 import { Configuration } from "@/db/schemas";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
-import { EnergyChainWidthType } from "@/types";
 
 const PART_NUMBERS = {
   STRAIGHT_SHELF: "1100.019.000",
@@ -16,10 +15,6 @@ const PART_NUMBERS = {
   ANCHOR_KIT: "1100.049.010",
   BOOM: "450.29.000",
   BOOM_HP: "450.39.000",
-  CHAIN_150: "CP-150", // TODO Create in TSE
-  CHAIN_200: "CP-200", // TODO Create in TSE
-  CHAIN_250: "CP-250", // TODO Create in TSE
-  CHAIN_300: "CP-300", // TODO Create in TSE
   REINFORCED_SHELF_ASSY_L: "1100.019.016",
   REINFORCED_SHELF_ASSY_R: "1100.019.017",
 } as const satisfies Record<string, string>;
@@ -40,14 +35,8 @@ const usesShelf = (config: Configuration): boolean => {
   return config.supply_fixing_type === "WALL";
 };
 
-const usesCableChain = (
-  config: Configuration,
-  width?: EnergyChainWidthType
-): boolean => {
-  if (!width) return config.supply_type === "CABLE_CHAIN";
-  return (
-    config.supply_type === "CABLE_CHAIN" && config.energy_chain_width === width
-  );
+const usesEnergyChain = (config: Configuration): boolean => {
+  return config.supply_type === "ENERGY_CHAIN";
 };
 
 const hasDoubleWaterSupply = (config: Configuration): boolean => {
@@ -175,39 +164,16 @@ export const supplyBOM: MaxBOMItem<Configuration>[] = [
     qty: 1,
     _description: "Boom",
   },
-  {
-    pn: PART_NUMBERS.CHAIN_150,
-    conditions: [(config) => usesCableChain(config, "L150")],
-    qty: 1,
-    _description: "Cable chain (150mm)",
-  },
-  {
-    pn: PART_NUMBERS.CHAIN_200,
-    conditions: [(config) => usesCableChain(config, "L200")],
-    qty: 1,
-    _description: "Cable chain (200mm)",
-  },
-  {
-    pn: PART_NUMBERS.CHAIN_250,
-    conditions: [(config) => usesCableChain(config, "L250")],
-    qty: 1,
-    _description: "Cable chain (250mm)",
-  },
-  {
-    pn: PART_NUMBERS.CHAIN_300,
-    conditions: [(config) => usesCableChain(config, "L300")],
-    qty: 1,
-    _description: "Cable chain (300mm)",
-  },
+  // Energy chain reinforced shelf (chain items are per wash bay, in wash-bay-bom.ts)
   {
     pn: PART_NUMBERS.REINFORCED_SHELF_ASSY_L,
-    conditions: [usesCableChain, (config) => config.supply_side === "LEFT"],
+    conditions: [usesEnergyChain, (config) => config.supply_side === "LEFT"],
     qty: 1,
     _description: "Reinforced shelf (L)",
   },
   {
     pn: PART_NUMBERS.REINFORCED_SHELF_ASSY_R,
-    conditions: [usesCableChain, (config) => config.supply_side === "RIGHT"],
+    conditions: [usesEnergyChain, (config) => config.supply_side === "RIGHT"],
     qty: 1,
     _description: "Reinforced shelf (R)",
   },

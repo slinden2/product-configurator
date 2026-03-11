@@ -3,7 +3,7 @@ import { WithSupplyData } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
-  // TODO Create all these in TSE. Remember also chains in supplyBOM.
+  // TODO Create all these in TSE.
   LINE_POST_ASSY_H2500: "2500-PL",
   LINE_POST_ASSY_H2500_PANEL_READY: "2500-PL-PP",
   CENTRAL_POST_ASSY_H2500_PANEL_READY: "2500-PC-PP",
@@ -22,45 +22,52 @@ const PART_NUMBERS = {
   SIDE_PANEL_ASSY: "PN",
   SIDE_PANEL_ASSY_FOR_CENTRAL_POST_LINE: "PN-PC",
   SLIDING_BRACKETS_FOR_FESTOON_LINE_WITH_BOOM: "AS",
+  CHAIN_150: "CP-150",
+  CHAIN_200: "CP-200",
+  CHAIN_250: "CP-250",
+  CHAIN_300: "CP-300",
 } as const satisfies Record<string, string>;
 
-const usesCableChain = (config: WashBay & WithSupplyData) =>
-  config.supply_type === "CABLE_CHAIN" && config.supply_fixing_type === "POST";
+const hasEnergyChain = (config: WashBay & WithSupplyData) =>
+  config.supply_type === "ENERGY_CHAIN" &&
+  config.has_gantry;
 
-const hasCableChain = (config: WashBay & WithSupplyData) =>
-  usesCableChain(config) &&
-  (config.has_gantry || config.uses_cable_chain_without_washbay);
+const hasNoFestoons = (config: WashBay) =>
+  config.hp_lance_qty + config.det_lance_qty === 0;
 
 const usesCentralPost = (config: WashBay & WithSupplyData) =>
-  hasCableChain(config) && config.energy_chain_width !== "L150";
+  hasEnergyChain(config) && config.energy_chain_width !== "L150";
 
 const uses2500posts = (config: WashBay & WithSupplyData) =>
-  (config.hp_lance_qty + config.det_lance_qty === 2 &&
-    !config.uses_3000_posts) ||
-  config.uses_cable_chain_without_washbay;
+((config.hp_lance_qty + config.det_lance_qty === 2 || hasEnergyChain(config)) &&
+  !config.uses_3000_posts)
 
-const usesShortShelves = (config: WashBay & WithSupplyData) =>
+const usesShortShelves = (config: WashBay) =>
   config.hp_lance_qty + config.det_lance_qty === 2;
 
-const usesLongShelves = (config: WashBay & WithSupplyData) =>
+const usesShortAndLongShelves = (config: WashBay) =>
   config.hp_lance_qty + config.det_lance_qty > 2;
 
-const usesPanels = (config: WashBay & WithSupplyData) =>
+const usesPanels = (config: WashBay) =>
   config.has_bay_dividers;
 
 const usesSlidingBrackets = (config: WashBay & WithSupplyData) =>
   config.supply_type === "BOOM" && config.has_gantry;
 
 const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
-  if (config.is_first_bay && hasCableChain(config) && usesCentralPost(config))
-    return 17;
-  if (config.is_first_bay && hasCableChain(config) && !usesCentralPost(config))
-    return 18;
-  if (config.is_first_bay && !hasCableChain(config) && !usesCentralPost(config))
-    return 16;
-  if (!config.is_first_bay && hasCableChain(config) && usesCentralPost(config))
+  if (hasNoFestoons(config) && hasEnergyChain(config) && usesCentralPost(config))
+    return 8;
+  if (hasNoFestoons(config) && hasEnergyChain(config) && !usesCentralPost(config))
     return 9;
-  if (!config.is_first_bay && hasCableChain(config) && !usesCentralPost(config))
+  if (config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
+    return 17;
+  if (config.is_first_bay && hasEnergyChain(config) && !usesCentralPost(config))
+    return 18;
+  if (config.is_first_bay && !hasEnergyChain(config) && !usesCentralPost(config))
+    return 16;
+  if (!config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
+    return 9;
+  if (!config.is_first_bay && hasEnergyChain(config) && !usesCentralPost(config))
     return 10;
   return 8;
 };
@@ -68,10 +75,10 @@ const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
 const calculateLinePostAssyQtyWithPanels = (
   config: WashBay & WithSupplyData
 ) => {
-  if (config.is_first_bay && hasCableChain(config) && usesCentralPost(config))
+  if (config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
     return 19;
   if (config.is_first_bay) return 20;
-  if (!config.is_first_bay && hasCableChain(config) && usesCentralPost(config))
+  if (!config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
     return 9;
   return 10;
 };
@@ -131,14 +138,14 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
   },
   {
     pn: PART_NUMBERS.FESTOON_LINE_WITH_SHORT_SHELVES,
-    conditions: [(config) => usesShortShelves(config)],
+    conditions: [(config) => usesShortShelves(config) || usesShortAndLongShelves(config)],
     qty: (config) => (usesCentralPost(config) ? 1 : 2),
     _description: "Festoon line with short shelves",
   },
   {
     pn: PART_NUMBERS.FESTOON_LINE_WITH_SHORT_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST,
     conditions: [
-      (config) => usesShortShelves(config),
+      (config) => usesShortShelves(config) || usesShortAndLongShelves(config),
       (config) => usesCentralPost(config),
     ],
     qty: 1,
@@ -147,14 +154,14 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
   },
   {
     pn: PART_NUMBERS.FESTOON_LINE_WITH_LONG_SHELVES,
-    conditions: [(config) => usesLongShelves(config)],
+    conditions: [(config) => usesShortAndLongShelves(config)],
     qty: (config) => (usesCentralPost(config) ? 1 : 2),
     _description: "Festoon line with long shelves",
   },
   {
     pn: PART_NUMBERS.FESTOON_LINE_WITH_LONG_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST,
     conditions: [
-      (config) => usesLongShelves(config),
+      (config) => usesShortAndLongShelves(config),
       (config) => usesCentralPost(config),
     ],
     qty: 1,
@@ -211,5 +218,29 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
     conditions: [(config) => usesSlidingBrackets(config)],
     qty: 1,
     _description: "Sliding brackets for festoon line with boom",
+  },
+  {
+    pn: PART_NUMBERS.CHAIN_150,
+    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L150"],
+    qty: 1,
+    _description: "Cable chain (150mm)",
+  },
+  {
+    pn: PART_NUMBERS.CHAIN_200,
+    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L200"],
+    qty: 1,
+    _description: "Cable chain (200mm)",
+  },
+  {
+    pn: PART_NUMBERS.CHAIN_250,
+    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L250"],
+    qty: 1,
+    _description: "Cable chain (250mm)",
+  },
+  {
+    pn: PART_NUMBERS.CHAIN_300,
+    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L300"],
+    qty: 1,
+    _description: "Cable chain (300mm)",
   },
 ];

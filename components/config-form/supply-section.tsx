@@ -4,7 +4,7 @@ import FieldsetContent from "@/components/fieldset-content";
 import FieldsetItem from "@/components/fieldset-item";
 import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
-import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
+import { withNoSelection } from "@/lib/utils";
 import { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
@@ -22,9 +22,6 @@ const SupplySection = () => {
     (supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.BOOM ||
       supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF) &&
     supplyFixingTypeWatch === zodEnums.SupplyFixingTypeEnum.enum.POST;
-
-  const isEnergyChainDisabled =
-    supplyTypeWatch !== zodEnums.SupplyTypeEnum.enum.CABLE_CHAIN;
 
   return (
     <Fieldset
@@ -45,28 +42,8 @@ const SupplySection = () => {
                   invertTrigger: true,
                   resetToValue: false,
                 },
-                {
-                  triggerValue: zodEnums.SupplyTypeEnum.enum.CABLE_CHAIN,
-                  fieldsToReset: ["energy_chain_width", "has_shelf_extension"],
-                  invertTrigger: true,
-                },
               ]}
-              // fieldsToRevalidate={["supply_fixing_type"]}
             />
-            {!isEnergyChainDisabled && (
-              <>
-                <SelectField<ConfigSchema>
-                  name="energy_chain_width"
-                  dataType="string"
-                  label="Larghezza catena"
-                  items={selectFieldOptions.cableChainWidths}
-                />
-                <CheckboxField<ConfigSchema>
-                  name="has_shelf_extension"
-                  label="Con prolunga per mensola alim."
-                />
-              </>
-            )}
           </FieldsetItem>
           <FieldsetItem>
             <SelectField<ConfigSchema>

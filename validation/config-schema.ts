@@ -22,8 +22,8 @@ export const configSchema = baseSchema
   .and(hpPumpSchema)
   .and(touchSchema)
   .superRefine((data, ctx) => {
-    // Limit rail length to 25 if cable chain width is set
-    if (data.energy_chain_width && data.rail_length && data.rail_length < 25) {
+    // Limit rail length to 25 if energy chain is selected
+    if (data.supply_type === "ENERGY_CHAIN" && data.rail_length && data.rail_length < 25) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
@@ -104,8 +104,6 @@ export const configDefaults: ConfigSchema = {
   supply_type: undefined,
   supply_fixing_type: undefined,
   has_post_frame: false,
-  energy_chain_width: undefined,
-  has_shelf_extension: false,
   supply_side: undefined,
   // --- Rail Section ---
   rail_type: undefined,

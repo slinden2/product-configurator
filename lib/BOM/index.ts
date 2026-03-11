@@ -34,24 +34,21 @@ export interface BOMItemWithCost extends BOMItemWithDescription {
 
 export type WithSupplyData = Pick<
   Configuration,
-  "supply_side" | "supply_type" | "supply_fixing_type" | "energy_chain_width"
+  "supply_side" | "supply_type" | "supply_fixing_type"
 > & {
   uses_3000_posts: boolean;
-  uses_cable_chain_without_washbay: boolean;
 };
+
+export type GeneralBOMConfig = Configuration & { has_shelf_extension: boolean };
 
 export class BOM {
   configuration: ConfigurationWithWaterTanksAndWashBays;
   generalMaxBOM = GeneralMaxBOM;
   waterTankMaxBOM = WaterTankMaxBOM;
   washBayMaxBOM = WashBayMaxBOM;
-  usesCableChainWithoutWashBay = false;
 
   private constructor(configuration: ConfigurationWithWaterTanksAndWashBays) {
     this.configuration = configuration;
-    this.usesCableChainWithoutWashBay =
-      configuration.wash_bays.length === 0 &&
-      configuration.supply_type === "CABLE_CHAIN";
   }
 
   static init(configuration: ConfigurationWithWaterTanksAndWashBays): BOM {
@@ -64,17 +61,8 @@ export class BOM {
     washBayBOMs: BOMItemWithDescription[][];
   }> {
     const waterTankBOMs = await this.buildWaterTankBOM();
-    let washBayBOMs = await this.buildWashBayBOM();
-    let generalBOM: BOMItemWithDescription[] = [];
-
-    // This is needed to build the general BOM correctly and add the wash bay BOM (posts)
-    // to the general BOM if there are no wash bays (e.g. festoon line) and the supply type is cable chain
-    if (this.usesCableChainWithoutWashBay) {
-      generalBOM = await this.buildGeneralBOM(washBayBOMs[0]);
-      washBayBOMs = [];
-    } else {
-      generalBOM = await this.buildGeneralBOM();
-    }
+    const washBayBOMs = await this.buildWashBayBOM();
+    const generalBOM = await this.buildGeneralBOM();
 
     return { generalBOM, waterTankBOMs, washBayBOMs };
   }
@@ -82,10 +70,19 @@ export class BOM {
   async buildGeneralBOM(
     washBayBOM: BOMItemWithDescription[] = []
   ): Promise<BOMItemWithDescription[]> {
+    // Derive has_shelf_extension from the wash bays that have a gantry
+    const has_shelf_extension = this.configuration.wash_bays.some(
+      (wb) => wb.has_gantry && wb.has_shelf_extension
+    );
+    const augmentedConfig: GeneralBOMConfig = {
+      ...this.configuration,
+      has_shelf_extension,
+    };
+
     const bom = [
-      ...(await this._buildBOM<Configuration>(
-        this.generalMaxBOM,
-        this.configuration
+      ...(await this._buildBOM<GeneralBOMConfig>(
+        this.generalMaxBOM as MaxBOMItem<GeneralBOMConfig>[],
+        augmentedConfig
       )),
       ...washBayBOM,
     ];
@@ -112,9 +109,7 @@ export class BOM {
       supply_side: this.configuration.supply_side,
       supply_type: this.configuration.supply_type,
       supply_fixing_type: this.configuration.supply_fixing_type,
-      energy_chain_width: this.configuration.energy_chain_width,
       uses_3000_posts: uses3000posts,
-      uses_cable_chain_without_washbay: this.usesCableChainWithoutWashBay,
     };
   }
 
@@ -122,21 +117,6 @@ export class BOM {
     const uses3000posts = this.configuration.wash_bays.some((washBay) => {
       return washBay.hp_lance_qty + washBay.det_lance_qty > 2;
     });
-
-    // Check first if there are no wash bays and if the supply type is cable chain
-    // because in that case the posts are needed.
-    if (
-      this.configuration.wash_bays.length === 0 &&
-      this.configuration.supply_type === "CABLE_CHAIN" &&
-      this.configuration.supply_fixing_type === "POST"
-    ) {
-      const washBayWithSupplyData: WashBay & WithSupplyData =
-        this._generateWashBayObjectWithSupplyData({} as WashBay, {
-          uses3000posts,
-        });
-
-      return [await this._buildBOM(this.washBayMaxBOM, washBayWithSupplyData)];
-    }
 
     return await Promise.all(
       this.configuration.wash_bays.map(async (washBay) => {

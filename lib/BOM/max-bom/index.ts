@@ -1,5 +1,5 @@
-import { Configuration, WashBay, WaterTank } from "@/db/schemas";
-import { WithSupplyData } from "@/lib/BOM";
+import { WashBay, WaterTank } from "@/db/schemas";
+import { GeneralBOMConfig, WithSupplyData } from "@/lib/BOM";
 import { brushBOM } from "@/lib/BOM/max-bom/brush-bom";
 import { dosingPumpBOM } from "@/lib/BOM/max-bom/dosing-pump-bom";
 import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
@@ -24,7 +24,9 @@ export interface MaxBOMItem<T> {
   _description: string;
 }
 
-export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
+// All general BOM items operate on Configuration (a subset of GeneralBOMConfig).
+// The cast is safe because GeneralBOMConfig extends Configuration.
+export const GeneralMaxBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   ...gruBOM,
   ...brushBOM,
   ...dosingPumpBOM,
@@ -35,7 +37,7 @@ export const GeneralMaxBOM: MaxBOMItem<Configuration>[] = [
   ...electricBOM,
   ...fastBOM,
   ...hpPumpBOM,
-];
+] as MaxBOMItem<GeneralBOMConfig>[];
 
 export const WaterTankMaxBOM: MaxBOMItem<WaterTank>[] = [...waterTankBOM];
 

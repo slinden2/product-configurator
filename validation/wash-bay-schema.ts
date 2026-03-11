@@ -3,6 +3,7 @@ import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
+import { CableChainWidthEnum } from "@/validation/configuration/supply-type-schema";
 import { z } from "zod";
 
 export const PressureWasherTypeEnum = z.enum(["L21_150BAR", "L21_200BAR"], {
@@ -43,6 +44,8 @@ export const washBaySchema = z
       .max(2)
       .optional(),
     has_gantry: z.boolean().default(false),
+    energy_chain_width: CableChainWidthEnum.optional(),
+    has_shelf_extension: z.boolean().default(false),
     is_first_bay: z.boolean().default(false),
     has_bay_dividers: z.boolean().default(false),
   })
@@ -85,6 +88,8 @@ export const washBayDefaults: WashBaySchema = {
   pressure_washer_type: undefined,
   pressure_washer_qty: undefined,
   has_gantry: false,
+  energy_chain_width: undefined,
+  has_shelf_extension: false,
   is_first_bay: false,
   has_bay_dividers: false,
 };

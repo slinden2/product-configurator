@@ -1,8 +1,9 @@
 import { db } from "@/db";
-import { configurations, userProfiles } from "@/db/schemas";
+import { configurations, userProfiles, washBays, waterTanks } from "@/db/schemas";
 import { ConfigSchema } from "@/validation/config-schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { transformConfigToDbInsert } from "./transformations";
+import { WashBaySchema } from "@/validation/wash-bay-schema";
 
 const configurationSimple: ConfigSchema = {
   name: "Cliente 1",
@@ -29,8 +30,6 @@ const configurationSimple: ConfigSchema = {
   supply_type: "BOOM",
   supply_fixing_type: "POST",
   has_post_frame: false,
-  energy_chain_width: undefined,
-  has_shelf_extension: false,
   rail_type: "DOWELED",
   rail_length: 25,
   rail_guide_qty: 1,
@@ -74,11 +73,9 @@ const configurationComplicated: ConfigSchema = {
   has_acid_pump: false,
   acid_pump_pos: undefined,
   supply_side: "RIGHT",
-  supply_type: "CABLE_CHAIN",
+  supply_type: "ENERGY_CHAIN",
   supply_fixing_type: "POST",
   has_post_frame: false,
-  energy_chain_width: "L250",
-  has_shelf_extension: false,
   rail_type: "DOWELED",
   rail_length: 26,
   rail_guide_qty: 2,
@@ -99,6 +96,19 @@ const configurationComplicated: ConfigSchema = {
   touch_pos: "EXTERNAL",
   touch_fixing_type: "POST",
 };
+
+const getWashBayComplicated = (id: number): WashBaySchema & { configuration_id: number } => ({
+  configuration_id: id,
+  hp_lance_qty: 2,
+  det_lance_qty: 2,
+  hose_reel_qty: 0,
+  has_gantry: true,
+  energy_chain_width: "L250",
+  has_shelf_extension: false,
+  is_first_bay: true,
+  has_bay_dividers: false,
+
+})
 
 const configurationFast: ConfigSchema = {
   name: "Cliente 3",
@@ -125,8 +135,6 @@ const configurationFast: ConfigSchema = {
   supply_type: "STRAIGHT_SHELF",
   supply_fixing_type: "WALL",
   has_post_frame: false,
-  energy_chain_width: undefined,
-  has_shelf_extension: false,
   rail_type: "DOWELED",
   rail_length: 7,
   rail_guide_qty: 1,
@@ -149,6 +157,22 @@ const configurationFast: ConfigSchema = {
 };
 
 async function seedDb() {
+  const shouldReset = process.argv.includes("--reset");
+
+  if (shouldReset) {
+    console.log("⚠️ Reset flag detected. Cleaning up existing data...");
+
+    await db.delete(waterTanks)
+    await db.delete(washBays);
+    await db.delete(configurations);
+
+    await db.execute(sql`ALTER SEQUENCE water_tanks_id_seq RESTART WITH 1`);
+    await db.execute(sql`ALTER SEQUENCE wash_bays_id_seq RESTART WITH 1`);
+    await db.execute(sql`ALTER SEQUENCE configurations_id_seq RESTART WITH 1`);
+
+    console.log("✅ Database cleared.");
+  }
+
   const confArr = [
     configurationSimple,
     configurationComplicated,
@@ -163,9 +187,15 @@ async function seedDb() {
     throw new Error("Admin user not found.");
   }
 
+  console.log("🌱 Starting seeding...");
+
   for (const conf of confArr) {
     const dbData = transformConfigToDbInsert(conf, user.id);
-    await db.insert(configurations).values(dbData);
+    const [inserted] = await db.insert(configurations).values(dbData).returning({ id: configurations.id });
+
+    if (conf === configurationComplicated && inserted) {
+      await db.insert(washBays).values(getWashBayComplicated(inserted.id));
+    }
   }
 }
 

@@ -18,6 +18,7 @@ import { ConfigurationStatusType } from "@/types";
 interface WashBayFormProps {
   confId: number;
   confStatus: ConfigurationStatusType;
+  supplyType?: string;
   washBay?: UpdateWashBaySchema;
   washBayIndex?: number;
   onDelete?: (tankId: number) => void;
@@ -28,6 +29,10 @@ interface WashBayFormProps {
 }
 
 const WashBayForm = (props: WashBayFormProps) => {
+  const FieldsWithSupplyType = () => (
+    <WashBayFields supplyType={props.supplyType} />
+  );
+
   return (
     <SubRecordForm
       schema={washBaySchema}
@@ -42,7 +47,7 @@ const WashBayForm = (props: WashBayFormProps) => {
       insertAction={insertWashBayAction}
       editAction={editWashBayAction}
       deleteAction={deleteWashBayAction}
-      FieldsComponent={WashBayFields}
+      FieldsComponent={FieldsWithSupplyType}
       formKey={props.formKey}
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}

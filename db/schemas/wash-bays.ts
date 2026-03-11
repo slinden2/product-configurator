@@ -1,5 +1,5 @@
 import { configurations } from "@/db/schemas/configurations";
-import { PressureWashers } from "@/types";
+import { EnergyChainWidths, PressureWashers } from "@/types";
 import { relations } from "drizzle-orm";
 import {
   boolean,
@@ -8,6 +8,11 @@ import {
   pgTable,
   timestamp,
 } from "drizzle-orm/pg-core";
+
+export const energyChainWidthEnum = pgEnum(
+  "energy_chain_width",
+  EnergyChainWidths
+);
 
 export type WashBay = typeof washBays.$inferSelect;
 export type NewWashBay = typeof washBays.$inferInsert;
@@ -25,6 +30,8 @@ export const washBays = pgTable("wash_bays", {
   pressure_washer_type: pressureWasherTypeEnum("pressure_washer_type"),
   pressure_washer_qty: integer(),
   has_gantry: boolean().notNull(),
+  energy_chain_width: energyChainWidthEnum("energy_chain_width"),
+  has_shelf_extension: boolean().notNull().default(false),
   is_first_bay: boolean().notNull(),
   has_bay_dividers: boolean().notNull(),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
