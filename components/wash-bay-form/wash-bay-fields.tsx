@@ -105,7 +105,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
         </FieldsetItem>
       </FieldsetRow>
       {showEnergyChainFields && (
-        <FieldsetRow>
+        <FieldsetRow className="md:items-end">
           <FieldsetItem>
             <SelectField<WashBaySchema>
               name="energy_chain_width"

@@ -9,7 +9,7 @@ import { Button } from "./ui/button";
 import { PlusCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
-import WashBayForm from "./wash-bay-form.tsx";
+import WashBayForm from "./wash-bay-form";
 import useMediaQuery from "@/hooks/use-media-query";
 import {
   Select,

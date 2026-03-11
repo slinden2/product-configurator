@@ -41,12 +41,12 @@ const PART_NUMBERS = {
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT: "9000.530.035",
 } as const satisfies Record<string, string>;
 
-const uses15kwPump = (config: Configuration): boolean => config.has_15kw_pump;
-const uses30kwPump = (config: Configuration): boolean => config.has_30kw_pump;
-const uses15kwOr30kwPump = (config: Configuration): boolean =>
+const uses15kwPump = (config: GeneralBOMConfig): boolean => config.has_15kw_pump;
+const uses30kwPump = (config: GeneralBOMConfig): boolean => config.has_30kw_pump;
+const uses15kwOr30kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_15kw_pump || config.has_30kw_pump;
-const usesOMZPump = (config: Configuration): boolean => config.has_omz_pump;
-const usesHPRoofBar = (config: Configuration): boolean => {
+const usesOMZPump = (config: GeneralBOMConfig): boolean => config.has_omz_pump;
+const usesHPRoofBar = (config: GeneralBOMConfig): boolean => {
   return (
     usesOMZPump(config) &&
     (config.pump_outlet_omz === "HP_ROOF_BAR" ||
@@ -54,13 +54,13 @@ const usesHPRoofBar = (config: Configuration): boolean => {
   );
 };
 
-const usesHPDeviationValveKit = (config: Configuration) => {
+const usesHPDeviationValveKit = (config: GeneralBOMConfig) => {
   return (
     usesOMZPump(config) && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"
   );
 };
 
-const usesHoseFromShelfToTFitting = (config: Configuration): boolean => {
+const usesHoseFromShelfToTFitting = (config: GeneralBOMConfig): boolean => {
   return (
     isOneOfOutlets(
       [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
