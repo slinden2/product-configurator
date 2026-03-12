@@ -54,7 +54,7 @@ const usesPanels = (config: WashBay) =>
 const usesSlidingBrackets = (config: WashBay & WithSupplyData) =>
   config.supply_type === "BOOM" && config.has_gantry;
 
-const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
+export const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
   if (hasNoFestoons(config) && hasEnergyChain(config) && usesCentralPost(config))
     return 8;
   if (hasNoFestoons(config) && hasEnergyChain(config) && !usesCentralPost(config))
@@ -72,7 +72,7 @@ const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
   return 8;
 };
 
-const calculateLinePostAssyQtyWithPanels = (
+export const calculateLinePostAssyQtyWithPanels = (
   config: WashBay & WithSupplyData
 ) => {
   if (config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
@@ -83,7 +83,7 @@ const calculateLinePostAssyQtyWithPanels = (
   return 10;
 };
 
-const calculateSidePanelQty = (config: WashBay & WithSupplyData) => {
+export const calculateSidePanelQty = (config: WashBay & WithSupplyData) => {
   if (!config.is_first_bay && usesCentralPost(config)) return 0;
   if (config.is_first_bay && usesCentralPost(config)) return 1;
   if (!config.is_first_bay && !usesCentralPost(config)) return 1;

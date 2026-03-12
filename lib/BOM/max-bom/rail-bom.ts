@@ -11,10 +11,10 @@ const PART_NUMBERS = {
   PROXIMITY_PLATES: "450.35.010",
 } as const satisfies Record<string, string>;
 
-const calculate3mRailQty = (config: Configuration): number =>
+export const calculate3mRailQty = (config: Configuration): number =>
   Math.floor((config.rail_length - 6) / 3);
 
-const calculate1mRailQty = (config: Configuration): number =>
+export const calculate1mRailQty = (config: Configuration): number =>
   (config.rail_length - 6) % 3;
 
 export const railBOM: MaxBOMItem<Configuration>[] = [

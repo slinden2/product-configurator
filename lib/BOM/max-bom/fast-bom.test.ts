@@ -1,0 +1,61 @@
+import { vi, describe, test, expect } from "vitest";
+
+vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
+vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+
+import { fastBOM } from "@/lib/BOM/max-bom/fast-bom";
+import type { Configuration } from "@/db/schemas";
+
+const cfg = (is_fast: boolean, brush_qty: number) =>
+  ({ is_fast, brush_qty } as Configuration);
+
+const pns = (config: Configuration) =>
+  fastBOM
+    .filter((item) => item.conditions.every((fn) => fn(config)))
+    .map((item) => item.pn);
+
+const PNUMS = {
+  ADDITIONAL_LATERAL_RINSE_BARS: "450.65.000",
+  ADDITIONAL_RINSE_ARCH: "450.65.002",
+  SHORT_PHOTOCELL_SUPPORTS: "925.00.000",
+  LONG_PHOTOCELL_SUPPORTS: "926.03.000",
+  POSTERIOR_TRAFFIC_LIGHTS: "926.01.000",
+};
+
+describe("fastBOM — not fast", () => {
+  test("!is_fast, brush_qty=2 → only short photocell supports", () => {
+    expect(pns(cfg(false, 2))).toEqual([PNUMS.SHORT_PHOTOCELL_SUPPORTS]);
+  });
+
+  test("!is_fast, brush_qty=3 → only short photocell supports", () => {
+    expect(pns(cfg(false, 3))).toEqual([PNUMS.SHORT_PHOTOCELL_SUPPORTS]);
+  });
+});
+
+describe("fastBOM — is fast", () => {
+  test("is_fast, brush_qty=2 → lateral rinse bars + long photocell + traffic lights", () => {
+    expect(pns(cfg(true, 2))).toEqual([
+      PNUMS.ADDITIONAL_LATERAL_RINSE_BARS,
+      PNUMS.LONG_PHOTOCELL_SUPPORTS,
+      PNUMS.POSTERIOR_TRAFFIC_LIGHTS,
+    ]);
+  });
+
+  test("is_fast, brush_qty=3 → rinse arch + long photocell + traffic lights", () => {
+    expect(pns(cfg(true, 3))).toEqual([
+      PNUMS.ADDITIONAL_RINSE_ARCH,
+      PNUMS.LONG_PHOTOCELL_SUPPORTS,
+      PNUMS.POSTERIOR_TRAFFIC_LIGHTS,
+    ]);
+  });
+
+  test("is_fast never includes short photocell supports", () => {
+    expect(pns(cfg(true, 2))).not.toContain(PNUMS.SHORT_PHOTOCELL_SUPPORTS);
+    expect(pns(cfg(true, 3))).not.toContain(PNUMS.SHORT_PHOTOCELL_SUPPORTS);
+  });
+
+  test("!is_fast never includes long photocell supports or traffic lights", () => {
+    expect(pns(cfg(false, 2))).not.toContain(PNUMS.LONG_PHOTOCELL_SUPPORTS);
+    expect(pns(cfg(false, 2))).not.toContain(PNUMS.POSTERIOR_TRAFFIC_LIGHTS);
+  });
+});
