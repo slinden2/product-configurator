@@ -13,8 +13,6 @@ const BrushSection = () => {
   const brushNumWatch = useWatch<ConfigSchema>({ control, name: "brush_qty" });
   const isDisabled = brushNumWatch === undefined || brushNumWatch === 0;
 
-  console.log('brushNumWatch :>> ', brushNumWatch);
-
   return (
     <Fieldset
       title="Spazzole"

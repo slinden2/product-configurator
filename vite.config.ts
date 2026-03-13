@@ -3,4 +3,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
+  esbuild: {
+    jsx: "automatic",
+  },
+  test: {
+    setupFiles: ["./test/setup-dom.ts"],
+  },
 });
