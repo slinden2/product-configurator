@@ -78,20 +78,18 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: entityData ?? entityDefaults,
-    disabled: formIsDisabled,
   });
   const { handleSubmit, reset, formState } = form;
 
-  const isTouched = Object.keys(formState.touchedFields).length > 0;
   useEffect(() => {
-    if (formKey) onDirtyChange?.(formKey, isTouched);
-  }, [isTouched, formKey, onDirtyChange]);
+    if (formKey) onDirtyChange?.(formKey, formState.isDirty);
+  }, [formState.isDirty, formKey, onDirtyChange]);
 
   // --- Derived State ---
   const isEditing = !!entityData?.id;
   const isSaveOrCancelDisabled =
-    !!isLoading || (isEditing && !formState.isDirty) || formState.disabled;
-  const isDeleteDisabled = !!isLoading || formState.disabled;
+    formIsDisabled || (isEditing && !formState.isDirty);
+  const isDeleteDisabled = formIsDisabled;
 
   // --- Event Handlers ---
   const handleSaveSubmit = useCallback(
@@ -194,7 +192,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     <div>
       <DevTool control={form.control} />
       <Form {...form}>
-        <fieldset disabled={!!isLoading} className="group">
+        <fieldset disabled={formIsDisabled} className="group">
           <form id={formKey ? `form-${formKey}` : undefined} onSubmit={handleSubmit(handleSaveSubmit)}>
             <Fieldset
               title={
