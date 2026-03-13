@@ -50,7 +50,6 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
     defaultValues: configuration ?? configDefaults,
-    disabled: formIsDisabled,
   });
 
   const isTouched = Object.keys(form.formState.touchedFields).length > 0;
@@ -95,34 +94,36 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
       {/* <DevTool control={form.control} /> */}
       <Form {...form}>
         <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit)}>
-          <GeneralSection />
-          <BrushSection />
-          <ChemPumpSection />
-          <WaterSupplySection />
-          <SupplySection />
-          <RailSection />
-          <TouchSection />
-          <HPPumpSection />
-          <div className="flex gap-4">
-            <BackButton fallbackPath={"/configurations"} />
-            <Button
-              className="ml-auto"
-              variant="destructive"
-              onClick={() => form.reset()}
-              disabled={formIsDisabled}
-            // type="reset"
-            >
-              Annulla
-            </Button>
-            <Button className="flex items-center gap-2" type="submit" disabled={formIsDisabled}>
-              {isSubmitting ? (
-                <Spinner className="h-4 w-4 text-foreground" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <span>Salva configurazione</span>
-            </Button>
-          </div>
+          <fieldset disabled={formIsDisabled}>
+            <GeneralSection />
+            <BrushSection />
+            <ChemPumpSection />
+            <WaterSupplySection />
+            <SupplySection />
+            <RailSection />
+            <TouchSection />
+            <HPPumpSection />
+            <div className="flex gap-4">
+              <BackButton fallbackPath={"/configurations"} />
+              <Button
+                className="ml-auto"
+                variant="destructive"
+                onClick={() => form.reset()}
+                disabled={formIsDisabled}
+              // type="reset"
+              >
+                Annulla
+              </Button>
+              <Button className="flex items-center gap-2" type="submit" disabled={formIsDisabled}>
+                {isSubmitting ? (
+                  <Spinner className="h-4 w-4 text-foreground" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span>Salva configurazione</span>
+              </Button>
+            </div>
+          </fieldset>
         </form>
       </Form>
       <p className="text-destructive">{error}</p>
