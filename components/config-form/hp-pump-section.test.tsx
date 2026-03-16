@@ -61,8 +61,8 @@ describe("HPPumpSection", () => {
     test("unchecking 15kW pump resets its outlet fields", async () => {
       const { getValues } = renderHPPumpSection({
         has_15kw_pump: true,
-        pump_outlet_1_15kw: "HP_SIDE_BARS",
-        pump_outlet_2_15kw: "HP_SIDE_BARS",
+        pump_outlet_1_15kw: "CHASSIS_WASH",
+        pump_outlet_2_15kw: "LOW_SPINNERS",
       });
 
       const checkboxes = screen.getAllByRole("checkbox");
@@ -98,8 +98,8 @@ describe("HPPumpSection", () => {
     test("unchecking 30kW pump resets its outlet fields", async () => {
       const { getValues } = renderHPPumpSection({
         has_30kw_pump: true,
-        pump_outlet_1_30kw: "HP_SIDE_BARS",
-        pump_outlet_2_30kw: "HP_SIDE_BARS",
+        pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL",
+        pump_outlet_2_30kw: "LOW_SPINNERS_HIGH_BARS",
       });
 
       const checkboxes = screen.getAllByRole("checkbox");
