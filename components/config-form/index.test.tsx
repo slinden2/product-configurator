@@ -93,8 +93,8 @@ afterEach(cleanup);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockInsertAction.mockResolvedValue({ id: 42 });
-  mockEditAction.mockResolvedValue(undefined);
+  mockInsertAction.mockResolvedValue({ success: true, id: 42 });
+  mockEditAction.mockResolvedValue({ success: true });
 });
 
 describe("ConfigForm", () => {
@@ -181,7 +181,7 @@ describe("ConfigForm", () => {
     });
 
     test("displays error text when editConfigurationAction throws", async () => {
-      mockEditAction.mockRejectedValueOnce(new Error("Network error"));
+      mockEditAction.mockResolvedValueOnce({ success: false, error: "Network error" });
       const config = makeValidConfig();
 
       render(

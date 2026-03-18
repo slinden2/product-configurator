@@ -54,7 +54,12 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
     console.log("🚀 ~ handleSubmit ~ data:", data); // DEBUG
     try {
       setIsLoading(true);
-      await updateConfigStatusAction(confId, data);
+      const result = await updateConfigStatusAction(confId, data);
+      if (!result.success) {
+        toast.error(result.error);
+        form.setValue("status", initialStatus);
+        return;
+      }
       toast.success("Stato aggiornato.");
     } catch (err) {
       console.error(err);

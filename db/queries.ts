@@ -212,28 +212,25 @@ export const updateConfiguration = async (
 
 function canTransition(role: Role, from: ConfigurationStatusType, to: ConfigurationStatusType): boolean {
   if (from === to) return true;
-
   if (role === "ADMIN") return true;
 
-  // External: only DRAFT <-> open
+  // EXTERNAL (Area Manager): Only their own DRAFT <-> OPEN
   if (role === "EXTERNAL") {
-    const allowed =
-      (from === "DRAFT" && to === "OPEN") ||
+    return (from === "DRAFT" && to === "OPEN") ||
       (from === "OPEN" && to === "DRAFT");
-    return allowed;
   }
 
-  // Internal: everything External can do plus
-  // DRAFT/OPEN <-> LOCKED (both directions)
+  // INTERNAL (Technical Office): Can claim (LOCKED) and return to OPEN/DRAFT
   if (role === "INTERNAL") {
-    const allowed =
-      (from === "DRAFT" && to === "OPEN") ||
-      (from === "OPEN" && to === "DRAFT") ||
-      (from === "DRAFT" && to === "LOCKED") ||
-      (from === "OPEN" && to === "LOCKED") ||
-      (from === "LOCKED" && to === "DRAFT") ||
-      (from === "LOCKED" && to === "OPEN");
-    return allowed;
+    const allowedTransitions = [
+      { from: "DRAFT", to: "OPEN" },
+      { from: "OPEN", to: "DRAFT" },
+      { from: "OPEN", to: "LOCKED" },
+      { from: "LOCKED", to: "OPEN" },
+      { from: "LOCKED", to: "DRAFT" }
+    ];
+
+    return allowedTransitions.some(t => t.from === from && t.to === to);
   }
 
   return false;

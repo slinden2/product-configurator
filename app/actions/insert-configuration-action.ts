@@ -9,24 +9,24 @@ export const insertConfigurationAction = async (formData: unknown) => {
   const validation = configSchema.safeParse(formData);
 
   if (!validation.success) {
-    throw new Error(validation.error?.message);
+    return { success: false as const, error: validation.error.message };
   }
 
   const user = await getUserData();
 
   if (!user) {
-    throw new Error("User not found.");
+    return { success: false as const, error: "Utente non trovato." };
   }
 
   try {
     const newConfig = await insertConfiguration(validation.data);
     revalidatePath("/configurations");
-    return { success: true, id: newConfig.id };
+    return { success: true as const, id: newConfig.id };
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {
-      throw err;
+      return { success: false as const, error: err.message };
     }
 
-    throw new Error("Unknown Error.");
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 };

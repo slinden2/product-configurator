@@ -70,13 +70,25 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
           setIsSubmitting(false);
           return;
         }
-        await editConfigurationAction(id, configuration.user_id, values);
+        const result = await editConfigurationAction(id, configuration.user_id, values);
+        if (!result.success) {
+          setError(result.error);
+          toast.error(result.error);
+          setIsSubmitting(false);
+          return;
+        }
         toast.success("Configurazione aggiornata.");
         if (formKey) onSaved?.(formKey);
       } else {
-        const { id } = await insertConfigurationAction(values);
+        const result = await insertConfigurationAction(values);
+        if (!result.success) {
+          setError(result.error);
+          toast.error(result.error);
+          setIsSubmitting(false);
+          return;
+        }
         toast.success("Configurazione creata.");
-        router.push(`/configurations/edit/${id}`);
+        router.push(`/configurations/edit/${result.id}`);
       }
       setIsSubmitting(false);
     } catch (err) {

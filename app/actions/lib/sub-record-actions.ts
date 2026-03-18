@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getUserData, getConfiguration, QueryError } from "@/db/queries";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 
 type ActionType = "insert" | "edit" | "delete";
 
@@ -76,21 +77,30 @@ export async function handleSubRecordAction<TFormSchema extends z.ZodTypeAny>(
     throw new Error("Utente non trovato o non autenticato.");
   }
 
-  // --- 3. Authorization (for Edit/Delete - assumes ownership check needed) ---
-  // Insert might only need user to be logged in, depends on policy.
-  // Edit/Delete typically require checking ownership of the parent configuration.
-  if (actionType === "edit" || actionType === "delete") {
-    const configuration = await getConfiguration(parentId); // Fetch parent config
-    if (!configuration) {
-      throw new Error("Configurazione associata non trovata.");
-    }
-    // Check if user owns the config or is an admin
-    if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-      throw new Error("Non autorizzato a modificare/eliminare questo record.");
-    }
-    if (!recordId) {
-      throw new Error(`Record ID mancante per l'azione ${actionType}.`);
-    }
+  // --- 3. Authorization & Status Protection ---
+  const configuration = await getConfiguration(parentId);
+  if (!configuration) {
+    throw new Error("Configurazione associata non trovata.");
+  }
+
+  // Check if user owns the config, is INTERNAL, or is ADMIN
+  if (
+    user.id !== configuration.user_id &&
+    user.role !== "ADMIN" &&
+    user.role !== "INTERNAL"
+  ) {
+    throw new Error("Non autorizzato a modificare/eliminare questo record.");
+  }
+
+  // Status protection: enforce editable rules per role
+  if (!isEditable(configuration.status, user.role)) {
+    throw new Error(
+      "Non è possibile modificare i record di una configurazione in questo stato."
+    );
+  }
+
+  if ((actionType === "edit" || actionType === "delete") && !recordId) {
+    throw new Error(`Record ID mancante per l'azione ${actionType}.`);
   }
 
   // --- 4. Database Operation ---
