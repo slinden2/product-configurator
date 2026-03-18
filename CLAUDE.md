@@ -61,31 +61,32 @@ We follow a strict "Action-Validation-Mutation-Sync" loop:
 - **FormContainer** manages tabs (config / water tanks / wash bays), tracks dirty state across forms, and prompts on unsaved changes
 
 ### Workflow & Role Permissions
-The app manages a 3-stage hand-off between sales and production.
+The app manages a 3-stage hand-off between sales, engineering, and production.
 
-**Workflow:** DRAFT ↔ OPEN ↔ LOCKED → CLOSED.
+**Workflow:** DRAFT ↔ OPEN ↔ LOCKED ↔ CLOSED.
 
 1. **EXTERNAL (Area Manager or Sales Agent):**
    - **Primary Goal:** Capture customer requirements in `DRAFT`.
    - **Access:** Own configurations only.
    - **Permissions:** Can EDIT and toggle `DRAFT ↔ OPEN`.
-   - **Lockout:** Cannot edit or change status once moved to `LOCKED` or `CLOSED`.
+   - **Lockout:** Cannot edit once status moves to `OPEN`, `LOCKED`, or `CLOSED`.
 
 2. **INTERNAL (Technical Office or Engineer):**
    - **Primary Goal:** Finalize the "Bill of Materials" (BOM) and technical specs.
    - **Access:** All configurations.
-   - **Permissions:** Can EDIT `OPEN` and `LOCKED` configurations to finalize technical specs.
-   - **Action:** Moves `OPEN ↔ LOCKED` to signal "Engineering Review." Can return to `DRAFT` if sales input is needed.
+   - **Permissions:** Can EDIT in `DRAFT` or `OPEN` to finalize technical specs.
+   - **Action:** Moves `OPEN → LOCKED` to freeze the configuration for production.
 
 3. **ADMIN (Production/System):**
-   - **Permissions:** Full override. Only role that can move status to `CLOSED` (Machine Produced).
+   - **Permissions:** Same edit rights as INTERNAL. Only role that can move status to `CLOSED` or revert a `CLOSED` status.
 
 **Operational Constraints:**
-- **Editable Logic:** A configuration is "Editable" if:
-  - `(status === 'DRAFT' && user.role === 'EXTERNAL')` OR
-  - `(['OPEN', 'LOCKED'].includes(status) && user.role === 'INTERNAL')` OR
-  - `(user.role === 'ADMIN')`
-- **Validation:** Every Server Action MUST run the `canTransition` helper and verify the "Editable" logic above before saving.
+- **Editable Logic (IMMUTABLE STATES):** A configuration is ONLY editable if:
+  - `status` is `DRAFT` or `OPEN` AND
+  - `(user.role === 'INTERNAL' || user.role === 'ADMIN')`
+  - *Exception:* `EXTERNAL` can ONLY edit if `status` is `DRAFT`.
+- **Frozen States:** Any configuration in `LOCKED` or `CLOSED` is **Read-Only** for all users. To edit, an INTERNAL/ADMIN must transition the status back to `OPEN`.
+- **Validation:** Every Server Action MUST run `isEditable(status, role)` before executing any DB update.
 
 ### Operational Constraints
 - Server Actions: Always use revalidatePath after any mutation in app/actions/. Never bypass Server Actions for direct DB calls.

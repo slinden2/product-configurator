@@ -1,20 +1,30 @@
 import { ConfigurationStatusType, Role } from "@/types";
 
 /**
- * Determines whether a user with the given role can edit a configuration
- * in the given status, following the operational constraints:
- *
- * - EXTERNAL: can edit only DRAFT
- * - INTERNAL: can edit OPEN and LOCKED
- * - ADMIN: can edit any status
+ * Determines whether a configuration is currently in an editable state
+ * based on the User's Role and the Record's Status.
+ * * Rules:
+ * - LOCKED/CLOSED: Never editable by anyone.
+ * - EXTERNAL: Editable only in DRAFT.
+ * - INTERNAL/ADMIN: Editable in DRAFT or OPEN.
  */
 export function isEditable(
   status: ConfigurationStatusType,
   role: Role
 ): boolean {
-  if (role === "ADMIN") return true;
-  if (role === "EXTERNAL" && status === "DRAFT") return true;
-  if (role === "INTERNAL" && (status === "OPEN" || status === "LOCKED"))
-    return true;
+  // 1. Hard stop: Locked and Closed are read-only for all roles
+  if (status === "LOCKED" || status === "CLOSED") {
+    return false;
+  }
+
+  // 2. Role-based permissions for active states
+  if (role === "EXTERNAL") {
+    return status === "DRAFT";
+  }
+
+  if (role === "INTERNAL" || role === "ADMIN") {
+    return status === "DRAFT" || status === "OPEN";
+  }
+
   return false;
 }
