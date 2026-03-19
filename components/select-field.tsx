@@ -13,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormDisabled,
 } from "@/components/ui/form";
 import {
   Select,
@@ -85,7 +86,8 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
   fieldsToResetOnValue,
   fieldsToRevalidate,
 }: SelectFieldProps<TFieldValues>) => {
-  const { control, setValue, trigger, formState } = useFormContext<TFieldValues>();
+  const { control, setValue, trigger } = useFormContext<TFieldValues>();
+  const formDisabled = useFormDisabled();
 
   // This is needed, because when resetting fields the UI
   // doesn't update until correctly using the field object
@@ -168,7 +170,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                   trigger(fieldToRevalidate);
                 });
               }}
-              disabled={disabled || formState.disabled}
+              disabled={disabled || formDisabled}
             >
               <FormControl>
                 <SelectTrigger className="bg-background">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Form } from "@/components/ui/form";
+import { Form, FormDisabledContext } from "@/components/ui/form";
 import {
   configDefaults,
   ConfigSchema,
@@ -100,35 +100,37 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
     <div>
       <Form {...form}>
         <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit)}>
-          <fieldset disabled={formIsDisabled}>
-            <GeneralSection />
-            <BrushSection />
-            <ChemPumpSection />
-            <WaterSupplySection />
-            <SupplySection />
-            <RailSection />
-            <TouchSection />
-            <HPPumpSection />
-            <div className="flex gap-4">
-              <BackButton fallbackPath={"/configurations"} />
-              <Button
-                className="ml-auto"
-                variant="destructive"
-                onClick={() => form.reset()}
-                disabled={formIsDisabled}
-              >
-                Annulla
-              </Button>
-              <Button className="flex items-center gap-2" type="submit" disabled={formIsDisabled}>
-                {isSubmitting ? (
-                  <Spinner className="h-4 w-4 text-foreground" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                <span>Salva configurazione</span>
-              </Button>
-            </div>
-          </fieldset>
+          <FormDisabledContext.Provider value={formIsDisabled}>
+            <fieldset disabled={formIsDisabled}>
+              <GeneralSection />
+              <BrushSection />
+              <ChemPumpSection />
+              <WaterSupplySection />
+              <SupplySection />
+              <RailSection />
+              <TouchSection />
+              <HPPumpSection />
+              <div className="flex gap-4">
+                <BackButton fallbackPath={"/configurations"} />
+                <Button
+                  className="ml-auto"
+                  variant="destructive"
+                  onClick={() => form.reset()}
+                  disabled={formIsDisabled}
+                >
+                  Annulla
+                </Button>
+                <Button className="flex items-center gap-2" type="submit" disabled={formIsDisabled}>
+                  {isSubmitting ? (
+                    <Spinner className="h-4 w-4 text-foreground" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span>Salva configurazione</span>
+                </Button>
+              </div>
+            </fieldset>
+          </FormDisabledContext.Provider>
         </form>
       </Form>
     </div>

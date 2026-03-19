@@ -2,12 +2,13 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Form } from "@/components/ui/form";
-import { useForm, FieldValues } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcw, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { FormDisabledContext } from "@/components/ui/form";
 import Fieldset from "@/components/fieldset";
 import { z } from "zod";
 import { ConfigurationStatusType, Role } from "@/types";
@@ -208,67 +209,69 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   return (
     <div>
       <Form {...form}>
-        <fieldset disabled={formIsDisabled} className="group">
-          <form id={formKey ? `form-${formKey}` : undefined} onSubmit={handleSubmit(handleSaveSubmit)}>
-            <Fieldset
-              title={
-                isEditing
-                  ? `${entityName} ${entityIndex}`
-                  : `Aggiungi Nuovo ${entityName}`
-              }
-            >
-              {/* Render the specific fields passed as a component */}
-              <FieldsComponent />
+        <FormDisabledContext.Provider value={formIsDisabled}>
+          <fieldset disabled={formIsDisabled} className="group">
+            <form id={formKey ? `form-${formKey}` : undefined} onSubmit={handleSubmit(handleSaveSubmit)}>
+              <Fieldset
+                title={
+                  isEditing
+                    ? `${entityName} ${entityIndex}`
+                    : `Aggiungi Nuovo ${entityName}`
+                }
+              >
+                {/* Render the specific fields passed as a component */}
+                <FieldsComponent />
 
-              <div className="flex items-center gap-4 pt-4 border-t border-border mt-4 group-disabled:opacity-50">
-                {/* Delete Button */}
-                {isEditing && onDelete && (
-                  <Button
-                    className="ml-auto"
-                    type="button"
-                    variant="destructive"
-                    onClick={handleDelete}
-                    disabled={isDeleteDisabled}
-                    aria-label={`Elimina ${entityName} ${entityIndex}`}
-                  >
-                    {isLoading === "delete" ? (
-                      <Spinner className="h-4 w-4" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                    <span className="hidden sm:inline">Elimina</span>
-                  </Button>
-                )}
-
-                {/* Cancel Button */}
-                <Button
-                  className={!isEditing ? "ml-auto" : ""}
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isSaveOrCancelDisabled}
-                >
-                  <RotateCcw />
-                  <span className="hidden sm:inline">Annulla</span>
-                </Button>
-
-                {/* Save/Add Button */}
-                <Button
-                  type="submit"
-                  disabled={isSaveOrCancelDisabled}
-                  className="gap-1.5 min-w-[100px] sm:min-w-[140px]"
-                >
-                  {isLoading === "submit" ? (
-                    <Spinner className="h-4 w-4 text-foreground" />
-                  ) : (
-                    <Save className="h-4 w-4" />
+                <div className="flex items-center gap-4 pt-4 border-t border-border mt-4 group-disabled:opacity-50">
+                  {/* Delete Button */}
+                  {isEditing && onDelete && (
+                    <Button
+                      className="ml-auto"
+                      type="button"
+                      variant="destructive"
+                      onClick={handleDelete}
+                      disabled={isDeleteDisabled}
+                      aria-label={`Elimina ${entityName} ${entityIndex}`}
+                    >
+                      {isLoading === "delete" ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">Elimina</span>
+                    </Button>
                   )}
-                  <span>{isEditing ? "Salva" : `Aggiungi`}</span>
-                </Button>
-              </div>
-            </Fieldset>
-          </form>
-        </fieldset>
+
+                  {/* Cancel Button */}
+                  <Button
+                    className={!isEditing ? "ml-auto" : ""}
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={isSaveOrCancelDisabled}
+                  >
+                    <RotateCcw />
+                    <span className="hidden sm:inline">Annulla</span>
+                  </Button>
+
+                  {/* Save/Add Button */}
+                  <Button
+                    type="submit"
+                    disabled={isSaveOrCancelDisabled}
+                    className="gap-1.5 min-w-[100px] sm:min-w-[140px]"
+                  >
+                    {isLoading === "submit" ? (
+                      <Spinner className="h-4 w-4 text-foreground" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span>{isEditing ? "Salva" : `Aggiungi`}</span>
+                  </Button>
+                </div>
+              </Fieldset>
+            </form>
+          </fieldset>
+        </FormDisabledContext.Provider>
       </Form>
       {error && <p className="text-destructive mt-2 text-sm">{error}</p>}
     </div>

@@ -12,7 +12,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage, // Import FormMessage for displaying errors
+  FormMessage,
+  useFormDisabled,
 } from "@/components/ui/form";
 import type { CheckedState } from "@radix-ui/react-checkbox"; // Import type for clarity
 
@@ -48,6 +49,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
   fieldsToResetOnUncheck, // Use the updated prop name
 }: CheckboxFieldProps<TFieldValues>) => {
   const { control, setValue } = useFormContext<TFieldValues>();
+  const formDisabled = useFormDisabled();
 
   return (
     <FormField
@@ -91,7 +93,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                     });
                   }
                 }}
-                disabled={disabled}
+                disabled={disabled || formDisabled}
               // Link label and checkbox implicitly via FormItem/FormLabel or explicitly via aria-labelledby if needed
               // aria-label={label} // Can be used if label text isn't sufficient
               />
