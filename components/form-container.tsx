@@ -102,7 +102,6 @@ const FormContainer = ({
   }, [dirtyFormKeys, pendingTab]);
 
   const handleTabChange = (newTab: string) => {
-    console.log('dirtyFormKeys :>> ', dirtyFormKeys);
     if (dirtyFormKeys.size > 0) {
       setPendingTab(newTab);
       setIsUnsavedModalOpen(true);

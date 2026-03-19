@@ -208,5 +208,96 @@ describe("ConfigForm", () => {
         expect(toast.error).toHaveBeenCalledWith("Network error");
       });
     });
+
+    test("shows error toast when configuration data is missing user_id", async () => {
+      const config = { ...makeValidConfig() };
+      // Remove user_id to trigger the "Dati incompleti" branch
+      delete (config as Record<string, unknown>).user_id;
+
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i })
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Dati incompleti per l'aggiornamento."
+        );
+      });
+
+      expect(mockEditAction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Insert submission", () => {
+    test("does not submit new config when required fields are missing", async () => {
+      render(<ConfigForm />);
+
+      // Only fill name, leave other required fields at defaults (undefined)
+      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      await userEvent.type(nameInput, "Nuovo Cliente");
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i })
+      );
+
+      // Validation should prevent submission
+      await waitFor(() => {
+        expect(mockInsertAction).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Dirty state tracking", () => {
+    test("fires onDirtyChange when name is modified", async () => {
+      const onDirtyChange = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="INTERNAL"
+          formKey="config-1"
+          onDirtyChange={onDirtyChange}
+        />
+      );
+
+      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      await userEvent.type(nameInput, " modificato");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("config-1", true);
+      });
+    });
+
+    test("fires onSaved after successful edit", async () => {
+      const onSaved = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="INTERNAL"
+          formKey="config-1"
+          onDirtyChange={vi.fn()}
+          onSaved={onSaved}
+        />
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i })
+      );
+
+      await waitFor(() => {
+        expect(onSaved).toHaveBeenCalledWith("config-1");
+      });
+    });
   });
 });
