@@ -84,6 +84,8 @@ function makeValidConfig(): UpdateConfigSchema {
     has_card_reader: false,
     card_qty: 0,
     is_fast: false,
+    sales_notes: "",
+    engineering_notes: "",
   } as UpdateConfigSchema;
 }
 
@@ -248,6 +250,92 @@ describe("ConfigForm", () => {
       await waitFor(() => {
         expect(mockInsertAction).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe("Notes visibility per role", () => {
+    test("EXTERNAL sees sales notes but not engineering notes", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="EXTERNAL" />
+      );
+
+      expect(
+        screen.getByPlaceholderText("Inserire eventuali note commerciali")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Inserire eventuali note tecniche")
+      ).not.toBeInTheDocument();
+    });
+
+    test("EXTERNAL can edit sales notes", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="EXTERNAL" />
+      );
+
+      const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
+      expect(salesTextarea).not.toBeDisabled();
+    });
+
+    test("INTERNAL sees both notes fields", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+      );
+
+      expect(
+        screen.getByPlaceholderText("Inserire eventuali note commerciali")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Inserire eventuali note tecniche")
+      ).toBeInTheDocument();
+    });
+
+    test("INTERNAL cannot edit sales notes", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+      );
+
+      const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
+      expect(salesTextarea).toBeDisabled();
+    });
+
+    test("INTERNAL can edit engineering notes", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+      );
+
+      const engTextarea = screen.getByPlaceholderText("Inserire eventuali note tecniche");
+      expect(engTextarea).not.toBeDisabled();
+    });
+
+    test("ADMIN sees both notes fields", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ADMIN" />
+      );
+
+      expect(
+        screen.getByPlaceholderText("Inserire eventuali note commerciali")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Inserire eventuali note tecniche")
+      ).toBeInTheDocument();
+    });
+
+    test("ADMIN can edit both sales and engineering notes", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ADMIN" />
+      );
+
+      const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
+      const engTextarea = screen.getByPlaceholderText("Inserire eventuali note tecniche");
+      expect(salesTextarea).not.toBeDisabled();
+      expect(engTextarea).not.toBeDisabled();
     });
   });
 

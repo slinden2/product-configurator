@@ -28,6 +28,9 @@ import { toast } from "sonner";
 import { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
+import Fieldset from "@/components/fieldset";
+import FieldsetContent from "@/components/fieldset-content";
+import TextareaField from "@/components/textarea-field";
 
 interface ConfigurationFormProps {
   id?: number;
@@ -110,6 +113,34 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
               <RailSection />
               <TouchSection />
               <HPPumpSection />
+              <Fieldset
+                title="Note"
+                description="Note aggiuntive per la vendita e l'ufficio tecnico">
+                <FieldsetContent>
+                  {userRole !== "INTERNAL" && (
+                    <TextareaField<ConfigSchema>
+                      name="sales_notes"
+                      label="Note commerciali"
+                      placeholder="Inserire eventuali note commerciali"
+                    />
+                  )}
+                  {userRole === "INTERNAL" && (
+                    <TextareaField<ConfigSchema>
+                      name="sales_notes"
+                      label="Note commerciali"
+                      placeholder="Inserire eventuali note commerciali"
+                      disabled
+                    />
+                  )}
+                  {(userRole === "INTERNAL" || userRole === "ADMIN") && (
+                    <TextareaField<ConfigSchema>
+                      name="engineering_notes"
+                      label="Note tecniche"
+                      placeholder="Inserire eventuali note tecniche"
+                    />
+                  )}
+                </FieldsetContent>
+              </Fieldset>
               <div className="flex gap-4">
                 <BackButton fallbackPath={"/configurations"} />
                 <Button

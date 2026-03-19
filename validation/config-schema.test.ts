@@ -54,6 +54,9 @@ const validBase = {
   has_card_reader: false,
   card_qty: 0,
   is_fast: false,
+  // Notes
+  sales_notes: "",
+  engineering_notes: "",
 };
 
 describe("configSchema", () => {
@@ -137,6 +140,31 @@ describe("configSchema", () => {
       expect(() => configSchema.parse(data)).toThrow(
         "Per un portale fast le rotaie devono essere da 7 metri."
       );
+    });
+  });
+
+  describe("Notes fields", () => {
+    test("should default sales_notes to empty string when omitted", () => {
+      const { sales_notes, ...withoutSalesNotes } = validBase;
+      const result = configSchema.parse(withoutSalesNotes);
+      expect(result.sales_notes).toBe("");
+    });
+
+    test("should default engineering_notes to empty string when omitted", () => {
+      const { engineering_notes, ...withoutEngNotes } = validBase;
+      const result = configSchema.parse(withoutEngNotes);
+      expect(result.engineering_notes).toBe("");
+    });
+
+    test("should accept non-empty notes", () => {
+      const data = {
+        ...validBase,
+        sales_notes: "Note per la vendita",
+        engineering_notes: "Note per l'ufficio tecnico",
+      };
+      const result = configSchema.parse(data);
+      expect(result.sales_notes).toBe("Note per la vendita");
+      expect(result.engineering_notes).toBe("Note per l'ufficio tecnico");
     });
   });
 

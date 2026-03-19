@@ -11,6 +11,8 @@ import { zodEnums } from "./configuration";
 export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
   description: z.string().default(""),
+  sales_notes: z.string().default(""),
+  engineering_notes: z.string().default(""),
 });
 
 export const configSchema = baseSchema
@@ -79,6 +81,8 @@ export type SelectConfigSchema = z.infer<typeof selectConfigSchema>;
 export const configDefaults: ConfigSchema = {
   name: "",
   description: "",
+  sales_notes: "",
+  engineering_notes: "",
   // --- Brush Section ---
   brush_qty: undefined,
   brush_type: undefined,

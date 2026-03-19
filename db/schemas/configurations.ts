@@ -25,6 +25,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  text,
   timestamp,
   uuid,
   varchar,
@@ -111,6 +112,8 @@ export const configurations = pgTable("configurations", {
   has_omz_pump: boolean().notNull(),
   pump_outlet_omz: hpPumpOMZOutletTypeEnum("pump_outlet_omz"),
   has_chemical_roof_bar: boolean().notNull(),
+  sales_notes: text().notNull().default(""),
+  engineering_notes: text().notNull().default(""),
   status: configurationStatusEnum("configuration_status")
     .default("DRAFT")
     .notNull(),

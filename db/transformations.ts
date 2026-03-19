@@ -16,6 +16,8 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
   return {
     name: values.name,
     description: values.description,
+    sales_notes: values.sales_notes,
+    engineering_notes: values.engineering_notes,
 
     // --- NOT NULL in DB (Zod refinement must ensure value exists) ---
     // Assert type as Zod refine guarantees it's not undefined
