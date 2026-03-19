@@ -10,27 +10,20 @@ import React, { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const TouchSection = () => {
-  const { control, resetField } = useFormContext<ConfigSchema>();
+  const { control, setValue } = useFormContext<ConfigSchema>();
   const touchQtyWatch = useWatch({ control, name: "touch_qty" });
   const touchPosWatch = useWatch({ control, name: "touch_pos" });
   const hasItecowebWatch = useWatch({ control, name: "has_itecoweb" });
   const hasCardReaderWatch = useWatch({ control, name: "has_card_reader" });
 
+  // Cross-field condition: reset card_qty only when BOTH itecoweb AND card_reader
+  // are unchecked. This can't be expressed via single-field fieldsToResetOnUncheck
+  // because each checkbox alone shouldn't reset card_qty while the other is checked.
   useEffect(() => {
-    // Resetting card_qty when itecoweb and card_reader are unchecked
     if (!hasItecowebWatch && !hasCardReaderWatch) {
-      resetField("card_qty");
+      setValue("card_qty", 0, { shouldDirty: true });
     }
-  }, [hasItecowebWatch, hasCardReaderWatch, resetField]);
-
-  useEffect(() => {
-    if (
-      touchQtyWatch === 1 &&
-      touchPosWatch === zodEnums.TouchPosEnum.enum.INTERNAL
-    ) {
-      resetField("touch_fixing_type");
-    }
-  }, [touchQtyWatch, touchPosWatch, resetField]);
+  }, [hasItecowebWatch, hasCardReaderWatch, setValue]);
 
   return (
     <Fieldset

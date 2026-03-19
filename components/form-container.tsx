@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ConfigurationStatusType } from "@/types";
+import { ConfigurationStatusType, Role } from "@/types";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -33,6 +34,7 @@ interface ConfigurationFormProps {
   confId?: number;
   configuration?: UpdateConfigSchema;
   confStatus?: ConfigurationStatusType;
+  userRole?: Role;
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
 }
@@ -47,6 +49,7 @@ const FormContainer = ({
   confId,
   configuration,
   confStatus,
+  userRole,
   initialWaterTanks,
   initialWashBays,
 }: ConfigurationFormProps) => {
@@ -64,7 +67,7 @@ const FormContainer = ({
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 640px)");
-  const showAddEntityButton = confStatus === "DRAFT" || confStatus === "OPEN";
+  const showAddEntityButton = !!confStatus && !!userRole && isEditable(confStatus, userRole);
 
   useEffect(() => {
     setWaterTanks(initialWaterTanks || []);
@@ -99,6 +102,7 @@ const FormContainer = ({
   }, [dirtyFormKeys, pendingTab]);
 
   const handleTabChange = (newTab: string) => {
+    console.log('dirtyFormKeys :>> ', dirtyFormKeys);
     if (dirtyFormKeys.size > 0) {
       setPendingTab(newTab);
       setIsUnsavedModalOpen(true);
@@ -192,6 +196,7 @@ const FormContainer = ({
             id={confId}
             configuration={configuration}
             status={confStatus}
+            userRole={userRole}
             formKey="config"
             onDirtyChange={handleDirtyChange}
             onSaved={handleSaved}
@@ -209,6 +214,7 @@ const FormContainer = ({
               key={wt.id}
               confId={confId}
               confStatus={confStatus}
+              userRole={userRole}
               waterTank={wt}
               waterTankIndex={index + 1}
               onDelete={handleDeleteWaterTank}
@@ -224,6 +230,7 @@ const FormContainer = ({
             <WaterTankForm
               confId={confId}
               confStatus={confStatus}
+              userRole={userRole}
               onSaveSuccess={handleSaveSuccess}
               formKey="new-tank"
               onDirtyChange={handleDirtyChange}
@@ -237,8 +244,7 @@ const FormContainer = ({
               <Button
                 className="ml-auto"
                 variant="outline"
-                onClick={() => setShowAddWaterTankForm(true)}
-                disabled={confStatus !== "DRAFT"}>
+                onClick={() => setShowAddWaterTankForm(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Serbatoio
               </Button>
             </div>
@@ -262,6 +268,7 @@ const FormContainer = ({
               key={wb.id}
               confId={confId}
               confStatus={confStatus}
+              userRole={userRole}
               supplyType={configuration?.supply_type}
               washBay={wb}
               washBayIndex={index + 1}
@@ -278,6 +285,7 @@ const FormContainer = ({
             <WashBayForm
               confId={confId}
               confStatus={confStatus}
+              userRole={userRole}
               supplyType={configuration?.supply_type}
               onSaveSuccess={handleSaveSuccess}
               formKey="new-bay"

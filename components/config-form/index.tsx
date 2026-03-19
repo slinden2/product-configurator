@@ -18,7 +18,6 @@ import WaterSupplySection from "@/components/config-form/water-supply-section";
 import RailSection from "@/components/config-form/rail-section";
 import TouchSection from "@/components/config-form/touch-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
-import { DevTool } from "@hookform/devtools"; // DEBUG
 import { Save } from "lucide-react";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
@@ -26,63 +25,61 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ConfigurationStatusType } from "@/types";
+import { ConfigurationStatusType, Role } from "@/types";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
 
 interface ConfigurationFormProps {
   id?: number;
   configuration?: UpdateConfigSchema;
   status?: ConfigurationStatusType;
+  userRole?: Role;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
 }
 
-const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved }: ConfigurationFormProps) => {
+const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChange, onSaved }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
   const router = useRouter();
 
   const isNewConfiguration = !id && !configuration && !status;
 
-  const formIsDisabled = isSubmitting || status !== "DRAFT" && !isNewConfiguration;
+  const formIsDisabled = isSubmitting || (!isNewConfiguration && (!status || !userRole || !isEditable(status, userRole)));
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
-    defaultValues: configuration ?? configDefaults,
+    defaultValues: configuration
+      ? Object.assign({}, configDefaults, configuration)
+      : configDefaults,
   });
 
-  const isTouched = Object.keys(form.formState.touchedFields).length > 0;
   useEffect(() => {
-    if (formKey) onDirtyChange?.(formKey, isTouched);
-  }, [isTouched, formKey, onDirtyChange]);
+    if (formKey) onDirtyChange?.(formKey, form.formState.isDirty);
+  }, [form.formState.isDirty, formKey, onDirtyChange]);
 
   async function onSubmit(values: ConfigSchema) {
-    console.log("🚀 ~ onSubmit ~ values:", values); // DEBUG
     try {
       setIsSubmitting(true);
-      setError("");
 
       if (id) {
         if (!configuration || !("user_id" in configuration)) {
-          setError("Dati incompleti per l'aggiornamento.");
           toast.error("Dati incompleti per l'aggiornamento.");
           setIsSubmitting(false);
           return;
         }
         const result = await editConfigurationAction(id, configuration.user_id, values);
         if (!result.success) {
-          setError(result.error);
           toast.error(result.error);
           setIsSubmitting(false);
           return;
         }
         toast.success("Configurazione aggiornata.");
+        form.reset(values);
         if (formKey) onSaved?.(formKey);
       } else {
         const result = await insertConfigurationAction(values);
         if (!result.success) {
-          setError(result.error);
           toast.error(result.error);
           setIsSubmitting(false);
           return;
@@ -92,9 +89,8 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
       }
       setIsSubmitting(false);
     } catch (err) {
-      console.log("🚀 ~ onSubmit ~ err:", err);
       if (err instanceof Error) {
-        setError(err.message);
+        toast.error(err.message);
       }
       setIsSubmitting(false);
     }
@@ -102,8 +98,6 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
 
   return (
     <div>
-      {/* DEBUG */}
-      {/* <DevTool control={form.control} /> */}
       <Form {...form}>
         <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={formIsDisabled}>
@@ -122,7 +116,6 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
                 variant="destructive"
                 onClick={() => form.reset()}
                 disabled={formIsDisabled}
-              // type="reset"
               >
                 Annulla
               </Button>
@@ -138,7 +131,6 @@ const ConfigForm = ({ id, configuration, status, formKey, onDirtyChange, onSaved
           </fieldset>
         </form>
       </Form>
-      <p className="text-destructive">{error}</p>
     </div>
   );
 };

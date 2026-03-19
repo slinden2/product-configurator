@@ -8,15 +8,22 @@ import { RotateCcw, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import Fieldset from "@/components/fieldset"; // Assuming Fieldset is general purpose
+import Fieldset from "@/components/fieldset";
 import { z } from "zod";
-import { DevTool } from "@hookform/devtools";
-import { ConfigurationStatusType } from "@/types";
+import { ConfigurationStatusType, Role } from "@/types";
+import { isEditable } from "@/app/actions/lib/auth-checks";
+
+// Shared result type for server actions
+interface ActionResult {
+  success: boolean;
+  error?: string;
+}
 
 // --- Generic Props Interface ---
 interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   parentId: number; // ID of the parent (e.g., confId)
   parentStatus: ConfigurationStatusType;
+  userRole?: Role;
   schema: TFormSchema; // Zod schema for validation
   entityDefaults: z.infer<TFormSchema>; // Default values for new entity
   entityData?: z.infer<TFormSchema> & { id: number }; // Optional existing data (must have id)
@@ -27,20 +34,20 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
-  // Server Actions (adjust signatures as needed)
+  // Server Actions
   insertAction: (
     parentId: number,
     values: z.infer<TFormSchema>
-  ) => Promise<any>;
+  ) => Promise<ActionResult>;
   editAction: (
     parentId: number,
     id: number,
     values: z.infer<TFormSchema>
-  ) => Promise<any>;
+  ) => Promise<ActionResult>;
   deleteAction: (
     parentId: number,
     id: number
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<ActionResult>;
   // Component to render the specific fields
   FieldsComponent: React.ComponentType;
 }
@@ -49,6 +56,7 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
 const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   parentId,
   parentStatus,
+  userRole,
   schema,
   entityDefaults,
   entityData,
@@ -73,11 +81,13 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   );
   const [error, setError] = useState<string>("");
 
-  const formIsDisabled = !!isLoading || parentStatus !== "DRAFT";
+  const formIsDisabled = !!isLoading || !userRole || !isEditable(parentStatus, userRole);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: entityData ?? entityDefaults,
+    defaultValues: entityData
+      ? { ...entityDefaults, ...entityData }
+      : entityDefaults,
   });
   const { handleSubmit, reset, formState } = form;
 
@@ -94,12 +104,14 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   // --- Event Handlers ---
   const handleSaveSubmit = useCallback(
     async (values: FormData) => {
-      console.log("🚀 ~ onSubmit ~ values:", values); // DEBUG
       setIsLoading("submit");
       setError("");
       try {
         if (isEditing) {
-          await editAction(parentId, entityData.id, values);
+          const result = await editAction(parentId, entityData.id, values);
+          if (!result.success) {
+            throw new Error(result.error || `Errore durante l'aggiornamento (${entityName}).`);
+          }
           toast.success(
             `${entityName} ${entityIndex ?? ""} aggiornat${entityName === "Pista" ? "a" : "o"
             }.`
@@ -107,7 +119,10 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
           reset(values);
           if (formKey) onSaved?.(formKey);
         } else {
-          await insertAction(parentId, values);
+          const result = await insertAction(parentId, values);
+          if (!result.success) {
+            throw new Error(result.error || `Errore durante la creazione (${entityName}).`);
+          }
           toast.success(
             `${entityName} creat${entityName === "Pista" ? "a" : "o"}.`
           );
@@ -138,6 +153,8 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       insertAction,
       entityDefaults,
       entityName,
+      formKey,
+      onSaved,
     ]
   );
 
@@ -190,7 +207,6 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
 
   return (
     <div>
-      <DevTool control={form.control} />
       <Form {...form}>
         <fieldset disabled={formIsDisabled} className="group">
           <form id={formKey ? `form-${formKey}` : undefined} onSubmit={handleSubmit(handleSaveSubmit)}>

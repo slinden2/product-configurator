@@ -13,11 +13,12 @@ import {
   insertWashBayAction,
 } from "@/app/actions/wash-bay-actions";
 import WashBayFields from "./wash-bay-fields";
-import { ConfigurationStatusType } from "@/types";
+import { ConfigurationStatusType, Role } from "@/types";
 
 interface WashBayFormProps {
   confId: number;
   confStatus: ConfigurationStatusType;
+  userRole?: Role;
   supplyType?: string;
   washBay?: UpdateWashBaySchema;
   washBayIndex?: number;
@@ -42,6 +43,7 @@ const WashBayForm = (props: WashBayFormProps) => {
       entityIndex={props.washBayIndex}
       parentId={props.confId}
       parentStatus={props.confStatus}
+      userRole={props.userRole}
       onDelete={props.onDelete}
       onSaveSuccess={props.onSaveSuccess}
       insertAction={insertWashBayAction}

@@ -39,7 +39,7 @@ const BrushSection = () => {
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="brush_type"
               dataType="string"
               label="Tipo di setole"
@@ -48,7 +48,7 @@ const BrushSection = () => {
             />
           </FieldsetItem>
           <FieldsetItem>
-            <SelectField
+            <SelectField<ConfigSchema>
               name="brush_color"
               dataType="string"
               label="Colore di setole"

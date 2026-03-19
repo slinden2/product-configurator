@@ -112,20 +112,30 @@ describe("ConfigForm", () => {
   });
 
   describe("Disabled state", () => {
-    test("disables the fieldset when status is OPEN", () => {
+    test("disables the fieldset when status is OPEN for EXTERNAL role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="OPEN" />
+        <ConfigForm id={1} configuration={config} status="OPEN" userRole="EXTERNAL" />
       );
 
       const fieldset = document.querySelector("fieldset");
       expect(fieldset).toBeDisabled();
     });
 
+    test("enables the fieldset when status is OPEN for INTERNAL role", () => {
+      const config = makeValidConfig();
+      render(
+        <ConfigForm id={1} configuration={config} status="OPEN" userRole="INTERNAL" />
+      );
+
+      const fieldset = document.querySelector("fieldset");
+      expect(fieldset).not.toBeDisabled();
+    });
+
     test("disables the fieldset when status is LOCKED", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="LOCKED" />
+        <ConfigForm id={1} configuration={config} status="LOCKED" userRole="ADMIN" />
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -135,7 +145,7 @@ describe("ConfigForm", () => {
     test("enables the fieldset when status is DRAFT", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="EXTERNAL" />
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -158,6 +168,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          userRole="INTERNAL"
           formKey="config-1"
         />
       );
@@ -180,12 +191,12 @@ describe("ConfigForm", () => {
       );
     });
 
-    test("displays error text when editConfigurationAction throws", async () => {
+    test("shows error toast when editConfigurationAction fails", async () => {
       mockEditAction.mockResolvedValueOnce({ success: false, error: "Network error" });
       const config = makeValidConfig();
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
       );
 
       const submitButton = screen.getByRole("button", {
@@ -194,7 +205,7 @@ describe("ConfigForm", () => {
       await userEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Network error")).toBeInTheDocument();
+        expect(toast.error).toHaveBeenCalledWith("Network error");
       });
     });
   });

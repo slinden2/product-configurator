@@ -58,6 +58,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
         confId={id}
         configuration={validatedConfiguration}
         confStatus={configuration.status}
+        userRole={user.role}
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}
       />
