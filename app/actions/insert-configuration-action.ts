@@ -19,7 +19,7 @@ export const insertConfigurationAction = async (formData: unknown) => {
   }
 
   try {
-    const newConfig = await insertConfiguration(validation.data);
+    const newConfig = await insertConfiguration(validation.data, user.id);
     revalidatePath("/configurations");
     return { success: true as const, id: newConfig.id };
   } catch (err) {

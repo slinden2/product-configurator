@@ -179,18 +179,36 @@ async function seedDb() {
     configurationFast,
   ];
 
-  const user = await db.query.userProfiles.findFirst({
+  const adminUser = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.email, "samu@itecosrl.com"),
   });
 
-  if (!user) {
+  if (!adminUser) {
     throw new Error("Admin user not found.");
   }
 
+  const externalUser = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.email, "externaltest@itecosrl.com"),
+  });
+
+  if (!externalUser) {
+    throw new Error("External user not found.");
+  }
+
+  const internalUser = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.email, "internaltest@itecosrl.com"),
+  });
+
+  if (!internalUser) {
+    throw new Error("Internal user not found.");
+  }
+
+  const userArr = [adminUser, externalUser, internalUser];
+
   console.log("🌱 Starting seeding...");
 
-  for (const conf of confArr) {
-    const dbData = transformConfigToDbInsert(conf, user.id);
+  for (const [index, conf] of confArr.entries()) {
+    const dbData = transformConfigToDbInsert(conf, userArr[index].id);
     const [inserted] = await db.insert(configurations).values(dbData).returning({ id: configurations.id });
 
     if (conf === configurationComplicated && inserted) {

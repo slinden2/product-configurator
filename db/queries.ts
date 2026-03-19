@@ -148,14 +148,11 @@ export async function getConfiguration(id: number) {
   return response;
 }
 
-export const insertConfiguration = async (newConfiguration: ConfigSchema) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const dbData = transformConfigToDbInsert(newConfiguration, user.id);
+export const insertConfiguration = async (
+  newConfiguration: ConfigSchema,
+  userId: string
+) => {
+  const dbData = transformConfigToDbInsert(newConfiguration, userId);
 
   const [insertedConfiguration] = await db
     .insert(configurations)
@@ -173,41 +170,20 @@ export const updateConfiguration = async (
   confId: number,
   configurationData: UpdateConfigSchema
 ): Promise<{ id: number }> => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
   const setData = transformConfigToDbUpdate(configurationData);
   console.log("setData :>> ", setData); // DEBUG
 
-  const response = await db.transaction(async (tx) => {
-    const condition =
-      user.role !== "ADMIN"
-        ? and(
-          eq(configurations.id, confId),
-          eq(configurations.user_id, user.id)
-        )
-        : eq(configurations.id, confId);
+  const [updatedConfiguration] = await db
+    .update(configurations)
+    .set(setData)
+    .where(eq(configurations.id, confId))
+    .returning({ id: configurations.id });
 
-    const [updatedConfiguration] = await tx
-      .update(configurations)
-      .set(setData)
-      .where(condition)
-      .returning({ id: configurations.id });
+  if (!updatedConfiguration) {
+    throw new QueryError("Configurazione non trovata.", 404);
+  }
 
-    if (!updatedConfiguration) {
-      throw new QueryError(
-        "Configurazione non trovata o non autorizzata per l'aggiornamento.",
-        404
-      );
-    }
-
-    return updatedConfiguration;
-  });
-
-  return response;
+  return updatedConfiguration;
 };
 
 function canTransition(role: Role, from: ConfigurationStatusType, to: ConfigurationStatusType): boolean {
@@ -279,22 +255,6 @@ export const insertWaterTank = async (
   confId: number,
   newWaterTank: WaterTankSchema
 ) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const configuration = await getConfiguration(confId);
-
-  if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
-  }
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-    throw new QueryError("Utente non autorizzato.", 403);
-  }
-
   const dbData = transformWaterTankSchemaToDbData(newWaterTank);
 
   const [id] = await db
@@ -310,22 +270,6 @@ export const updateWaterTank = async (
   waterTankId: number,
   waterTank: WaterTankSchema
 ) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const configuration = await getConfiguration(confId);
-
-  if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
-  }
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-    throw new QueryError("Utente non autorizzato.", 403);
-  }
-
   const dbData = transformWaterTankSchemaToDbData(waterTank);
 
   const [id] = await db
@@ -338,22 +282,6 @@ export const updateWaterTank = async (
 };
 
 export const deleteWaterTank = async (confId: number, waterTankId: number) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const configuration = await getConfiguration(confId);
-
-  if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
-  }
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-    throw new QueryError("Utente non autorizzato.", 403);
-  }
-
   const [id] = await db
     .delete(waterTanks)
     .where(
@@ -371,22 +299,6 @@ export const insertWashBay = async (
   confId: number,
   newWashBay: WashBaySchema
 ) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const configuration = await getConfiguration(confId);
-
-  if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
-  }
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-    throw new QueryError("Utente non autorizzato.", 403);
-  }
-
   const dbData = transformWashBaySchemaToDbData(newWashBay);
 
   const [id] = await db
@@ -402,22 +314,6 @@ export const updateWashBay = async (
   washBayId: number,
   washBay: WashBaySchema
 ) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const configuration = await getConfiguration(confId);
-
-  if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
-  }
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-    throw new QueryError("Utente non autorizzato.", 403);
-  }
-
   const dbData = transformWashBaySchemaToDbData(washBay);
 
   const [id] = await db
@@ -430,22 +326,6 @@ export const updateWashBay = async (
 };
 
 export const deleteWashBay = async (confId: number, washBayId: number) => {
-  const user = await getUserData();
-
-  if (!user) {
-    throw new QueryError("Utente non trovato.", 401);
-  }
-
-  const configuration = await getConfiguration(confId);
-
-  if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
-  }
-
-  if (user.id !== configuration.user_id && user.role !== "ADMIN") {
-    throw new QueryError("Utente non autorizzato.", 403);
-  }
-
   const [id] = await db
     .delete(washBays)
     .where(
