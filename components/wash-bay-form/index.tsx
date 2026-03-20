@@ -27,6 +27,7 @@ interface WashBayFormProps {
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
+  hasEngineeringBom?: boolean;
 }
 
 const WashBayForm = (props: WashBayFormProps) => {
@@ -53,6 +54,7 @@ const WashBayForm = (props: WashBayFormProps) => {
       formKey={props.formKey}
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}
+      hasEngineeringBom={props.hasEngineeringBom}
     />
   );
 };

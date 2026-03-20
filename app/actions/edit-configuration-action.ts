@@ -1,8 +1,10 @@
 "use server";
 
 import {
+  deleteAllEngineeringBomItems,
   getConfigurationWithTanksAndBays,
   getUserData,
+  hasEngineeringBom,
   QueryError,
   updateConfiguration,
 } from "@/db/queries";
@@ -53,7 +55,15 @@ export const editConfigurationAction = async (
 
   try {
     await updateConfiguration(confId, { ...validation.data, user_id: ownerId });
+
+    // Delete engineering BOM if it exists — config changes invalidate the snapshot
+    const ebomExists = await hasEngineeringBom(confId);
+    if (ebomExists) {
+      await deleteAllEngineeringBomItems(confId);
+    }
+
     revalidatePath(`/configurations/edit/${confId}`);
+    revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     if (err instanceof QueryError || err instanceof DatabaseError) {

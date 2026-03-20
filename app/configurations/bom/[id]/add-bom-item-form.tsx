@@ -1,0 +1,262 @@
+"use client";
+
+import {
+  addEngineeringBomItemAction,
+  searchPartNumbersAction,
+} from "@/app/actions/engineering-bom-actions";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { PartNumber } from "@/db/schemas";
+import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+
+interface AddBomItemFormProps {
+  confId: number;
+  category: "GENERAL" | "WATER_TANK" | "WASH_BAY";
+  categoryIndex: number;
+}
+
+const AddBomItemForm = ({
+  confId,
+  category,
+  categoryIndex,
+}: AddBomItemFormProps) => {
+  const [mode, setMode] = useState<"catalog" | "custom">("catalog");
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState<PartNumber[]>([]);
+  const [selectedPn, setSelectedPn] = useState<PartNumber | null>(null);
+  const [qty, setQty] = useState("1");
+  const [isPending, startTransition] = useTransition();
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Custom mode fields
+  const [customPn, setCustomPn] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
+
+  const doSearch = useCallback(async (query: string) => {
+    if (query.trim().length === 0) {
+      setResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const result = await searchPartNumbersAction(query);
+      setResults(result.success ? result.data : []);
+    } catch {
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => doSearch(searchQuery), 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery, doSearch]);
+
+  function handleSelect(pn: PartNumber) {
+    setSelectedPn(pn);
+    setOpen(false);
+    setSearchQuery("");
+  }
+
+  function handleAdd() {
+    const parsedQty = parseInt(qty, 10);
+    if (!Number.isInteger(parsedQty) || parsedQty < 1) {
+      toast.error("Quantità non valida (minimo 1).");
+      return;
+    }
+
+    if (mode === "catalog") {
+      if (!selectedPn) {
+        toast.error("Seleziona un codice articolo.");
+        return;
+      }
+      startTransition(async () => {
+        try {
+          await addEngineeringBomItemAction(confId, {
+            pn: selectedPn.pn,
+            qty: parsedQty,
+            description: selectedPn.description,
+            category,
+            category_index: categoryIndex,
+            is_custom: false,
+          });
+          setSelectedPn(null);
+          setQty("1");
+          toast.success("Riga aggiunta.");
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : "Errore durante l'aggiunta."
+          );
+        }
+      });
+    } else {
+      if (!customPn.trim()) {
+        toast.error("Codice articolo obbligatorio.");
+        return;
+      }
+      startTransition(async () => {
+        try {
+          await addEngineeringBomItemAction(confId, {
+            pn: customPn.trim(),
+            qty: parsedQty,
+            description: customDescription.trim(),
+            category,
+            category_index: categoryIndex,
+            is_custom: true,
+          });
+          setCustomPn("");
+          setCustomDescription("");
+          setQty("1");
+          toast.success("Riga personalizzata aggiunta.");
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : "Errore durante l'aggiunta."
+          );
+        }
+      });
+    }
+  }
+
+  const canAdd =
+    mode === "catalog"
+      ? !!selectedPn
+      : customPn.trim().length > 0;
+
+  return (
+    <div className="space-y-2 px-2 pb-3">
+      <div className="flex items-center gap-2">
+        {mode === "catalog" ? (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-[400px] justify-between font-mono text-sm"
+              >
+                {selectedPn
+                  ? `${selectedPn.pn} — ${selectedPn.description.slice(0, 40)}`
+                  : "Cerca codice articolo..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0" align="start">
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder="Cerca per codice o descrizione (usa % come jolly)..."
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                />
+                <CommandList>
+                  {isSearching ? (
+                    <div className="py-4 text-center text-sm text-muted-foreground">
+                      Ricerca...
+                    </div>
+                  ) : results.length === 0 && searchQuery.trim().length > 0 ? (
+                    <CommandEmpty>Nessun risultato.</CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {results.map((pn) => (
+                        <CommandItem
+                          key={pn.id}
+                          value={pn.pn}
+                          onSelect={() => handleSelect(pn)}
+                          className="font-mono text-xs"
+                        >
+                          <span className="font-semibold mr-2">{pn.pn}</span>
+                          <span className="text-muted-foreground truncate">
+                            {pn.description}
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <>
+            <Input
+              value={customPn}
+              onChange={(e) => setCustomPn(e.target.value)}
+              className="w-[160px] font-mono text-sm"
+              placeholder="Codice"
+              maxLength={25}
+            />
+            <Input
+              value={customDescription}
+              onChange={(e) => setCustomDescription(e.target.value)}
+              className="w-[240px] text-sm"
+              placeholder="Descrizione"
+              maxLength={255}
+            />
+          </>
+        )}
+
+        <Input
+          type="number"
+          min={1}
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          className="w-20 text-center"
+          placeholder="Qtà"
+        />
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAdd}
+          disabled={isPending || !canAdd}
+        >
+          <Plus size={16} />
+          <span>Aggiungi</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setMode(mode === "catalog" ? "custom" : "catalog");
+            setSelectedPn(null);
+            setCustomPn("");
+            setCustomDescription("");
+          }}
+          title={
+            mode === "catalog"
+              ? "Inserimento manuale"
+              : "Cerca da catalogo"
+          }
+        >
+          <Pencil size={14} />
+          <span className="text-xs">
+            {mode === "catalog" ? "Manuale" : "Catalogo"}
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default AddBomItemForm;

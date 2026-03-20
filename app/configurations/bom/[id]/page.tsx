@@ -1,15 +1,30 @@
-import BOMDataTable from "@/app/configurations/bom/[id]/bom-data-table";
+import {
+  buildEbomCostExportData,
+  buildEbomExportData,
+  getEarliestCreatedAt,
+  groupEbomByCategory,
+} from "@/app/configurations/bom/[id]/bom-helpers";
+import {
+  GeneralSection,
+  SubRecordSection,
+} from "@/app/configurations/bom/[id]/bom-section-cards";
 import ExportButton from "@/app/configurations/bom/[id]/export-button";
 import MetaDataTable from "@/app/configurations/bom/[id]/meta-data-table";
+import RegenerateButton from "@/app/configurations/bom/[id]/regenerate-button";
+import SnapshotButton from "@/app/configurations/bom/[id]/snapshot-button";
 import BackButton from "@/components/back-button";
-import BOMCard from "@/components/bom-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getBOM, getUserData } from "@/db/queries";
+import {
+  getBOM,
+  getConfiguration,
+  getEngineeringBomItems,
+  getUserData,
+  hasEngineeringBom,
+} from "@/db/queries";
 import { Edit } from "lucide-react";
 import Link from "next/link";
-import { Fragment } from "react";
 import ExportCostsButton from "./export-costs-button";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 
 interface BOMViewProps {
   params: Promise<{ id: string }>;
@@ -23,26 +38,38 @@ const BOMView = async (props: BOMViewProps) => {
   }
 
   const params = await props.params;
-  const bom = await getBOM(parseInt(params.id));
+  const confId = parseInt(params.id);
+  const bom = await getBOM(confId);
 
   if (!bom) return <div>La distinta non è disponibile.</div>;
+
+  const configuration = await getConfiguration(confId);
+  if (!configuration) return <div>Configurazione non trovata.</div>;
 
   const clientName = bom.getClientName();
   const description = bom.getDescription();
   const { generalBOM, waterTankBOMs, washBayBOMs } =
     await bom.buildCompleteBOM();
 
-  const exportData = bom.generateExportData(
-    generalBOM,
-    waterTankBOMs,
-    washBayBOMs
-  );
+  const hasEbom = await hasEngineeringBom(confId);
+  const ebomItems = hasEbom ? await getEngineeringBomItems(confId) : [];
+  const activeEbomItems = ebomItems.filter((i) => !i.is_deleted);
 
-  const exportCostsData = await bom.generateCostExportData(
-    generalBOM,
-    waterTankBOMs,
-    washBayBOMs
-  );
+  const editable = isEditable(configuration.status, user.role);
+
+  // Group engineering BOM items by category
+  const ebomGrouped = groupEbomByCategory(ebomItems);
+
+  // Build export data from either engineering or calculated BOM
+  const exportData = hasEbom
+    ? buildEbomExportData(activeEbomItems)
+    : bom.generateExportData(generalBOM, waterTankBOMs, washBayBOMs);
+
+  const exportCostsData = hasEbom
+    ? await buildEbomCostExportData(activeEbomItems)
+    : await bom.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
+
+  const ebomCreatedAt = getEarliestCreatedAt(ebomItems);
 
   return (
     <div className="space-y-6">
@@ -58,56 +85,57 @@ const BOMView = async (props: BOMViewProps) => {
               <span>Modifica</span>
             </Link>
           </Button>
+          {!hasEbom && editable && <SnapshotButton confId={confId} />}
+          {hasEbom && editable && <RegenerateButton confId={confId} />}
           <ExportButton exportData={exportData} />
           <ExportCostsButton exportData={exportCostsData} user={user} />
         </div>
       </div>
-      <MetaDataTable clientName={clientName} description={description || ""} />
-      <BOMCard title="Distinta generale">
-        <BOMDataTable items={generalBOM} />
-      </BOMCard>
 
-      {waterTankBOMs.length > 0 && (
-        <Card>
-          <>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                Serbatoi (n. {waterTankBOMs.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {waterTankBOMs.map((bom, key) => (
-                <Fragment key={key}>
-                  <BOMCard title={`Distinta serbatoio ${key + 1}`}>
-                    <BOMDataTable items={bom} />
-                  </BOMCard>
-                </Fragment>
-              ))}
-            </CardContent>
-          </>
-        </Card>
+      <MetaDataTable
+        clientName={clientName}
+        description={description || ""}
+      />
+
+      {hasEbom && ebomCreatedAt && (
+        <p className="text-sm text-muted-foreground">
+          Distinta ingegneria generata il{" "}
+          {ebomCreatedAt.toLocaleDateString("it-IT", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
       )}
 
-      {washBayBOMs.length > 0 && (
-        <Card>
-          <>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                Piste (n. {washBayBOMs.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {washBayBOMs.map((bom, key) => (
-                <Fragment key={key}>
-                  <BOMCard title={`Distinta pista ${key + 1}`}>
-                    <BOMDataTable items={bom} />
-                  </BOMCard>
-                </Fragment>
-              ))}
-            </CardContent>
-          </>
-        </Card>
-      )}
+      <GeneralSection
+        engineeringItems={hasEbom ? ebomGrouped.general : undefined}
+        calculatedItems={hasEbom ? undefined : generalBOM}
+        confId={confId}
+        editable={editable}
+      />
+
+      <SubRecordSection
+        title="Serbatoi"
+        itemLabel="Distinta serbatoio"
+        engineeringMap={hasEbom ? ebomGrouped.waterTanks : undefined}
+        calculatedBOMs={hasEbom ? undefined : waterTankBOMs}
+        category="WATER_TANK"
+        confId={confId}
+        editable={editable}
+      />
+
+      <SubRecordSection
+        title="Piste"
+        itemLabel="Distinta pista"
+        engineeringMap={hasEbom ? ebomGrouped.washBays : undefined}
+        calculatedBOMs={hasEbom ? undefined : washBayBOMs}
+        category="WASH_BAY"
+        confId={confId}
+        editable={editable}
+      />
     </div>
   );
 };

@@ -1,13 +1,15 @@
 import { db } from "@/db";
 import {
   configurations,
+  engineeringBomItems,
+  NewEngineeringBomItem,
   partNumbers,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, ilike, sql } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import {
   UpdateConfigSchema,
@@ -352,4 +354,50 @@ export async function getPartNumbersByArray(array: string[]) {
     where: inArray(partNumbers.pn, array),
   });
   return response;
+}
+
+// --- Engineering BOM ---
+
+export async function getEngineeringBomItems(confId: number) {
+  return db.query.engineeringBomItems.findMany({
+    where: eq(engineeringBomItems.configuration_id, confId),
+    orderBy: [
+      asc(engineeringBomItems.category),
+      asc(engineeringBomItems.category_index),
+      asc(engineeringBomItems.sort_order),
+    ],
+  });
+}
+
+export async function hasEngineeringBom(confId: number) {
+  const result = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(engineeringBomItems)
+    .where(eq(engineeringBomItems.configuration_id, confId));
+  return (result[0]?.count ?? 0) > 0;
+}
+
+export async function insertEngineeringBomItems(
+  items: NewEngineeringBomItem[]
+) {
+  if (items.length === 0) return;
+  await db.insert(engineeringBomItems).values(items);
+}
+
+export async function deleteAllEngineeringBomItems(confId: number) {
+  await db
+    .delete(engineeringBomItems)
+    .where(eq(engineeringBomItems.configuration_id, confId));
+}
+
+export async function searchPartNumbers(query: string, limit = 20) {
+  const pattern = query.includes("%") ? query : `%${query}%`;
+  return db.query.partNumbers.findMany({
+    where: or(
+      ilike(partNumbers.pn, pattern),
+      ilike(partNumbers.description, pattern)
+    ),
+    limit,
+    orderBy: [asc(partNumbers.pn)],
+  });
 }

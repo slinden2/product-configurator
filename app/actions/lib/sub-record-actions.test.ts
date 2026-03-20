@@ -5,10 +5,15 @@ import { z } from "zod";
 
 const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
+const mockHasEngineeringBom = vi.fn();
+const mockDeleteAllEngineeringBomItems = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
+  hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
+  deleteAllEngineeringBomItems: (...args: unknown[]) =>
+    mockDeleteAllEngineeringBomItems(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -77,6 +82,8 @@ describe("handleSubRecordAction", () => {
       initials: "TU",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig());
+    mockHasEngineeringBom.mockResolvedValue(false);
+    mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
   });
 
   // --- Insert ---

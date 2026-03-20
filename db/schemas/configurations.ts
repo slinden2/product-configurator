@@ -1,3 +1,4 @@
+import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
 import { userProfiles } from "@/db/schemas/user-profiles";
 import { WashBay, washBays } from "@/db/schemas/wash-bays";
 import { WaterTank, waterTanks } from "@/db/schemas/water-tanks";
@@ -138,5 +139,6 @@ export const configurationsRelations = relations(
     }),
     water_tanks: many(waterTanks),
     wash_bays: many(washBays),
+    engineering_bom_items: many(engineeringBomItems),
   })
 );

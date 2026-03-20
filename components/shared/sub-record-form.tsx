@@ -1,10 +1,20 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcw, Save, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
@@ -49,6 +59,7 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
     parentId: number,
     id: number
   ) => Promise<ActionResult>;
+  hasEngineeringBom?: boolean;
   // Component to render the specific fields
   FieldsComponent: React.ComponentType;
 }
@@ -71,6 +82,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   insertAction,
   editAction,
   deleteAction,
+  hasEngineeringBom,
   FieldsComponent, // Destructure the FieldsComponent
 }: SubRecordFormProps<TFormSchema>) => {
   // Infer the TS type from the Zod schema
@@ -81,6 +93,9 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     false
   );
   const [error, setError] = useState<string>("");
+  const [showBomWarning, setShowBomWarning] = useState(false);
+  const pendingValuesRef = useRef<FormData | null>(null);
+  const pendingActionRef = useRef<"save" | "delete" | null>(null);
 
   const formIsDisabled = !!isLoading || !userRole || !isEditable(parentStatus, userRole);
 
@@ -103,7 +118,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   const isDeleteDisabled = formIsDisabled;
 
   // --- Event Handlers ---
-  const handleSaveSubmit = useCallback(
+  const executeSave = useCallback(
     async (values: FormData) => {
       setIsLoading("submit");
       setError("");
@@ -159,11 +174,21 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     ]
   );
 
-  const handleDelete = useCallback(async () => {
+  const handleSaveSubmit = useCallback(
+    async (values: FormData) => {
+      if (hasEngineeringBom) {
+        pendingValuesRef.current = values;
+        pendingActionRef.current = "save";
+        setShowBomWarning(true);
+        return;
+      }
+      await executeSave(values);
+    },
+    [hasEngineeringBom, executeSave]
+  );
+
+  const executeDelete = useCallback(async () => {
     if (!isEditing || !onDelete) return;
-    const confirmMessage = `Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""
-      }?`;
-    if (!window.confirm(confirmMessage)) return;
 
     setIsLoading("delete");
     setError("");
@@ -197,6 +222,33 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     deleteAction,
     entityName,
   ]);
+
+  const handleDelete = useCallback(async () => {
+    if (!isEditing || !onDelete) return;
+    const confirmMessage = `Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""
+      }?`;
+    if (!window.confirm(confirmMessage)) return;
+
+    if (hasEngineeringBom) {
+      pendingActionRef.current = "delete";
+      setShowBomWarning(true);
+      return;
+    }
+    await executeDelete();
+  }, [isEditing, onDelete, entityName, entityIndex, hasEngineeringBom, executeDelete]);
+
+  const handleBomWarningConfirm = useCallback(() => {
+    setShowBomWarning(false);
+    if (pendingActionRef.current === "save" && pendingValuesRef.current) {
+      const values = pendingValuesRef.current;
+      pendingValuesRef.current = null;
+      pendingActionRef.current = null;
+      executeSave(values);
+    } else if (pendingActionRef.current === "delete") {
+      pendingActionRef.current = null;
+      executeDelete();
+    }
+  }, [executeSave, executeDelete]);
 
   const handleCancel = useCallback(() => {
     reset(entityData ?? entityDefaults);
@@ -274,6 +326,33 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         </FormDisabledContext.Provider>
       </Form>
       {error && <p className="text-destructive mt-2 text-sm">{error}</p>}
+      <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Distinta ingegneria presente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Salvando le modifiche alla configurazione, la distinta ingegneria
+              verrà eliminata e dovrà essere rigenerata. Continuare?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                pendingValuesRef.current = null;
+                pendingActionRef.current = null;
+              }}
+            >
+              Annulla
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBomWarningConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Salva e elimina distinta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

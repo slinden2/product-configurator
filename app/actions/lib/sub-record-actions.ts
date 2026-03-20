@@ -1,7 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { getUserData, getConfiguration, QueryError } from "@/db/queries";
+import {
+  getUserData,
+  getConfiguration,
+  QueryError,
+  hasEngineeringBom,
+  deleteAllEngineeringBomItems,
+} from "@/db/queries";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
@@ -136,12 +142,17 @@ export async function handleSubRecordAction<TFormSchema extends z.ZodTypeAny>(
         throw new Error("Azione non valida.");
     }
 
-    // --- 5. Cache Revalidation ---
-    revalidatePath(revalidatePathStr);
+    // --- 5. Delete engineering BOM if it exists — config changes invalidate the snapshot ---
+    const ebomExists = await hasEngineeringBom(parentId);
+    if (ebomExists) {
+      await deleteAllEngineeringBomItems(parentId);
+    }
 
-    // --- 6. Return Success ---
-    // Return minimal success or specific data if needed (e.g., new ID from insert)
-    // Delete action already returns { success: true } implicitly if no error thrown
+    // --- 6. Cache Revalidation ---
+    revalidatePath(revalidatePathStr);
+    revalidatePath(`/configurations/bom/${parentId}`);
+
+    // --- 7. Return Success ---
     return { success: true, data: result };
   } catch (err) {
     // --- 7. Error Handling ---

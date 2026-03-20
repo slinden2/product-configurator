@@ -1,6 +1,10 @@
 import React from "react";
 import { updateConfigSchema } from "@/validation/config-schema";
-import { getConfigurationWithTanksAndBays, getUserData } from "@/db/queries";
+import {
+  getConfigurationWithTanksAndBays,
+  getUserData,
+  hasEngineeringBom,
+} from "@/db/queries";
 import FormContainer from "@/components/form-container";
 import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
@@ -41,6 +45,8 @@ const EditConfiguration = async (props: EditConfigProps) => {
     updateWashBaySchema.parse(transformDbNullToUndefined(wb))
   );
 
+  const ebomExists = await hasEngineeringBom(id);
+
   return (
     <div>
       <div className="mb-6 sm:flex sm:gap-2">
@@ -61,6 +67,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
         userRole={user.role}
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}
+        hasEngineeringBom={ebomExists}
       />
     </div>
   );

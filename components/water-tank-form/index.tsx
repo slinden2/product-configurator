@@ -26,6 +26,7 @@ interface WaterTankFormProps {
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
+  hasEngineeringBom?: boolean;
 }
 
 const WaterTankForm = (props: WaterTankFormProps) => {
@@ -48,6 +49,7 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       formKey={props.formKey}
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}
+      hasEngineeringBom={props.hasEngineeringBom}
     />
   );
 };

@@ -37,6 +37,7 @@ interface ConfigurationFormProps {
   userRole?: Role;
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
+  hasEngineeringBom?: boolean;
 }
 
 const TABS_CONFIG = [
@@ -52,6 +53,7 @@ const FormContainer = ({
   userRole,
   initialWaterTanks,
   initialWashBays,
+  hasEngineeringBom,
 }: ConfigurationFormProps) => {
   const [waterTanks, setWaterTanks] = useState<UpdateWaterTankSchema[]>(
     initialWaterTanks || []
@@ -199,6 +201,7 @@ const FormContainer = ({
             formKey="config"
             onDirtyChange={handleDirtyChange}
             onSaved={handleSaved}
+            hasEngineeringBom={hasEngineeringBom}
           />
         </TabsContent>
 
@@ -221,6 +224,7 @@ const FormContainer = ({
               formKey={wt.id?.toString() ?? `tank-${index}`}
               onDirtyChange={handleDirtyChange}
               onSaved={handleSaved}
+              hasEngineeringBom={hasEngineeringBom}
             />
           ))}
 
@@ -234,6 +238,7 @@ const FormContainer = ({
               formKey="new-tank"
               onDirtyChange={handleDirtyChange}
               onSaved={handleSaved}
+              hasEngineeringBom={hasEngineeringBom}
             />
           )}
 
@@ -276,6 +281,7 @@ const FormContainer = ({
               formKey={wb.id?.toString() ?? `bay-${index}`}
               onDirtyChange={handleDirtyChange}
               onSaved={handleSaved}
+              hasEngineeringBom={hasEngineeringBom}
             />
           ))}
 
@@ -290,6 +296,7 @@ const FormContainer = ({
               formKey="new-bay"
               onDirtyChange={handleDirtyChange}
               onSaved={handleSaved}
+              hasEngineeringBom={hasEngineeringBom}
             />
           )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import {
   configDefaults,
@@ -21,6 +21,16 @@ import HPPumpSection from "@/components/config-form/hp-pump-section";
 import { Save } from "lucide-react";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
@@ -40,10 +50,13 @@ interface ConfigurationFormProps {
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
+  hasEngineeringBom?: boolean;
 }
 
-const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChange, onSaved }: ConfigurationFormProps) => {
+const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChange, onSaved, hasEngineeringBom }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showBomWarning, setShowBomWarning] = useState(false);
+  const pendingValuesRef = useRef<ConfigSchema | null>(null);
   const router = useRouter();
 
   const isNewConfiguration = !id && !configuration && !status;
@@ -61,7 +74,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
     if (formKey) onDirtyChange?.(formKey, form.formState.isDirty);
   }, [form.formState.isDirty, formKey, onDirtyChange]);
 
-  async function onSubmit(values: ConfigSchema) {
+  async function executeSubmit(values: ConfigSchema) {
     try {
       setIsSubmitting(true);
 
@@ -96,6 +109,24 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
         toast.error(err.message);
       }
       setIsSubmitting(false);
+    }
+  }
+
+  async function onSubmit(values: ConfigSchema) {
+    if (hasEngineeringBom && id) {
+      pendingValuesRef.current = values;
+      setShowBomWarning(true);
+      return;
+    }
+    await executeSubmit(values);
+  }
+
+  function handleBomWarningConfirm() {
+    setShowBomWarning(false);
+    if (pendingValuesRef.current) {
+      const values = pendingValuesRef.current;
+      pendingValuesRef.current = null;
+      executeSubmit(values);
     }
   }
 
@@ -164,6 +195,30 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           </FormDisabledContext.Provider>
         </form>
       </Form>
+      <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Distinta ingegneria presente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Salvando le modifiche alla configurazione, la distinta ingegneria
+              verrà eliminata e dovrà essere rigenerata. Continuare?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => { pendingValuesRef.current = null; }}
+            >
+              Annulla
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBomWarningConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Salva e elimina distinta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

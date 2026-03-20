@@ -8,6 +8,8 @@ import { WashBaySchema } from "@/validation/wash-bay-schema";
 const configurationSimple: ConfigSchema = {
   name: "Cliente 1",
   description: "Tre spazzole semplice",
+  sales_notes: "",
+  engineering_notes: "",
   brush_qty: 3,
   brush_type: "THREAD",
   brush_color: "BLUE_SILVER",
@@ -54,6 +56,8 @@ const configurationSimple: ConfigSchema = {
 const configurationComplicated: ConfigSchema = {
   name: "Cliente 2",
   description: "Tre spazzole complesso",
+  sales_notes: "",
+  engineering_notes: "",
   brush_qty: 3,
   brush_type: "THREAD",
   brush_color: "BLUE_SILVER",
@@ -113,6 +117,8 @@ const getWashBayComplicated = (id: number): WashBaySchema & { configuration_id: 
 const configurationFast: ConfigSchema = {
   name: "Cliente 3",
   description: "Portale fast a due spazzole",
+  sales_notes: "",
+  engineering_notes: "",
   brush_qty: 2,
   brush_type: "THREAD",
   brush_color: "BLUE_SILVER",
