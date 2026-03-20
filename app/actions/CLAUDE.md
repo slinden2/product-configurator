@@ -22,4 +22,25 @@ Actions must always return an object with this structure:
 - Auth: `Non autorizzato.`
 - Not Found: `Record non trovato.` or `Configurazione non trovata.`
 - Frozen State: `Non è possibile modificare una configurazione in questo stato.`
+- BOM Auth: `Non autorizzato a modificare la distinta ingegneria.`
 - Default: `Si è verificato un errore imprevisto.`
+
+## BOM Cascade Invalidation
+When a configuration is edited, the engineering BOM snapshot becomes stale. Any action that mutates configuration data must:
+1. Check `hasEngineeringBom(confId)` after the mutation succeeds.
+2. If true, call `deleteAllEngineeringBomItems(confId)` to invalidate the snapshot.
+3. Revalidate the BOM page path: `revalidatePath(/configurations/bom/${confId})`.
+
+This applies to `editConfigurationAction` and any new action that changes configuration fields used by BOM rules.
+
+## Transactions
+Use `db.transaction(async (tx) => { ... })` when a mutation involves multiple dependent DB operations that must succeed or fail atomically. Example: BOM regenerate (delete all items + insert new items). Use `tx` (not `db`) for all operations inside the callback.
+
+## Standard revalidatePath Targets
+After mutations, invalidate all affected routes:
+- `/configurations` — list page (status/name may have changed)
+- `/configurations/edit/${confId}` — detail/edit page
+- `/configurations/bom/${confId}` — BOM page (if config data or BOM changed)
+
+## Shared Authorization Helpers
+When multiple actions in one file share the same auth logic, extract it into a local helper (e.g., `authorizeEngineeringBomAction()` in `engineering-bom-actions.ts`). This avoids duplicating the validate → auth → permissions chain across every export.
