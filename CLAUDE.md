@@ -43,6 +43,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`
 - `types/index.ts` — All enums and shared types (BrushType, WaterType, ConfigurationStatus, etc.)
 - `lib/BOM/` — BOM generation in the UI and also with ExcelJS
+  - **`BOM_RULES_VERSION`** (`lib/BOM/max-bom/index.ts`): Must be bumped every time any rule file under `lib/BOM/max-bom/` is modified. This version is stored on engineering BOM snapshots so engineers can identify which rule set produced the BOM and whether it is outdated. The version number in this format: YYYYMMDD.
 
 ### Data Flow & Synchronization
 We follow a strict "Action-Validation-Mutation-Sync" loop:
