@@ -44,3 +44,10 @@ After mutations, invalidate all affected routes:
 
 ## Shared Authorization Helpers
 When multiple actions in one file share the same auth logic, extract it into a local helper (e.g., `authorizeEngineeringBomAction()` in `engineering-bom-actions.ts`). This avoids duplicating the validate → auth → permissions chain across every export.
+
+## Data Flow & Frontend Sync
+Server Actions are the only mutation path. The full loop is: **Input → Mutation (Server Action) → Database → Sync**.
+
+- **Form Sync:** The UI must rely on the returned `data` from the Server Action to reset React Hook Form state. Do not manually patch form state after a mutation — always `form.reset(returnedData)`.
+- **Frontend consumption:** `sonner` toast displays `error` on failure; form resets with returned `data` on success.
+- **Conflict Resolution:** If a mutation fails due to `ConfigurationStatus` (e.g., attempt to edit a `LOCKED` record), the action must return a structured error for `sonner` to display.

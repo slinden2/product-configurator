@@ -1,4 +1,14 @@
-# Form Implementation Rules
+# Form Architecture & Implementation Rules
+
+## Architecture Overview
+- **ConfigForm** is the main form, composed of 8 section components (General, Brush, ChemPump, WaterSupply, Supply, Rail, Touch, HPPump)
+- **SubRecordForm** (`components/shared/sub-record-form.tsx`) — generic, schema-inferred form wrapper for water tanks and wash bays (create/update/delete)
+- **SelectField** handles string↔number/boolean type conversion; supports `fieldsToResetOnValue` for dependent field clearing
+- **CheckboxField** resets dependent fields on uncheck via `fieldsToReset`
+- **FormContainer** manages tabs (config / water tanks / wash bays), tracks dirty state across forms, prompts on unsaved changes
+- **Shared utilities:** `NOT_SELECTED_VALUE`/`NOT_SELECTED_LABEL` (sentinel for empty selects), `withNoSelection()` (prepends empty option), `generateSelectOptionsFromZodEnum()` (maps Zod enum values to Italian labels), `getNumericSelectOptions()` (numeric array → options)
+
+## Implementation Rules
 
 When editing any file in `components/config-form/` or using `SubRecordForm`:
 
