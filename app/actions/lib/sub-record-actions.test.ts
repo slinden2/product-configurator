@@ -58,13 +58,13 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function baseOptions(overrides: Record<string, unknown> = {}) {
+function insertOptions(overrides: Record<string, unknown> = {}) {
   return {
     actionType: "insert" as const,
     parentId: PARENT_ID,
     formData: { value: "test" },
     schema: testSchema,
-    insertQueryFn: vi.fn().mockResolvedValue({ id: 99 }),
+    queryFn: vi.fn().mockResolvedValue({ success: true, id: { id: 99 } }),
     revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
     entityName: "TestEntity",
     ...overrides,
@@ -89,125 +89,101 @@ describe("handleSubRecordAction", () => {
   // --- Insert ---
 
   test("insert: succeeds with valid data", async () => {
-    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: 99 } });
+    const result = await handleSubRecordAction(insertOptions({ queryFn }));
+    expect(result).toEqual({
+      success: true,
+      data: { success: true, id: { id: 99 } },
+    });
+    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, { value: "test" });
+  });
+
+  test("insert: returns error on invalid form data", async () => {
     const result = await handleSubRecordAction(
-      baseOptions({ insertQueryFn: insertFn })
+      insertOptions({ formData: { value: "" } })
     );
-    expect(result).toEqual({ success: true, data: { id: 99 } });
-    expect(insertFn).toHaveBeenCalledWith(PARENT_ID, { value: "test" });
-  });
-
-  test("insert: throws on invalid form data", async () => {
-    await expect(
-      handleSubRecordAction(baseOptions({ formData: { value: "" } }))
-    ).rejects.toThrow();
-  });
-
-  test("insert: throws when schema/formData missing", async () => {
-    await expect(
-      handleSubRecordAction(
-        baseOptions({ schema: undefined, formData: undefined })
-      )
-    ).rejects.toThrow("Schema and formData are required");
+    expect(result.success).toBe(false);
   });
 
   // --- Edit ---
 
   test("edit: succeeds with valid data", async () => {
-    const updateFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    const result = await handleSubRecordAction(
-      baseOptions({
-        actionType: "edit",
-        recordId: RECORD_ID,
-        updateQueryFn: updateFn,
-      })
-    );
-    expect(result).toEqual({ success: true, data: { id: RECORD_ID } });
-    expect(updateFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID, {
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const result = await handleSubRecordAction({
+      actionType: "edit",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      formData: { value: "test" },
+      schema: testSchema,
+      queryFn,
+      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      entityName: "TestEntity",
+    });
+    expect(result).toEqual({
+      success: true,
+      data: { success: true, id: { id: RECORD_ID } },
+    });
+    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID, {
       value: "test",
     });
-  });
-
-  test("edit: throws when recordId missing", async () => {
-    await expect(
-      handleSubRecordAction(
-        baseOptions({
-          actionType: "edit",
-          updateQueryFn: vi.fn(),
-        })
-      )
-    ).rejects.toThrow("Record ID mancante");
   });
 
   // --- Delete ---
 
   test("delete: succeeds", async () => {
-    const deleteFn = vi.fn().mockResolvedValue({ success: true });
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
     const result = await handleSubRecordAction({
       actionType: "delete",
       parentId: PARENT_ID,
       recordId: RECORD_ID,
-      deleteQueryFn: deleteFn,
+      queryFn,
       revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
       entityName: "TestEntity",
     });
-    expect(result).toEqual({ success: true, data: { success: true } });
-    expect(deleteFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID);
-  });
-
-  test("delete: throws when deleteFn returns failure", async () => {
-    const deleteFn = vi
-      .fn()
-      .mockResolvedValue({ success: false, error: "Not found" });
-    await expect(
-      handleSubRecordAction({
-        actionType: "delete",
-        parentId: PARENT_ID,
-        recordId: RECORD_ID,
-        deleteQueryFn: deleteFn,
-        revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
-        entityName: "TestEntity",
-      })
-    ).rejects.toThrow("Not found");
-  });
-
-  test("delete: throws when recordId missing", async () => {
-    await expect(
-      handleSubRecordAction({
-        actionType: "delete",
-        parentId: PARENT_ID,
-        deleteQueryFn: vi.fn(),
-        revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
-        entityName: "TestEntity",
-      })
-    ).rejects.toThrow("Record ID mancante");
+    expect(result).toEqual({
+      success: true,
+      data: { success: true, id: { id: RECORD_ID } },
+    });
+    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID);
   });
 
   // --- Auth ---
 
-  test("throws when user is not authenticated", async () => {
+  test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
-    await expect(handleSubRecordAction(baseOptions())).rejects.toThrow(
-      "Utente non trovato"
-    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringContaining("Utente non trovato"),
+    });
   });
 
-  test("throws when configuration not found", async () => {
+  test("returns error when configuration not found", async () => {
     mockGetConfiguration.mockResolvedValue(undefined);
-    await expect(handleSubRecordAction(baseOptions())).rejects.toThrow(
-      "Configurazione associata non trovata"
-    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringContaining("Configurazione associata non trovata"),
+    });
   });
 
-  test("throws when EXTERNAL user tries to modify another's config", async () => {
+  test("returns error when EXTERNAL user tries to modify another's config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "other-user",
       role: "EXTERNAL",
       initials: "OU",
     });
-    await expect(handleSubRecordAction(baseOptions())).rejects.toThrow(
-      "Non autorizzato"
-    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringContaining("Non autorizzato"),
+    });
   });
 
   test("INTERNAL user can modify another user's config", async () => {
@@ -216,27 +192,31 @@ describe("handleSubRecordAction", () => {
       role: "INTERNAL",
       initials: "IU",
     });
-    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
-    const result = await handleSubRecordAction(
-      baseOptions({ insertQueryFn: insertFn })
-    );
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: 99 } });
+    const result = await handleSubRecordAction(insertOptions({ queryFn }));
     expect(result.success).toBe(true);
   });
 
   // --- Status protection ---
 
-  test("throws when config is LOCKED", async () => {
+  test("returns error when config is LOCKED", async () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "LOCKED" }));
-    await expect(handleSubRecordAction(baseOptions())).rejects.toThrow(
-      "Non è possibile modificare"
-    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringContaining("Non è possibile modificare"),
+    });
   });
 
-  test("throws when config is CLOSED", async () => {
+  test("returns error when config is CLOSED", async () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "CLOSED" }));
-    await expect(handleSubRecordAction(baseOptions())).rejects.toThrow(
-      "Non è possibile modificare"
-    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringContaining("Non è possibile modificare"),
+    });
   });
 
   test("EXTERNAL cannot modify sub-records of OPEN config", async () => {
@@ -246,48 +226,55 @@ describe("handleSubRecordAction", () => {
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "OPEN" }));
-    await expect(handleSubRecordAction(baseOptions())).rejects.toThrow(
-      "Non è possibile modificare"
-    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringContaining("Non è possibile modificare"),
+    });
   });
 
   // --- Engineering BOM auto-invalidation ---
 
   test("deletes engineering BOM when it exists after successful insert", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
-    await handleSubRecordAction(baseOptions({ insertQueryFn: insertFn }));
+    await handleSubRecordAction(insertOptions());
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
   });
 
   test("does NOT delete engineering BOM when it does not exist", async () => {
     mockHasEngineeringBom.mockResolvedValue(false);
-    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
-    await handleSubRecordAction(baseOptions({ insertQueryFn: insertFn }));
+    await handleSubRecordAction(insertOptions());
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
   });
 
   test("deletes engineering BOM after successful edit", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const updateFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    await handleSubRecordAction(
-      baseOptions({
-        actionType: "edit",
-        recordId: RECORD_ID,
-        updateQueryFn: updateFn,
-      })
-    );
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    await handleSubRecordAction({
+      actionType: "edit",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      formData: { value: "test" },
+      schema: testSchema,
+      queryFn,
+      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      entityName: "TestEntity",
+    });
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
   });
 
   test("deletes engineering BOM after successful delete", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const deleteFn = vi.fn().mockResolvedValue({ success: true });
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
     await handleSubRecordAction({
       actionType: "delete",
       parentId: PARENT_ID,
       recordId: RECORD_ID,
-      deleteQueryFn: deleteFn,
+      queryFn,
       revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
       entityName: "TestEntity",
     });
@@ -296,8 +283,7 @@ describe("handleSubRecordAction", () => {
 
   test("revalidates BOM path after sub-record mutation", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
-    await handleSubRecordAction(baseOptions({ insertQueryFn: insertFn }));
+    await handleSubRecordAction(insertOptions());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurations/bom/${PARENT_ID}`

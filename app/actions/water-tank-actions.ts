@@ -16,7 +16,7 @@ export const insertWaterTankAction = async (
     parentId: confId,
     formData: formData,
     schema: waterTankSchema,
-    insertQueryFn: insertWaterTank,
+    queryFn: insertWaterTank,
     revalidatePathStr: `/configurations/edit/${confId}`,
     entityName: "Serbatoio",
   });
@@ -33,7 +33,7 @@ export const editWaterTankAction = async (
     recordId: waterTankId,
     formData: formData,
     schema: waterTankSchema,
-    updateQueryFn: updateWaterTank,
+    queryFn: updateWaterTank,
     revalidatePathStr: `/configurations/edit/${confId}`,
     entityName: "Serbatoio",
   });
@@ -44,7 +44,7 @@ export const deleteWaterTankAction = async (confId: number, tankId: number) => {
     actionType: "delete",
     parentId: confId,
     recordId: tankId,
-    deleteQueryFn: deleteWaterTank, // Pass the actual DB query function
+    queryFn: deleteWaterTank,
     revalidatePathStr: `/configurations/edit/${confId}`,
     entityName: "Serbatoio",
   });

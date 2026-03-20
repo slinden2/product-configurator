@@ -12,67 +12,81 @@ import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 
-type ActionType = "insert" | "edit" | "delete";
+// --- Types ---
 
-interface HandleSubRecordOptions<TFormSchema extends z.ZodTypeAny> {
-  actionType: ActionType;
+type QueryResult = { success: boolean; id: { id: number } };
+
+type SubRecordActionResult =
+  | { success: true; data: QueryResult }
+  | { success: false; error: string };
+
+interface SubRecordOptionsBase {
   parentId: number;
-  recordId?: number;
-  formData?: unknown;
-  schema?: TFormSchema;
-  insertQueryFn?: (
-    parentId: number,
-    data: z.infer<TFormSchema>
-  ) => Promise<any>;
-  updateQueryFn?: (
-    parentId: number,
-    recordId: number,
-    data: z.infer<TFormSchema>
-  ) => Promise<any>;
-  deleteQueryFn?: (
-    parentId: number,
-    recordId: number
-  ) => Promise<{ success: boolean; error?: string }>;
   revalidatePathStr: string;
   entityName: string;
 }
+
+interface InsertSubRecordOptions<TFormSchema extends z.ZodTypeAny>
+  extends SubRecordOptionsBase {
+  actionType: "insert";
+  formData: unknown;
+  schema: TFormSchema;
+  queryFn: (
+    parentId: number,
+    data: z.infer<TFormSchema>
+  ) => Promise<QueryResult>;
+}
+
+interface EditSubRecordOptions<TFormSchema extends z.ZodTypeAny>
+  extends SubRecordOptionsBase {
+  actionType: "edit";
+  recordId: number;
+  formData: unknown;
+  schema: TFormSchema;
+  queryFn: (
+    parentId: number,
+    recordId: number,
+    data: z.infer<TFormSchema>
+  ) => Promise<QueryResult>;
+}
+
+interface DeleteSubRecordOptions extends SubRecordOptionsBase {
+  actionType: "delete";
+  recordId: number;
+  queryFn: (
+    parentId: number,
+    recordId: number
+  ) => Promise<QueryResult>;
+}
+
+type SubRecordOptions<TFormSchema extends z.ZodTypeAny> =
+  | InsertSubRecordOptions<TFormSchema>
+  | EditSubRecordOptions<TFormSchema>
+  | DeleteSubRecordOptions;
 
 /**
  * Generic handler for Insert, Update, Delete operations on sub-records
  * related to a parent configuration. Handles validation, auth, execution,
  * error handling, and cache revalidation.
  */
-export async function handleSubRecordAction<TFormSchema extends z.ZodTypeAny>(
-  options: HandleSubRecordOptions<TFormSchema>
-) {
-  const {
-    actionType,
-    parentId,
-    recordId,
-    formData,
-    schema,
-    insertQueryFn,
-    updateQueryFn,
-    deleteQueryFn,
-    revalidatePathStr,
-    entityName,
-  } = options;
-
-  let validatedData: z.infer<TFormSchema> | undefined;
+export async function handleSubRecordAction<
+  TFormSchema extends z.ZodTypeAny = z.ZodTypeAny,
+>(options: SubRecordOptions<TFormSchema>): Promise<SubRecordActionResult> {
+  const { actionType, parentId, revalidatePathStr, entityName } = options;
 
   // --- 1. Validation (for Insert/Edit) ---
+  let validatedData: z.infer<TFormSchema> | undefined;
   if (actionType === "insert" || actionType === "edit") {
-    if (!schema || formData === undefined) {
-      throw new Error(
-        `Schema and formData are required for ${actionType} action.`
-      );
-    }
-    const validation = schema.safeParse(formData);
+    const validation = options.schema.safeParse(options.formData);
     if (!validation.success) {
-      console.error(`Invalid ${entityName} data:`, validation.error.flatten());
-      throw new Error(
-        validation.error?.message || `Dati ${entityName} non validi.`
+      console.error(
+        `Invalid ${entityName} data:`,
+        validation.error.flatten()
       );
+      return {
+        success: false as const,
+        error: validation.error?.message || `Dati ${entityName} non validi.`,
+      };
     }
     validatedData = validation.data;
   }
@@ -80,66 +94,52 @@ export async function handleSubRecordAction<TFormSchema extends z.ZodTypeAny>(
   // --- 2. Authentication ---
   const user = await getUserData();
   if (!user) {
-    throw new Error("Utente non trovato o non autenticato.");
+    return {
+      success: false as const,
+      error: "Utente non trovato o non autenticato.",
+    };
   }
 
   // --- 3. Authorization & Status Protection ---
   const configuration = await getConfiguration(parentId);
   if (!configuration) {
-    throw new Error("Configurazione associata non trovata.");
+    return {
+      success: false as const,
+      error: "Configurazione associata non trovata.",
+    };
   }
 
-  // Check if user owns the config, is INTERNAL, or is ADMIN
   if (
     user.id !== configuration.user_id &&
     user.role !== "ADMIN" &&
     user.role !== "INTERNAL"
   ) {
-    throw new Error("Non autorizzato a modificare/eliminare questo record.");
+    return {
+      success: false as const,
+      error: "Non autorizzato a modificare/eliminare questo record.",
+    };
   }
 
-  // Status protection: enforce editable rules per role
   if (!isEditable(configuration.status, user.role)) {
-    throw new Error(
-      "Non è possibile modificare i record di una configurazione in questo stato."
-    );
-  }
-
-  if ((actionType === "edit" || actionType === "delete") && !recordId) {
-    throw new Error(`Record ID mancante per l'azione ${actionType}.`);
+    return {
+      success: false as const,
+      error: "Non è possibile modificare i record di una configurazione in questo stato.",
+    };
   }
 
   // --- 4. Database Operation ---
   try {
-    let result: any;
-    switch (actionType) {
+    let result: QueryResult;
+    switch (options.actionType) {
       case "insert":
-        if (!insertQueryFn || validatedData === undefined)
-          throw new Error("Insert function or data missing.");
-        result = await insertQueryFn(parentId, validatedData);
+        result = await options.queryFn(parentId, validatedData!);
         break;
       case "edit":
-        if (
-          !updateQueryFn ||
-          validatedData === undefined ||
-          recordId === undefined
-        )
-          throw new Error("Update function, data, or recordId missing.");
-        result = await updateQueryFn(parentId, recordId, validatedData);
+        result = await options.queryFn(parentId, options.recordId, validatedData!);
         break;
       case "delete":
-        if (!deleteQueryFn || recordId === undefined)
-          throw new Error("Delete function or recordId missing.");
-        result = await deleteQueryFn(parentId, recordId);
-        // Check specific success flag for delete actions
-        if (!result?.success) {
-          throw new Error(
-            result?.error || `Impossibile eliminare ${entityName}.`
-          );
-        }
+        result = await options.queryFn(parentId, options.recordId);
         break;
-      default:
-        throw new Error("Azione non valida.");
     }
 
     // --- 5. Delete engineering BOM if it exists — config changes invalidate the snapshot ---
@@ -153,21 +153,21 @@ export async function handleSubRecordAction<TFormSchema extends z.ZodTypeAny>(
     revalidatePath(`/configurations/bom/${parentId}`);
 
     // --- 7. Return Success ---
-    return { success: true, data: result };
+    return { success: true as const, data: result };
   } catch (err) {
-    // --- 7. Error Handling ---
     console.error(`Failed to ${actionType} ${entityName}:`, err);
     if (err instanceof QueryError) {
-      throw new Error(err.message);
+      return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      throw new Error("Errore del database.");
+      return { success: false as const, error: "Errore del database." };
     }
     if (err instanceof Error) {
-      throw err;
+      return { success: false as const, error: err.message };
     }
-    throw new Error(
-      `Errore sconosciuto durante l'operazione ${actionType} su ${entityName}.`
-    );
+    return {
+      success: false as const,
+      error: `Errore sconosciuto durante l'operazione ${actionType} su ${entityName}.`,
+    };
   }
 }

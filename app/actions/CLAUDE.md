@@ -37,8 +37,8 @@ When a configuration is edited, the engineering BOM snapshot becomes stale. Any 
 
 This applies to `editConfigurationAction` and any new action that changes configuration fields used by BOM rules.
 
-## Sub-Record Actions (Throw Variant)
-`handleSubRecordAction` in `lib/sub-record-actions.ts` **throws** errors instead of returning `{ success: false }`. This is intentional — callers (water-tank, wash-bay actions) delegate fully and catch at the boundary. The same `QueryError` vs `DatabaseError` separation applies: `QueryError` → re-throw with `err.message`, `DatabaseError` → re-throw with `"Errore del database."`.
+## Sub-Record Actions
+`handleSubRecordAction` in `lib/sub-record-actions.ts` is a generic handler for insert/edit/delete on sub-records (water tanks, wash bays). It uses a discriminated union on `actionType` to enforce type-safe options per variant (each variant requires only its relevant fields: `schema`/`formData` for insert/edit, `recordId` for edit/delete). It follows the standard return-based error pattern — returns `{ success: false, error }` on failure, never throws.
 
 ## Transactions
 Use `db.transaction(async (tx) => { ... })` when a mutation involves multiple dependent DB operations that must succeed or fail atomically. Example: BOM regenerate (delete all items + insert new items). Use `tx` (not `db`) for all operations inside the callback.

@@ -12,7 +12,7 @@ export const insertWashBayAction = async (
     parentId: confId,
     formData: formData,
     schema: washBaySchema,
-    insertQueryFn: insertWashBay,
+    queryFn: insertWashBay,
     revalidatePathStr: `/configurations/edit/${confId}`,
     entityName: "Pista",
   });
@@ -29,7 +29,7 @@ export const editWashBayAction = async (
     recordId: washBayId,
     formData: formData,
     schema: washBaySchema,
-    updateQueryFn: updateWashBay,
+    queryFn: updateWashBay,
     revalidatePathStr: `/configurations/edit/${confId}`,
     entityName: "Pista",
   });
@@ -43,7 +43,7 @@ export const deleteWashBayAction = async (
     actionType: "delete",
     parentId: confId,
     recordId: washBayId,
-    deleteQueryFn: deleteWashBay,
+    queryFn: deleteWashBay,
     revalidatePathStr: `/configurations/edit/${confId}`,
     entityName: "Pista",
   });
