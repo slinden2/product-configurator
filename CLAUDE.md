@@ -100,7 +100,7 @@ The app manages a 3-stage hand-off between sales, engineering, and production.
 Before finalizing any change, verify:
 1. **Status Check:** Does the Server Action check if the configuration status is `DRAFT`?
 2. **Dependent Fields:** If adding or modifying a `SelectField` or `CheckboxField`, are `fieldsToReset` correctly mapped to the Zod schema keys?
-3. **Type Safety:** Does the change respect the existing types in `types/index.ts` without using `any` or loose type casting?
+3. **Type Safety:** Does the change respect the existing types in `types/index.ts` without using `any` or loose type casting? Always run `npm run type-check` to ensure no regressions were introduced.
 4. **Data Integrity:** Is `revalidatePath` included in the Server Action to ensure the UI stays in sync with the DB?
 5. **Localization:** Are all new UI labels in Italian?
 

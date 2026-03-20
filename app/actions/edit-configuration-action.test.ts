@@ -276,4 +276,40 @@ describe("editConfigurationAction", () => {
     );
     expect(result).toEqual({ success: false, error: "Errore sconosciuto." });
   });
+
+  // --- Engineering BOM auto-invalidation ---
+
+  test("deletes engineering BOM when it exists after successful update", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    const result = await editConfigurationAction(
+      CONF_ID,
+      OWNER_ID,
+      makeValidFormData()
+    );
+    expect(result.success).toBe(true);
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(CONF_ID);
+  });
+
+  test("does NOT delete engineering BOM when it does not exist", async () => {
+    mockHasEngineeringBom.mockResolvedValue(false);
+    const result = await editConfigurationAction(
+      CONF_ID,
+      OWNER_ID,
+      makeValidFormData()
+    );
+    expect(result.success).toBe(true);
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+  });
+
+  test("revalidates both edit and BOM paths after successful update", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    await editConfigurationAction(CONF_ID, OWNER_ID, makeValidFormData());
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurations/edit/${CONF_ID}`
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurations/bom/${CONF_ID}`
+    );
+  });
 });

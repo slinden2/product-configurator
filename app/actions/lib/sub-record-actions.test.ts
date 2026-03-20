@@ -250,4 +250,57 @@ describe("handleSubRecordAction", () => {
       "Non è possibile modificare"
     );
   });
+
+  // --- Engineering BOM auto-invalidation ---
+
+  test("deletes engineering BOM when it exists after successful insert", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
+    await handleSubRecordAction(baseOptions({ insertQueryFn: insertFn }));
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  test("does NOT delete engineering BOM when it does not exist", async () => {
+    mockHasEngineeringBom.mockResolvedValue(false);
+    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
+    await handleSubRecordAction(baseOptions({ insertQueryFn: insertFn }));
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+  });
+
+  test("deletes engineering BOM after successful edit", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    const updateFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
+    await handleSubRecordAction(
+      baseOptions({
+        actionType: "edit",
+        recordId: RECORD_ID,
+        updateQueryFn: updateFn,
+      })
+    );
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  test("deletes engineering BOM after successful delete", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    const deleteFn = vi.fn().mockResolvedValue({ success: true });
+    await handleSubRecordAction({
+      actionType: "delete",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      deleteQueryFn: deleteFn,
+      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      entityName: "TestEntity",
+    });
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  test("revalidates BOM path after sub-record mutation", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    const insertFn = vi.fn().mockResolvedValue({ id: 99 });
+    await handleSubRecordAction(baseOptions({ insertQueryFn: insertFn }));
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurations/bom/${PARENT_ID}`
+    );
+  });
 });
