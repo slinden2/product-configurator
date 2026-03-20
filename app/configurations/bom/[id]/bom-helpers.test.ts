@@ -11,7 +11,6 @@ import {
   groupEbomByCategory,
   buildEbomExportData,
   getEarliestCreatedAt,
-  getBomRulesVersion,
   buildEbomCostExportData,
 } from "@/app/configurations/bom/[id]/bom-helpers";
 import { EngineeringBomItem } from "@/db/schemas";
@@ -34,7 +33,6 @@ function makeItem(
     is_deleted: false,
     is_added: false,
     sort_order: 0,
-    bom_rules_version: null,
     created_at: new Date("2026-03-20T10:00:00Z"),
     updated_at: new Date("2026-03-20T10:00:00Z"),
     ...overrides,
@@ -140,25 +138,6 @@ describe("getEarliestCreatedAt", () => {
       makeItem({ id: 3, created_at: earliest }),
     ];
     expect(getEarliestCreatedAt(items)).toEqual(earliest);
-  });
-});
-
-describe("getBomRulesVersion", () => {
-  test("returns null for empty array", () => {
-    expect(getBomRulesVersion([])).toBeNull();
-  });
-
-  test("returns null when items have no version", () => {
-    const items = [makeItem({ bom_rules_version: null })];
-    expect(getBomRulesVersion(items)).toBeNull();
-  });
-
-  test("returns the version from the first item", () => {
-    const items = [
-      makeItem({ id: 1, bom_rules_version: "1.0.0" }),
-      makeItem({ id: 2, bom_rules_version: "1.0.0" }),
-    ];
-    expect(getBomRulesVersion(items)).toBe("1.0.0");
   });
 });
 

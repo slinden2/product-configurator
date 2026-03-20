@@ -33,7 +33,6 @@ export const engineeringBomItems = pgTable("engineering_bom_items", {
   is_deleted: boolean("is_deleted").notNull().default(false),
   is_added: boolean("is_added").notNull().default(false),
   sort_order: integer("sort_order").notNull(),
-  bom_rules_version: varchar("bom_rules_version", { length: 20 }),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()
     .defaultNow(),

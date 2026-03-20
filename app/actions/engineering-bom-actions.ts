@@ -14,7 +14,6 @@ import {
 import { engineeringBomItems, NewEngineeringBomItem } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { BOMItemWithDescription } from "@/lib/BOM";
-import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { engineeringBomItemSchema } from "@/validation/engineering-bom-item-schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -111,7 +110,6 @@ function flattenBomToItems(
     is_added: false,
     is_custom: !tsePns.has(item.pn),
     sort_order: sortOrder,
-    bom_rules_version: BOM_RULES_VERSION,
   });
 
   generalBOM.forEach((item, index) => {
