@@ -16,14 +16,18 @@ Actions must always return an object with this structure:
    - CALL `isEditable(status, role)` for all mutations (edit/delete/status change).
 5. **Execution:** Wrap the `db` mutation in a `try/catch` block.
 6. **Invalidation:** Call `revalidatePath` for all affected routes (e.g., list and detail pages).
-7. **Error Handling:** Catch `QueryError` or `DatabaseError` specifically; otherwise, return `error: "Errore sconosciuto."`
+7. **Error Handling:** Catch `QueryError` and `DatabaseError` **separately**:
+   - `QueryError` → return `err.message` (controlled Italian messages from `db/queries.ts`)
+   - `DatabaseError` → return `"Errore del database."` (never expose raw pg error strings)
+   - Default → return `"Errore sconosciuto."`
 
 ## Error Message Registry (Standardized Italian)
 - Auth: `Non autorizzato.`
 - Not Found: `Record non trovato.` or `Configurazione non trovata.`
 - Frozen State: `Non è possibile modificare una configurazione in questo stato.`
 - BOM Auth: `Non autorizzato a modificare la distinta ingegneria.`
-- Default: `Si è verificato un errore imprevisto.`
+- Database Error: `Errore del database.`
+- Default: `Errore sconosciuto.`
 
 ## BOM Cascade Invalidation
 When a configuration is edited, the engineering BOM snapshot becomes stale. Any action that mutates configuration data must:
@@ -32,6 +36,9 @@ When a configuration is edited, the engineering BOM snapshot becomes stale. Any 
 3. Revalidate the BOM page path: `revalidatePath(/configurations/bom/${confId})`.
 
 This applies to `editConfigurationAction` and any new action that changes configuration fields used by BOM rules.
+
+## Sub-Record Actions (Throw Variant)
+`handleSubRecordAction` in `lib/sub-record-actions.ts` **throws** errors instead of returning `{ success: false }`. This is intentional — callers (water-tank, wash-bay actions) delegate fully and catch at the boundary. The same `QueryError` vs `DatabaseError` separation applies: `QueryError` → re-throw with `err.message`, `DatabaseError` → re-throw with `"Errore del database."`.
 
 ## Transactions
 Use `db.transaction(async (tx) => { ... })` when a mutation involves multiple dependent DB operations that must succeed or fail atomically. Example: BOM regenerate (delete all items + insert new items). Use `tx` (not `db`) for all operations inside the callback.

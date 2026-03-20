@@ -9,9 +9,11 @@ import {
   hasEngineeringBom,
   getPartNumbersByArray,
   insertEngineeringBomItems,
+  QueryError,
   searchPartNumbers,
 } from "@/db/queries";
 import { engineeringBomItems, NewEngineeringBomItem } from "@/db/schemas";
+import { DatabaseError } from "pg";
 import { BOM } from "@/lib/BOM";
 import { BOMItemWithDescription } from "@/lib/BOM";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
@@ -153,9 +155,15 @@ export async function snapshotEngineeringBomAction(confId: number) {
 
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
-  } catch (error) {
-    console.error("Failed to snapshot engineering BOM:", error);
-    return { success: false as const, error: "Si è verificato un errore imprevisto." };
+  } catch (err) {
+    console.error("Failed to snapshot engineering BOM:", err);
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 }
 
@@ -178,9 +186,15 @@ export async function regenerateEngineeringBomAction(confId: number) {
 
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
-  } catch (error) {
-    console.error("Failed to regenerate engineering BOM:", error);
-    return { success: false as const, error: "Si è verificato un errore imprevisto." };
+  } catch (err) {
+    console.error("Failed to regenerate engineering BOM:", err);
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 }
 
@@ -231,13 +245,15 @@ export async function addEngineeringBomItemAction(
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
 
-  } catch (error) {
-    // 5. Catch-all for DB errors (Unique constraints, connection issues, etc.)
-    console.error("Failed to add BOM item:", error);
-    return {
-      success: false as const,
-      error: "Impossibile aggiungere l'articolo. Errore del database.",
-    };
+  } catch (err) {
+    console.error("Failed to add BOM item:", err);
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 }
 
@@ -279,9 +295,15 @@ export async function updateEngineeringBomItemQtyAction(
 
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
-  } catch (error) {
-    console.error("Failed to update BOM item qty:", error);
-    return { success: false as const, error: "Si è verificato un errore imprevisto." };
+  } catch (err) {
+    console.error("Failed to update BOM item qty:", err);
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 }
 
@@ -317,9 +339,15 @@ export async function toggleDeleteEngineeringBomItemAction(
 
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
-  } catch (error) {
-    console.error("Failed to toggle delete BOM item:", error);
-    return { success: false as const, error: "Si è verificato un errore imprevisto." };
+  } catch (err) {
+    console.error("Failed to toggle delete BOM item:", err);
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 }
 
@@ -336,8 +364,14 @@ export async function searchPartNumbersAction(query: string) {
   try {
     const results = await searchPartNumbers(query.trim(), 20);
     return { success: true as const, data: results };
-  } catch (error) {
-    console.error("Failed to search part numbers:", error);
-    return { success: false as const, error: "Si è verificato un errore imprevisto." };
+  } catch (err) {
+    console.error("Failed to search part numbers:", err);
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
+    return { success: false as const, error: "Errore sconosciuto." };
   }
 }

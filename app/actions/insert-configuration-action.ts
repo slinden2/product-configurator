@@ -23,10 +23,13 @@ export const insertConfigurationAction = async (formData: unknown) => {
     revalidatePath("/configurations");
     return { success: true as const, id: newConfig.id };
   } catch (err) {
-    if (err instanceof QueryError || err instanceof DatabaseError) {
+    console.error("Failed to insert configuration:", err);
+    if (err instanceof QueryError) {
       return { success: false as const, error: err.message };
     }
-
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: "Errore del database." };
+    }
     return { success: false as const, error: "Errore sconosciuto." };
   }
 };

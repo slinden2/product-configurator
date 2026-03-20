@@ -9,6 +9,23 @@ const mockDbDelete = vi.fn();
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
+  QueryError: class QueryError extends Error {
+    errorCode: number;
+    constructor(message: string, errorCode: number) {
+      super(message);
+      this.name = "QueryError";
+      this.errorCode = errorCode;
+    }
+  },
+}));
+
+vi.mock("pg", () => ({
+  DatabaseError: class DatabaseError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "DatabaseError";
+    }
+  },
 }));
 
 vi.mock("@/db", () => ({
@@ -139,6 +156,6 @@ describe("deleteConfigurationAction", () => {
     });
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("errore");
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 });

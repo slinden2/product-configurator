@@ -19,6 +19,23 @@ vi.mock("@/db/queries", () => ({
   insertEngineeringBomItems: (...args: unknown[]) =>
     mockInsertEngineeringBomItems(...args),
   searchPartNumbers: (...args: unknown[]) => mockSearchPartNumbers(...args),
+  QueryError: class QueryError extends Error {
+    errorCode: number;
+    constructor(message: string, errorCode: number) {
+      super(message);
+      this.name = "QueryError";
+      this.errorCode = errorCode;
+    }
+  },
+}));
+
+vi.mock("pg", () => ({
+  DatabaseError: class DatabaseError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "DatabaseError";
+    }
+  },
 }));
 
 vi.mock("next/cache", () => ({
@@ -303,7 +320,7 @@ describe("snapshotEngineeringBomAction", () => {
     mockInsertEngineeringBomItems.mockRejectedValue(new Error("DB down"));
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Si è verificato un errore imprevisto.");
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 });
 
@@ -361,7 +378,7 @@ describe("regenerateEngineeringBomAction", () => {
     const result: ActionResult =
       await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Si è verificato un errore imprevisto.");
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 });
 
@@ -459,7 +476,7 @@ describe("addEngineeringBomItemAction", () => {
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(
-      "Impossibile aggiungere l'articolo. Errore del database."
+      "Errore sconosciuto."
     );
   });
 
@@ -549,7 +566,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       3
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Si è verificato un errore imprevisto.");
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 
   test("returns auth error for EXTERNAL user", async () => {
@@ -628,7 +645,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
       ITEM_ID
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Si è verificato un errore imprevisto.");
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 
   test("returns auth error for EXTERNAL user", async () => {
@@ -692,7 +709,7 @@ describe("searchPartNumbersAction", () => {
     mockSearchPartNumbers.mockRejectedValue(new Error("DB error"));
     const result: ActionResult = await searchPartNumbersAction("test");
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Si è verificato un errore imprevisto.");
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 
   test("does NOT require INTERNAL/ADMIN role (any authenticated user)", async () => {

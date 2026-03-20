@@ -157,15 +157,15 @@ export async function handleSubRecordAction<TFormSchema extends z.ZodTypeAny>(
   } catch (err) {
     // --- 7. Error Handling ---
     console.error(`Failed to ${actionType} ${entityName}:`, err);
-    // Check for specific DB/Query errors if needed
-    if (err instanceof QueryError || err instanceof DatabaseError) {
-      throw new Error(err.message); // Re-throw specific DB errors
+    if (err instanceof QueryError) {
+      throw new Error(err.message);
     }
-    // Re-throw custom errors or generic ones
+    if (err instanceof DatabaseError) {
+      throw new Error("Errore del database.");
+    }
     if (err instanceof Error) {
-      throw err; // Re-throw errors from deleteQueryFn or auth checks
+      throw err;
     }
-    // Fallback generic error
     throw new Error(
       `Errore sconosciuto durante l'operazione ${actionType} su ${entityName}.`
     );
