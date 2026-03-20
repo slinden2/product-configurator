@@ -13,6 +13,12 @@ import { washBayBOM } from "@/lib/BOM/max-bom/wash-bay-bom";
 import { waterSupplyBOM } from "@/lib/BOM/max-bom/water-supply-bom";
 import { waterTankBOM } from "@/lib/BOM/max-bom/water-tank-bom";
 
+/**
+ * Bump this version every time any BOM rule file under `lib/BOM/max-bom/` is modified.
+ * It is stored on engineering BOM snapshots so engineers can tell which rule set produced the BOM.
+ */
+export const BOM_RULES_VERSION = "260320";
+
 export interface ValidationFn<T> {
   (config: T): boolean;
 }

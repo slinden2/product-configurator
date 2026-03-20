@@ -1,6 +1,7 @@
 import {
   buildEbomCostExportData,
   buildEbomExportData,
+  getBomRulesVersion,
   getEarliestCreatedAt,
   groupEbomByCategory,
 } from "@/app/configurations/bom/[id]/bom-helpers";
@@ -21,6 +22,7 @@ import {
   getUserData,
   hasEngineeringBom,
 } from "@/db/queries";
+import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { Edit } from "lucide-react";
 import Link from "next/link";
 import ExportCostsButton from "./export-costs-button";
@@ -70,6 +72,7 @@ const BOMView = async (props: BOMViewProps) => {
     : await bom.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
 
   const ebomCreatedAt = getEarliestCreatedAt(ebomItems);
+  const ebomRulesVersion = getBomRulesVersion(ebomItems);
 
   return (
     <div className="space-y-6">
@@ -107,6 +110,13 @@ const BOMView = async (props: BOMViewProps) => {
             hour: "2-digit",
             minute: "2-digit",
           })}
+          {ebomRulesVersion && <> — regole v{ebomRulesVersion}</>}
+          {ebomRulesVersion && ebomRulesVersion !== BOM_RULES_VERSION && (
+            <span className="text-yellow-600 dark:text-yellow-500">
+              {" "}
+              (versione corrente: v{BOM_RULES_VERSION})
+            </span>
+          )}
         </p>
       )}
 

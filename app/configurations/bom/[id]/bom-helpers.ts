@@ -85,7 +85,7 @@ export async function buildEbomCostExportData(
   };
 }
 
-// ── Timestamp ───────────────────────────────────────────────────────────
+// ── Metadata ────────────────────────────────────────────────────────────
 
 export function getEarliestCreatedAt(
   items: EngineeringBomItem[]
@@ -94,4 +94,11 @@ export function getEarliestCreatedAt(
   return items.reduce((earliest, item) =>
     item.created_at < earliest.created_at ? item : earliest
   ).created_at;
+}
+
+export function getBomRulesVersion(
+  items: EngineeringBomItem[]
+): string | null {
+  if (items.length === 0) return null;
+  return items[0].bom_rules_version;
 }
