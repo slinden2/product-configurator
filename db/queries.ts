@@ -9,6 +9,7 @@ import {
   waterTanks,
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
+import { MSG } from "@/lib/messages";
 import { and, asc, desc, eq, inArray, or, ilike, sql } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -162,7 +163,7 @@ export const insertConfiguration = async (
     .returning({ id: configurations.id });
 
   if (!insertedConfiguration) {
-    throw new QueryError("Impossibile creare la configurazione.", 500);
+    throw new QueryError(MSG.config.createFailed, 500);
   }
 
   return insertedConfiguration;
@@ -182,7 +183,7 @@ export const updateConfiguration = async (
     .returning({ id: configurations.id });
 
   if (!updatedConfiguration) {
-    throw new QueryError("Configurazione non trovata.", 404);
+    throw new QueryError(MSG.config.notFound, 404);
   }
 
   return updatedConfiguration;
@@ -222,19 +223,19 @@ export const updateConfigStatus = async (
   const configuration = await getConfiguration(confId);
 
   if (!configuration) {
-    throw new QueryError("Configurazione non trovata.", 404);
+    throw new QueryError(MSG.config.notFound, 404);
   }
 
   if (configuration.status === statusData.status) {
-    throw new QueryError("Stato già aggiornato.", 400);
+    throw new QueryError(MSG.config.statusAlreadyUpdated, 400);
   }
 
   if (user.role === "EXTERNAL" && user.id !== configuration.user_id) {
-    throw new QueryError("Utente non autorizzato.", 403);
+    throw new QueryError(MSG.auth.userUnauthorized, 403);
   }
 
   if (!canTransition(user.role, configuration.status, statusData.status)) {
-    throw new QueryError("Stato non autorizzato.", 403);
+    throw new QueryError(MSG.config.statusUnauthorized, 403);
   }
 
   const [response] = await db
@@ -245,7 +246,7 @@ export const updateConfigStatus = async (
 
   if (!response) {
     throw new QueryError(
-      "Configurazione non trovata o non autorizzata per l'aggiornamento.",
+      MSG.config.updateNotFoundOrUnauthorized,
       404
     );
   }

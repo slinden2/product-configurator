@@ -9,6 +9,7 @@ import { AllConfigurations, UserData } from "@/db/queries";
 import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
 import { Edit, ScrollText, Trash2 } from "lucide-react";
 import React, { useCallback, useState } from "react";
+import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 
 interface ConfigurationRowProps {
@@ -33,9 +34,9 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         user.id
       );
       if (!response.success) {
-        toast.error("Errore durante l'eliminazione.");
+        toast.error(MSG.toast.deleteError);
       } else {
-        toast.success("Configurazione eliminata con successo.");
+        toast.success(MSG.toast.configDeleted);
       }
     } catch (error) {
       toast.error("Errore durante l'eliminazione.");

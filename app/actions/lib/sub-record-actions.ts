@@ -8,6 +8,7 @@ import {
   hasEngineeringBom,
   deleteAllEngineeringBomItems,
 } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
@@ -85,7 +86,7 @@ export async function handleSubRecordAction<
       );
       return {
         success: false as const,
-        error: validation.error?.message || `Dati ${entityName} non validi.`,
+        error: validation.error?.message || MSG.entity.invalidData(entityName),
       };
     }
     validatedData = validation.data;
@@ -96,7 +97,7 @@ export async function handleSubRecordAction<
   if (!user) {
     return {
       success: false as const,
-      error: "Utente non trovato o non autenticato.",
+      error: MSG.auth.userNotAuthenticated,
     };
   }
 
@@ -105,7 +106,7 @@ export async function handleSubRecordAction<
   if (!configuration) {
     return {
       success: false as const,
-      error: "Configurazione associata non trovata.",
+      error: MSG.config.associatedNotFound,
     };
   }
 
@@ -116,14 +117,14 @@ export async function handleSubRecordAction<
   ) {
     return {
       success: false as const,
-      error: "Non autorizzato a modificare/eliminare questo record.",
+      error: MSG.auth.unauthorizedSubRecord,
     };
   }
 
   if (!isEditable(configuration.status, user.role)) {
     return {
       success: false as const,
-      error: "Non è possibile modificare i record di una configurazione in questo stato.",
+      error: MSG.config.cannotEditSubRecord,
     };
   }
 
@@ -160,14 +161,14 @@ export async function handleSubRecordAction<
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
     if (err instanceof Error) {
       return { success: false as const, error: err.message };
     }
     return {
       success: false as const,
-      error: `Errore sconosciuto durante l'operazione ${actionType} su ${entityName}.`,
+      error: MSG.entity.unknownError(actionType, entityName),
     };
   }
 }

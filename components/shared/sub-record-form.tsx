@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { MSG } from "@/lib/messages";
 import { FormDisabledContext } from "@/components/ui/form";
 import Fieldset from "@/components/fieldset";
 import { z } from "zod";
@@ -126,21 +127,20 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         if (isEditing) {
           const result = await editAction(parentId, entityData.id, values);
           if (!result.success) {
-            throw new Error(result.error || `Errore durante l'aggiornamento (${entityName}).`);
+            throw new Error(result.error || MSG.toast.entityUpdateFallback(entityName));
           }
           toast.success(
-            `${entityName} ${entityIndex ?? ""} aggiornat${entityName === "Pista" ? "a" : "o"
-            }.`
+            MSG.toast.entityUpdated(entityName, entityIndex)
           );
           reset(values);
           if (formKey) onSaved?.(formKey);
         } else {
           const result = await insertAction(parentId, values);
           if (!result.success) {
-            throw new Error(result.error || `Errore durante la creazione (${entityName}).`);
+            throw new Error(result.error || MSG.toast.entityCreateFallback(entityName));
           }
           toast.success(
-            `${entityName} creat${entityName === "Pista" ? "a" : "o"}.`
+            MSG.toast.entityCreated(entityName)
           );
           reset(entityDefaults);
           if (formKey) onSaved?.(formKey);
@@ -151,7 +151,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         const message =
           err instanceof Error
             ? err.message
-            : `Errore sconosciuto durante il salvataggio (${entityName}).`;
+            : MSG.toast.entitySaveUnknown(entityName);
         setError(message);
         toast.error(message);
       } finally {
@@ -196,19 +196,18 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       const result = await deleteAction(parentId, entityData.id!);
       if (result.success) {
         toast.success(
-          `${entityName} ${entityIndex} eliminat${entityName === "Pista" ? "a" : "o"
-          }.`
+          MSG.toast.entityDeleted(entityName, entityIndex)
         );
         onDelete(entityData.id!);
       } else {
-        throw new Error(result.error || `Impossibile eliminare ${entityName}.`);
+        throw new Error(result.error || MSG.toast.entityDeleteFailed(entityName));
       }
     } catch (err) {
       console.error(`Delete ${entityName} Error:`, err);
       const message =
         err instanceof Error
           ? err.message
-          : `Errore sconosciuto durante l'eliminazione (${entityName}).`;
+          : MSG.toast.entityDeleteUnknown(entityName);
       setError(message);
       toast.error(message);
       setIsLoading(false);
@@ -329,10 +328,9 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Distinta ingegneria presente</AlertDialogTitle>
+            <AlertDialogTitle>{MSG.bomWarning.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              Salvando le modifiche alla configurazione, la distinta ingegneria
-              verrà eliminata e dovrà essere rigenerata. Continuare?
+              {MSG.bomWarning.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -348,7 +346,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
               onClick={handleBomWarningConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Salva e elimina distinta
+              {MSG.bomWarning.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

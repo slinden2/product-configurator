@@ -13,6 +13,7 @@ import {
   searchPartNumbers,
 } from "@/db/queries";
 import { engineeringBomItems, NewEngineeringBomItem } from "@/db/schemas";
+import { MSG } from "@/lib/messages";
 import { DatabaseError } from "pg";
 import { BOM } from "@/lib/BOM";
 import { BOMItemWithDescription } from "@/lib/BOM";
@@ -43,14 +44,14 @@ async function authorizeEngineeringBomAction(confId: number) {
   if (!user) {
     return {
       success: false as const,
-      error: "Utente non trovato o non autenticato.",
+      error: MSG.auth.userNotAuthenticated,
     }
   }
 
   if (user.role === "EXTERNAL") {
     return {
       success: false as const,
-      error: "Non autorizzato a modificare la distinta ingegneria.",
+      error: MSG.bom.unauthorized,
     }
   }
 
@@ -58,14 +59,14 @@ async function authorizeEngineeringBomAction(confId: number) {
   if (!configuration) {
     return {
       success: false as const,
-      error: "Configurazione non trovata.",
+      error: MSG.config.notFound,
     }
   }
 
   if (!isEditable(configuration.status, user.role)) {
     return {
       success: false as const,
-      error: "Non autorizzato a modificare la distinta ingegneria in questo stato.",
+      error: MSG.bom.unauthorizedState,
     }
   }
 
@@ -145,7 +146,7 @@ export async function snapshotEngineeringBomAction(confId: number) {
   if (alreadyExists) {
     return {
       success: false as const,
-      error: "La distinta ingegneria esiste già. Usa 'Rigenera' per sovrascriverla.",
+      error: MSG.bom.alreadyExists,
     }
   }
 
@@ -161,9 +162,9 @@ export async function snapshotEngineeringBomAction(confId: number) {
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 }
 
@@ -192,9 +193,9 @@ export async function regenerateEngineeringBomAction(confId: number) {
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 }
 
@@ -251,9 +252,9 @@ export async function addEngineeringBomItemAction(
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 }
 
@@ -270,7 +271,7 @@ export async function updateEngineeringBomItemQtyAction(
   if (!Number.isInteger(qty) || qty < 1) {
     return {
       success: false as const,
-      error: "Quantità non valida.",
+      error: MSG.bom.invalidQty,
     }
   }
 
@@ -289,7 +290,7 @@ export async function updateEngineeringBomItemQtyAction(
     if (!updated) {
       return {
         success: false as const,
-        error: "Riga non trovata.",
+        error: MSG.bom.rowNotFound,
       }
     }
 
@@ -301,9 +302,9 @@ export async function updateEngineeringBomItemQtyAction(
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 }
 
@@ -328,7 +329,7 @@ export async function toggleDeleteEngineeringBomItemAction(
     if (!item) {
       return {
         success: false as const,
-        error: "Riga non trovata.",
+        error: MSG.bom.rowNotFound,
       }
     }
 
@@ -345,16 +346,16 @@ export async function toggleDeleteEngineeringBomItemAction(
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 }
 
 export async function searchPartNumbersAction(query: string) {
   const user = await getUserData();
   if (!user) {
-    return { success: false as const, error: "Utente non trovato o non autenticato." };
+    return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
   if (!query || query.trim().length === 0) {
@@ -370,8 +371,8 @@ export async function searchPartNumbersAction(query: string) {
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 }

@@ -22,6 +22,7 @@ import {
 import { PartNumber } from "@/db/schemas";
 import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 
 interface AddBomItemFormProps {
@@ -82,13 +83,13 @@ const AddBomItemForm = ({
   function handleAdd() {
     const parsedQty = parseInt(qty, 10);
     if (!Number.isInteger(parsedQty) || parsedQty < 1) {
-      toast.error("Quantità non valida (minimo 1).");
+      toast.error(MSG.toast.qtyInvalid);
       return;
     }
 
     if (mode === "catalog") {
       if (!selectedPn) {
-        toast.error("Seleziona un codice articolo.");
+        toast.error(MSG.toast.pnRequired);
         return;
       }
       startTransition(async () => {
@@ -103,16 +104,16 @@ const AddBomItemForm = ({
           });
           setSelectedPn(null);
           setQty("1");
-          toast.success("Riga aggiunta.");
+          toast.success(MSG.toast.rowAdded);
         } catch (err) {
           toast.error(
-            err instanceof Error ? err.message : "Errore durante l'aggiunta."
+            err instanceof Error ? err.message : MSG.toast.addError
           );
         }
       });
     } else {
       if (!customPn.trim()) {
-        toast.error("Codice articolo obbligatorio.");
+        toast.error(MSG.toast.pnMandatory);
         return;
       }
       startTransition(async () => {
@@ -128,10 +129,10 @@ const AddBomItemForm = ({
           setCustomPn("");
           setCustomDescription("");
           setQty("1");
-          toast.success("Riga personalizzata aggiunta.");
+          toast.success(MSG.toast.customRowAdded);
         } catch (err) {
           toast.error(
-            err instanceof Error ? err.message : "Errore durante l'aggiunta."
+            err instanceof Error ? err.message : MSG.toast.addError
           );
         }
       });

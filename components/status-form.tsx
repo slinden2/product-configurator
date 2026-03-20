@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
+import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -60,10 +61,10 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
         form.setValue("status", initialStatus);
         return;
       }
-      toast.success("Stato aggiornato.");
+      toast.success(MSG.toast.statusUpdated);
     } catch (err) {
       console.error(err);
-      toast.error("Impossibile aggiornare lo stato.");
+      toast.error(MSG.toast.statusUpdateFailed);
       form.setValue("status", initialStatus);
     } finally {
       setIsLoading(false);

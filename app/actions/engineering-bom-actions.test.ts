@@ -103,6 +103,7 @@ import {
   toggleDeleteEngineeringBomItemAction,
   searchPartNumbersAction,
 } from "@/app/actions/engineering-bom-actions";
+import { MSG } from "@/lib/messages";
 import { revalidatePath } from "next/cache";
 
 // --- Helpers ---
@@ -189,7 +190,7 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.success).toBe(false);
     expect(result).toHaveProperty(
       "error",
-      "Utente non trovato o non autenticato."
+      MSG.auth.userNotAuthenticated
     );
   });
 
@@ -197,14 +198,14 @@ describe("snapshotEngineeringBomAction", () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
   test("returns error when configuration not found", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(null);
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Configurazione non trovata.");
+    expect(result.error).toBe(MSG.config.notFound);
   });
 
   test("returns error when config is LOCKED", async () => {
@@ -213,7 +214,7 @@ describe("snapshotEngineeringBomAction", () => {
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toBe(MSG.bom.unauthorizedState);
   });
 
   test("returns error when config is CLOSED", async () => {
@@ -222,7 +223,7 @@ describe("snapshotEngineeringBomAction", () => {
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toBe(MSG.bom.unauthorizedState);
   });
 
   test("ADMIN can snapshot OPEN config", async () => {
@@ -320,7 +321,7 @@ describe("snapshotEngineeringBomAction", () => {
     mockInsertEngineeringBomItems.mockRejectedValue(new Error("DB down"));
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Errore sconosciuto.");
+    expect(result.error).toBe(MSG.db.unknown);
   });
 });
 
@@ -362,7 +363,7 @@ describe("regenerateEngineeringBomAction", () => {
     const result: ActionResult =
       await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
   test("returns error when config is LOCKED", async () => {
@@ -378,7 +379,7 @@ describe("regenerateEngineeringBomAction", () => {
     const result: ActionResult =
       await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Errore sconosciuto.");
+    expect(result.error).toBe(MSG.db.unknown);
   });
 });
 
@@ -487,7 +488,7 @@ describe("addEngineeringBomItemAction", () => {
       validFormData
     );
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toContain(MSG.bom.unauthorized);
     expect(mockInsert).not.toHaveBeenCalled();
   });
 });
@@ -523,7 +524,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       0
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Quantità non valida.");
+    expect(result.error).toBe(MSG.bom.invalidQty);
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
@@ -534,7 +535,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       -1
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Quantità non valida.");
+    expect(result.error).toBe(MSG.bom.invalidQty);
   });
 
   test("rejects non-integer qty", async () => {
@@ -544,7 +545,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       1.5
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Quantità non valida.");
+    expect(result.error).toBe(MSG.bom.invalidQty);
   });
 
   test("returns error when item not found", async () => {
@@ -555,7 +556,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       3
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Riga non trovata.");
+    expect(result.error).toBe(MSG.bom.rowNotFound);
   });
 
   test("returns generic error on DB failure", async () => {
@@ -566,7 +567,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       3
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Errore sconosciuto.");
+    expect(result.error).toBe(MSG.db.unknown);
   });
 
   test("returns auth error for EXTERNAL user", async () => {
@@ -577,7 +578,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
       3
     );
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
   test("returns error when config is CLOSED", async () => {
@@ -635,7 +636,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
       999
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Riga non trovata.");
+    expect(result.error).toBe(MSG.bom.rowNotFound);
   });
 
   test("returns generic error on DB failure", async () => {
@@ -645,7 +646,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
       ITEM_ID
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Errore sconosciuto.");
+    expect(result.error).toBe(MSG.db.unknown);
   });
 
   test("returns auth error for EXTERNAL user", async () => {
@@ -655,7 +656,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
       ITEM_ID
     );
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non autorizzato");
+    expect(result.error).toContain(MSG.bom.unauthorized);
   });
 });
 
@@ -669,7 +670,7 @@ describe("searchPartNumbersAction", () => {
     mockGetUserData.mockResolvedValue(null);
     const result: ActionResult = await searchPartNumbersAction("test");
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Utente non trovato o non autenticato.");
+    expect(result.error).toBe(MSG.auth.userNotAuthenticated);
   });
 
   test("returns empty array for empty query", async () => {
@@ -709,7 +710,7 @@ describe("searchPartNumbersAction", () => {
     mockSearchPartNumbers.mockRejectedValue(new Error("DB error"));
     const result: ActionResult = await searchPartNumbersAction("test");
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Errore sconosciuto.");
+    expect(result.error).toBe(MSG.db.unknown);
   });
 
   test("does NOT require INTERNAL/ADMIN role (any authenticated user)", async () => {

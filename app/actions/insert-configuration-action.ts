@@ -1,6 +1,7 @@
 "use server";
 
 import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
@@ -15,7 +16,7 @@ export const insertConfigurationAction = async (formData: unknown) => {
   const user = await getUserData();
 
   if (!user) {
-    return { success: false as const, error: "Utente non trovato." };
+    return { success: false as const, error: MSG.auth.userNotFound };
   }
 
   try {
@@ -28,8 +29,8 @@ export const insertConfigurationAction = async (formData: unknown) => {
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 };

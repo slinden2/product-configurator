@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Workflow } from "lucide-react";
 import { useTransition } from "react";
+import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 
 interface SnapshotButtonProps {
@@ -18,10 +19,10 @@ const SnapshotButton = ({ confId }: SnapshotButtonProps) => {
     startTransition(async () => {
       try {
         await snapshotEngineeringBomAction(confId);
-        toast.success("Distinta ingegneria generata.");
+        toast.success(MSG.toast.bomGenerated);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Errore durante la generazione."
+          err instanceof Error ? err.message : MSG.toast.generateError
         );
       }
     });

@@ -1,6 +1,7 @@
 "use server";
 
 import { getUserData, QueryError, updateConfigStatus } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 import { configStatusSchema } from "@/validation/config-status.schema";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
@@ -20,7 +21,7 @@ export const updateConfigStatusAction = async (
   if (!user) {
     return {
       success: false as const,
-      error: "Utente non trovato o non autenticato.",
+      error: MSG.auth.userNotAuthenticated,
     };
   }
 
@@ -34,8 +35,8 @@ export const updateConfigStatusAction = async (
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 };

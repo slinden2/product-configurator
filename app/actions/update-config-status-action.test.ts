@@ -35,6 +35,7 @@ vi.mock("pg", () => ({
 
 import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
 import { QueryError } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 
 // --- Tests ---
 
@@ -85,7 +86,7 @@ describe("updateConfigStatusAction", () => {
     });
     expect(result).toEqual({
       success: false,
-      error: "Utente non trovato o non autenticato.",
+      error: MSG.auth.userNotAuthenticated,
     });
   });
 
@@ -98,7 +99,7 @@ describe("updateConfigStatusAction", () => {
     });
     expect(result).toEqual({
       success: false,
-      error: "Stato non autorizzato.",
+      error: MSG.config.statusUnauthorized,
     });
   });
 
@@ -107,6 +108,6 @@ describe("updateConfigStatusAction", () => {
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "OPEN",
     });
-    expect(result).toEqual({ success: false, error: "Errore sconosciuto." });
+    expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 });

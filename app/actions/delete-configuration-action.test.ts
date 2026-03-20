@@ -49,6 +49,7 @@ vi.mock("next/cache", () => ({
 // --- Imports ---
 
 import { deleteConfigurationAction } from "@/app/actions/delete-configuration-action";
+import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
@@ -90,7 +91,7 @@ describe("deleteConfigurationAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
-    expect(result).toEqual({ success: false, error: "Utente non trovato." });
+    expect(result).toEqual({ success: false, error: MSG.auth.userNotFound });
   });
 
   test("EXTERNAL cannot delete another user's config", async () => {
@@ -100,7 +101,7 @@ describe("deleteConfigurationAction", () => {
       initials: "OU",
     });
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
-    expect(result).toEqual({ success: false, error: "Non autorizzato." });
+    expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
   });
 
   test("ADMIN can delete another user's config", async () => {
@@ -118,7 +119,7 @@ describe("deleteConfigurationAction", () => {
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result).toEqual({
       success: false,
-      error: "Configurazione non trovata.",
+      error: MSG.config.notFound,
     });
   });
 
@@ -126,14 +127,14 @@ describe("deleteConfigurationAction", () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "LOCKED" }));
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non è possibile eliminare");
+    expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
   test("cannot delete CLOSED config", async () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "CLOSED" }));
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non è possibile eliminare");
+    expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
   test("EXTERNAL cannot delete OPEN config", async () => {
@@ -145,7 +146,7 @@ describe("deleteConfigurationAction", () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "OPEN" }));
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non è possibile eliminare");
+    expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
   test("returns error on db failure", async () => {
@@ -156,6 +157,6 @@ describe("deleteConfigurationAction", () => {
     });
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Errore sconosciuto.");
+    expect(result.error).toBe(MSG.db.unknown);
   });
 });

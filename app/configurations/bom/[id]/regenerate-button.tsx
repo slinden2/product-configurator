@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { RefreshCw } from "lucide-react";
 import { useTransition } from "react";
+import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 
 interface RegenerateButtonProps {
@@ -29,12 +30,12 @@ const RegenerateButton = ({ confId }: RegenerateButtonProps) => {
     startTransition(async () => {
       try {
         await regenerateEngineeringBomAction(confId);
-        toast.success("Distinta ingegneria rigenerata.");
+        toast.success(MSG.toast.bomRegenerated);
       } catch (err) {
         toast.error(
           err instanceof Error
             ? err.message
-            : "Errore durante la rigenerazione."
+            : MSG.toast.regenerateError
         );
       }
     });

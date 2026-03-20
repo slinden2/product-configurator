@@ -19,6 +19,7 @@ import { EngineeringBomItem } from "@/db/schemas";
 import { cn } from "@/lib/utils";
 import { ArrowDownUp, Check, Pencil, Trash2, Undo2, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
+import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 
 interface EngineeringBomTableProps {
@@ -79,7 +80,7 @@ const EngineeringBomTable = ({
   function saveEdit(itemId: number) {
     const newQty = parseInt(editQty, 10);
     if (!Number.isInteger(newQty) || newQty < 1) {
-      toast.error("Quantità non valida (minimo 1).");
+      toast.error(MSG.toast.qtyInvalid);
       return;
     }
     startTransition(async () => {
@@ -91,10 +92,10 @@ const EngineeringBomTable = ({
           )
         );
         setEditingId(null);
-        toast.success("Quantità aggiornata.");
+        toast.success(MSG.toast.qtyUpdated);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Errore aggiornamento."
+          err instanceof Error ? err.message : MSG.toast.updateError
         );
       }
     });
@@ -113,10 +114,10 @@ const EngineeringBomTable = ({
               : item
           )
         );
-        toast.success(wasDeleted ? "Riga ripristinata." : "Riga eliminata.");
+        toast.success(wasDeleted ? MSG.toast.rowRestored : MSG.toast.rowDeleted);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Errore operazione."
+          err instanceof Error ? err.message : MSG.toast.operationError
         );
       }
     });

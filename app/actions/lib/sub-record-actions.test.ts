@@ -40,6 +40,7 @@ vi.mock("pg", () => ({
 // --- Imports ---
 
 import { handleSubRecordAction } from "@/app/actions/lib/sub-record-actions";
+import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
@@ -160,7 +161,7 @@ describe("handleSubRecordAction", () => {
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
-      error: expect.stringContaining("Utente non trovato"),
+      error: MSG.auth.userNotAuthenticated,
     });
   });
 
@@ -169,7 +170,7 @@ describe("handleSubRecordAction", () => {
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
-      error: expect.stringContaining("Configurazione associata non trovata"),
+      error: MSG.config.associatedNotFound,
     });
   });
 
@@ -182,7 +183,7 @@ describe("handleSubRecordAction", () => {
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
-      error: expect.stringContaining("Non autorizzato"),
+      error: MSG.auth.unauthorizedSubRecord,
     });
   });
 
@@ -206,7 +207,7 @@ describe("handleSubRecordAction", () => {
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
-      error: expect.stringContaining("Non è possibile modificare"),
+      error: MSG.config.cannotEditSubRecord,
     });
   });
 
@@ -215,7 +216,7 @@ describe("handleSubRecordAction", () => {
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
-      error: expect.stringContaining("Non è possibile modificare"),
+      error: MSG.config.cannotEditSubRecord,
     });
   });
 
@@ -229,7 +230,7 @@ describe("handleSubRecordAction", () => {
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
-      error: expect.stringContaining("Non è possibile modificare"),
+      error: MSG.config.cannotEditSubRecord,
     });
   });
 

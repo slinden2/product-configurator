@@ -8,6 +8,7 @@ import {
   QueryError,
   updateConfiguration,
 } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
@@ -27,13 +28,13 @@ export const editConfigurationAction = async (
   const user = await getUserData();
 
   if (!user) {
-    return { success: false as const, error: "Utente non trovato." };
+    return { success: false as const, error: MSG.auth.userNotFound };
   }
 
   const configuration = await getConfigurationWithTanksAndBays(confId);
 
   if (!configuration) {
-    return { success: false as const, error: "Configurazione non trovata." };
+    return { success: false as const, error: MSG.config.notFound };
   }
 
   // Authorization: owner, INTERNAL, or ADMIN
@@ -42,14 +43,14 @@ export const editConfigurationAction = async (
     user.role !== "ADMIN" &&
     user.role !== "INTERNAL"
   ) {
-    return { success: false as const, error: "Non autorizzato." };
+    return { success: false as const, error: MSG.auth.unauthorized };
   }
 
   // Status protection: enforce editable rules per role
   if (!isEditable(configuration.status, user.role)) {
     return {
       success: false as const,
-      error: "Non è possibile modificare una configurazione in questo stato.",
+      error: MSG.config.cannotEdit,
     };
   }
 
@@ -71,8 +72,8 @@ export const editConfigurationAction = async (
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 };

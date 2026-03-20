@@ -21,13 +21,8 @@ Actions must always return an object with this structure:
    - `DatabaseError` → return `"Errore del database."` (never expose raw pg error strings)
    - Default → return `"Errore sconosciuto."`
 
-## Error Message Registry (Standardized Italian)
-- Auth: `Non autorizzato.`
-- Not Found: `Record non trovato.` or `Configurazione non trovata.`
-- Frozen State: `Non è possibile modificare una configurazione in questo stato.`
-- BOM Auth: `Non autorizzato a modificare la distinta ingegneria.`
-- Database Error: `Errore del database.`
-- Default: `Errore sconosciuto.`
+## Error Message Registry
+All Italian error messages are centralized in `lib/messages.ts` as the `MSG` constant. Import `MSG` from `@/lib/messages` and reference keys like `MSG.auth.unauthorized`, `MSG.config.notFound`, `MSG.db.error`, etc. Never hardcode message strings — always use `MSG`.
 
 ## BOM Cascade Invalidation
 When a configuration is edited, the engineering BOM snapshot becomes stale. Any action that mutates configuration data must:

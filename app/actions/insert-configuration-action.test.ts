@@ -35,6 +35,7 @@ vi.mock("pg", () => ({
 
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
 import { QueryError } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
@@ -115,7 +116,7 @@ describe("insertConfigurationAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await insertConfigurationAction(makeValidFormData());
-    expect(result).toEqual({ success: false, error: "Utente non trovato." });
+    expect(result).toEqual({ success: false, error: MSG.auth.userNotFound });
     expect(mockInsertConfiguration).not.toHaveBeenCalled();
   });
 
@@ -125,12 +126,12 @@ describe("insertConfigurationAction", () => {
     );
     const result = await insertConfigurationAction(makeValidFormData());
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Impossibile creare la configurazione.");
+    expect(result.error).toBe(MSG.config.createFailed);
   });
 
   test("returns generic error on unknown exceptions", async () => {
     mockInsertConfiguration.mockRejectedValue(new TypeError("unexpected"));
     const result = await insertConfigurationAction(makeValidFormData());
-    expect(result).toEqual({ success: false, error: "Errore sconosciuto." });
+    expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 });

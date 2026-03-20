@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { getConfiguration, getUserData, QueryError } from "@/db/queries";
 import { DatabaseError } from "pg";
 import { configurations } from "@/db/schemas";
+import { MSG } from "@/lib/messages";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { isEditable } from "@/app/actions/lib/auth-checks";
@@ -12,24 +13,24 @@ export const deleteConfigurationAction = async (id: number, userId: string) => {
   const user = await getUserData();
 
   if (!user) {
-    return { success: false as const, error: "Utente non trovato." };
+    return { success: false as const, error: MSG.auth.userNotFound };
   }
 
   if (user.id !== userId && user.role !== "ADMIN") {
-    return { success: false as const, error: "Non autorizzato." };
+    return { success: false as const, error: MSG.auth.unauthorized };
   }
 
   const configuration = await getConfiguration(id);
 
   if (!configuration) {
-    return { success: false as const, error: "Configurazione non trovata." };
+    return { success: false as const, error: MSG.config.notFound };
   }
 
   // Status protection: only allow deletion if user can edit this status
   if (!isEditable(configuration.status, user.role)) {
     return {
       success: false as const,
-      error: "Non è possibile eliminare una configurazione in questo stato.",
+      error: MSG.config.cannotDelete,
     };
   }
 
@@ -43,8 +44,8 @@ export const deleteConfigurationAction = async (id: number, userId: string) => {
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
-      return { success: false as const, error: "Errore del database." };
+      return { success: false as const, error: MSG.db.error };
     }
-    return { success: false as const, error: "Errore sconosciuto." };
+    return { success: false as const, error: MSG.db.unknown };
   }
 };

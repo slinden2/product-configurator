@@ -44,6 +44,7 @@ vi.mock("pg", () => ({
 
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { QueryError } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
@@ -150,7 +151,7 @@ describe("editConfigurationAction", () => {
       OWNER_ID,
       makeValidFormData()
     );
-    expect(result).toEqual({ success: false, error: "Utente non trovato." });
+    expect(result).toEqual({ success: false, error: MSG.auth.userNotFound });
   });
 
   test("returns error when configuration not found", async () => {
@@ -162,7 +163,7 @@ describe("editConfigurationAction", () => {
     );
     expect(result).toEqual({
       success: false,
-      error: "Configurazione non trovata.",
+      error: MSG.config.notFound,
     });
   });
 
@@ -177,7 +178,7 @@ describe("editConfigurationAction", () => {
       OWNER_ID,
       makeValidFormData()
     );
-    expect(result).toEqual({ success: false, error: "Non autorizzato." });
+    expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
   });
 
   test("INTERNAL user can edit another user's DRAFT config", async () => {
@@ -226,7 +227,7 @@ describe("editConfigurationAction", () => {
       makeValidFormData()
     );
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non è possibile modificare");
+    expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
   test("nobody can edit LOCKED config", async () => {
@@ -239,7 +240,7 @@ describe("editConfigurationAction", () => {
       makeValidFormData()
     );
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non è possibile modificare");
+    expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
   test("nobody can edit CLOSED config", async () => {
@@ -252,7 +253,7 @@ describe("editConfigurationAction", () => {
       makeValidFormData()
     );
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Non è possibile modificare");
+    expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
   test("returns error message on QueryError", async () => {
@@ -274,7 +275,7 @@ describe("editConfigurationAction", () => {
       OWNER_ID,
       makeValidFormData()
     );
-    expect(result).toEqual({ success: false, error: "Errore sconosciuto." });
+    expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 
   // --- Engineering BOM auto-invalidation ---

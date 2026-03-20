@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { MSG } from "@/lib/messages";
 import { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
@@ -80,7 +81,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
 
       if (id) {
         if (!configuration || !("user_id" in configuration)) {
-          toast.error("Dati incompleti per l'aggiornamento.");
+          toast.error(MSG.toast.configIncompleteUpdate);
           setIsSubmitting(false);
           return;
         }
@@ -90,7 +91,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           setIsSubmitting(false);
           return;
         }
-        toast.success("Configurazione aggiornata.");
+        toast.success(MSG.toast.configUpdated);
         form.reset(values);
         if (formKey) onSaved?.(formKey);
       } else {
@@ -100,7 +101,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           setIsSubmitting(false);
           return;
         }
-        toast.success("Configurazione creata.");
+        toast.success(MSG.toast.configCreated);
         router.push(`/configurations/edit/${result.id}`);
       }
       setIsSubmitting(false);
@@ -199,10 +200,9 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
       <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Distinta ingegneria presente</AlertDialogTitle>
+            <AlertDialogTitle>{MSG.bomWarning.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              Salvando le modifiche alla configurazione, la distinta ingegneria
-              verrà eliminata e dovrà essere rigenerata. Continuare?
+              {MSG.bomWarning.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -215,7 +215,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
               onClick={handleBomWarningConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Salva e elimina distinta
+              {MSG.bomWarning.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
