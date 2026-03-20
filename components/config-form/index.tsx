@@ -195,6 +195,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           </FormDisabledContext.Provider>
         </form>
       </Form>
+      {/* TODO this needs to be a separate component */}
       <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>

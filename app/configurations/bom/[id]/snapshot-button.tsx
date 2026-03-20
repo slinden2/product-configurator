@@ -1,8 +1,9 @@
 "use client";
 
 import { snapshotEngineeringBomAction } from "@/app/actions/engineering-bom-actions";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Workflow } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
@@ -27,14 +28,14 @@ const SnapshotButton = ({ confId }: SnapshotButtonProps) => {
   };
 
   return (
-    <LoadingButton
+    <Button
       variant="outline"
-      loading={isPending}
+      disabled={isPending}
       onClick={handleSnapshot}
     >
-      <Sparkles />
+      {isPending ? <Spinner className="h-4 w-4" /> : <Workflow className="h-4 w-4" />}
       <span>Genera distinta ingegneria</span>
-    </LoadingButton>
+    </Button>
   );
 };
 

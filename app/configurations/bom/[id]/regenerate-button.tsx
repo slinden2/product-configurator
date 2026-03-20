@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { RefreshCw } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -43,7 +44,7 @@ const RegenerateButton = ({ confId }: RegenerateButtonProps) => {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="outline" disabled={isPending}>
-          <RefreshCw className={isPending ? "animate-spin" : ""} />
+          {isPending ? <Spinner className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
           <span>Rigenera distinta</span>
         </Button>
       </AlertDialogTrigger>
