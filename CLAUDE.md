@@ -63,6 +63,8 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - Form State: When modifying components/config-form/, never introduce useState for form fields. Use only react-hook-form methods (setValue, watch, control) to ensure Zod validation remains in sync.
 - Type Safety: Always use the types defined in types/index.ts. If a new entity is added, define the Zod schema in validation/ before touching the DB schema.
 - Status Protection: Before performing any mutation on a Configuration, verify the ConfigurationStatus. Mutations must fail if status is LOCKED or CLOSED.
+- DRY: Do not duplicate logic. Extract repeated patterns into shared utilities (`lib/`), helper functions, or reusable components (`components/shared/`). Before writing new code, check if an existing function or component already handles the same concern.
+- Component Readability: Keep React components focused and readable. If a component grows too large or handles multiple concerns, split it into smaller, well-named sub-components. Avoid deeply nested conditionals and long render functions — extract sections into dedicated components or custom hooks.
 
 ## Development Checklist
 Before finalizing any change, verify:
