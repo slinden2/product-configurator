@@ -93,11 +93,11 @@ export function transformConfigToDbUpdate(values: ConfigSchema): DbConfigSet {
 export function transformDbNullToUndefined(data: Record<string, unknown>) {
   const newDataObj = { ...data };
   for (const key in newDataObj) {
-    if (data[key] === null) {
-      data[key] = undefined;
+    if (newDataObj[key] === null) {
+      newDataObj[key] = undefined;
     }
   }
-  return data;
+  return newDataObj;
 }
 
 export function transformWaterTankSchemaToDbData(values: WaterTankSchema) {

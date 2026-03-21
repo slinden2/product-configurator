@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import {
   configDefaults,
@@ -21,16 +21,7 @@ import HPPumpSection from "@/components/config-form/hp-pump-section";
 import { Save } from "lucide-react";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import BomWarningDialog from "@/components/config-form/bom-warning-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
@@ -148,21 +139,12 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
                 title="Note"
                 description="Note aggiuntive per la vendita e l'ufficio tecnico">
                 <div className="fs-content">
-                  {userRole !== "INTERNAL" && (
-                    <TextareaField<ConfigSchema>
+                  <TextareaField<ConfigSchema>
                       name="sales_notes"
                       label="Note commerciali"
                       placeholder="Inserire eventuali note commerciali"
+                      disabled={userRole === "INTERNAL"}
                     />
-                  )}
-                  {userRole === "INTERNAL" && (
-                    <TextareaField<ConfigSchema>
-                      name="sales_notes"
-                      label="Note commerciali"
-                      placeholder="Inserire eventuali note commerciali"
-                      disabled
-                    />
-                  )}
                   {(userRole === "INTERNAL" || userRole === "ADMIN") && (
                     <TextareaField<ConfigSchema>
                       name="engineering_notes"
@@ -195,30 +177,12 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           </FormDisabledContext.Provider>
         </form>
       </Form>
-      {/* TODO this needs to be a separate component */}
-      <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{MSG.bomWarning.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {MSG.bomWarning.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => { pendingValuesRef.current = null; }}
-            >
-              Annulla
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBomWarningConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {MSG.bomWarning.confirm}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BomWarningDialog
+        open={showBomWarning}
+        onOpenChange={setShowBomWarning}
+        onCancel={() => { pendingValuesRef.current = null; }}
+        onConfirm={handleBomWarningConfirm}
+      />
     </div>
   );
 };
