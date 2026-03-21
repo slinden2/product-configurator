@@ -1,6 +1,5 @@
 import MainNav from "@/components/main-nav";
 import { createClient } from "@/utils/supabase/server";
-import React from "react";
 
 const MainNavServer = async () => {
   const supabase = await createClient();

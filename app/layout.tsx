@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -28,7 +29,9 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col">
             <header className="top-0 z-50 border-b bg-background/95">
               <div className="container py-3">
-                <MainNavServer />
+                <Suspense>
+                  <MainNavServer />
+                </Suspense>
               </div>
             </header>
             <main className="container mx-auto px-4 py-8 max-w-5xl">

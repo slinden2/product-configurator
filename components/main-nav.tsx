@@ -7,7 +7,6 @@ import {
   SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -18,7 +17,7 @@ import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface MainNavProps {
   user: User | null;
@@ -26,7 +25,7 @@ interface MainNavProps {
 
 const MainNav = ({ user }: MainNavProps) => {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const routes = [
@@ -38,7 +37,7 @@ const MainNav = ({ user }: MainNavProps) => {
     {
       label: "Configurazioni",
       href: "/configurations",
-      active: pathname === "/configurations",
+      active: pathname.startsWith("/configurations"),
     },
   ];
 
@@ -107,9 +106,9 @@ const MainNav = ({ user }: MainNavProps) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           aria-label="Toggle theme">
-          {theme === "dark" ? (
+          {resolvedTheme === "dark" ? (
             <Sun className="h-5 w-5" />
           ) : (
             <Moon className="h-5 w-5" />
