@@ -7,7 +7,7 @@ import {
   ConfigStatusSchema,
 } from "@/validation/config-status.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormField, FormItem, FormLabel } from "./ui/form";
 import {
@@ -19,9 +19,9 @@ import {
 } from "./ui/select";
 import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
 import { MSG } from "@/lib/messages";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-
 
 interface StatusFormProps {
   confId: number;
@@ -30,18 +30,13 @@ interface StatusFormProps {
 }
 
 const ALLOWED_STATUSES: Record<Role, ConfigurationStatusType[]> = {
-  EXTERNAL: ['DRAFT', 'OPEN'],
-  INTERNAL: ['DRAFT', 'OPEN', 'LOCKED'],
-  ADMIN: ['DRAFT', 'OPEN', 'LOCKED', 'CLOSED']
+  EXTERNAL: ["DRAFT", "OPEN"],
+  INTERNAL: ["DRAFT", "OPEN", "LOCKED"],
+  ADMIN: ["DRAFT", "OPEN", "LOCKED", "CLOSED"],
 };
 
-function isAllowedStatus(status: string | number, role: Role): boolean {
-  const allowedStatuses = ALLOWED_STATUSES[role];
-  return allowedStatuses.includes(status as ConfigurationStatusType);
-}
-
 const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ConfigStatusSchema>({
     resolver: zodResolver(configStatusSchema),
@@ -50,9 +45,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
     },
   });
 
-  const statusValueWatch = form.watch("status");
   const handleSubmit = async (data: ConfigStatusSchema) => {
-    console.log("🚀 ~ handleSubmit ~ data:", data); // DEBUG
     try {
       setIsLoading(true);
       const result = await updateConfigStatusAction(confId, data);
@@ -72,52 +65,49 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
   };
 
   const userConfigStatusOpts = configStatusOpts.filter((opt) =>
-    isAllowedStatus(opt.value, userRole)
+    ALLOWED_STATUSES[userRole].includes(opt.value as ConfigurationStatusType)
   );
 
   return (
-    <div>
-      <Form {...form}>
-        <fieldset disabled={isLoading}>
-          <form onSubmit={form.handleSubmit((data) => console.log(data))}>
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center relative">
-                    <span>Stato</span>
-                    <Loader2
-                      className={`ml-2 inline animate-spin h-6 w-6 text-primary absolute left-8 ${isLoading ? "" : "hidden"
-                        }`}
-                    />
-                  </FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      form.handleSubmit((data) => handleSubmit(data))();
-                    }}
-                    value={statusValueWatch}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {userConfigStatusOpts.map((opt) => (
-                        <SelectItem
-                          key={opt.value}
-                          value={opt.value.toString()}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-          </form>
-        </fieldset>
-      </Form>
-    </div>
+    <Form {...form}>
+      <fieldset disabled={isLoading}>
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center relative">
+                <span>Stato</span>
+                <Loader2
+                  className={cn(
+                    "ml-2 inline animate-spin h-6 w-6 text-primary absolute left-8",
+                    !isLoading && "hidden"
+                  )}
+                />
+              </FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  form.handleSubmit(handleSubmit)();
+                }}
+                value={field.value}
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {userConfigStatusOpts.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value.toString()}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+      </fieldset>
+    </Form>
   );
 };
 
