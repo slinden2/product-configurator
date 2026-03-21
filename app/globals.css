@@ -79,3 +79,15 @@
     @apply text-xl font-bold;
   }
 }
+
+@layer components {
+  .fs-content {
+    @apply space-y-4;
+  }
+  .fs-row {
+    @apply space-y-3 md:flex md:gap-4 md:space-y-0;
+  }
+  .fs-item {
+    @apply space-y-3 md:flex-1;
+  }
+}

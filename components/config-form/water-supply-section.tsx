@@ -1,8 +1,5 @@
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
-import FieldsetContent from "@/components/fieldset-content";
-import FieldsetItem from "@/components/fieldset-item";
-import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { ConfigSchema } from "@/validation/config-schema";
@@ -29,9 +26,9 @@ const WaterSupplySection = () => {
       title="Alimentazione acqua"
       description="Configura le impostazioni per l'alimentazione dell'acqua e le pompe di rilancio"
     >
-      <FieldsetContent>
-        <FieldsetRow className="md:items-start">
-          <FieldsetItem>
+      <div className="fs-content">
+        <div className="fs-row md:items-start">
+          <div className="fs-item">
             <div className="space-y-3">
               <SelectField<ConfigSchema>
                 name="water_1_type"
@@ -59,9 +56,9 @@ const WaterSupplySection = () => {
                 ]}
               />
             </div>
-          </FieldsetItem>
+          </div>
           {isInvPump1Selected && (
-            <FieldsetItem>
+            <div className="fs-item">
               <>
                 <SelectField<ConfigSchema>
                   name="inv_pump_outlet_dosatron_qty"
@@ -76,9 +73,9 @@ const WaterSupplySection = () => {
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
               </>
-            </FieldsetItem>
+            </div>
           )}
-          <FieldsetItem>
+          <div className="fs-item">
             <div className="space-y-3">
               <SelectField<ConfigSchema>
                 name="water_2_type"
@@ -100,13 +97,13 @@ const WaterSupplySection = () => {
                 items={withNoSelection(selectFieldOptions.waterPump2Opts)}
               />
             </div>
-          </FieldsetItem>
-          {!isInvPump1Selected && <FieldsetItem />}
-        </FieldsetRow>
+          </div>
+          {!isInvPump1Selected && <div className="fs-item" />}
+        </div>
         <div className="">
           <CheckboxField name="has_antifreeze" label="Scarico invernale" />
         </div>
-      </FieldsetContent>
+      </div>
     </Fieldset>
   );
 };

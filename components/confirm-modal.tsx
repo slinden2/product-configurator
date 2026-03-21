@@ -1,4 +1,3 @@
-// components/shared/confirm-modal.tsx
 import * as React from "react";
 import {
   ResponsiveModal,

@@ -7,15 +7,15 @@ import {
 } from "@/components/ui/card";
 import React, { HTMLAttributes } from "react";
 
-interface Props extends HTMLAttributes<HTMLFieldSetElement> {
+interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   title: string;
   description?: string;
 }
 
-const Fieldset = ({ children, title, description }: Props) => {
+const Fieldset = ({ children, title, description, ...rest }: Props) => {
   return (
-    <Card className="overflow-hidden shadow-lg mb-8">
+    <Card {...rest} className="overflow-hidden shadow-lg mb-8">
       <CardHeader className="border-b bg-card-foreground/5">
         <CardTitle className="text-xl text-foreground">{title}</CardTitle>
         <CardDescription className="text-muted-foreground">

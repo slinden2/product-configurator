@@ -1,12 +1,9 @@
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
-import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import FieldsetItem from "@/components/fieldset-item";
-import FieldsetContent from "@/components/fieldset-content";
 import { withNoSelection } from "@/lib/utils";
 import { ConfigSchema } from "@/validation/config-schema";
 
@@ -26,9 +23,9 @@ const HPPumpSection = () => {
       title="Pompe HP"
       description="Seleziona le pompe alta pressione e le tipologie di uscite da includere nella configurazione"
     >
-      <FieldsetContent className="space-y-6 md:space-y-3">
-        <FieldsetRow>
-          <FieldsetItem className="md:self-end md:pb-3">
+      <div className="space-y-6 md:space-y-3">
+        <div className="fs-row">
+          <div className="fs-item md:self-end md:pb-3">
             <CheckboxField<ConfigSchema>
               name="has_15kw_pump"
               label="Pompa 15kW"
@@ -38,8 +35,8 @@ const HPPumpSection = () => {
                 },
               ]}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="pump_outlet_1_15kw"
               dataType="string"
@@ -47,8 +44,8 @@ const HPPumpSection = () => {
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="pump_outlet_2_15kw"
               dataType="string"
@@ -56,10 +53,10 @@ const HPPumpSection = () => {
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
-          </FieldsetItem>
-        </FieldsetRow>
-        <FieldsetRow>
-          <FieldsetItem className="md:self-end md:pb-3">
+          </div>
+        </div>
+        <div className="fs-row">
+          <div className="fs-item md:self-end md:pb-3">
             <CheckboxField<ConfigSchema>
               name="has_30kw_pump"
               label="Pompa 30kW"
@@ -69,8 +66,8 @@ const HPPumpSection = () => {
                 },
               ]}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="pump_outlet_1_30kw"
               dataType="string"
@@ -78,8 +75,8 @@ const HPPumpSection = () => {
               disabled={!has30kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="pump_outlet_2_30kw"
               dataType="string"
@@ -87,10 +84,10 @@ const HPPumpSection = () => {
               disabled={!has30kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
             />
-          </FieldsetItem>
-        </FieldsetRow>
-        <FieldsetRow>
-          <FieldsetItem className="md:self-center md:mt-1">
+          </div>
+        </div>
+        <div className="fs-row">
+          <div className="fs-item md:self-center md:mt-1">
             <CheckboxField<ConfigSchema>
               name="has_omz_pump"
               label="Pompa OMZ"
@@ -105,8 +102,8 @@ const HPPumpSection = () => {
                 },
               ]}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="pump_outlet_omz"
               dataType="string"
@@ -131,10 +128,10 @@ const HPPumpSection = () => {
                 label="Con barra di prelavaggio"
               />
             </div>
-          </FieldsetItem>
-          <FieldsetItem />
-        </FieldsetRow>
-      </FieldsetContent>
+          </div>
+          <div className="fs-item" />
+        </div>
+      </div>
     </Fieldset>
   );
 };

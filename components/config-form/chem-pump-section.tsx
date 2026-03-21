@@ -4,7 +4,6 @@ import SelectField from "@/components/select-field";
 import { selectFieldOptions } from "@/validation/configuration";
 import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import FieldsetContent from "@/components/fieldset-content";
 import { ConfigSchema } from "@/validation/config-schema";
 
 const ChemPumpSection = () => {
@@ -17,7 +16,7 @@ const ChemPumpSection = () => {
     <Fieldset
       title="Pompe dosatrici"
       description="Seleziona le pompe da includere nella configurazione">
-      <FieldsetContent>
+      <div className="fs-content">
         <div className="grid grid-rows-2 grid-cols-2 md:grid-rows-1 md:grid-cols-4">
           <div className="order-1 my-1 md:my-0">
             <CheckboxField<ConfigSchema> name="has_shampoo_pump" label="Pompa sapone" disabled={brushNumWatch === 0} />
@@ -61,14 +60,14 @@ const ChemPumpSection = () => {
             />
           </div>
         </div>
-      </FieldsetContent>
+      </div>
       <div
         className={`${hasChemicalPumpWatch || hasAcidPumpWatch ? "space-y-6 pt-10" : "pt-3"
           }`}>
         {hasChemicalPumpWatch && (
           <div>
-            <div className="md:flex md:gap-4">
-              <div className="md:flex-1 my-4">
+            <div className="fs-row">
+              <div className="fs-item my-4">
                 <SelectField<ConfigSchema>
                   name="chemical_qty"
                   dataType="number"
@@ -77,7 +76,7 @@ const ChemPumpSection = () => {
                   items={selectFieldOptions.chemicalNum}
                 />
               </div>
-              <div className="md:flex-1 my-4">
+              <div className="fs-item my-4">
                 <SelectField<ConfigSchema>
                   name="chemical_pump_pos"
                   dataType="string"

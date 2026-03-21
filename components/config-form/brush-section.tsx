@@ -1,7 +1,4 @@
 import Fieldset from "@/components/fieldset";
-import FieldsetContent from "@/components/fieldset-content";
-import FieldsetItem from "@/components/fieldset-item";
-import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
@@ -18,9 +15,9 @@ const BrushSection = () => {
       title="Spazzole"
       description="Compila i dati relativi alle spazzole"
     >
-      <FieldsetContent>
-        <FieldsetRow>
-          <FieldsetItem>
+      <div className="fs-content">
+        <div className="fs-row">
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="brush_qty"
               dataType="number"
@@ -37,8 +34,8 @@ const BrushSection = () => {
                 }
               ]}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="brush_type"
               dataType="string"
@@ -46,8 +43,8 @@ const BrushSection = () => {
               disabled={isDisabled}
               items={selectFieldOptions.brushTypes}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="brush_color"
               dataType="string"
@@ -55,9 +52,9 @@ const BrushSection = () => {
               disabled={isDisabled}
               items={selectFieldOptions.brushColors}
             />
-          </FieldsetItem>
-        </FieldsetRow>
-      </FieldsetContent>
+          </div>
+        </div>
+      </div>
     </Fieldset>
   );
 };

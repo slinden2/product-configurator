@@ -1,5 +1,4 @@
 import Fieldset from "@/components/fieldset";
-import FieldsetContent from "@/components/fieldset-content";
 import InputField from "@/components/input-field";
 import TextareaField from "@/components/textarea-field";
 import { ConfigSchema } from "@/validation/config-schema";
@@ -10,7 +9,7 @@ const GeneralSection = () => {
     <Fieldset
       title="Informazioni generali"
       description="Compila i dati del cliente e la descrizione dell'impianto">
-      <FieldsetContent>
+      <div className="fs-content">
         <InputField<ConfigSchema>
           name="name"
           label="Nome del cliente"
@@ -21,7 +20,7 @@ const GeneralSection = () => {
           label="Descrizione"
           placeholder="Inserire la descrizione"
         />
-      </FieldsetContent>
+      </div>
     </Fieldset>
   );
 };

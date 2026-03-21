@@ -1,7 +1,4 @@
 import CheckboxField from "@/components/checkbox-field";
-import FieldsetContent from "@/components/fieldset-content";
-import FieldsetItem from "@/components/fieldset-item";
-import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
@@ -26,35 +23,35 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
     hasGantryWatch && supplyType === "ENERGY_CHAIN";
 
   return (
-    <FieldsetContent>
-      <FieldsetRow>
-        <FieldsetItem>
+    <div className="fs-content">
+      <div className="fs-row">
+        <div className="fs-item">
           <SelectField<WashBaySchema>
             name="hp_lance_qty"
             dataType="number"
             label="Numero lance HP"
             items={getNumericSelectOptions([0, 2])}
           />
-        </FieldsetItem>
-        <FieldsetItem>
+        </div>
+        <div className="fs-item">
           <SelectField<WashBaySchema>
             name="det_lance_qty"
             dataType="number"
             label={`Numero lance detergente`}
             items={getNumericSelectOptions([0, 2])}
           />
-        </FieldsetItem>
-        <FieldsetItem>
+        </div>
+        <div className="fs-item">
           <SelectField<WashBaySchema>
             name="hose_reel_qty"
             dataType="number"
             label="Numero avvolgitori"
             items={getNumericSelectOptions([0, 1, 2])}
           />
-        </FieldsetItem>
-      </FieldsetRow>
-      <FieldsetRow>
-        <FieldsetItem>
+        </div>
+      </div>
+      <div className="fs-row">
+        <div className="fs-item">
           <SelectField<WashBaySchema>
             name="pressure_washer_type"
             dataType="string"
@@ -67,8 +64,8 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               },
             ]}
           />
-        </FieldsetItem>
-        <FieldsetItem>
+        </div>
+        <div className="fs-item">
           <SelectField<WashBaySchema>
             name="pressure_washer_qty"
             dataType="number"
@@ -76,10 +73,10 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             disabled={!!!pressureWashTypeWatch}
             items={getNumericSelectOptions([1, 2, 3, 4])}
           />
-        </FieldsetItem>
-      </FieldsetRow>
-      <FieldsetRow>
-        <FieldsetItem>
+        </div>
+      </div>
+      <div className="fs-row">
+        <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="has_gantry"
             label="Pista con portale"
@@ -90,39 +87,39 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               },
             ]}
           />
-        </FieldsetItem>
-        <FieldsetItem>
+        </div>
+        <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="is_first_bay"
             label="Prima pista"
           />
-        </FieldsetItem>
-        <FieldsetItem>
+        </div>
+        <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="has_bay_dividers"
             label="Con pannellature"
           />
-        </FieldsetItem>
-      </FieldsetRow>
+        </div>
+      </div>
       {showEnergyChainFields && (
-        <FieldsetRow className="md:items-end">
-          <FieldsetItem>
+        <div className="fs-row md:items-end">
+          <div className="fs-item">
             <SelectField<WashBaySchema>
               name="energy_chain_width"
               dataType="string"
               label="Larghezza catena"
               items={selectFieldOptions.cableChainWidths}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <CheckboxField<WashBaySchema>
               name="has_shelf_extension"
               label="Con prolunga per mensola alim."
             />
-          </FieldsetItem>
-        </FieldsetRow>
+          </div>
+        </div>
       )}
-    </FieldsetContent>
+    </div>
   );
 };
 

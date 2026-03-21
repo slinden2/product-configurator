@@ -40,7 +40,6 @@ import { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
 import Fieldset from "@/components/fieldset";
-import FieldsetContent from "@/components/fieldset-content";
 import TextareaField from "@/components/textarea-field";
 
 interface ConfigurationFormProps {
@@ -148,7 +147,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
               <Fieldset
                 title="Note"
                 description="Note aggiuntive per la vendita e l'ufficio tecnico">
-                <FieldsetContent>
+                <div className="fs-content">
                   {userRole !== "INTERNAL" && (
                     <TextareaField<ConfigSchema>
                       name="sales_notes"
@@ -171,7 +170,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
                       placeholder="Inserire eventuali note tecniche"
                     />
                   )}
-                </FieldsetContent>
+                </div>
               </Fieldset>
               <div className="flex gap-4">
                 <BackButton fallbackPath={"/configurations"} />

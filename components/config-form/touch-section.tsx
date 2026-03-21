@@ -1,8 +1,5 @@
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
-import FieldsetContent from "@/components/fieldset-content";
-import FieldsetItem from "@/components/fieldset-item";
-import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
@@ -30,9 +27,9 @@ const TouchSection = () => {
       title="Configurazione quadro elettrico"
       description="Configura il quadro elettrico e i touch screen del portale"
     >
-      <FieldsetContent>
-        <FieldsetRow>
-          <FieldsetItem>
+      <div className="fs-content">
+        <div className="fs-row">
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="touch_qty"
               dataType="number"
@@ -49,8 +46,8 @@ const TouchSection = () => {
                 },
               ]}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="touch_pos"
               dataType="string"
@@ -64,9 +61,8 @@ const TouchSection = () => {
                 },
               ]}
             />
-            {/* )} */}
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="touch_fixing_type"
               dataType="string"
@@ -74,30 +70,32 @@ const TouchSection = () => {
               disabled={touchQtyWatch !== 2 && touchPosWatch !== "EXTERNAL"}
               items={selectFieldOptions.touchFixingTypeOpts}
             />
-          </FieldsetItem>
-        </FieldsetRow>
-        <FieldsetRow>
-          <div>
+          </div>
+        </div>
+        <div className="fs-row">
+          <div className="fs-item">
             <CheckboxField name="has_itecoweb" label="Itecoweb" />
           </div>
-          <div>
+          <div className="fs-item">
             <CheckboxField name="has_card_reader" label="Lettore schede" />
           </div>
-          <div>
+          <div className="fs-item">
             <CheckboxField name="is_fast" label="Portale fast" />
           </div>
-        </FieldsetRow>
+        </div>
         {(hasItecowebWatch || hasCardReaderWatch) && (
-          <div className="w-1/2 md:w-1/3">
-            <SelectField
-              name="card_qty"
-              dataType="number"
-              label="Numero di schede"
-              items={selectFieldOptions.cardQtyOpts}
-            />
+          <div className="fs-row">
+            <div className="fs-item w-1/2 md:w-1/3">
+              <SelectField
+                name="card_qty"
+                dataType="number"
+                label="Numero di schede"
+                items={selectFieldOptions.cardQtyOpts}
+              />
+            </div>
           </div>
         )}
-      </FieldsetContent>
+      </div>
     </Fieldset>
   );
 };

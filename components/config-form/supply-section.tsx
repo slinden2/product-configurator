@@ -1,8 +1,5 @@
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
-import FieldsetContent from "@/components/fieldset-content";
-import FieldsetItem from "@/components/fieldset-item";
-import FieldsetRow from "@/components/fieldset-row";
 import SelectField from "@/components/select-field";
 import { withNoSelection } from "@/lib/utils";
 import { ConfigSchema } from "@/validation/config-schema";
@@ -27,9 +24,9 @@ const SupplySection = () => {
     <Fieldset
       title="Alimentazione portale"
       description="Configura le impostazioni per la tipologia di alimentazione del portale e il lato">
-      <FieldsetContent>
-        <FieldsetRow>
-          <FieldsetItem>
+      <div className="fs-content">
+        <div className="fs-row">
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="supply_type"
               dataType="string"
@@ -44,8 +41,8 @@ const SupplySection = () => {
                 },
               ]}
             />
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="supply_fixing_type"
               dataType="string"
@@ -69,17 +66,17 @@ const SupplySection = () => {
                 label="Con telaio e coperchio"
               />
             )}
-          </FieldsetItem>
-          <FieldsetItem>
+          </div>
+          <div className="fs-item">
             <SelectField<ConfigSchema>
               name="supply_side"
               dataType="string"
               label="Lato di alimentazione"
               items={selectFieldOptions.supplySides}
             />
-          </FieldsetItem>
-        </FieldsetRow>
-      </FieldsetContent>
+          </div>
+        </div>
+      </div>
     </Fieldset>
   );
 };
