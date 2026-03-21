@@ -70,8 +70,8 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             name="pressure_washer_qty"
             dataType="number"
             label="Numero idropulitrici"
-            disabled={!!!pressureWashTypeWatch}
-            items={getNumericSelectOptions([1, 2, 3, 4])}
+            disabled={!pressureWashTypeWatch}
+            items={getNumericSelectOptions([1, 2])}
           />
         </div>
       </div>

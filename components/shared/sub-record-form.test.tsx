@@ -409,7 +409,7 @@ describe("SubRecordForm — WashBayForm", () => {
         />
       );
 
-      expect(screen.getByText("Aggiungi Nuovo Pista")).toBeInTheDocument();
+      expect(screen.getByText("Aggiungi Nuova Pista")).toBeInTheDocument();
     });
 
     test("calls insertAction on submit", async () => {

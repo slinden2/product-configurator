@@ -265,7 +265,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
                 title={
                   isEditing
                     ? `${entityName} ${entityIndex}`
-                    : `Aggiungi Nuovo ${entityName}`
+                    : `Aggiungi ${entityName === "Pista" ? "Nuova" : "Nuovo"} ${entityName}`
                 }
               >
                 {/* Render the specific fields passed as a component */}

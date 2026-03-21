@@ -179,7 +179,7 @@ describe("FormContainer", () => {
       await userEvent.click(screen.getByRole("tab", { name: "Piste Lavaggio" }));
       await userEvent.click(screen.getByRole("button", { name: /aggiungi pista/i }));
 
-      expect(screen.getByText("Aggiungi Nuovo Pista")).toBeInTheDocument();
+      expect(screen.getByText("Aggiungi Nuova Pista")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /aggiungi pista/i })).not.toBeInTheDocument();
     });
   });
