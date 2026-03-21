@@ -174,7 +174,6 @@ export const updateConfiguration = async (
   configurationData: UpdateConfigSchema
 ): Promise<{ id: number }> => {
   const setData = transformConfigToDbUpdate(configurationData);
-  console.log("setData :>> ", setData); // DEBUG
 
   const [updatedConfiguration] = await db
     .update(configurations)
@@ -385,6 +384,13 @@ export async function insertEngineeringBomItems(
   await db.insert(engineeringBomItems).values(items);
 }
 
+/**
+ * Hard-deletes all engineering BOM items for a configuration.
+ * Used during BOM regeneration (full wipe + reinsert).
+ *
+ * Individual item removal uses soft delete (is_deleted toggle) so the UI
+ * can display removed items with visual distinction and allow restoration.
+ */
 export async function deleteAllEngineeringBomItems(confId: number) {
   await db
     .delete(engineeringBomItems)

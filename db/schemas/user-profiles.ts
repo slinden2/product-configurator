@@ -32,14 +32,33 @@ export const userProfiles = pgTable(
     initials: varchar({ length: 3 }),
   },
   () => [
-    pgPolicy("Enable all operations for authenticated users only", {
+    pgPolicy("Allow authenticated users to select all profiles", {
       as: "permissive",
       to: authenticatedRole,
-      for: "all",
-      withCheck: sql`true`,
+      for: "select",
+      using: sql`true`,
+    }),
+    pgPolicy("Allow ADMIN to insert profiles", {
+      as: "permissive",
+      to: authenticatedRole,
+      for: "insert",
+      withCheck: sql`(SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
+    }),
+    pgPolicy("Allow users to update own profile or ADMIN to update any", {
+      as: "permissive",
+      to: authenticatedRole,
+      for: "update",
+      using: sql`auth.uid() = id OR (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
+      withCheck: sql`auth.uid() = id OR (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
+    }),
+    pgPolicy("Allow only ADMIN to delete profiles", {
+      as: "permissive",
+      to: authenticatedRole,
+      for: "delete",
+      using: sql`(SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
     }),
   ]
-);
+).enableRLS();
 
 export const usersProfilesRelations = relations(userProfiles, ({ many }) => ({
   configurations: many(configurations),

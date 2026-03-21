@@ -11,7 +11,7 @@ export const partNumbers = pgTable("part_numbers", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   pn: varchar({ length: 25 }).unique().notNull(),
   description: varchar({ length: 255 }).notNull(),
-  cost: numeric().default("0").notNull(),
+  cost: numeric({ precision: 10, scale: 2 }).default("0").notNull(),
   pn_type: pnTypeEnum("pn_type").notNull(),
   is_phantom: boolean().notNull(),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
