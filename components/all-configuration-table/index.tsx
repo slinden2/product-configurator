@@ -59,7 +59,7 @@ const AllConfigurationsTable = async ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={headers.length}>
                   Non hai ancora configurazioni.
                 </TableCell>
               </TableRow>

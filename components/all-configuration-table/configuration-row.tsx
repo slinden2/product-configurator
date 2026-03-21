@@ -11,6 +11,7 @@ import { Edit, ScrollText, Trash2 } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 
 interface ConfigurationRowProps {
   configuration: NonNullable<AllConfigurations> extends Array<infer T>
@@ -21,11 +22,12 @@ interface ConfigurationRowProps {
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
   const canEdit = ["ADMIN", "INTERNAL"].includes(user.role) || configuration.user.id === user.id;
+  const canDelete = canEdit && isEditable(configuration.status, user.role);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const performDelete = useCallback(async () => {
-    if (!canEdit) return;
+    if (!canDelete) return;
 
     setIsDeleting(true);
     try {
@@ -39,22 +41,22 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         toast.success(MSG.toast.configDeleted);
       }
     } catch (error) {
-      toast.error("Errore durante l'eliminazione.");
+      toast.error(MSG.toast.deleteError);
       console.error("Delete failed:", error);
     } finally {
       setIsDeleting(false);
       setIsConfirmDeleteOpen(false);
     }
-  }, [canEdit, configuration.id, user.id]);
+  }, [canDelete, configuration.id, user.id]);
 
   const handleDeleteClick = () => {
-    if (!canEdit) return;
+    if (!canDelete) return;
     setIsConfirmDeleteOpen(true);
   };
 
   return (
     <>
-      <TableRow key={configuration.id}>
+      <TableRow>
         <TableCell>{configuration.id}</TableCell>
         <TableCell>
           <ConfigurationStatusBadge status={configuration.status} />
@@ -92,7 +94,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
             Icon={Trash2}
             title="Elimina configurazione"
             variant="ghost"
-            disabled={!canEdit}
+            disabled={!canDelete}
             onClick={handleDeleteClick}
           />
         </TableCell>

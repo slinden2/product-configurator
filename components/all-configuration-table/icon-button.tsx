@@ -36,11 +36,11 @@ const IconButton: React.FC<IconButtonProps> = ({
       aria-label={title}>
       {isLink ? (
         <Link href={linkTo as string}>
-          <Icon aria-hidden="true" className={`text-current`} />
+          <Icon aria-hidden="true" className="text-current" />
         </Link>
       ) : (
         <span>
-          <Icon aria-hidden="true" className={`text-current`} />
+          <Icon aria-hidden="true" className="text-current" />
         </span>
       )}
     </Button>
