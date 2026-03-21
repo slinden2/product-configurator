@@ -46,6 +46,42 @@ const TABS_CONFIG = [
   { value: "bays", label: "Piste Lavaggio" },
 ];
 
+interface EntityTabContentProps {
+  title: string;
+  renderForms: () => React.ReactNode;
+  renderAddForm: () => React.ReactNode;
+  showAddForm: boolean;
+  onShowAddForm: () => void;
+  showAddButton: boolean;
+  addButtonLabel: string;
+  warning?: React.ReactNode;
+}
+
+const EntityTabContent = ({
+  title,
+  renderForms,
+  renderAddForm,
+  showAddForm,
+  onShowAddForm,
+  showAddButton,
+  addButtonLabel,
+  warning,
+}: EntityTabContentProps) => (
+  <>
+    <h2 className="text-xl font-semibold border-b pb-2">{title}</h2>
+    {warning}
+    {renderForms()}
+    {showAddForm && renderAddForm()}
+    {!showAddForm && showAddButton && (
+      <div className="flex">
+        <Button className="ml-auto" variant="outline" onClick={onShowAddForm}>
+          <PlusCircle className="mr-2 h-4 w-4" /> {addButtonLabel}
+        </Button>
+      </div>
+    )}
+  </>
+);
+
 const FormContainer = ({
   confId,
   configuration,
@@ -137,22 +173,11 @@ const FormContainer = ({
   };
 
   const handleSaveSuccess = (entityName: "Serbatoio" | "Pista") => {
-    if (entityName === "Serbatoio") {
-      setShowAddWaterTankForm(false);
-    }
-
-    if (entityName === "Pista") {
-      setShowAddWashBayForm(false);
-    }
+    const setter = entityName === "Serbatoio" ? setShowAddWaterTankForm : setShowAddWashBayForm;
+    setter(false);
   };
 
-  // If no confId, it's the "New Configuration" page - only show ConfigForm
-  if (!confId) {
-    return <ConfigForm />;
-  }
-
-  // If no confStatus, it means that the data is not ok in the db.
-  if (!confStatus) {
+  if (!confId || !confStatus) {
     return <ConfigForm />;
   }
 
@@ -163,9 +188,7 @@ const FormContainer = ({
         onValueChange={handleTabChange}
         defaultValue="config"
         className="w-full space-y-4">
-        {/* Conditionally render TabsList or Select */}
         {isDesktop ? (
-          // Desktop: Render horizontal tabs
           <TabsList className="w-full grid grid-cols-3">
             {TABS_CONFIG.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
@@ -174,7 +197,6 @@ const FormContainer = ({
             ))}
           </TabsList>
         ) : (
-          // Mobile: Render Select dropdown
           <div className="space-y-2 mb-6">
             <span className="block text-sm">Sezione attiva</span>
             <Select value={activeTab} onValueChange={handleTabChange}>
@@ -206,115 +228,96 @@ const FormContainer = ({
         </TabsContent>
 
         <TabsContent value="tanks" className="space-y-4">
-          <h2 className="text-xl font-semibold border-b pb-2">
-            Gestione Serbatoi
-          </h2>
-
-          {/* List Existing Water Tanks */}
-          {waterTanks.map((wt, index) => (
-            <WaterTankForm
-              key={wt.id}
-              confId={confId}
-              confStatus={confStatus}
-              userRole={userRole}
-              waterTank={wt}
-              waterTankIndex={index + 1}
-              onDelete={handleDeleteWaterTank}
-              onSaveSuccess={handleSaveSuccess}
-              formKey={wt.id?.toString() ?? `tank-${index}`}
-              onDirtyChange={handleDirtyChange}
-              onSaved={handleSaved}
-              hasEngineeringBom={hasEngineeringBom}
-            />
-          ))}
-
-          {/* "Add New Water Tank" Form (Conditional) */}
-          {showAddWaterTankForm && (
-            <WaterTankForm
-              confId={confId}
-              confStatus={confStatus}
-              userRole={userRole}
-              onSaveSuccess={handleSaveSuccess}
-              formKey="new-tank"
-              onDirtyChange={handleDirtyChange}
-              onSaved={handleSaved}
-              hasEngineeringBom={hasEngineeringBom}
-            />
-          )}
-
-          {/* Button to Add New Tank */}
-          {!showAddWaterTankForm && showAddEntityButton && (
-            <div className="flex">
-              <Button
-                className="ml-auto"
-                variant="outline"
-                onClick={() => setShowAddWaterTankForm(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Serbatoio
-              </Button>
-            </div>
-          )}
+          <EntityTabContent
+            title="Gestione Serbatoi"
+            showAddForm={showAddWaterTankForm}
+            onShowAddForm={() => setShowAddWaterTankForm(true)}
+            showAddButton={showAddEntityButton}
+            addButtonLabel="Aggiungi Serbatoio"
+            renderForms={() =>
+              waterTanks.map((wt, index) => (
+                <WaterTankForm
+                  key={wt.id}
+                  confId={confId}
+                  confStatus={confStatus}
+                  userRole={userRole}
+                  waterTank={wt}
+                  waterTankIndex={index + 1}
+                  onDelete={handleDeleteWaterTank}
+                  onSaveSuccess={handleSaveSuccess}
+                  formKey={wt.id?.toString() ?? `tank-${index}`}
+                  onDirtyChange={handleDirtyChange}
+                  onSaved={handleSaved}
+                  hasEngineeringBom={hasEngineeringBom}
+                />
+              ))
+            }
+            renderAddForm={() => (
+              <WaterTankForm
+                confId={confId}
+                confStatus={confStatus}
+                userRole={userRole}
+                onSaveSuccess={handleSaveSuccess}
+                formKey="new-tank"
+                onDirtyChange={handleDirtyChange}
+                onSaved={handleSaved}
+                hasEngineeringBom={hasEngineeringBom}
+              />
+            )}
+          />
         </TabsContent>
 
         <TabsContent value="bays" className="space-y-4">
-          <h2 className="text-xl font-semibold border-b pb-2">Gestione Piste</h2>
-
-          {/* Warning: energy chain config requires a gantry wash bay with chain width set */}
-          {configuration?.supply_type === "ENERGY_CHAIN" &&
-            !washBays.some((wb) => wb.has_gantry && wb.energy_chain_width) && (
-              <p className="text-sm text-destructive border border-destructive/40 rounded-md px-3 py-2">
-                Con la catena portacavi è obbligatoria almeno una pista con portale e larghezza catena configurata.
-              </p>
+          <EntityTabContent
+            title="Gestione Piste"
+            showAddForm={showAddWashBayForm}
+            onShowAddForm={() => setShowAddWashBayForm(true)}
+            showAddButton={showAddEntityButton}
+            addButtonLabel="Aggiungi Pista"
+            warning={
+              configuration?.supply_type === "ENERGY_CHAIN" &&
+              !washBays.some((wb) => wb.has_gantry && wb.energy_chain_width) ? (
+                <p className="text-sm text-destructive border border-destructive/40 rounded-md px-3 py-2">
+                  Con la catena portacavi è obbligatoria almeno una pista con portale e larghezza catena configurata.
+                </p>
+              ) : undefined
+            }
+            renderForms={() =>
+              washBays.map((wb, index) => (
+                <WashBayForm
+                  key={wb.id}
+                  confId={confId}
+                  confStatus={confStatus}
+                  userRole={userRole}
+                  supplyType={configuration?.supply_type}
+                  washBay={wb}
+                  washBayIndex={index + 1}
+                  onDelete={handleDeleteWashBay}
+                  onSaveSuccess={handleSaveSuccess}
+                  formKey={wb.id?.toString() ?? `bay-${index}`}
+                  onDirtyChange={handleDirtyChange}
+                  onSaved={handleSaved}
+                  hasEngineeringBom={hasEngineeringBom}
+                />
+              ))
+            }
+            renderAddForm={() => (
+              <WashBayForm
+                confId={confId}
+                confStatus={confStatus}
+                userRole={userRole}
+                supplyType={configuration?.supply_type}
+                onSaveSuccess={handleSaveSuccess}
+                formKey="new-bay"
+                onDirtyChange={handleDirtyChange}
+                onSaved={handleSaved}
+                hasEngineeringBom={hasEngineeringBom}
+              />
             )}
-
-          {/* List Existing Wash Bays */}
-          {washBays.map((wb, index) => (
-            <WashBayForm
-              key={wb.id}
-              confId={confId}
-              confStatus={confStatus}
-              userRole={userRole}
-              supplyType={configuration?.supply_type}
-              washBay={wb}
-              washBayIndex={index + 1}
-              onDelete={handleDeleteWashBay}
-              onSaveSuccess={handleSaveSuccess}
-              formKey={wb.id?.toString() ?? `bay-${index}`}
-              onDirtyChange={handleDirtyChange}
-              onSaved={handleSaved}
-              hasEngineeringBom={hasEngineeringBom}
-            />
-          ))}
-
-          {/* "Add New Wash Bay" Form (Conditional) */}
-          {showAddWashBayForm && (
-            <WashBayForm
-              confId={confId}
-              confStatus={confStatus}
-              userRole={userRole}
-              supplyType={configuration?.supply_type}
-              onSaveSuccess={handleSaveSuccess}
-              formKey="new-bay"
-              onDirtyChange={handleDirtyChange}
-              onSaved={handleSaved}
-              hasEngineeringBom={hasEngineeringBom}
-            />
-          )}
-
-          {/* Button to Add New Bay */}
-          {!showAddWashBayForm && showAddEntityButton && (
-            <div className="flex">
-              <Button
-                className="ml-auto"
-                variant="outline"
-                onClick={() => setShowAddWashBayForm(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Aggiungi Pista
-              </Button>
-            </div>
-          )}
+          />
         </TabsContent>
       </Tabs>
 
-      {/* Unsaved changes confirmation modal */}
       <ResponsiveModal open={isUnsavedModalOpen} onOpenChange={setIsUnsavedModalOpen}>
         <ResponsiveModalContent side="bottom">
           <ResponsiveModalHeader className="mb-4">
