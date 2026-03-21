@@ -12,11 +12,15 @@ export default function BackButton({ fallbackPath }: BackButtonProps) {
   const router = useRouter();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push(fallbackPath);
-    }
+    const currentUrl = window.location.href;
+
+    router.back();
+
+    setTimeout(() => {
+      if (window.location.href === currentUrl) {
+        router.push(fallbackPath);
+      }
+    }, 100);
   };
 
   return (
@@ -25,7 +29,8 @@ export default function BackButton({ fallbackPath }: BackButtonProps) {
       size="icon"
       onClick={handleBack}
       title="Torna indietro"
-      type="button">
+      type="button"
+    >
       <ArrowLeft />
       <span className="sr-only">Torna indietro</span>
     </Button>

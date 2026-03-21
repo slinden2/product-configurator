@@ -74,6 +74,12 @@ Before finalizing any change, verify:
 4. **Data Integrity:** Is `revalidatePath` included in the Server Action to ensure the UI stays in sync with the DB?
 5. **Localization:** Are all new UI labels in Italian?
 
+## Post-Change Verification
+After every code change, run all three checks before considering the task complete:
+1. `npm run lint`
+2. `npm run type-check`
+3. `npm run test`
+
 ## Path Aliases
 
 `@/*` maps to project root (configured in `tsconfig.json`).
