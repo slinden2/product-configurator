@@ -188,7 +188,6 @@ describe("SubRecordForm — WaterTankForm", () => {
   describe("Delete flow", () => {
     test("calls deleteAction and onDelete after confirm", async () => {
       const onDelete = vi.fn();
-      vi.spyOn(window, "confirm").mockReturnValue(true);
 
       render(
         <WaterTankForm
@@ -202,7 +201,12 @@ describe("SubRecordForm — WaterTankForm", () => {
         />
       );
 
+      // Click delete button to open confirmation dialog
       await userEvent.click(screen.getByRole("button", { name: /elimina serbatoio 1/i }));
+
+      // Confirm in the dialog
+      expect(screen.getByText("Conferma eliminazione")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Elimina" }));
 
       await waitFor(() => {
         expect(mockDeleteWaterTank).toHaveBeenCalledWith(1, 10);
@@ -214,7 +218,6 @@ describe("SubRecordForm — WaterTankForm", () => {
 
     test("does not delete when confirm is cancelled", async () => {
       const onDelete = vi.fn();
-      vi.spyOn(window, "confirm").mockReturnValue(false);
 
       render(
         <WaterTankForm
@@ -228,7 +231,12 @@ describe("SubRecordForm — WaterTankForm", () => {
         />
       );
 
+      // Click delete button to open confirmation dialog
       await userEvent.click(screen.getByRole("button", { name: /elimina serbatoio 1/i }));
+
+      // Cancel in the dialog
+      expect(screen.getByText("Conferma eliminazione")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Annulla" }));
 
       expect(mockDeleteWaterTank).not.toHaveBeenCalled();
       expect(onDelete).not.toHaveBeenCalled();
@@ -466,7 +474,6 @@ describe("SubRecordForm — WashBayForm", () => {
   describe("Delete flow", () => {
     test("calls deleteAction after confirm", async () => {
       const onDelete = vi.fn();
-      vi.spyOn(window, "confirm").mockReturnValue(true);
 
       render(
         <WashBayForm
@@ -480,7 +487,12 @@ describe("SubRecordForm — WashBayForm", () => {
         />
       );
 
+      // Click delete button to open confirmation dialog
       await userEvent.click(screen.getByRole("button", { name: /elimina pista 1/i }));
+
+      // Confirm in the dialog
+      expect(screen.getByText("Conferma eliminazione")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Elimina" }));
 
       await waitFor(() => {
         expect(mockDeleteWashBay).toHaveBeenCalledWith(1, 20);

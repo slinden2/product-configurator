@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
 import { FormDisabledContext } from "@/components/ui/form";
 import Fieldset from "@/components/fieldset";
+import BomWarningDialog from "@/components/shared/bom-warning-dialog";
 import { z } from "zod";
 import { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
@@ -84,7 +85,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   editAction,
   deleteAction,
   hasEngineeringBom,
-  FieldsComponent, // Destructure the FieldsComponent
+  FieldsComponent,
 }: SubRecordFormProps<TFormSchema>) => {
   // Infer the TS type from the Zod schema
   type FormData = z.infer<TFormSchema>;
@@ -93,7 +94,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   const [isLoading, setIsLoading] = useState<"submit" | "delete" | false>(
     false
   );
-  const [error, setError] = useState<string>("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBomWarning, setShowBomWarning] = useState(false);
   const pendingValuesRef = useRef<FormData | null>(null);
   const pendingActionRef = useRef<"save" | "delete" | null>(null);
@@ -122,7 +123,6 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   const executeSave = useCallback(
     async (values: FormData) => {
       setIsLoading("submit");
-      setError("");
       try {
         if (isEditing) {
           const result = await editAction(parentId, entityData.id, values);
@@ -152,7 +152,6 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
           err instanceof Error
             ? err.message
             : MSG.toast.entitySaveUnknown(entityName);
-        setError(message);
         toast.error(message);
       } finally {
         setIsLoading(false);
@@ -191,14 +190,13 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     if (!isEditing || !onDelete) return;
 
     setIsLoading("delete");
-    setError("");
     try {
-      const result = await deleteAction(parentId, entityData.id!);
+      const result = await deleteAction(parentId, entityData.id);
       if (result.success) {
         toast.success(
           MSG.toast.entityDeleted(entityName, entityIndex)
         );
-        onDelete(entityData.id!);
+        onDelete(entityData.id);
       } else {
         throw new Error(result.error || MSG.toast.entityDeleteFailed(entityName));
       }
@@ -208,7 +206,6 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         err instanceof Error
           ? err.message
           : MSG.toast.entityDeleteUnknown(entityName);
-      setError(message);
       toast.error(message);
       setIsLoading(false);
     }
@@ -222,30 +219,31 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     entityName,
   ]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     if (!isEditing || !onDelete) return;
-    const confirmMessage = `Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""
-      }?`;
-    if (!window.confirm(confirmMessage)) return;
+    setShowDeleteConfirm(true);
+  }, [isEditing, onDelete]);
 
+  const handleDeleteConfirm = useCallback(async () => {
+    setShowDeleteConfirm(false);
     if (hasEngineeringBom) {
       pendingActionRef.current = "delete";
       setShowBomWarning(true);
       return;
     }
     await executeDelete();
-  }, [isEditing, onDelete, entityName, entityIndex, hasEngineeringBom, executeDelete]);
+  }, [hasEngineeringBom, executeDelete]);
 
-  const handleBomWarningConfirm = useCallback(() => {
+  const handleBomWarningConfirm = useCallback(async () => {
     setShowBomWarning(false);
     if (pendingActionRef.current === "save" && pendingValuesRef.current) {
       const values = pendingValuesRef.current;
       pendingValuesRef.current = null;
       pendingActionRef.current = null;
-      executeSave(values);
+      await executeSave(values);
     } else if (pendingActionRef.current === "delete") {
       pendingActionRef.current = null;
-      executeDelete();
+      await executeDelete();
     }
   }, [executeSave, executeDelete]);
 
@@ -324,33 +322,34 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
           </fieldset>
         </FormDisabledContext.Provider>
       </Form>
-      {error && <p className="text-destructive mt-2 text-sm">{error}</p>}
-      <AlertDialog open={showBomWarning} onOpenChange={setShowBomWarning}>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{MSG.bomWarning.title}</AlertDialogTitle>
+            <AlertDialogTitle>Conferma eliminazione</AlertDialogTitle>
             <AlertDialogDescription>
-              {MSG.bomWarning.description}
+              {`Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""}?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                pendingValuesRef.current = null;
-                pendingActionRef.current = null;
-              }}
-            >
-              Annulla
-            </AlertDialogCancel>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleBomWarningConfirm}
+              onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {MSG.bomWarning.confirm}
+              Elimina
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BomWarningDialog
+        open={showBomWarning}
+        onOpenChange={setShowBomWarning}
+        onCancel={() => {
+          pendingValuesRef.current = null;
+          pendingActionRef.current = null;
+        }}
+        onConfirm={handleBomWarningConfirm}
+      />
     </div>
   );
 };

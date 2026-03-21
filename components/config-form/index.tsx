@@ -21,7 +21,7 @@ import HPPumpSection from "@/components/config-form/hp-pump-section";
 import { Save } from "lucide-react";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
-import BomWarningDialog from "@/components/config-form/bom-warning-dialog";
+import BomWarningDialog from "@/components/shared/bom-warning-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
