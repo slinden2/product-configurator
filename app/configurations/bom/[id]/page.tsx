@@ -1,10 +1,4 @@
-import {
-  buildEbomCostExportData,
-  buildEbomExportData,
-  getBomRulesVersion,
-  getEarliestCreatedAt,
-  groupEbomByCategory,
-} from "@/app/configurations/bom/[id]/bom-helpers";
+import { prepareBOMPageData } from "@/app/configurations/bom/[id]/bom-helpers";
 import {
   GeneralSection,
   SubRecordSection,
@@ -15,64 +9,45 @@ import RegenerateButton from "@/app/configurations/bom/[id]/regenerate-button";
 import SnapshotButton from "@/app/configurations/bom/[id]/snapshot-button";
 import BackButton from "@/components/back-button";
 import { Button } from "@/components/ui/button";
-import {
-  getBOM,
-  getConfiguration,
-  getEngineeringBomItems,
-  getUserData,
-  hasEngineeringBom,
-} from "@/db/queries";
+import { getBOM, getConfiguration, getUserData } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { Edit } from "lucide-react";
 import Link from "next/link";
 import ExportCostsButton from "./export-costs-button";
-import { isEditable } from "@/app/actions/lib/auth-checks";
+import { notFound, redirect } from "next/navigation";
 
 interface BOMViewProps {
   params: Promise<{ id: string }>;
 }
 
 const BOMView = async (props: BOMViewProps) => {
-  const user = await getUserData();
-
-  if (!user) {
-    return <div>Utente non trovato.</div>;
-  }
-
   const params = await props.params;
   const confId = parseInt(params.id);
-  const bom = await getBOM(confId);
+  if (Number.isNaN(confId)) notFound();
 
-  if (!bom) return <div>La distinta non è disponibile.</div>;
+  const user = await getUserData();
+  if (!user) redirect("/login");
+
+  const bom = await getBOM(confId);
+  if (!bom) notFound();
 
   const configuration = await getConfiguration(confId);
-  if (!configuration) return <div>Configurazione non trovata.</div>;
+  if (!configuration) notFound();
 
-  const clientName = bom.getClientName();
-  const description = bom.getDescription();
-  const { generalBOM, waterTankBOMs, washBayBOMs } =
-    await bom.buildCompleteBOM();
-
-  const hasEbom = await hasEngineeringBom(confId);
-  const ebomItems = hasEbom ? await getEngineeringBomItems(confId) : [];
-  const activeEbomItems = ebomItems.filter((i) => !i.is_deleted);
-
-  const editable = isEditable(configuration.status, user.role);
-
-  // Group engineering BOM items by category
-  const ebomGrouped = groupEbomByCategory(ebomItems);
-
-  // Build export data from either engineering or calculated BOM
-  const exportData = hasEbom
-    ? buildEbomExportData(activeEbomItems)
-    : bom.generateExportData(generalBOM, waterTankBOMs, washBayBOMs);
-
-  const exportCostsData = hasEbom
-    ? await buildEbomCostExportData(activeEbomItems)
-    : await bom.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
-
-  const ebomCreatedAt = getEarliestCreatedAt(ebomItems);
-  const ebomRulesVersion = getBomRulesVersion(ebomItems);
+  const {
+    clientName,
+    description,
+    generalBOM,
+    waterTankBOMs,
+    washBayBOMs,
+    hasEbom,
+    editable,
+    ebomGrouped,
+    exportData,
+    exportCostsData,
+    ebomCreatedAt,
+    ebomRulesVersion,
+  } = await prepareBOMPageData(confId, bom, configuration, user.role);
 
   return (
     <div className="space-y-6">

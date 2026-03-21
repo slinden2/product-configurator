@@ -1,6 +1,12 @@
-import { EngineeringBomItem } from "@/db/schemas";
-import { getPartNumbersByArray } from "@/db/queries";
-import { BOMItemWithCost, BOMItemWithDescription } from "@/lib/BOM";
+import { Configuration, EngineeringBomItem } from "@/db/schemas";
+import {
+  getEngineeringBomItems,
+  getPartNumbersByArray,
+  hasEngineeringBom,
+} from "@/db/queries";
+import { isEditable } from "@/app/actions/lib/auth-checks";
+import { BOM, BOMItemWithCost, BOMItemWithDescription } from "@/lib/BOM";
+import { Role } from "@/types";
 
 // ── Grouping ────────────────────────────────────────────────────────────
 
@@ -82,6 +88,76 @@ export async function buildEbomCostExportData(
     washBayBOMs: Array.from(washBays.values()).map((items) =>
       items.map(addCost)
     ),
+  };
+}
+
+// ── Data orchestration ────────────────────────────────────────────────
+
+export interface BOMPageData {
+  clientName: string;
+  description: string;
+  generalBOM: BOMItemWithDescription[];
+  waterTankBOMs: BOMItemWithDescription[][];
+  washBayBOMs: BOMItemWithDescription[][];
+  hasEbom: boolean;
+  ebomItems: EngineeringBomItem[];
+  activeEbomItems: EngineeringBomItem[];
+  editable: boolean;
+  ebomGrouped: GroupedEbomItems;
+  exportData: BOMItemWithDescription[];
+  exportCostsData: {
+    generalBOM: BOMItemWithCost[];
+    waterTankBOMs: BOMItemWithCost[][];
+    washBayBOMs: BOMItemWithCost[][];
+  };
+  ebomCreatedAt: Date | null;
+  ebomRulesVersion: string | null;
+}
+
+export async function prepareBOMPageData(
+  confId: number,
+  bom: BOM,
+  configuration: Configuration,
+  userRole: Role
+): Promise<BOMPageData> {
+  const clientName = bom.getClientName();
+  const description = bom.getDescription();
+  const { generalBOM, waterTankBOMs, washBayBOMs } =
+    await bom.buildCompleteBOM();
+
+  const hasEbom = await hasEngineeringBom(confId);
+  const ebomItems = hasEbom ? await getEngineeringBomItems(confId) : [];
+  const activeEbomItems = ebomItems.filter((i) => !i.is_deleted);
+
+  const editable = isEditable(configuration.status, userRole);
+  const ebomGrouped = groupEbomByCategory(ebomItems);
+
+  const exportData = hasEbom
+    ? buildEbomExportData(activeEbomItems)
+    : bom.generateExportData(generalBOM, waterTankBOMs, washBayBOMs);
+
+  const exportCostsData = hasEbom
+    ? await buildEbomCostExportData(activeEbomItems)
+    : await bom.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
+
+  const ebomCreatedAt = getEarliestCreatedAt(ebomItems);
+  const ebomRulesVersion = getBomRulesVersion(ebomItems);
+
+  return {
+    clientName,
+    description,
+    generalBOM,
+    waterTankBOMs,
+    washBayBOMs,
+    hasEbom,
+    ebomItems,
+    activeEbomItems,
+    editable,
+    ebomGrouped,
+    exportData,
+    exportCostsData,
+    ebomCreatedAt,
+    ebomRulesVersion,
   };
 }
 

@@ -10,6 +10,8 @@ import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import { updateWashBaySchema } from "@/validation/wash-bay-schema";
 import StatusForm from "@/components/status-form";
+import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -18,17 +20,13 @@ interface EditConfigProps {
 const EditConfiguration = async (props: EditConfigProps) => {
   const params = await props.params;
   const id = parseInt(params.id);
-  const user = await getUserData();
+  if (Number.isNaN(id)) notFound();
 
-  if (!user) {
-    return <p className="text-destructive">Utente non trovato!</p>;
-  }
+  const user = await getUserData();
+  if (!user) redirect("/login");
 
   const configurationData = await getConfigurationWithTanksAndBays(id);
-
-  if (!configurationData) {
-    return <p className="text-destructive">Configurazione non trovata!</p>;
-  }
+  if (!configurationData) notFound();
 
   const { water_tanks, wash_bays, ...configuration } = configurationData;
 
