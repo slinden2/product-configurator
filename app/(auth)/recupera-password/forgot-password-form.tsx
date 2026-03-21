@@ -37,6 +37,7 @@ const ForgotPasswordForm = () => {
           label="Email"
           placeholder="Inserire la email"
           type="email"
+          autoComplete="email"
         />
         <Button>
           {form.formState.isSubmitting ? <Spinner /> : "Resetta la password"}

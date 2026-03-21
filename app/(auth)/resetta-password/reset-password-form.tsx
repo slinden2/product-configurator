@@ -37,12 +37,14 @@ const ResetPasswordForm = () => {
           label="Password"
           placeholder="Inserire la password"
           type="password"
+          autoComplete="new-password"
         />
         <InputField<NewPasswordSchema>
           name="confirmPassword"
           label="Password"
           placeholder="Inserire la password"
           type="password"
+          autoComplete="new-password"
         />
         <Button>
           {form.formState.isSubmitting ? <Spinner /> : "Resetta la password"}

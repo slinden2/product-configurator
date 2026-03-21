@@ -36,12 +36,14 @@ const LoginForm = () => {
           label="Email"
           placeholder="Inserire la email"
           type="email"
+          autoComplete="email"
         />
         <InputField<LoginSchema>
           name="password"
           label="Password"
           placeholder="Inserire la password"
           type="password"
+          autoComplete="current-password"
         />
         <Button>{form.formState.isSubmitting ? <Spinner /> : "Accedi"}</Button>
       </form>

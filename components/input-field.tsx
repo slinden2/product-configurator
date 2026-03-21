@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-interface InputFieldProps<TFieldValues extends FieldValues = FieldValues> {
+interface InputFieldProps<TFieldValues extends FieldValues = FieldValues>
+  extends Omit<
+    React.ComponentProps<"input">,
+    "name" | "type" | "disabled" | "placeholder"
+  > {
   name: FieldPath<TFieldValues>;
   label: string;
   placeholder?: string;
@@ -25,6 +29,7 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
   placeholder,
   type = "text",
   disabled,
+  ...inputProps
 }: InputFieldProps<TFieldValues>) => {
   const { control } = useFormContext<TFieldValues>();
 
@@ -43,6 +48,7 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
                 className="bg-background"
                 disabled={disabled}
                 {...field}
+                {...inputProps}
                 value={field.value ?? ""}
               />
             </FormControl>

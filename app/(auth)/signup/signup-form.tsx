@@ -36,18 +36,21 @@ const SignupForm = () => {
           label="Email"
           placeholder="Inserire la email"
           type="email"
+          autoComplete="email"
         />
         <InputField<SignupSchema>
           name="password"
           label="Password"
           placeholder="Inserire la password"
           type="password"
+          autoComplete="new-password"
         />
         <InputField<SignupSchema>
           name="confirmPassword"
           label="Password"
           placeholder="Inserire la password"
           type="password"
+          autoComplete="new-password"
         />
         <Button>
           {form.formState.isSubmitting ? <Spinner /> : "Registra"}
