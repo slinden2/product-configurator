@@ -23,22 +23,10 @@ function useMediaQuery(query: string): boolean {
     };
 
     setMatches(mediaQueryList.matches);
+    mediaQueryList.addEventListener("change", listener);
 
-    // Use addEventListener for modern browsers, fallback for older ones
-    try {
-      mediaQueryList.addEventListener("change", listener);
-    } catch (e) {
-      // Fallback for older browsers
-      mediaQueryList.addListener(listener); // Deprecated but necessary for some environments
-    }
-
-    // Cleanup listener on unmount
     return () => {
-      try {
-        mediaQueryList.removeEventListener("change", listener);
-      } catch (e) {
-        mediaQueryList.removeListener(listener);
-      }
+      mediaQueryList.removeEventListener("change", listener);
     };
   }, [query]);
 
