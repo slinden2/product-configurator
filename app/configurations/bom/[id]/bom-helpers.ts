@@ -1,11 +1,10 @@
 import { Configuration, EngineeringBomItem } from "@/db/schemas";
 import {
   getEngineeringBomItems,
-  getPartNumbersByArray,
   hasEngineeringBom,
 } from "@/db/queries";
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import { BOM, BOMItemWithCost, BOMItemWithDescription } from "@/lib/BOM";
+import { BOM, BOMItemWithCost, BOMItemWithDescription, enrichWithCosts } from "@/lib/BOM";
 import { Role } from "@/types";
 
 // ── Grouping ────────────────────────────────────────────────────────────
@@ -66,29 +65,28 @@ export async function buildEbomCostExportData(
   waterTankBOMs: BOMItemWithCost[][];
   washBayBOMs: BOMItemWithCost[][];
 }> {
-  const uniquePns = [...new Set(activeItems.map((i) => i.pn))];
-  const pnData = await getPartNumbersByArray(uniquePns);
-  const costMap = new Map(pnData.map((p) => [p.pn, Number(p.cost) || 0]));
-
-  const addCost = (i: EngineeringBomItem): BOMItemWithCost => ({
+  const toBomItem = (i: EngineeringBomItem): BOMItemWithDescription => ({
     pn: i.pn,
     qty: i.qty,
     _description: "",
     description: i.description,
-    cost: costMap.get(i.pn) ?? 0,
   });
 
   const { general, waterTanks, washBays } = groupEbomByCategory(activeItems);
 
-  return {
-    generalBOM: general.map(addCost),
-    waterTankBOMs: Array.from(waterTanks.values()).map((items) =>
-      items.map(addCost)
+  const generalBOM = await enrichWithCosts(general.map(toBomItem));
+  const waterTankBOMs = await Promise.all(
+    Array.from(waterTanks.values()).map((items) =>
+      enrichWithCosts(items.map(toBomItem))
     ),
-    washBayBOMs: Array.from(washBays.values()).map((items) =>
-      items.map(addCost)
+  );
+  const washBayBOMs = await Promise.all(
+    Array.from(washBays.values()).map((items) =>
+      enrichWithCosts(items.map(toBomItem))
     ),
-  };
+  );
+
+  return { generalBOM, waterTankBOMs, washBayBOMs };
 }
 
 // ── Data orchestration ────────────────────────────────────────────────
@@ -134,11 +132,11 @@ export async function prepareBOMPageData(
 
   const exportData = hasEbom
     ? buildEbomExportData(activeEbomItems)
-    : bom.generateExportData(generalBOM, waterTankBOMs, washBayBOMs);
+    : BOM.generateExportData(generalBOM, waterTankBOMs, washBayBOMs);
 
   const exportCostsData = hasEbom
     ? await buildEbomCostExportData(activeEbomItems)
-    : await bom.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
+    : await BOM.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
 
   const ebomCreatedAt = getEarliestCreatedAt(ebomItems);
   const ebomRulesVersion = getBomRulesVersion(ebomItems);

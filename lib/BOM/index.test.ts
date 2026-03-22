@@ -2,13 +2,7 @@ import { vi, describe, test, expect } from "vitest";
 
 // Must be mocked before BOM is imported — prevents DATABASE_URL check
 vi.mock("@/db", () => ({
-  db: {
-    query: {
-      partNumbers: {
-        findMany: vi.fn().mockResolvedValue([]),
-      },
-    },
-  },
+  db: {},
 }));
 vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
@@ -140,7 +134,7 @@ describe("BOM.init and getters", () => {
   });
 });
 
-describe("generateExportData", () => {
+describe("BOM.generateExportData (static)", () => {
   const item = (pn: string): BOMItemWithDescription => ({
     pn,
     qty: 1,
@@ -149,22 +143,19 @@ describe("generateExportData", () => {
   });
 
   test("returns empty array when all inputs are empty", () => {
-    const bom = BOM.init(makeConfig());
-    expect(bom.generateExportData([], [], [])).toEqual([]);
+    expect(BOM.generateExportData([], [], [])).toEqual([]);
   });
 
   test("returns only general items when tanks/bays are empty", () => {
-    const bom = BOM.init(makeConfig());
     const general = [item("A"), item("B")];
-    expect(bom.generateExportData(general, [], [])).toEqual(general);
+    expect(BOM.generateExportData(general, [], [])).toEqual(general);
   });
 
   test("flattens all arrays in order: general → tanks → bays", () => {
-    const bom = BOM.init(makeConfig());
     const general = [item("G1")];
     const tanks = [[item("T1"), item("T2")], [item("T3")]];
     const bays = [[item("B1")], [item("B2"), item("B3")]];
-    const result = bom.generateExportData(general, tanks, bays);
+    const result = BOM.generateExportData(general, tanks, bays);
     expect(result.map((i) => i.pn)).toEqual([
       "G1",
       "T1", "T2", "T3",
