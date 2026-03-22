@@ -11,6 +11,7 @@ import BackButton from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { getBOM, getConfiguration, getUserData } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
+import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { Edit } from "lucide-react";
 import Link from "next/link";
 import ExportCostsButton from "./export-costs-button";
@@ -78,13 +79,7 @@ const BOMView = async (props: BOMViewProps) => {
       {hasEbom && ebomCreatedAt && (
         <p className="text-sm text-muted-foreground">
           Distinta ingegneria generata il{" "}
-          {ebomCreatedAt.toLocaleDateString("it-IT", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatDateDDMMYYYYHHMM(ebomCreatedAt)}
           {ebomRulesVersion && <> — regole v{ebomRulesVersion}</>}
           {ebomRulesVersion && ebomRulesVersion !== BOM_RULES_VERSION && (
             <span className="text-yellow-600 dark:text-yellow-500">

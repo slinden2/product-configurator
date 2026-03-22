@@ -6,7 +6,7 @@ import IconButton from "@/components/all-configuration-table/icon-button";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { AllConfigurations, UserData } from "@/db/queries";
-import { formatDateDDMMYYHHMMSS } from "@/lib/utils";
+import { formatDateDDMMYYHHMM } from "@/lib/utils";
 import { Edit, ScrollText, Trash2 } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import { MSG } from "@/lib/messages";
@@ -67,10 +67,10 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         <TableCell>{configuration.name}</TableCell>
         <TableCell>{configuration.description}</TableCell>
         <TableCell>
-          {formatDateDDMMYYHHMMSS(configuration.created_at)}
+          {formatDateDDMMYYHHMM(configuration.created_at)}
         </TableCell>
         <TableCell>
-          {formatDateDDMMYYHHMMSS(configuration.updated_at)}
+          {formatDateDDMMYYHHMM(configuration.updated_at)}
         </TableCell>
         <TableCell className="flex gap-3">
           <IconButton
