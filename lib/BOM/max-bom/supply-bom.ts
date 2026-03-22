@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -19,31 +19,31 @@ const PART_NUMBERS = {
   REINFORCED_SHELF_ASSY_R: "1100.019.017",
 } as const satisfies Record<string, string>;
 
-const usesStraightShelf = (config: Configuration): boolean => {
+const usesStraightShelf = (config: GeneralBOMConfig): boolean => {
   return config.supply_type === "STRAIGHT_SHELF";
 };
 
-const usesBoom = (config: Configuration): boolean => {
+const usesBoom = (config: GeneralBOMConfig): boolean => {
   return config.supply_type === "BOOM";
 };
 
-const usesPost = (config: Configuration): boolean => {
+const usesPost = (config: GeneralBOMConfig): boolean => {
   return config.supply_fixing_type === "POST";
 };
 
-const usesShelf = (config: Configuration): boolean => {
+const usesShelf = (config: GeneralBOMConfig): boolean => {
   return config.supply_fixing_type === "WALL";
 };
 
-const usesEnergyChain = (config: Configuration): boolean => {
+const usesEnergyChain = (config: GeneralBOMConfig): boolean => {
   return config.supply_type === "ENERGY_CHAIN";
 };
 
-const hasDoubleWaterSupply = (config: Configuration): boolean => {
+const hasDoubleWaterSupply = (config: GeneralBOMConfig): boolean => {
   return !!config.water_2_type;
 };
 
-const has15kWPump = (config: Configuration): boolean => {
+const has15kWPump = (config: GeneralBOMConfig): boolean => {
   return (
     config.has_15kw_pump &&
     ((config.pump_outlet_1_15kw !== null &&
@@ -53,7 +53,7 @@ const has15kWPump = (config: Configuration): boolean => {
   );
 };
 
-export const supplyBOM: MaxBOMItem<Configuration>[] = [
+export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   // Straight shelf
   {
     pn: PART_NUMBERS.STRAIGHT_SHELF,

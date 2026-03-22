@@ -4,9 +4,9 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
+function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
   return {
     id: 1,
     name: "Test",
@@ -57,15 +57,15 @@ function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
     created_at: new Date(),
     updated_at: new Date(),
     ...overrides,
-  } as Configuration;
+  } as GeneralBOMConfig;
 }
 
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   electricBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
-const qty = (config: Configuration, pn: string) => {
+const qty = (config: GeneralBOMConfig, pn: string) => {
   const item = electricBOM.find(
     (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
   );

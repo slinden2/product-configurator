@@ -4,9 +4,9 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { dosingPumpBOM } from "@/lib/BOM/max-bom/dosing-pump-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
+function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
   return {
     id: 1,
     has_shampoo_pump: false,
@@ -20,15 +20,15 @@ function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
     has_antifreeze: false,
     has_itecoweb: false,
     ...overrides,
-  } as Configuration;
+  } as GeneralBOMConfig;
 }
 
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   dosingPumpBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
-const qty = (config: Configuration, pn: string) => {
+const qty = (config: GeneralBOMConfig, pn: string) => {
   const item = dosingPumpBOM.find(
     (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
   );

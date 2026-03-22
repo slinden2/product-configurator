@@ -4,9 +4,9 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { supplyBOM } from "@/lib/BOM/max-bom/supply-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
+function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
   return {
     id: 1,
     supply_type: "STRAIGHT_SHELF",
@@ -18,10 +18,10 @@ function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
     pump_outlet_2_15kw: null,
     has_post_frame: false,
     ...overrides,
-  } as Configuration;
+  } as GeneralBOMConfig;
 }
 
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   supplyBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);

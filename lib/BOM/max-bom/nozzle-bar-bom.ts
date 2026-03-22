@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -31,27 +31,25 @@ const PART_NUMBERS = {
   FITTINGS_FOR_WAX_PUMP: "450.36.076",
   FITTINGS_FOR_RINSE_WITHOUT_PREWASH: "450.36.077",
   FITTINGS_FOR_DOUBLE_SUPPLY: "450.36.078",
-  SUPPLEMENTARY_LATERAL_RINSE_BARS_FAST: "450.65.000",
-  SUPPLEMENTARY_RINSE_ARCH_FAST: "450.65.002",
 } as const satisfies Record<string, string>;
 
-const hasHpRoofBar = (config: Configuration): boolean =>
+const hasHpRoofBar = (config: GeneralBOMConfig): boolean =>
   config.pump_outlet_omz === "HP_ROOF_BAR" ||
   config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS";
 
-const hasChemicalRoofBar = (config: Configuration): boolean =>
+const hasChemicalRoofBar = (config: GeneralBOMConfig): boolean =>
   hasHpRoofBar(config) && config.has_chemical_roof_bar;
 
-const hasPrewashOrAcidOnBoard = (config: Configuration): boolean =>
+const hasPrewashOrAcidOnBoard = (config: GeneralBOMConfig): boolean =>
   config.chemical_pump_pos === "ONBOARD" || config.acid_pump_pos === "ONBOARD";
 
-const hasOneChemical = (config: Configuration): boolean =>
+const hasOneChemical = (config: GeneralBOMConfig): boolean =>
   config.has_chemical_pump && config.chemical_qty === 1;
 
-const hasTwoChemicals = (config: Configuration): boolean =>
+const hasTwoChemicals = (config: GeneralBOMConfig): boolean =>
   config.has_chemical_pump && config.chemical_qty === 2;
 
-export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
+export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   // Rinse
   {
     pn: PART_NUMBERS.RINSE_ARCH,
@@ -262,25 +260,5 @@ export const nozzleBarBOM: MaxBOMItem<Configuration>[] = [
     ],
     qty: 1,
     _description: "Fittings for double supply",
-  },
-
-  // Fast
-  {
-    pn: PART_NUMBERS.SUPPLEMENTARY_RINSE_ARCH_FAST,
-    conditions: [
-      (config) => config.is_fast,
-      (config) => config.brush_qty === 3,
-    ],
-    qty: 1,
-    _description: "Supplementary rinse arch (fast)",
-  },
-  {
-    pn: PART_NUMBERS.SUPPLEMENTARY_LATERAL_RINSE_BARS_FAST,
-    conditions: [
-      (config) => config.is_fast,
-      (config) => config.brush_qty === 2,
-    ],
-    qty: 1,
-    _description: "Supplementary rinse bars (fast)",
   },
 ];

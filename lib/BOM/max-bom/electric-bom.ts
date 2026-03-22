@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -18,19 +18,19 @@ const PART_NUMBERS = {
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
 } as const satisfies Record<string, string>;
 
-const uses1ExternalTouch = (config: Configuration): boolean => {
+const uses1ExternalTouch = (config: GeneralBOMConfig): boolean => {
   return config.touch_qty === 1 && config.touch_pos === "EXTERNAL";
 };
 
-const usesDualTouch = (config: Configuration): boolean =>
+const usesDualTouch = (config: GeneralBOMConfig): boolean =>
   config.touch_qty === 2;
 
-const usesOnboardTouch = (config: Configuration): boolean =>
+const usesOnboardTouch = (config: GeneralBOMConfig): boolean =>
   (config.touch_qty === 1 && config.touch_pos === "INTERNAL") ||
   config.touch_qty === 2;
 
 
-export const electricBOM: MaxBOMItem<Configuration>[] = [
+export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.RFID_READER,
     conditions: [(config) => config.has_card_reader || config.has_itecoweb],

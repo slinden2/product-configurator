@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -9,9 +9,9 @@ const PART_NUMBERS = {
   POSTERIOR_TRAFFIC_LIGHTS: "926.01.000",
 } as const satisfies Record<string, string>;
 
-const isFast = (config: Configuration): boolean => config.is_fast;
+const isFast = (config: GeneralBOMConfig): boolean => config.is_fast;
 
-export const fastBOM: MaxBOMItem<Configuration>[] = [
+export const fastBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.ADDITIONAL_LATERAL_RINSE_BARS,
     conditions: [isFast, (config) => config.brush_qty === 2],

@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { Water1PumpType, Water2PumpType } from "@/types";
 
@@ -16,28 +16,28 @@ const PART_NUMBERS = {
   OUTLET_PW: "1100.024.056",
 } as const satisfies Record<string, string>;
 
-const hasWater1Solenoid = (config: Configuration): boolean => {
+const hasWater1Solenoid = (config: GeneralBOMConfig): boolean => {
   return !!config.water_1_type;
 };
 
-const hasWater2Solenoid = (config: Configuration): boolean => {
+const hasWater2Solenoid = (config: GeneralBOMConfig): boolean => {
   return !!config.water_2_type;
 };
 
-const uses15kwPump = (config: Configuration): boolean => {
+const uses15kwPump = (config: GeneralBOMConfig): boolean => {
   return (
     config.water_1_pump === "BOOST_15KW" || config.water_2_pump === "BOOST_15KW"
   );
 };
 
-const uses22kwPump = (config: Configuration): boolean => {
+const uses22kwPump = (config: GeneralBOMConfig): boolean => {
   return (
     config.water_1_pump === "BOOST_22KW" || config.water_2_pump === "BOOST_22KW"
   );
 };
 
 const needsTwoPumps = (
-  config: Configuration,
+  config: GeneralBOMConfig,
   pumpType: Water1PumpType | Water2PumpType
 ): boolean => {
   if (config.water_2_pump === null) {
@@ -50,7 +50,7 @@ const needsTwoPumps = (
   );
 };
 
-export const waterSupplyBOM: MaxBOMItem<Configuration>[] = [
+export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.WASH_BAY_SOLENOID_WITH_ANTIFREEZE,
     conditions: [

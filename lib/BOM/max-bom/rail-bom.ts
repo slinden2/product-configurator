@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -11,13 +11,13 @@ const PART_NUMBERS = {
   PROXIMITY_PLATES: "450.35.010",
 } as const satisfies Record<string, string>;
 
-export const calculate3mRailQty = (config: Configuration): number =>
+export const calculate3mRailQty = (config: GeneralBOMConfig): number =>
   Math.floor((config.rail_length - 6) / 3);
 
-export const calculate1mRailQty = (config: Configuration): number =>
+export const calculate1mRailQty = (config: GeneralBOMConfig): number =>
   (config.rail_length - 6) % 3;
 
-export const railBOM: MaxBOMItem<Configuration>[] = [
+export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.DOWELED_RAIL_TERMINALS,
     conditions: [(config) => config.rail_type === "DOWELED"],

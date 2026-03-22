@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -18,7 +18,7 @@ const PART_NUMBERS = {
   FOAM_KIT: "852.00.000",
 } as const satisfies Record<string, string>;
 
-export const dosingPumpBOM: MaxBOMItem<Configuration>[] = [
+export const dosingPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.SHAMPOO_PUMP_NO_ALARM,
     conditions: [

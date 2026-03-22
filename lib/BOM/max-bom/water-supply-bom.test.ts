@@ -4,9 +4,9 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { waterSupplyBOM } from "@/lib/BOM/max-bom/water-supply-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
+function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
   return {
     id: 1,
     water_1_type: "NETWORK",
@@ -17,15 +17,15 @@ function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
     inv_pump_outlet_dosatron_qty: null,
     inv_pump_outlet_pw_qty: null,
     ...overrides,
-  } as Configuration;
+  } as GeneralBOMConfig;
 }
 
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   waterSupplyBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
-const qty = (config: Configuration, pn: string) => {
+const qty = (config: GeneralBOMConfig, pn: string) => {
   const item = waterSupplyBOM.find(
     (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
   );

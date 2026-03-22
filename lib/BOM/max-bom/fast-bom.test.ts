@@ -4,12 +4,12 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { fastBOM } from "@/lib/BOM/max-bom/fast-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
 const cfg = (is_fast: boolean, brush_qty: number) =>
-  ({ is_fast, brush_qty } as Configuration);
+  ({ is_fast, brush_qty } as GeneralBOMConfig);
 
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   fastBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);

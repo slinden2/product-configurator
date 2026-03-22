@@ -4,9 +4,9 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { nozzleBarBOM } from "@/lib/BOM/max-bom/nozzle-bar-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
+function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
   return {
     id: 1,
     brush_qty: 0,
@@ -24,15 +24,15 @@ function makeConfig(overrides: Partial<Configuration> = {}): Configuration {
     supply_type: "STRAIGHT_SHELF",
     is_fast: false,
     ...overrides,
-  } as Configuration;
+  } as GeneralBOMConfig;
 }
 
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   nozzleBarBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
-const qty = (config: Configuration, pn: string) => {
+const qty = (config: GeneralBOMConfig, pn: string) => {
   // Find first matching item with this pn (there may be duplicate pns for different conditions)
   const item = nozzleBarBOM.find(
     (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
@@ -62,8 +62,6 @@ const PNS = {
   FITTINGS_FOR_WAX_PUMP: "450.36.076",
   FITTINGS_FOR_RINSE_WITHOUT_PREWASH: "450.36.077",
   FITTINGS_FOR_DOUBLE_SUPPLY: "450.36.078",
-  SUPPLEMENTARY_LATERAL_RINSE_BARS_FAST: "450.65.000",
-  SUPPLEMENTARY_RINSE_ARCH_FAST: "450.65.002",
 };
 
 describe("nozzleBarBOM — rinse arch/bars", () => {
@@ -289,11 +287,4 @@ describe("nozzleBarBOM — other", () => {
     expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY);
   });
 
-  test("is_fast + brush_qty=3 → supplementary rinse arch (fast)", () => {
-    expect(pns(makeConfig({ is_fast: true, brush_qty: 3 }))).toContain(PNS.SUPPLEMENTARY_RINSE_ARCH_FAST);
-  });
-
-  test("is_fast + brush_qty=2 → supplementary lateral rinse bars (fast)", () => {
-    expect(pns(makeConfig({ is_fast: true, brush_qty: 2 }))).toContain(PNS.SUPPLEMENTARY_LATERAL_RINSE_BARS_FAST);
-  });
 });

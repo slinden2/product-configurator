@@ -4,19 +4,17 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { brushBOM } from "@/lib/BOM/max-bom/brush-bom";
-import type { Configuration } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
-type BrushCfg = Pick<Configuration, "brush_qty" | "brush_type" | "brush_color">;
+const cfg = (brush_qty: number, brush_type: string | null, brush_color: string | null): GeneralBOMConfig =>
+  ({ brush_qty, brush_type, brush_color } as GeneralBOMConfig);
 
-const cfg = (brush_qty: number, brush_type: string | null, brush_color: string | null): Configuration =>
-  ({ brush_qty, brush_type, brush_color } as Configuration);
-
-const pns = (config: Configuration) =>
+const pns = (config: GeneralBOMConfig) =>
   brushBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
-const qtys = (config: Configuration) =>
+const qtys = (config: GeneralBOMConfig) =>
   brushBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => (typeof item.qty === "function" ? item.qty(config) : item.qty));

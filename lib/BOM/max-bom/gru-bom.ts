@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
@@ -7,7 +7,7 @@ const PART_NUMBERS = {
   THREE_BRUSHES: "450.0E.GRU",
 } as const satisfies Record<string, string>;
 
-export const gruBOM: MaxBOMItem<Configuration>[] = [
+export const gruBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.ZERO_BRUSHES,
     conditions: [(config) => config.brush_qty === 0],

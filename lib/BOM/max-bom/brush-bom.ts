@@ -1,4 +1,4 @@
-import { Configuration } from "@/db/schemas";
+import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
 import { BrushColorType, BrushType } from "@/types";
 
@@ -65,7 +65,7 @@ const PART_NUMBERS: Record<
   },
 };
 
-const blueSilver: MaxBOMItem<Configuration>[] = [
+const blueSilver: MaxBOMItem<GeneralBOMConfig>[] = [
   // Thread
   {
     pn: PART_NUMBERS.BLUE_SILVER.THREAD.VERTICAL,
@@ -131,7 +131,7 @@ const blueSilver: MaxBOMItem<Configuration>[] = [
   },
 ];
 
-const greenBlack: MaxBOMItem<Configuration>[] = [
+const greenBlack: MaxBOMItem<GeneralBOMConfig>[] = [
   // Thread
   {
     pn: PART_NUMBERS.GREEN_BLACK.THREAD.VERTICAL,
@@ -198,7 +198,7 @@ const greenBlack: MaxBOMItem<Configuration>[] = [
   },
 ];
 
-const greenSilver: MaxBOMItem<Configuration>[] = [
+const greenSilver: MaxBOMItem<GeneralBOMConfig>[] = [
   //Thread
   {
     pn: PART_NUMBERS.GREEN_SILVER.THREAD.VERTICAL,
@@ -264,7 +264,7 @@ const greenSilver: MaxBOMItem<Configuration>[] = [
   },
 ];
 
-const red: MaxBOMItem<Configuration>[] = [
+const red: MaxBOMItem<GeneralBOMConfig>[] = [
   // Thread
   {
     pn: PART_NUMBERS.RED.THREAD.VERTICAL,
@@ -330,7 +330,7 @@ const red: MaxBOMItem<Configuration>[] = [
   },
 ];
 
-export const brushBOM: MaxBOMItem<Configuration>[] = [
+export const brushBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   ...blueSilver,
   ...greenBlack,
   ...greenSilver,

@@ -77,7 +77,7 @@ export class BOM {
   }> {
     // Phase 1: filter rules and resolve quantities (no DB calls)
     const generalFiltered = this._filterAndResolve(
-      this.generalMaxBOM as MaxBOMItem<GeneralBOMConfig>[],
+      this.generalMaxBOM,
       this._buildGeneralConfig(),
     );
     const waterTankFiltered = this.configuration.water_tanks.map((wt) =>
@@ -107,7 +107,7 @@ export class BOM {
 
   async buildGeneralBOM(): Promise<BOMItemWithDescription[]> {
     const filtered = this._filterAndResolve(
-      this.generalMaxBOM as MaxBOMItem<GeneralBOMConfig>[],
+      this.generalMaxBOM,
       this._buildGeneralConfig(),
     );
     const descriptionMap = await this._fetchDescriptions(filtered);
