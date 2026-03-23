@@ -103,6 +103,19 @@ describe("updateConfigStatusAction", () => {
     });
   });
 
+  test("returns error when energy chain constraint is not met", async () => {
+    mockUpdateConfigStatus.mockRejectedValue(
+      new QueryError(MSG.config.energyChainRequiresGantry, 400)
+    );
+    const result = await updateConfigStatusAction(CONF_ID, {
+      status: "SUBMITTED",
+    });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.energyChainRequiresGantry,
+    });
+  });
+
   test("returns generic error on unknown exceptions", async () => {
     mockUpdateConfigStatus.mockRejectedValue(new TypeError("unexpected"));
     const result = await updateConfigStatusAction(CONF_ID, {

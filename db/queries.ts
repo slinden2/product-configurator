@@ -151,6 +151,13 @@ export async function getConfiguration(id: number) {
   return response;
 }
 
+export async function getWashBaysByConfigId(configId: number) {
+  return db.query.washBays.findMany({
+    where: eq(washBays.configuration_id, configId),
+    columns: { id: true, has_gantry: true, energy_chain_width: true },
+  });
+}
+
 export const insertConfiguration = async (
   newConfiguration: ConfigSchema,
   userId: string
@@ -243,6 +250,29 @@ export const updateConfigStatus = async (
 
   if (!canTransition(user.role, configuration.status, statusData.status)) {
     throw new QueryError(MSG.config.statusUnauthorized, 403);
+  }
+
+  // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
+  const forwardStatuses: ConfigurationStatusType[] = [
+    "SUBMITTED",
+    "IN_REVIEW",
+    "APPROVED",
+    "CLOSED",
+  ];
+  if (
+    configuration.supply_type === "ENERGY_CHAIN" &&
+    forwardStatuses.indexOf(statusData.status) >
+      forwardStatuses.indexOf(
+        configuration.status as ConfigurationStatusType
+      )
+  ) {
+    const bays = await getWashBaysByConfigId(confId);
+    const hasValidBay = bays.some(
+      (wb) => wb.has_gantry && wb.energy_chain_width
+    );
+    if (!hasValidBay) {
+      throw new QueryError(MSG.config.energyChainRequiresGantry, 400);
+    }
   }
 
   const [response] = await db
