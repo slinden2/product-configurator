@@ -45,7 +45,7 @@ const LoginForm = () => {
           type="password"
           autoComplete="current-password"
         />
-        <Button>{form.formState.isSubmitting ? <Spinner /> : "Accedi"}</Button>
+        <Button>{form.formState.isSubmitting ? <Spinner className="text-primary-foreground" /> : "Accedi"}</Button>
       </form>
     </Form>
   );

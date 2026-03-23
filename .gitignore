@@ -40,3 +40,7 @@ zodTestFile.ts
 TODO.md
 TODO.txt
 no-git/
+
+# Dropbox temporary attribute files
+*.ffs_tmp
+*.dropbox.attrs
