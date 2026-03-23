@@ -188,6 +188,13 @@ export const updateConfiguration = async (
   return updatedConfiguration;
 };
 
+export const touchConfigurationUpdatedAt = async (confId: number) => {
+  await db
+    .update(configurations)
+    .set({ updated_at: new Date() })
+    .where(eq(configurations.id, confId));
+};
+
 function canTransition(role: Role, from: ConfigurationStatusType, to: ConfigurationStatusType): boolean {
   if (from === to) return true;
   if (role === "ADMIN") return true;

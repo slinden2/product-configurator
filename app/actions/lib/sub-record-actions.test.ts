@@ -7,6 +7,7 @@ const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
+const mockTouchConfigurationUpdatedAt = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -14,6 +15,8 @@ vi.mock("@/db/queries", () => ({
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
+  touchConfigurationUpdatedAt: (...args: unknown[]) =>
+    mockTouchConfigurationUpdatedAt(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -85,6 +88,7 @@ describe("handleSubRecordAction", () => {
     mockGetConfiguration.mockResolvedValue(mockConfig());
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
+    mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
   });
 
   // --- Insert ---
@@ -280,6 +284,62 @@ describe("handleSubRecordAction", () => {
       entityName: "TestEntity",
     });
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  // --- Parent updated_at propagation ---
+
+  test("touches parent configuration updated_at after successful insert", async () => {
+    await handleSubRecordAction(insertOptions());
+    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  test("touches parent configuration updated_at after successful edit", async () => {
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    await handleSubRecordAction({
+      actionType: "edit",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      formData: { value: "test" },
+      schema: testSchema,
+      queryFn,
+      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      entityName: "TestEntity",
+    });
+    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  test("touches parent configuration updated_at after successful delete", async () => {
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    await handleSubRecordAction({
+      actionType: "delete",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      queryFn,
+      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      entityName: "TestEntity",
+    });
+    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(PARENT_ID);
+  });
+
+  test("does NOT touch parent updated_at when validation fails", async () => {
+    await handleSubRecordAction(insertOptions({ formData: { value: "" } }));
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+  });
+
+  test("does NOT touch parent updated_at when auth fails", async () => {
+    mockGetUserData.mockResolvedValue(null);
+    await handleSubRecordAction(insertOptions());
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+  });
+
+  test("does NOT touch parent updated_at when config is not editable", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
+    await handleSubRecordAction(insertOptions());
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
   });
 
   test("revalidates BOM path after sub-record mutation", async () => {

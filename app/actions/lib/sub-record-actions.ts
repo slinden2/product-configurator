@@ -7,6 +7,7 @@ import {
   QueryError,
   hasEngineeringBom,
   deleteAllEngineeringBomItems,
+  touchConfigurationUpdatedAt,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { revalidatePath } from "next/cache";
@@ -143,17 +144,20 @@ export async function handleSubRecordAction<
         break;
     }
 
-    // --- 5. Delete engineering BOM if it exists — config changes invalidate the snapshot ---
+    // --- 5. Touch parent configuration's updated_at ---
+    await touchConfigurationUpdatedAt(parentId);
+
+    // --- 6. Delete engineering BOM if it exists — config changes invalidate the snapshot ---
     const ebomExists = await hasEngineeringBom(parentId);
     if (ebomExists) {
       await deleteAllEngineeringBomItems(parentId);
     }
 
-    // --- 6. Cache Revalidation ---
+    // --- 7. Cache Revalidation ---
     revalidatePath(revalidatePathStr);
     revalidatePath(`/configurations/bom/${parentId}`);
 
-    // --- 7. Return Success ---
+    // --- 8. Return Success ---
     return { success: true as const, data: result };
   } catch (err) {
     console.error(`Failed to ${actionType} ${entityName}:`, err);
