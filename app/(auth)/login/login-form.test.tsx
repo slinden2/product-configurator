@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 
 const mockPush = vi.fn();
 const mockSignIn = vi.fn();
+const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -15,6 +16,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/app/actions/auth", () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: (...args: unknown[]) => mockToastError(...args) },
 }));
 
 // --- Import SUT after mocks ---
@@ -28,7 +33,7 @@ describe("LoginForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSignIn.mockResolvedValue({ status: "success", user: { id: "u1" } });
+    mockSignIn.mockResolvedValue({ success: true, data: { user: { id: "u1" } } });
   });
 
   describe("Rendering", () => {
@@ -77,9 +82,8 @@ describe("LoginForm", () => {
       });
     });
 
-    test("calls console.error on error response and does not redirect", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockSignIn.mockResolvedValue({ status: "Invalid credentials", user: null });
+    test("shows toast error on error response and does not redirect", async () => {
+      mockSignIn.mockResolvedValue({ success: false, error: "Errore durante l'autenticazione." });
 
       const user = userEvent.setup();
       render(<LoginForm />);
@@ -89,11 +93,9 @@ describe("LoginForm", () => {
       await user.click(screen.getByRole("button", { name: "Accedi" }));
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalled();
+        expect(mockToastError).toHaveBeenCalledWith("Errore durante l'autenticazione.");
         expect(mockPush).not.toHaveBeenCalled();
       });
-
-      consoleSpy.mockRestore();
     });
 
     test("does not call signIn when form is empty", async () => {

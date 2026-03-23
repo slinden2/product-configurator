@@ -10,6 +10,8 @@ import InputField from "@/components/input-field";
 import { AuthSchema, authSchema } from "@/validation/auth-schema";
 import { useRouter } from "next/navigation";
 import { forgotPassword } from "@/app/actions/auth";
+import { toast } from "sonner";
+import { MSG } from "@/lib/messages";
 
 const ForgotPasswordForm = () => {
   const form = useForm<AuthSchema>({
@@ -19,11 +21,11 @@ const ForgotPasswordForm = () => {
 
   const onSubmit = async (formData: AuthSchema) => {
     const response = await forgotPassword(formData);
-    if (response.status === "success") {
-      alert("Email per resettare la password inviata.");
+    if (response.success) {
+      toast.success(MSG.toast.passwordResetEmailSent);
       router.push("/login");
     } else {
-      console.error(response);
+      toast.error(response.error);
     }
   };
 
@@ -40,7 +42,11 @@ const ForgotPasswordForm = () => {
           autoComplete="email"
         />
         <Button>
-          {form.formState.isSubmitting ? <Spinner /> : "Resetta la password"}
+          {form.formState.isSubmitting ? (
+            <Spinner className="text-primary-foreground" />
+          ) : (
+            "Resetta la password"
+          )}
         </Button>
       </form>
     </Form>

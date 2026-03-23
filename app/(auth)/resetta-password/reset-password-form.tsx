@@ -10,6 +10,8 @@ import InputField from "@/components/input-field";
 import { NewPasswordSchema, newPassWordSchema } from "@/validation/auth-schema";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resetPassword } from "@/app/actions/auth";
+import { toast } from "sonner";
+import { MSG } from "@/lib/messages";
 
 const ResetPasswordForm = () => {
   const form = useForm<NewPasswordSchema>({
@@ -20,10 +22,11 @@ const ResetPasswordForm = () => {
 
   const onSubmit = async (formData: NewPasswordSchema) => {
     const response = await resetPassword(formData, searchParams.get("code"));
-    if (response.status === "success") {
+    if (response.success) {
+      toast.success(MSG.toast.passwordResetSuccess);
       router.push("/login");
     } else {
-      console.error(response);
+      toast.error(response.error);
     }
   };
 
@@ -41,13 +44,17 @@ const ResetPasswordForm = () => {
         />
         <InputField<NewPasswordSchema>
           name="confirmPassword"
-          label="Password"
-          placeholder="Inserire la password"
+          label="Conferma password"
+          placeholder="Confermare la password"
           type="password"
           autoComplete="new-password"
         />
         <Button>
-          {form.formState.isSubmitting ? <Spinner /> : "Resetta la password"}
+          {form.formState.isSubmitting ? (
+            <Spinner className="text-primary-foreground" />
+          ) : (
+            "Resetta la password"
+          )}
         </Button>
       </form>
     </Form>

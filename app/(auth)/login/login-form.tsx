@@ -10,6 +10,7 @@ import InputField from "@/components/input-field";
 import { LoginSchema, loginSchema } from "@/validation/auth-schema";
 import { signIn } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const LoginForm = () => {
   const form = useForm<LoginSchema>({
@@ -19,10 +20,10 @@ const LoginForm = () => {
 
   const onSubmit = async (formData: LoginSchema) => {
     const response = await signIn(formData);
-    if (response.status === "success") {
+    if (response.success) {
       router.push("/configurations");
     } else {
-      console.error(response);
+      toast.error(response.error);
     }
   };
 
@@ -45,7 +46,13 @@ const LoginForm = () => {
           type="password"
           autoComplete="current-password"
         />
-        <Button>{form.formState.isSubmitting ? <Spinner className="text-primary-foreground" /> : "Accedi"}</Button>
+        <Button>
+          {form.formState.isSubmitting ? (
+            <Spinner className="text-primary-foreground" />
+          ) : (
+            "Accedi"
+          )}
+        </Button>
       </form>
     </Form>
   );

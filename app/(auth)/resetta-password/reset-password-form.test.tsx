@@ -9,6 +9,8 @@ import userEvent from "@testing-library/user-event";
 const mockPush = vi.fn();
 const mockGet = vi.fn();
 const mockResetPassword = vi.fn();
+const mockToastSuccess = vi.fn();
+const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -19,9 +21,17 @@ vi.mock("@/app/actions/auth", () => ({
   resetPassword: (...args: unknown[]) => mockResetPassword(...args),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
+}));
+
 // --- Import SUT after mocks ---
 
 import ResetPasswordForm from "@/app/(auth)/resetta-password/reset-password-form";
+import { MSG } from "@/lib/messages";
 
 // --- Tests ---
 
@@ -31,14 +41,15 @@ describe("ResetPasswordForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGet.mockReturnValue("test-code-123");
-    mockResetPassword.mockResolvedValue({ status: "success" });
+    mockResetPassword.mockResolvedValue({ success: true });
   });
 
   describe("Rendering", () => {
-    test("renders two password fields and 'Resetta la password' button", () => {
+    test("renders password field, confirm password field, and 'Resetta la password' button", () => {
       render(<ResetPasswordForm />);
 
-      expect(screen.getAllByLabelText("Password")).toHaveLength(2);
+      expect(screen.getByLabelText("Password")).toBeInTheDocument();
+      expect(screen.getByLabelText("Conferma password")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Resetta la password" })
       ).toBeInTheDocument();
@@ -46,13 +57,12 @@ describe("ResetPasswordForm", () => {
   });
 
   describe("Form submission", () => {
-    test("calls resetPassword with form data and code, redirects on success", async () => {
+    test("calls resetPassword with form data and code, shows toast success, redirects", async () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "newpass123");
-      await user.type(passwordFields[1], "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpass123");
+      await user.type(screen.getByLabelText("Conferma password"), "newpass123");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" })
       );
@@ -62,39 +72,42 @@ describe("ResetPasswordForm", () => {
           { password: "newpass123", confirmPassword: "newpass123" },
           "test-code-123"
         );
+        expect(mockToastSuccess).toHaveBeenCalledWith(
+          MSG.toast.passwordResetSuccess
+        );
         expect(mockPush).toHaveBeenCalledWith("/login");
       });
     });
 
-    test("calls console.error on error response and does not redirect", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockResetPassword.mockResolvedValue({ status: "Error" });
+    test("shows toast error on error response and does not redirect", async () => {
+      mockResetPassword.mockResolvedValue({
+        success: false,
+        error: "Errore durante l'autenticazione.",
+      });
 
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "newpass123");
-      await user.type(passwordFields[1], "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpass123");
+      await user.type(screen.getByLabelText("Conferma password"), "newpass123");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" })
       );
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalled();
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Errore durante l'autenticazione."
+        );
         expect(mockPush).not.toHaveBeenCalled();
       });
-
-      consoleSpy.mockRestore();
     });
 
     test("does not call resetPassword when passwords do not match", async () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "newpass123");
-      await user.type(passwordFields[1], "different456");
+      await user.type(screen.getByLabelText("Password"), "newpass123");
+      await user.type(screen.getByLabelText("Conferma password"), "different456");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" })
       );
@@ -108,9 +121,8 @@ describe("ResetPasswordForm", () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "ab");
-      await user.type(passwordFields[1], "ab");
+      await user.type(screen.getByLabelText("Password"), "ab");
+      await user.type(screen.getByLabelText("Conferma password"), "ab");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" })
       );
@@ -126,9 +138,8 @@ describe("ResetPasswordForm", () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "newpass123");
-      await user.type(passwordFields[1], "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpass123");
+      await user.type(screen.getByLabelText("Conferma password"), "newpass123");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" })
       );

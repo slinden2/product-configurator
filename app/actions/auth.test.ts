@@ -80,6 +80,7 @@ import {
 } from "@/app/actions/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
@@ -97,7 +98,7 @@ describe("getUserSession", () => {
 
     const result = await getUserSession();
 
-    expect(result).toEqual({ status: "success", user: mockUser });
+    expect(result).toEqual({ success: true, data: { user: mockUser } });
   });
 
   test("returns null on error", async () => {
@@ -129,12 +130,12 @@ describe("signUp", () => {
       confirmPassword: "password123",
     });
 
-    expect(result.status).toBe("success");
-    expect(result.user).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result).toHaveProperty("data");
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
 
-  test("returns error message when Supabase signup fails", async () => {
+  test("returns error when Supabase signup fails", async () => {
     mockSignUp.mockResolvedValue({
       data: { user: null },
       error: { message: "Signup failed" },
@@ -146,7 +147,10 @@ describe("signUp", () => {
       confirmPassword: "password123",
     });
 
-    expect(result).toEqual({ status: "Signup failed", user: null });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.genericError,
+    });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
@@ -162,10 +166,25 @@ describe("signUp", () => {
       confirmPassword: "password123",
     });
 
-    expect(result.user).toBeNull();
-    expect(result.status).toContain("Utente con questo indirizzo email gi");
-    expect(result.status).toContain("registrato");
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.emailAlreadyRegistered,
+    });
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  test("returns validation error for invalid input", async () => {
+    const result = await signUp({
+      email: "not-an-email",
+      password: "password123",
+      confirmPassword: "password123",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.invalidData,
+    });
+    expect(mockSignUp).not.toHaveBeenCalled();
   });
 });
 
@@ -187,7 +206,10 @@ describe("signIn", () => {
       password: "password123",
     });
 
-    expect(result).toEqual({ status: "success", user: mockUser });
+    expect(result).toEqual({
+      success: true,
+      data: { user: mockUser },
+    });
     expect(mockInsert).toHaveBeenCalled();
     expect(mockValues).toHaveBeenCalledWith({
       id: mockUser.id,
@@ -209,7 +231,10 @@ describe("signIn", () => {
       password: "password123",
     });
 
-    expect(result).toEqual({ status: "success", user: mockUser });
+    expect(result).toEqual({
+      success: true,
+      data: { user: mockUser },
+    });
     expect(mockInsert).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
@@ -225,7 +250,10 @@ describe("signIn", () => {
       password: "wrong",
     });
 
-    expect(result).toEqual({ status: "Invalid credentials", user: null });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.genericError,
+    });
     expect(mockFindFirst).not.toHaveBeenCalled();
     expect(mockInsert).not.toHaveBeenCalled();
   });
@@ -242,7 +270,10 @@ describe("signIn", () => {
       password: "password123",
     });
 
-    expect(result).toEqual({ status: "DB connection failed", user: null });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.db.error,
+    });
   });
 
   test("returns error when DB insert throws", async () => {
@@ -258,7 +289,23 @@ describe("signIn", () => {
       password: "password123",
     });
 
-    expect(result).toEqual({ status: "Insert failed", user: null });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.db.error,
+    });
+  });
+
+  test("returns validation error for invalid input", async () => {
+    const result = await signIn({
+      email: "not-an-email",
+      password: "password123",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.invalidData,
+    });
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
   });
 });
 
@@ -297,21 +344,34 @@ describe("forgotPassword", () => {
 
     const result = await forgotPassword({ email: "test@example.com" });
 
-    expect(result).toEqual({ status: "success" });
+    expect(result).toEqual({ success: true });
     expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
       "test@example.com",
       { redirectTo: "http://localhost:3000/resetta-password" }
     );
   });
 
-  test("returns error message when Supabase fails", async () => {
+  test("returns error when Supabase fails", async () => {
     mockResetPasswordForEmail.mockResolvedValue({
       error: { message: "Rate limited" },
     });
 
     const result = await forgotPassword({ email: "test@example.com" });
 
-    expect(result).toEqual({ status: "Rate limited", user: null });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.genericError,
+    });
+  });
+
+  test("returns validation error for invalid input", async () => {
+    const result = await forgotPassword({ email: "not-an-email" });
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.invalidData,
+    });
+    expect(mockResetPasswordForEmail).not.toHaveBeenCalled();
   });
 });
 
@@ -320,13 +380,16 @@ describe("resetPassword", () => {
     vi.clearAllMocks();
   });
 
-  test("returns 'Codice mancante' when code is null", async () => {
+  test("returns missing code error when code is null", async () => {
     const result = await resetPassword(
       { password: "newpass123", confirmPassword: "newpass123" },
       null
     );
 
-    expect(result).toEqual({ status: "Codice mancante" });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.missingResetCode,
+    });
     expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
   });
 
@@ -340,7 +403,10 @@ describe("resetPassword", () => {
       "bad-code"
     );
 
-    expect(result).toEqual({ status: "Invalid code" });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.genericError,
+    });
     expect(mockUpdateUser).not.toHaveBeenCalled();
   });
 
@@ -355,7 +421,10 @@ describe("resetPassword", () => {
       "valid-code"
     );
 
-    expect(result).toEqual({ status: "Weak password" });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.genericError,
+    });
   });
 
   test("returns success when both steps succeed", async () => {
@@ -367,7 +436,20 @@ describe("resetPassword", () => {
       "valid-code"
     );
 
-    expect(result).toEqual({ status: "success" });
+    expect(result).toEqual({ success: true });
     expect(mockUpdateUser).toHaveBeenCalledWith({ password: "newpass123" });
+  });
+
+  test("returns validation error for invalid input", async () => {
+    const result = await resetPassword(
+      { password: "ab", confirmPassword: "ab" },
+      "valid-code"
+    );
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.invalidData,
+    });
+    expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
   });
 });

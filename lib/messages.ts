@@ -10,6 +10,11 @@ export const MSG = {
     unauthorizedSubRecord:
       "Non autorizzato a modificare/eliminare questo record.",
     userUnauthorized: "Utente non autorizzato.",
+    emailAlreadyRegistered:
+      "Utente con questo indirizzo email già registrato. Effettua il login per proseguire.",
+    missingResetCode: "Codice di reset mancante.",
+    genericError: "Errore durante l'autenticazione.",
+    invalidData: "Dati di autenticazione non validi.",
   },
   config: {
     notFound: "Configurazione non trovata.",
@@ -82,6 +87,8 @@ export const MSG = {
       `Errore sconosciuto durante il salvataggio (${name}).`,
     entityDeleteUnknown: (name: string) =>
       `Errore sconosciuto durante l'eliminazione (${name}).`,
+    passwordResetEmailSent: "Email per resettare la password inviata.",
+    passwordResetSuccess: "Password aggiornata con successo.",
   },
   bomWarning: {
     title: "Distinta ingegneria presente",

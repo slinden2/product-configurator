@@ -10,6 +10,7 @@ import InputField from "@/components/input-field";
 import { SignupSchema, signupSchema } from "@/validation/auth-schema";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 const SignupForm = () => {
   const form = useForm<SignupSchema>({
@@ -19,10 +20,10 @@ const SignupForm = () => {
 
   const onSubmit = async (formData: SignupSchema) => {
     const response = await signUp(formData);
-    if (response.status === "success") {
+    if (response.success) {
       router.push("/login");
     } else {
-      console.error(response);
+      toast.error(response.error);
     }
   };
 
@@ -47,13 +48,17 @@ const SignupForm = () => {
         />
         <InputField<SignupSchema>
           name="confirmPassword"
-          label="Password"
-          placeholder="Inserire la password"
+          label="Conferma password"
+          placeholder="Confermare la password"
           type="password"
           autoComplete="new-password"
         />
         <Button>
-          {form.formState.isSubmitting ? <Spinner /> : "Registra"}
+          {form.formState.isSubmitting ? (
+            <Spinner className="text-primary-foreground" />
+          ) : (
+            "Registra"
+          )}
         </Button>
       </form>
     </Form>

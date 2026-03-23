@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 
 const mockPush = vi.fn();
 const mockSignUp = vi.fn();
+const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -15,6 +16,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/app/actions/auth", () => ({
   signUp: (...args: unknown[]) => mockSignUp(...args),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: (...args: unknown[]) => mockToastError(...args) },
 }));
 
 // --- Import SUT after mocks ---
@@ -28,15 +33,16 @@ describe("SignupForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSignUp.mockResolvedValue({ status: "success", user: { id: "u1" } });
+    mockSignUp.mockResolvedValue({ success: true, data: { user: { id: "u1" } } });
   });
 
   describe("Rendering", () => {
-    test("renders email field, two password fields, and 'Registra' button", () => {
+    test("renders email field, password field, confirm password field, and 'Registra' button", () => {
       render(<SignupForm />);
 
       expect(screen.getByLabelText("Email")).toBeInTheDocument();
-      expect(screen.getAllByLabelText("Password")).toHaveLength(2);
+      expect(screen.getByLabelText("Password")).toBeInTheDocument();
+      expect(screen.getByLabelText("Conferma password")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Registra" })
       ).toBeInTheDocument();
@@ -49,9 +55,8 @@ describe("SignupForm", () => {
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "password123");
-      await user.type(passwordFields[1], "password123");
+      await user.type(screen.getByLabelText("Password"), "password123");
+      await user.type(screen.getByLabelText("Conferma password"), "password123");
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {
@@ -64,25 +69,21 @@ describe("SignupForm", () => {
       });
     });
 
-    test("calls console.error on error response and does not redirect", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockSignUp.mockResolvedValue({ status: "Error", user: null });
+    test("shows toast error on error response and does not redirect", async () => {
+      mockSignUp.mockResolvedValue({ success: false, error: "Errore durante l'autenticazione." });
 
       const user = userEvent.setup();
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "password123");
-      await user.type(passwordFields[1], "password123");
+      await user.type(screen.getByLabelText("Password"), "password123");
+      await user.type(screen.getByLabelText("Conferma password"), "password123");
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalled();
+        expect(mockToastError).toHaveBeenCalledWith("Errore durante l'autenticazione.");
         expect(mockPush).not.toHaveBeenCalled();
       });
-
-      consoleSpy.mockRestore();
     });
 
     test("does not call signUp when form is empty", async () => {
@@ -101,9 +102,8 @@ describe("SignupForm", () => {
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "password123");
-      await user.type(passwordFields[1], "different456");
+      await user.type(screen.getByLabelText("Password"), "password123");
+      await user.type(screen.getByLabelText("Conferma password"), "different456");
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {
@@ -116,9 +116,8 @@ describe("SignupForm", () => {
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
-      const passwordFields = screen.getAllByLabelText("Password");
-      await user.type(passwordFields[0], "ab");
-      await user.type(passwordFields[1], "ab");
+      await user.type(screen.getByLabelText("Password"), "ab");
+      await user.type(screen.getByLabelText("Conferma password"), "ab");
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {

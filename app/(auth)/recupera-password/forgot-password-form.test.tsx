@@ -8,6 +8,8 @@ import userEvent from "@testing-library/user-event";
 
 const mockPush = vi.fn();
 const mockForgotPassword = vi.fn();
+const mockToastSuccess = vi.fn();
+const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -17,9 +19,17 @@ vi.mock("@/app/actions/auth", () => ({
   forgotPassword: (...args: unknown[]) => mockForgotPassword(...args),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
+}));
+
 // --- Import SUT after mocks ---
 
 import ForgotPasswordForm from "@/app/(auth)/recupera-password/forgot-password-form";
+import { MSG } from "@/lib/messages";
 
 // --- Tests ---
 
@@ -28,8 +38,7 @@ describe("ForgotPasswordForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockForgotPassword.mockResolvedValue({ status: "success" });
-    vi.spyOn(window, "alert").mockImplementation(() => {});
+    mockForgotPassword.mockResolvedValue({ success: true });
   });
 
   describe("Rendering", () => {
@@ -44,7 +53,7 @@ describe("ForgotPasswordForm", () => {
   });
 
   describe("Form submission", () => {
-    test("calls forgotPassword, shows alert, and redirects on success", async () => {
+    test("calls forgotPassword, shows toast success, and redirects on success", async () => {
       const user = userEvent.setup();
       render(<ForgotPasswordForm />);
 
@@ -57,18 +66,17 @@ describe("ForgotPasswordForm", () => {
         expect(mockForgotPassword).toHaveBeenCalledWith({
           email: "test@example.com",
         });
-        expect(window.alert).toHaveBeenCalledWith(
-          "Email per resettare la password inviata."
+        expect(mockToastSuccess).toHaveBeenCalledWith(
+          MSG.toast.passwordResetEmailSent
         );
         expect(mockPush).toHaveBeenCalledWith("/login");
       });
     });
 
-    test("calls console.error on error response, no alert, no redirect", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    test("shows toast error on error response, no redirect", async () => {
       mockForgotPassword.mockResolvedValue({
-        status: "Rate limited",
-        user: null,
+        success: false,
+        error: "Errore durante l'autenticazione.",
       });
 
       const user = userEvent.setup();
@@ -80,12 +88,12 @@ describe("ForgotPasswordForm", () => {
       );
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(window.alert).not.toHaveBeenCalled();
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Errore durante l'autenticazione."
+        );
+        expect(mockToastSuccess).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
       });
-
-      consoleSpy.mockRestore();
     });
 
     test("does not call forgotPassword with invalid email", async () => {

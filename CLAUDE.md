@@ -78,7 +78,7 @@ Before finalizing any change, verify:
 After every code change, run all three checks before considering the task complete:
 1. `npm run lint`
 2. `npm run type-check`
-3. `npm run test`
+3. `npm run test:run`
 
 ## Path Aliases
 
