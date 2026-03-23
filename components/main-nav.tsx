@@ -17,7 +17,7 @@ import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface MainNavProps {
   user: User | null;
@@ -26,7 +26,10 @@ interface MainNavProps {
 const MainNav = ({ user }: MainNavProps) => {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const routes = [
     {
@@ -108,10 +111,14 @@ const MainNav = ({ user }: MainNavProps) => {
           size="icon"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           aria-label="Toggle theme">
-          {resolvedTheme === "dark" ? (
-            <Sun className="h-5 w-5" />
+          {mounted ? (
+            resolvedTheme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )
           ) : (
-            <Moon className="h-5 w-5" />
+            <span className="h-5 w-5" />
           )}
         </Button>
         {user ? (
