@@ -59,10 +59,11 @@ export const waterSupplySchema = z
   })
   .and(inverterPumpSchema)
   .superRefine((data, ctx) => {
-    if (data.water_1_type === undefined) {
+    if (data.water_1_pump !== undefined && data.water_1_type === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: genericRequiredMessage,
+        message:
+          "Se selezioni la pompa di rilancio devi scegliere anche il tipo acqua 1.",
         path: ["water_1_type"],
       });
     }

@@ -88,7 +88,7 @@ export const configurations = pgTable("configurations", {
   has_foam: boolean().notNull(),
   has_acid_pump: boolean().notNull(),
   acid_pump_pos: chemPumpPosEnum("acid_pump_pos"),
-  water_1_type: waterTypeEnum("water_1_type").notNull(),
+  water_1_type: waterTypeEnum("water_1_type"),
   water_1_pump: water1PumpTypeEnum("water_1_pump_type"),
   inv_pump_outlet_dosatron_qty: integer(),
   inv_pump_outlet_pw_qty: integer(),

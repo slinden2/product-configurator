@@ -11,6 +11,7 @@ const WaterSupplySection = () => {
   const { control } = useFormContext<ConfigSchema>();
 
   // Watch relevant fields
+  const water1TypeWatch = useWatch({ control, name: "water_1_type" });
   const water1PumpWatch = useWatch({ control, name: "water_1_pump" });
   const water2TypeWatch = useWatch({ control, name: "water_2_type" });
 
@@ -19,8 +20,9 @@ const WaterSupplySection = () => {
     water1PumpWatch === zodEnums.WaterPump1Enum.enum.INV_3KW_200L ||
     water1PumpWatch === zodEnums.WaterPump1Enum.enum.INV_3KW_250L;
 
-  // Determine if water pump 2 should be disabled (if type 2 is not selected/undefined)
-  const isWater2PumpDisabled = water2TypeWatch === undefined; // Simplified check
+  // Determine if pumps should be disabled (if their water type is not selected)
+  const isWater1PumpDisabled = water1TypeWatch === undefined;
+  const isWater2PumpDisabled = water2TypeWatch === undefined;
   return (
     <Fieldset
       title="Alimentazione acqua"
@@ -35,11 +37,26 @@ const WaterSupplySection = () => {
                 dataType="string"
                 label="Tipo acqua 1"
                 items={withNoSelection(selectFieldOptions.waterTypes)}
+                fieldsToResetOnValue={[
+                  {
+                    triggerValue: NOT_SELECTED_VALUE,
+                    fieldsToReset: ["water_1_pump"],
+                  },
+                  {
+                    triggerValue: NOT_SELECTED_VALUE,
+                    fieldsToReset: [
+                      "inv_pump_outlet_dosatron_qty",
+                      "inv_pump_outlet_pw_qty",
+                    ],
+                    resetToValue: 0,
+                  },
+                ]}
               />
               <SelectField<ConfigSchema>
                 name="water_1_pump"
                 dataType="string"
                 label="Pompa di rilancio"
+                disabled={isWater1PumpDisabled}
                 items={withNoSelection(selectFieldOptions.waterPump1Opts)}
                 fieldsToResetOnValue={[
                   {

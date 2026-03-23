@@ -27,10 +27,6 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_chemical_pump: values.has_chemical_pump,
     has_foam: values.has_foam,
     has_acid_pump: values.has_acid_pump,
-    water_1_type: values.water_1_type as
-      | "NETWORK"
-      | "RECYCLED"
-      | "DEMINERALIZED",
     has_antifreeze: values.has_antifreeze,
     supply_type: values.supply_type as
       | "STRAIGHT_SHELF"
@@ -52,6 +48,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_chemical_roof_bar: values.has_chemical_roof_bar,
 
     // --- NULLABLE in DB (Map undefined -> null) ---
+    water_1_type: values.water_1_type ?? null,
     brush_type: values.brush_type ?? null,
     brush_color: values.brush_color ?? null,
     chemical_qty: values.chemical_qty ?? null,

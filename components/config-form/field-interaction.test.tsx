@@ -97,6 +97,50 @@ describe("Multi-step field dependency chains", () => {
   });
 
   describe("Water supply chain", () => {
+    test("deselecting water_1_type resets water_1_pump and inverter outlets", async () => {
+      const { getValues } = renderSections(
+        {
+          water_1_type: "NETWORK",
+          water_1_pump: "INV_3KW_200L",
+          inv_pump_outlet_dosatron_qty: 2,
+          inv_pump_outlet_pw_qty: 1,
+        },
+        <WaterSupplySection />,
+      );
+
+      expect(getValues().water_1_type).toBe("NETWORK");
+      expect(getValues().water_1_pump).toBe("INV_3KW_200L");
+      expect(getValues().inv_pump_outlet_dosatron_qty).toBe(2);
+      expect(getValues().inv_pump_outlet_pw_qty).toBe(1);
+
+      // Deselect water_1_type
+      await selectRadixOption("Tipo acqua 1", "---");
+
+      expect(getValues().water_1_type).toBeUndefined();
+      expect(getValues().water_1_pump).toBeUndefined();
+      // Outlets must reset to 0, not undefined, to satisfy inverterPumpSchema
+      expect(getValues().inv_pump_outlet_dosatron_qty).toBe(0);
+      expect(getValues().inv_pump_outlet_pw_qty).toBe(0);
+    });
+
+    test("deselecting water_1_type with non-inverter pump resets outlets to 0", async () => {
+      const { getValues } = renderSections(
+        {
+          water_1_type: "NETWORK",
+          water_1_pump: "BOOST_15KW",
+        },
+        <WaterSupplySection />,
+      );
+
+      // Deselect water_1_type
+      await selectRadixOption("Tipo acqua 1", "---");
+
+      expect(getValues().water_1_type).toBeUndefined();
+      expect(getValues().water_1_pump).toBeUndefined();
+      expect(getValues().inv_pump_outlet_dosatron_qty).toBe(0);
+      expect(getValues().inv_pump_outlet_pw_qty).toBe(0);
+    });
+
     test("deselecting water_2_type resets water_2_pump", async () => {
       const { getValues } = renderSections(
         {

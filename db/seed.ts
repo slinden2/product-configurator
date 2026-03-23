@@ -46,7 +46,7 @@ const configurationSimple: ConfigSchema = {
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_itecoweb: true,
-  has_card_reader: true,
+  has_card_reader: false,
   card_qty: 100,
   is_fast: false,
   touch_qty: 1,

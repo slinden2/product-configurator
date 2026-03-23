@@ -35,9 +35,20 @@ describe("waterSupplySchema", () => {
       expect(() => waterSupplySchema.parse(validData)).not.toThrow();
     });
 
-    test("should throw if water_1_type is missing", () => {
+    test("should validate successfully with water_1_type undefined and no pump", () => {
+      const validData = createWaterSupplyObject(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        false
+      );
+      expect(() => waterSupplySchema.parse(validData)).not.toThrow();
+    });
+
+    test("should throw if water_1_pump is set without water_1_type", () => {
       const invalidData = createWaterSupplyObject(
-        null,
+        undefined,
         "BOOST_15KW",
         undefined,
         undefined,
