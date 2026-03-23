@@ -54,7 +54,7 @@ describe("StatusForm", () => {
   });
 
   describe("Role-based status filtering", () => {
-    test("EXTERNAL sees only DRAFT and OPEN", async () => {
+    test("EXTERNAL sees only DRAFT and SUBMITTED", async () => {
       render(
         <StatusForm confId={1} initialStatus="DRAFT" userRole="EXTERNAL" />
       );
@@ -62,12 +62,13 @@ describe("StatusForm", () => {
       await userEvent.click(screen.getByRole("combobox"));
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Aperto" })).toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "Bloccato" })).not.toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: "In Revisione" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: "Approvato" })).not.toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
     });
 
-    test("INTERNAL sees DRAFT, OPEN, and LOCKED", async () => {
+    test("INTERNAL sees DRAFT, SUBMITTED, IN_REVIEW, and APPROVED", async () => {
       render(
         <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
       );
@@ -75,8 +76,9 @@ describe("StatusForm", () => {
       await userEvent.click(screen.getByRole("combobox"));
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Aperto" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Bloccato" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "In Revisione" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Approvato" })).toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
     });
 
@@ -88,8 +90,9 @@ describe("StatusForm", () => {
       await userEvent.click(screen.getByRole("combobox"));
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Aperto" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Bloccato" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "In Revisione" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Approvato" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Chiuso" })).toBeInTheDocument();
     });
   });
@@ -100,11 +103,11 @@ describe("StatusForm", () => {
         <StatusForm confId={42} initialStatus="DRAFT" userRole="INTERNAL" />
       );
 
-      await selectStatus("Aperto");
+      await selectStatus("Inviato");
 
       await waitFor(() => {
         expect(mockUpdateConfigStatus).toHaveBeenCalledWith(42, {
-          status: "OPEN",
+          status: "SUBMITTED",
         });
       });
     });
@@ -114,7 +117,7 @@ describe("StatusForm", () => {
         <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
       );
 
-      await selectStatus("Aperto");
+      await selectStatus("Inviato");
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith(MSG.toast.statusUpdated);
@@ -133,7 +136,7 @@ describe("StatusForm", () => {
         <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
       );
 
-      await selectStatus("Aperto");
+      await selectStatus("Inviato");
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Permesso negato");
@@ -149,17 +152,17 @@ describe("StatusForm", () => {
       mockUpdateConfigStatus.mockRejectedValue(new Error("Network error"));
 
       render(
-        <StatusForm confId={1} initialStatus="OPEN" userRole="ADMIN" />
+        <StatusForm confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />
       );
 
-      await selectStatus("Bloccato");
+      await selectStatus("In Revisione");
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(MSG.toast.statusUpdateFailed);
       });
 
       // Status should revert to initial
-      expect(screen.getByText("Aperto")).toBeInTheDocument();
+      expect(screen.getByText("Inviato")).toBeInTheDocument();
     });
   });
 });

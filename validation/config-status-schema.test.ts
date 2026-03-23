@@ -2,7 +2,7 @@ import { configStatusSchema } from "@/validation/config-status.schema";
 import { describe, test, expect } from "vitest";
 
 describe("configStatusSchema", () => {
-  test.each(["DRAFT", "OPEN", "LOCKED", "CLOSED"])(
+  test.each(["DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED", "CLOSED"])(
     "should pass with valid status '%s'",
     (status) => {
       expect(() => configStatusSchema.parse({ status })).not.toThrow();

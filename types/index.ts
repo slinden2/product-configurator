@@ -84,8 +84,9 @@ export type PressureWasherType = (typeof PressureWashers)[number];
 
 export const ConfigurationStatus = [
   "DRAFT",
-  "OPEN",
-  "LOCKED",
+  "SUBMITTED",
+  "IN_REVIEW",
+  "APPROVED",
   "CLOSED",
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];

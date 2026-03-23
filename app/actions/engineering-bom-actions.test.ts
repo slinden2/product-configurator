@@ -208,9 +208,9 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.error).toBe(MSG.config.notFound);
   });
 
-  test("returns error when config is LOCKED", async () => {
+  test("returns error when config is APPROVED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "LOCKED" })
+      mockConfig({ status: "APPROVED" })
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -226,10 +226,10 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.error).toBe(MSG.bom.unauthorizedState);
   });
 
-  test("ADMIN can snapshot OPEN config", async () => {
+  test("ADMIN can snapshot SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "ADMIN" }));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "OPEN" })
+      mockConfig({ status: "SUBMITTED" })
     );
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);
@@ -366,9 +366,9 @@ describe("regenerateEngineeringBomAction", () => {
     expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
-  test("returns error when config is LOCKED", async () => {
+  test("returns error when config is APPROVED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "LOCKED" })
+      mockConfig({ status: "APPROVED" })
     );
     const result = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);

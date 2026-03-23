@@ -192,20 +192,21 @@ function canTransition(role: Role, from: ConfigurationStatusType, to: Configurat
   if (from === to) return true;
   if (role === "ADMIN") return true;
 
-  // EXTERNAL (Area Manager): Only their own DRAFT <-> OPEN
+  // EXTERNAL (Area Manager): Only their own DRAFT <-> SUBMITTED
   if (role === "EXTERNAL") {
-    return (from === "DRAFT" && to === "OPEN") ||
-      (from === "OPEN" && to === "DRAFT");
+    return (from === "DRAFT" && to === "SUBMITTED") ||
+      (from === "SUBMITTED" && to === "DRAFT");
   }
 
-  // INTERNAL (Technical Office): Can claim (LOCKED) and return to OPEN/DRAFT
+  // INTERNAL (Technical Office): Can take into review and approve
   if (role === "INTERNAL") {
     const allowedTransitions = [
-      { from: "DRAFT", to: "OPEN" },
-      { from: "OPEN", to: "DRAFT" },
-      { from: "OPEN", to: "LOCKED" },
-      { from: "LOCKED", to: "OPEN" },
-      { from: "LOCKED", to: "DRAFT" }
+      { from: "DRAFT", to: "SUBMITTED" },
+      { from: "SUBMITTED", to: "DRAFT" },
+      { from: "SUBMITTED", to: "IN_REVIEW" },
+      { from: "IN_REVIEW", to: "SUBMITTED" },
+      { from: "IN_REVIEW", to: "APPROVED" },
+      { from: "APPROVED", to: "IN_REVIEW" },
     ];
 
     return allowedTransitions.some(t => t.from === from && t.to === to);

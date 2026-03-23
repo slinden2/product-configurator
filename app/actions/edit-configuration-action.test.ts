@@ -195,14 +195,14 @@ describe("editConfigurationAction", () => {
     expect(result).toEqual({ success: true });
   });
 
-  test("ADMIN user can edit another user's OPEN config", async () => {
+  test("ADMIN user can edit another user's SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "admin-user",
       role: "ADMIN",
       initials: "AU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "OPEN" })
+      mockConfig({ status: "SUBMITTED" })
     );
     const result = await editConfigurationAction(
       CONF_ID,
@@ -212,14 +212,14 @@ describe("editConfigurationAction", () => {
     expect(result).toEqual({ success: true });
   });
 
-  test("EXTERNAL cannot edit OPEN config", async () => {
+  test("EXTERNAL cannot edit SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "EXTERNAL",
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "OPEN" })
+      mockConfig({ status: "SUBMITTED" })
     );
     const result = await editConfigurationAction(
       CONF_ID,
@@ -230,9 +230,9 @@ describe("editConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
-  test("nobody can edit LOCKED config", async () => {
+  test("nobody can edit APPROVED config", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "LOCKED" })
+      mockConfig({ status: "APPROVED" })
     );
     const result = await editConfigurationAction(
       CONF_ID,

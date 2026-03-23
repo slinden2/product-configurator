@@ -123,8 +123,8 @@ describe("deleteConfigurationAction", () => {
     });
   });
 
-  test("cannot delete LOCKED config", async () => {
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "LOCKED" }));
+  test("cannot delete APPROVED config", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);
@@ -137,13 +137,13 @@ describe("deleteConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
-  test("EXTERNAL cannot delete OPEN config", async () => {
+  test("EXTERNAL cannot delete SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "EXTERNAL",
       initials: "EX",
     });
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "OPEN" }));
+    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);

@@ -114,30 +114,30 @@ describe("ConfigForm", () => {
   });
 
   describe("Disabled state", () => {
-    test("disables the fieldset when status is OPEN for EXTERNAL role", () => {
+    test("disables the fieldset when status is SUBMITTED for EXTERNAL role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="OPEN" userRole="EXTERNAL" />
+        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="EXTERNAL" />
       );
 
       const fieldset = document.querySelector("fieldset");
       expect(fieldset).toBeDisabled();
     });
 
-    test("enables the fieldset when status is OPEN for INTERNAL role", () => {
+    test("enables the fieldset when status is SUBMITTED for INTERNAL role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="OPEN" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="INTERNAL" />
       );
 
       const fieldset = document.querySelector("fieldset");
       expect(fieldset).not.toBeDisabled();
     });
 
-    test("disables the fieldset when status is LOCKED", () => {
+    test("disables the fieldset when status is APPROVED", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="LOCKED" userRole="ADMIN" />
+        <ConfigForm id={1} configuration={config} status="APPROVED" userRole="ADMIN" />
       );
 
       const fieldset = document.querySelector("fieldset");

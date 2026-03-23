@@ -11,8 +11,9 @@ const statusMap: Record<
   { label: string; className: string }
 > = {
   DRAFT: { label: "Bozza", className: "bg-slate-400 hover:bg-slate-400" },
-  OPEN: { label: "Aperto", className: "bg-green-400 hover:bg-green-400" },
-  LOCKED: { label: "Bloccato", className: "bg-blue-400 hover:bg-blue-400" },
+  SUBMITTED: { label: "Inviato", className: "bg-green-400 hover:bg-green-400" },
+  IN_REVIEW: { label: "In Revisione", className: "bg-blue-400 hover:bg-blue-400" },
+  APPROVED: { label: "Approvato", className: "bg-amber-400 hover:bg-amber-400" },
   CLOSED: { label: "Chiuso", className: "bg-rose-400 hover:bg-rose-400" },
 };
 

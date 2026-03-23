@@ -185,13 +185,13 @@ describe("FormContainer", () => {
   });
 
   describe("Role-based add button visibility", () => {
-    test("hides add buttons when status is LOCKED", async () => {
+    test("hides add buttons when status is APPROVED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="LOCKED"
+          confStatus="APPROVED"
           userRole="ADMIN"
           initialWaterTanks={[makeWaterTank(100)]}
           initialWashBays={[]}
@@ -203,13 +203,13 @@ describe("FormContainer", () => {
       expect(screen.queryByRole("button", { name: /aggiungi serbatoio/i })).not.toBeInTheDocument();
     });
 
-    test("hides add buttons when EXTERNAL and status is OPEN", async () => {
+    test("hides add buttons when EXTERNAL and status is SUBMITTED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="OPEN"
+          confStatus="SUBMITTED"
           userRole="EXTERNAL"
           initialWaterTanks={[]}
           initialWashBays={[]}
@@ -221,13 +221,13 @@ describe("FormContainer", () => {
       expect(screen.queryByRole("button", { name: /aggiungi serbatoio/i })).not.toBeInTheDocument();
     });
 
-    test("shows add buttons when INTERNAL and status is OPEN", async () => {
+    test("shows add buttons when INTERNAL and status is SUBMITTED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="OPEN"
+          confStatus="SUBMITTED"
           userRole="INTERNAL"
           initialWaterTanks={[]}
           initialWashBays={[]}

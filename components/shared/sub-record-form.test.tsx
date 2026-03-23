@@ -290,11 +290,11 @@ describe("SubRecordForm — WaterTankForm", () => {
   });
 
   describe("Role-based disabling", () => {
-    test("disables fieldset when status is LOCKED", () => {
+    test("disables fieldset when status is APPROVED", () => {
       render(
         <WaterTankForm
           confId={1}
-          confStatus="LOCKED"
+          confStatus="APPROVED"
           userRole="ADMIN"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -307,11 +307,11 @@ describe("SubRecordForm — WaterTankForm", () => {
       expect(fieldset).toBeDisabled();
     });
 
-    test("disables fieldset when EXTERNAL and status is OPEN", () => {
+    test("disables fieldset when EXTERNAL and status is SUBMITTED", () => {
       render(
         <WaterTankForm
           confId={1}
-          confStatus="OPEN"
+          confStatus="SUBMITTED"
           userRole="EXTERNAL"
           waterTank={makeWaterTank()}
           waterTankIndex={1}

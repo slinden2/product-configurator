@@ -167,9 +167,9 @@ describe("ConfigurationRow", () => {
     });
 
     test("renders status badge with correct status text", () => {
-      renderRow({ status: "OPEN" });
+      renderRow({ status: "SUBMITTED" });
 
-      expect(screen.getByText("Aperto")).toBeInTheDocument();
+      expect(screen.getByText("Inviato")).toBeInTheDocument();
     });
   });
 
@@ -231,9 +231,9 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("INTERNAL user can delete OPEN configuration", () => {
+    test("INTERNAL user can delete SUBMITTED configuration", () => {
       renderRow(
-        { status: "OPEN", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
+        { status: "SUBMITTED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
         { id: "user-1", role: "INTERNAL" }
       );
 
@@ -242,9 +242,9 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("INTERNAL user cannot delete LOCKED configuration", () => {
+    test("INTERNAL user cannot delete APPROVED configuration", () => {
       renderRow(
-        { status: "LOCKED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
+        { status: "APPROVED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
         { id: "user-1", role: "INTERNAL" }
       );
 
@@ -275,9 +275,9 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("EXTERNAL owner cannot delete own OPEN configuration", () => {
+    test("EXTERNAL owner cannot delete own SUBMITTED configuration", () => {
       renderRow(
-        { status: "OPEN", user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
+        { status: "SUBMITTED", user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
         { id: "user-1", role: "EXTERNAL" }
       );
 

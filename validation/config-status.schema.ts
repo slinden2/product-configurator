@@ -12,8 +12,9 @@ const configStatusEnum = z.enum(ConfigurationStatus, {
 export const configStatusOpts: SelectOption[] =
   generateSelectOptionsFromZodEnum(configStatusEnum, [
     "Bozza",
-    "Aperto",
-    "Bloccato",
+    "Inviato",
+    "In Revisione",
+    "Approvato",
     "Chiuso",
   ]);
 

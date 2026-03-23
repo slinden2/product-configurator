@@ -54,13 +54,13 @@ describe("updateConfigStatusAction", () => {
 
   test("returns success with config id on valid status update", async () => {
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "OPEN",
+      status: "SUBMITTED",
     });
     expect(result).toEqual({ success: true, id: CONF_ID });
     expect(mockUpdateConfigStatus).toHaveBeenCalledWith(
       CONF_ID,
       { id: "user-1", role: "INTERNAL", initials: "TU" },
-      { status: "OPEN" }
+      { status: "SUBMITTED" }
     );
   });
 
@@ -82,7 +82,7 @@ describe("updateConfigStatusAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "OPEN",
+      status: "SUBMITTED",
     });
     expect(result).toEqual({
       success: false,
@@ -95,7 +95,7 @@ describe("updateConfigStatusAction", () => {
       new QueryError("Stato non autorizzato.", 403)
     );
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "LOCKED",
+      status: "IN_REVIEW",
     });
     expect(result).toEqual({
       success: false,
@@ -106,7 +106,7 @@ describe("updateConfigStatusAction", () => {
   test("returns generic error on unknown exceptions", async () => {
     mockUpdateConfigStatus.mockRejectedValue(new TypeError("unexpected"));
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "OPEN",
+      status: "SUBMITTED",
     });
     expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });

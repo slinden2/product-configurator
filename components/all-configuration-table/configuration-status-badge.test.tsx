@@ -8,8 +8,9 @@ import { ConfigurationStatusType } from "@/types";
 describe("ConfigurationStatusBadge", () => {
   test.each<[ConfigurationStatusType, string, string, string]>([
     ["DRAFT", "Bozza", "bg-slate-400", "hover:bg-slate-400"],
-    ["OPEN", "Aperto", "bg-green-400", "hover:bg-green-400"],
-    ["LOCKED", "Bloccato", "bg-blue-400", "hover:bg-blue-400"],
+    ["SUBMITTED", "Inviato", "bg-green-400", "hover:bg-green-400"],
+    ["IN_REVIEW", "In Revisione", "bg-blue-400", "hover:bg-blue-400"],
+    ["APPROVED", "Approvato", "bg-amber-400", "hover:bg-amber-400"],
     ["CLOSED", "Chiuso", "bg-rose-400", "hover:bg-rose-400"],
   ])(
     "renders '%s' as '%s' with correct classes",

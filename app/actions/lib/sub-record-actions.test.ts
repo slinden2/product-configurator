@@ -202,8 +202,8 @@ describe("handleSubRecordAction", () => {
 
   // --- Status protection ---
 
-  test("returns error when config is LOCKED", async () => {
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "LOCKED" }));
+  test("returns error when config is APPROVED", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
@@ -220,13 +220,13 @@ describe("handleSubRecordAction", () => {
     });
   });
 
-  test("EXTERNAL cannot modify sub-records of OPEN config", async () => {
+  test("EXTERNAL cannot modify sub-records of SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "EXTERNAL",
       initials: "EX",
     });
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "OPEN" }));
+    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
