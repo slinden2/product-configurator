@@ -87,18 +87,21 @@ describe("hpPumpSchema", () => {
       }
     );
     test.each([
-      [createHpPumpObject(15, true, "CHASSIS_WASH", undefined)],
+      [{ ...createHpPumpObject(15, true, "CHASSIS_WASH", undefined), chassis_wash_sensor_type: "SINGLE_POST" }],
       [createHpPumpObject(15, true, "LOW_SPINNERS", undefined)],
-      [createHpPumpObject(15, true, "CHASSIS_WASH", "LOW_SPINNERS")],
-      [createHpPumpObject(30, true, "CHASSIS_WASH_HORIZONTAL", undefined)],
+      [{ ...createHpPumpObject(15, true, "CHASSIS_WASH", "LOW_SPINNERS"), chassis_wash_sensor_type: "SINGLE_POST" }],
+      [{ ...createHpPumpObject(30, true, "CHASSIS_WASH_HORIZONTAL", undefined), chassis_wash_sensor_type: "DOUBLE_POST" }],
       [createHpPumpObject(30, true, "HIGH_MEDIUM_SPINNERS", undefined)],
       [
-        createHpPumpObject(
-          30,
-          true,
-          "CHASSIS_WASH_LATERAL_HORIZONTAL",
-          "LOW_MEDIUM_SPINNERS"
-        ),
+        {
+          ...createHpPumpObject(
+            30,
+            true,
+            "CHASSIS_WASH_LATERAL_HORIZONTAL",
+            "LOW_MEDIUM_SPINNERS"
+          ),
+          chassis_wash_sensor_type: "SINGLE_WALL",
+        },
       ],
     ])(
       `should not throw if the outlets are configured correctly, %o`,

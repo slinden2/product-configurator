@@ -19,6 +19,7 @@ function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig
     pump_outlet_omz: null,
     has_antifreeze: false,
     has_chemical_roof_bar: false,
+    chassis_wash_sensor_type: null,
     supply_side: "LEFT",
     supply_type: "STRAIGHT_SHELF",
     supply_fixing_type: null,
@@ -56,6 +57,9 @@ const PNS = {
   CHASSIS_WASH_30KW_HORIZONTAL: "1100.024.100",
   CHASSIS_WASH_30KW_WITH_LATERAL_BARS: "1100.024.003",
   ULTRASONIC_SENSOR_POST: "1100.021.000",
+  ULTRASONIC_SENSOR_WALL: "1100.052.000",
+  DUAL_ULTRASONIC_SENSORS_POST: "1100.021.001",
+  DUAL_ULTRASONIC_SENSORS_WALL: "1100.052.004",
   MID_HEIGHT_HP_BARS: "1100.036.005",
   FULL_HEIGHT_HP_BARS: "1100.036.000",
   LOW_SPINNERS_2X150L: "940.11.000",
@@ -148,21 +152,55 @@ describe("hpPumpBOM — 30kW pneumatic valves", () => {
 });
 
 describe("hpPumpBOM — chassis wash", () => {
-  test("15kW + outlet=CHASSIS_WASH → chassis wash 15kW + ultrasonic sensor", () => {
+  test("15kW + outlet=CHASSIS_WASH → chassis wash 15kW", () => {
     const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH" });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_15KW);
-    expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_POST);
   });
 
-  test("30kW + outlet=CHASSIS_WASH_HORIZONTAL → chassis wash 30kW horizontal + ultrasonic", () => {
+  test("30kW + outlet=CHASSIS_WASH_HORIZONTAL → chassis wash 30kW horizontal", () => {
     const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL" });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_30KW_HORIZONTAL);
-    expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_POST);
   });
 
   test("30kW + outlet=CHASSIS_WASH_LATERAL_HORIZONTAL → chassis wash 30kW with lateral bars", () => {
     const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_LATERAL_HORIZONTAL" });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_30KW_WITH_LATERAL_BARS);
+  });
+});
+
+describe("hpPumpBOM — chassis wash sensor types", () => {
+  test("SINGLE_POST → single ultrasonic sensor on post", () => {
+    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH", chassis_wash_sensor_type: "SINGLE_POST" });
+    expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_POST);
+    expect(pns(config)).not.toContain(PNS.DUAL_ULTRASONIC_SENSORS_POST);
+    expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_WALL);
+    expect(pns(config)).not.toContain(PNS.DUAL_ULTRASONIC_SENSORS_WALL);
+  });
+
+  test("DOUBLE_POST → dual ultrasonic sensors on post", () => {
+    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH", chassis_wash_sensor_type: "DOUBLE_POST" });
+    expect(pns(config)).toContain(PNS.DUAL_ULTRASONIC_SENSORS_POST);
+    expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_POST);
+  });
+
+  test("SINGLE_WALL → single ultrasonic sensor on wall", () => {
+    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL", chassis_wash_sensor_type: "SINGLE_WALL" });
+    expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_WALL);
+    expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_POST);
+  });
+
+  test("DOUBLE_WALL → dual ultrasonic sensors on wall", () => {
+    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL", chassis_wash_sensor_type: "DOUBLE_WALL" });
+    expect(pns(config)).toContain(PNS.DUAL_ULTRASONIC_SENSORS_WALL);
+    expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_WALL);
+  });
+
+  test("no sensor type selected → no sensor in BOM", () => {
+    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH", chassis_wash_sensor_type: null });
+    expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_POST);
+    expect(pns(config)).not.toContain(PNS.DUAL_ULTRASONIC_SENSORS_POST);
+    expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_WALL);
+    expect(pns(config)).not.toContain(PNS.DUAL_ULTRASONIC_SENSORS_WALL);
   });
 });
 

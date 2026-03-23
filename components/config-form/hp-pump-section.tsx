@@ -2,21 +2,39 @@ import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import React from "react";
+import React, { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { withNoSelection } from "@/lib/utils";
 import { ConfigSchema } from "@/validation/config-schema";
+import { hasAnyChassiswashOutlet } from "@/validation/configuration/hp-pump-schema";
 
 const HPPumpSection = () => {
-  const { control } = useFormContext<ConfigSchema>();
+  const { control, setValue } = useFormContext<ConfigSchema>();
   const has15kwPumpWatch = useWatch({ control, name: "has_15kw_pump" });
   const has30kwPumpWatch = useWatch({ control, name: "has_30kw_pump" });
   const hasOMZPumpWatch = useWatch({ control, name: "has_omz_pump" });
   const omzPumpOutletWatch = useWatch({ control, name: "pump_outlet_omz" });
+  const pumpOutlet1_15kw = useWatch({ control, name: "pump_outlet_1_15kw" });
+  const pumpOutlet2_15kw = useWatch({ control, name: "pump_outlet_2_15kw" });
+  const pumpOutlet1_30kw = useWatch({ control, name: "pump_outlet_1_30kw" });
+  const pumpOutlet2_30kw = useWatch({ control, name: "pump_outlet_2_30kw" });
 
   const showChemicalRoofBar =
     omzPumpOutletWatch === zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR ||
     omzPumpOutletWatch === zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS;
+
+  const showChassiswashSensor = hasAnyChassiswashOutlet({
+    pump_outlet_1_15kw: pumpOutlet1_15kw,
+    pump_outlet_2_15kw: pumpOutlet2_15kw,
+    pump_outlet_1_30kw: pumpOutlet1_30kw,
+    pump_outlet_2_30kw: pumpOutlet2_30kw,
+  });
+
+  useEffect(() => {
+    if (!showChassiswashSensor) {
+      setValue("chassis_wash_sensor_type", undefined, { shouldDirty: true });
+    }
+  }, [showChassiswashSensor, setValue]);
 
   return (
     <Fieldset
@@ -31,7 +49,11 @@ const HPPumpSection = () => {
               label="Pompa 15kW"
               fieldsToResetOnUncheck={[
                 {
-                  fieldsToReset: ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
+                  fieldsToReset: [
+                    "pump_outlet_1_15kw",
+                    "pump_outlet_2_15kw",
+                    "chassis_wash_sensor_type",
+                  ],
                 },
               ]}
             />
@@ -62,7 +84,11 @@ const HPPumpSection = () => {
               label="Pompa 30kW"
               fieldsToResetOnUncheck={[
                 {
-                  fieldsToReset: ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
+                  fieldsToReset: [
+                    "pump_outlet_1_30kw",
+                    "pump_outlet_2_30kw",
+                    "chassis_wash_sensor_type",
+                  ],
                 },
               ]}
             />
@@ -86,6 +112,22 @@ const HPPumpSection = () => {
             />
           </div>
         </div>
+        {showChassiswashSensor && (
+          <div className="fs-row">
+            <div className="fs-item" />
+            <div className="fs-item">
+              <SelectField<ConfigSchema>
+                name="chassis_wash_sensor_type"
+                dataType="string"
+                label="Sensore ultrasuoni lavachassis"
+                items={withNoSelection(
+                  selectFieldOptions.chassisWashSensorTypeOpts
+                )}
+              />
+            </div>
+            <div className="fs-item" />
+          </div>
+        )}
         <div className="fs-row">
           <div className="fs-item md:self-center md:mt-1">
             <CheckboxField<ConfigSchema>

@@ -64,6 +64,14 @@ export const HpPump30kwOutlets = [
 ] as const;
 export type HpPump30kwOutletType = (typeof HpPump30kwOutlets)[number];
 
+export const ChassisWashSensorTypes = [
+  "SINGLE_POST",
+  "DOUBLE_POST",
+  "SINGLE_WALL",
+  "DOUBLE_WALL",
+] as const;
+export type ChassisWashSensorType = (typeof ChassisWashSensorTypes)[number];
+
 export const HpPumpOMZkwOutlets = [
   "HP_ROOF_BAR",
   "SPINNERS",

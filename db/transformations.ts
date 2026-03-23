@@ -70,6 +70,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     pump_outlet_1_30kw: values.pump_outlet_1_30kw ?? null,
     pump_outlet_2_30kw: values.pump_outlet_2_30kw ?? null,
     pump_outlet_omz: values.pump_outlet_omz ?? null,
+    chassis_wash_sensor_type: values.chassis_wash_sensor_type ?? null,
   };
 }
 

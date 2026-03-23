@@ -38,6 +38,38 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
     "2 robottine alte + 2 medie",
   ]);
 
+export const ChassisWashSensorTypeEnum = z.enum(
+  ["SINGLE_POST", "DOUBLE_POST", "SINGLE_WALL", "DOUBLE_WALL"],
+  { message: genericRequiredMessage }
+);
+
+export const chassisWashSensorTypeOpts: SelectOption[] =
+  generateSelectOptionsFromZodEnum(ChassisWashSensorTypeEnum, [
+    "Singolo sensore su palo",
+    "Doppio sensore su palo",
+    "Singolo sensore a parete",
+    "Doppio sensore a parete",
+  ]);
+
+export function hasAnyChassiswashOutlet(data: {
+  pump_outlet_1_15kw?: string;
+  pump_outlet_2_15kw?: string;
+  pump_outlet_1_30kw?: string;
+  pump_outlet_2_30kw?: string;
+}): boolean {
+  const cw15: string[] = [HPPumpOutlet15kwEnum.enum.CHASSIS_WASH];
+  const cw30: string[] = [
+    HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_HORIZONTAL,
+    HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_LATERAL_HORIZONTAL,
+  ];
+  return (
+    cw15.includes(data.pump_outlet_1_15kw ?? "") ||
+    cw15.includes(data.pump_outlet_2_15kw ?? "") ||
+    cw30.includes(data.pump_outlet_1_30kw ?? "") ||
+    cw30.includes(data.pump_outlet_2_30kw ?? "")
+  );
+}
+
 export const OMZPumpOutletEnum = z.enum(
   ["HP_ROOF_BAR", "SPINNERS", "HP_ROOF_BAR_SPINNERS"],
   { message: genericRequiredMessage }
@@ -271,6 +303,11 @@ const hpPumpOmzDiscriminatedUnion = z
 export const hpPumpSchema = hpPump15kwDiscriminatedUnion
   .and(hpPump30kwDiscriminatedUnion) // Merge 30kW logic
   .and(hpPumpOmzDiscriminatedUnion) // Merge OMZ logic
+  .and(
+    z.object({
+      chassis_wash_sensor_type: ChassisWashSensorTypeEnum.optional(),
+    })
+  )
   .superRefine((data, ctx) => {
     // Final check: cannot have both 15kW and 30kW pumps
     if (data.has_15kw_pump && data.has_30kw_pump) {
@@ -284,6 +321,18 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
         code: z.ZodIssueCode.custom,
         message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
         path: ["has_30kw_pump"],
+      });
+    }
+
+    // If any chassis wash outlet is selected, sensor type is required
+    if (
+      hasAnyChassiswashOutlet(data) &&
+      data.chassis_wash_sensor_type === undefined
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Seleziona il tipo di sensore per il lavachassis.",
+        path: ["chassis_wash_sensor_type"],
       });
     }
   });

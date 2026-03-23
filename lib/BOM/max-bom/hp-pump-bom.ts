@@ -19,10 +19,10 @@ const PART_NUMBERS = {
   CHASSIS_WASH_30KW_HORIZONTAL: "1100.024.100",
   CHASSIS_WASH_30KW_WITH_LATERAL_BARS: "1100.024.003",
   COVER_PLATE_KIT: "1100.024.008", // TODO Add option for this in the form
-  ULTRASONIC_SENSOR_POST: "1100.021.000", // TODO Now this is automatically chosen with lavachassis. Missing logic for wall sensor and double sensors.
-  ULTRASONIC_SENSOR_WALL: "1100.052.000", // TODO Add this in the form
-  DUAL_ULTRASONIC_SENSORS_POST: "1100.021.001", // TODO Add this in the form
-  DUAL_ULTRASONIC_SENSORS_WALL: "1100.052.004", // TODO Add this in the form
+  ULTRASONIC_SENSOR_POST: "1100.021.000",
+  ULTRASONIC_SENSOR_WALL: "1100.052.000",
+  DUAL_ULTRASONIC_SENSORS_POST: "1100.021.001",
+  DUAL_ULTRASONIC_SENSORS_WALL: "1100.052.004",
   MID_HEIGHT_HP_BARS: "1100.036.005",
   FULL_HEIGHT_HP_BARS: "1100.036.000",
   LOW_SPINNERS_2X150L: "940.11.000",
@@ -254,22 +254,37 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_POST,
     conditions: [
       uses15kwOr30kwPump,
-      (config) =>
-        isOneOfOutlets(
-          [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "CHASSIS_WASH"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "CHASSIS_WASH_HORIZONTAL"
-        ) ||
-        isOneOfOutlets(
-          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "CHASSIS_WASH_LATERAL_HORIZONTAL"
-        ),
+      (config) => config.chassis_wash_sensor_type === "SINGLE_POST",
     ],
     qty: 1,
-    _description: "Ultrasonic sensor post",
+    _description: "Ultrasonic sensor - single post",
+  },
+  {
+    pn: PART_NUMBERS.DUAL_ULTRASONIC_SENSORS_POST,
+    conditions: [
+      uses15kwOr30kwPump,
+      (config) => config.chassis_wash_sensor_type === "DOUBLE_POST",
+    ],
+    qty: 1,
+    _description: "Ultrasonic sensors - double post",
+  },
+  {
+    pn: PART_NUMBERS.ULTRASONIC_SENSOR_WALL,
+    conditions: [
+      uses15kwOr30kwPump,
+      (config) => config.chassis_wash_sensor_type === "SINGLE_WALL",
+    ],
+    qty: 1,
+    _description: "Ultrasonic sensor - single wall",
+  },
+  {
+    pn: PART_NUMBERS.DUAL_ULTRASONIC_SENSORS_WALL,
+    conditions: [
+      uses15kwOr30kwPump,
+      (config) => config.chassis_wash_sensor_type === "DOUBLE_WALL",
+    ],
+    qty: 1,
+    _description: "Ultrasonic sensors - double wall",
   },
   {
     pn: PART_NUMBERS.MID_HEIGHT_HP_BARS,

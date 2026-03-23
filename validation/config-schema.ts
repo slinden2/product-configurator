@@ -123,6 +123,7 @@ export const configDefaults: ConfigSchema = {
   has_omz_pump: false,
   pump_outlet_omz: undefined,
   has_chemical_roof_bar: false,
+  chassis_wash_sensor_type: undefined,
   // --- Touch Section
   has_itecoweb: false,
   has_card_reader: false,

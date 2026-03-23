@@ -12,6 +12,8 @@ import {
   chemicalPumpPositions,
 } from "@/validation/configuration/chem-pump-schema";
 import {
+  ChassisWashSensorTypeEnum,
+  chassisWashSensorTypeOpts,
   HPPumpOutlet15kwEnum,
   hpPumpOutlet15kwTypes,
   HPPumpOutlet30kwEnum,
@@ -70,6 +72,7 @@ export const zodEnums = {
   WaterPump1Enum,
   WaterPump2Enum,
   RailTypeEnum,
+  ChassisWashSensorTypeEnum,
   HPPumpOutlet15kwEnum,
   HPPumpOutlet30kwEnum,
   OMZPumpOutletEnum,
@@ -98,6 +101,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   hpPumpOutlet15kwTypes,
   hpPumpOutlet30kwTypes,
   omzPumpOutletTypes,
+  chassisWashSensorTypeOpts,
   touchQtyOpts,
   touchPositionOpts,
   touchFixingTypeOpts,

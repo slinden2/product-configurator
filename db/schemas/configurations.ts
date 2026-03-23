@@ -5,6 +5,7 @@ import { WaterTank, waterTanks } from "@/db/schemas/water-tanks";
 import {
   BrushColors,
   BrushTypes,
+  ChassisWashSensorTypes,
   ChemPumpPos,
   ConfigurationStatus,
   HpPump15kwOutlets,
@@ -63,6 +64,10 @@ export const hpPumpOMZOutletTypeEnum = pgEnum(
   "hp_pump_omz_outlet_type",
   HpPumpOMZkwOutlets
 );
+export const chassisWashSensorTypeEnum = pgEnum(
+  "chassis_wash_sensor_type",
+  ChassisWashSensorTypes
+);
 export const configurationStatusEnum = pgEnum(
   "configuration_status",
   ConfigurationStatus
@@ -110,6 +115,7 @@ export const configurations = pgTable("configurations", {
   has_30kw_pump: boolean().notNull(),
   pump_outlet_1_30kw: hpPump30kwOutletTypeEnum("pump_outlet_1_30kw"),
   pump_outlet_2_30kw: hpPump30kwOutletTypeEnum("pump_outlet_2_30kw"),
+  chassis_wash_sensor_type: chassisWashSensorTypeEnum("chassis_wash_sensor_type"),
   has_omz_pump: boolean().notNull(),
   pump_outlet_omz: hpPumpOMZOutletTypeEnum("pump_outlet_omz"),
   has_chemical_roof_bar: boolean().notNull(),
