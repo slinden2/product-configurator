@@ -435,6 +435,25 @@ export async function deleteAllEngineeringBomItems(confId: number) {
     .where(eq(engineeringBomItems.configuration_id, confId));
 }
 
+export async function getConfigurationStatusCounts() {
+  const user = await getUserData();
+  if (!user) return null;
+
+  const whereClause =
+    user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined;
+
+  const result = await db
+    .select({
+      status: configurations.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(configurations)
+    .where(whereClause)
+    .groupBy(configurations.status);
+
+  return result;
+}
+
 export async function searchPartNumbers(query: string, limit = 20) {
   const pattern = query.includes("%") ? query : `%${query}%`;
   return db.query.partNumbers.findMany({

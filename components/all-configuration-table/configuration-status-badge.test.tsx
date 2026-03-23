@@ -3,24 +3,26 @@ import React from "react";
 import { describe, test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
-import { ConfigurationStatusType } from "@/types";
+import { ConfigurationStatus, ConfigurationStatusType } from "@/types";
+import { STATUS_CONFIG } from "@/lib/status-config";
+
+const testCases: [ConfigurationStatusType, string, string][] =
+  ConfigurationStatus.map((status) => [
+    status,
+    STATUS_CONFIG[status].label,
+    STATUS_CONFIG[status].bgClass,
+  ]);
 
 describe("ConfigurationStatusBadge", () => {
-  test.each<[ConfigurationStatusType, string, string, string]>([
-    ["DRAFT", "Bozza", "bg-slate-400", "hover:bg-slate-400"],
-    ["SUBMITTED", "Inviato", "bg-green-400", "hover:bg-green-400"],
-    ["IN_REVIEW", "In Revisione", "bg-blue-400", "hover:bg-blue-400"],
-    ["APPROVED", "Approvato", "bg-amber-400", "hover:bg-amber-400"],
-    ["CLOSED", "Chiuso", "bg-rose-400", "hover:bg-rose-400"],
-  ])(
+  test.each(testCases)(
     "renders '%s' as '%s' with correct classes",
-    (status, expectedLabel, expectedBgClass, expectedHoverClass) => {
+    (status, expectedLabel, expectedBgClass) => {
       render(<ConfigurationStatusBadge status={status} />);
 
       const badge = screen.getByText(expectedLabel);
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass(expectedBgClass);
-      expect(badge).toHaveClass(expectedHoverClass);
+      expect(badge).toHaveClass(`hover:${expectedBgClass}`);
     }
   );
 });
