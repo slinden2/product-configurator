@@ -45,7 +45,7 @@ describe("StatusForm", () => {
   describe("Rendering", () => {
     test("renders label and initial status", () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
       );
 
       expect(screen.getByText("Stato")).toBeInTheDocument();
@@ -54,9 +54,9 @@ describe("StatusForm", () => {
   });
 
   describe("Role-based status filtering", () => {
-    test("EXTERNAL sees only DRAFT and SUBMITTED", async () => {
+    test("SALES sees only DRAFT and SUBMITTED", async () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="EXTERNAL" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="SALES" />
       );
 
       await userEvent.click(screen.getByRole("combobox"));
@@ -68,9 +68,9 @@ describe("StatusForm", () => {
       expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
     });
 
-    test("INTERNAL sees DRAFT, SUBMITTED, IN_REVIEW, and APPROVED", async () => {
+    test("ENGINEER sees DRAFT, SUBMITTED, IN_REVIEW, and APPROVED", async () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("combobox"));
@@ -100,7 +100,7 @@ describe("StatusForm", () => {
   describe("Status change — success", () => {
     test("calls action with correct confId and new status", async () => {
       render(
-        <StatusForm confId={42} initialStatus="DRAFT" userRole="INTERNAL" />
+        <StatusForm confId={42} initialStatus="DRAFT" userRole="ENGINEER" />
       );
 
       await selectStatus("Inviato");
@@ -114,7 +114,7 @@ describe("StatusForm", () => {
 
     test("shows success toast", async () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
       );
 
       await selectStatus("Inviato");
@@ -133,7 +133,7 @@ describe("StatusForm", () => {
       });
 
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="INTERNAL" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
       );
 
       await selectStatus("Inviato");

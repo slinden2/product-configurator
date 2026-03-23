@@ -116,7 +116,7 @@ describe("FormContainer", () => {
       confId: 1,
       configuration: config,
       confStatus: "DRAFT" as const,
-      userRole: "INTERNAL" as const,
+      userRole: "ENGINEER" as const,
       initialWaterTanks: [makeWaterTank(100)],
       initialWashBays: [makeWashBay(200)],
     };
@@ -203,14 +203,14 @@ describe("FormContainer", () => {
       expect(screen.queryByRole("button", { name: /aggiungi serbatoio/i })).not.toBeInTheDocument();
     });
 
-    test("hides add buttons when EXTERNAL and status is SUBMITTED", async () => {
+    test("hides add buttons when SALES and status is SUBMITTED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
           confStatus="SUBMITTED"
-          userRole="EXTERNAL"
+          userRole="SALES"
           initialWaterTanks={[]}
           initialWashBays={[]}
         />
@@ -221,14 +221,14 @@ describe("FormContainer", () => {
       expect(screen.queryByRole("button", { name: /aggiungi serbatoio/i })).not.toBeInTheDocument();
     });
 
-    test("shows add buttons when INTERNAL and status is SUBMITTED", async () => {
+    test("shows add buttons when ENGINEER and status is SUBMITTED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
           confStatus="SUBMITTED"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           initialWaterTanks={[]}
           initialWashBays={[]}
         />
@@ -248,7 +248,7 @@ describe("FormContainer", () => {
           confId={1}
           configuration={config}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           initialWaterTanks={[]}
           initialWashBays={[makeWashBay(200)]}
         />
@@ -268,7 +268,7 @@ describe("FormContainer", () => {
           confId={1}
           configuration={config}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           initialWaterTanks={[]}
           initialWashBays={[makeWashBay(200)]}
         />

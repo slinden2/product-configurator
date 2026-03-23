@@ -27,7 +27,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - **React 19** with **React Hook Form + Zod** for form state/validation
 - **Radix UI / shadcn/ui** components with **Tailwind CSS** (dark mode via class)
 - **Drizzle ORM + PostgreSQL** with Row Level Security (RLS)
-- **Supabase** for auth (roles: ADMIN, INTERNAL, EXTERNAL)
+- **Supabase** for auth (roles: ADMIN, ENGINEER, SALES)
 - **Vitest + @testing-library/react** for testing
 
 ### Key Directories

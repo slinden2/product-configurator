@@ -12,7 +12,7 @@ Actions must always return an object with this structure:
 1. **Validation:** `safeParse` the input immediately using the relevant Zod schema. This is valid for any action that needs to parse form data.
 2. **Authentication:** Fetch `getUserData()`. Return `{ success: false, error: "Utente non trovato." }` if null.
 3. **Existence & State:** Fetch the current record from the DB. Verify it exists.
-4. **Permissions:** - Check Ownership/Role (Owner, INTERNAL, or ADMIN).
+4. **Permissions:** - Check Ownership/Role (Owner, ENGINEER, or ADMIN).
    - CALL `isEditable(status, role)` for all mutations (edit/delete/status change).
 5. **Execution:** Wrap the `db` mutation in a `try/catch` block.
 6. **Invalidation:** Call `revalidatePath` for all affected routes (e.g., list and detail pages).

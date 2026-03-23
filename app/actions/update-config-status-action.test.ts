@@ -46,7 +46,7 @@ describe("updateConfigStatusAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({
       id: "user-1",
-      role: "INTERNAL",
+      role: "ENGINEER",
       initials: "TU",
     });
     mockUpdateConfigStatus.mockResolvedValue({ id: CONF_ID });
@@ -59,7 +59,7 @@ describe("updateConfigStatusAction", () => {
     expect(result).toEqual({ success: true, id: CONF_ID });
     expect(mockUpdateConfigStatus).toHaveBeenCalledWith(
       CONF_ID,
-      { id: "user-1", role: "INTERNAL", initials: "TU" },
+      { id: "user-1", role: "ENGINEER", initials: "TU" },
       { status: "SUBMITTED" }
     );
   });

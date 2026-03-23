@@ -94,7 +94,7 @@ describe("insertConfigurationAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({
       id: "user-1",
-      role: "INTERNAL",
+      role: "ENGINEER",
       initials: "TU",
     });
     mockInsertConfiguration.mockResolvedValue({ id: 42 });

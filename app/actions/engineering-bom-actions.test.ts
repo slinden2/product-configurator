@@ -127,8 +127,8 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
 
 function mockUser(overrides: Record<string, unknown> = {}) {
   return {
-    id: "internal-user",
-    role: "INTERNAL",
+    id: "engineer-user",
+    role: "ENGINEER",
     initials: "IU",
     ...overrides,
   };
@@ -194,8 +194,8 @@ describe("snapshotEngineeringBomAction", () => {
     );
   });
 
-  test("returns error when user is EXTERNAL", async () => {
-    mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
+  test("returns error when user is SALES", async () => {
+    mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toContain(MSG.bom.unauthorized);
@@ -235,7 +235,7 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.success).toBe(true);
   });
 
-  test("INTERNAL can snapshot DRAFT config", async () => {
+  test("ENGINEER can snapshot DRAFT config", async () => {
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);
   });
@@ -358,8 +358,8 @@ describe("regenerateEngineeringBomAction", () => {
     );
   });
 
-  test("returns error when user is EXTERNAL", async () => {
-    mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
+  test("returns error when user is SALES", async () => {
+    mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult =
       await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -481,8 +481,8 @@ describe("addEngineeringBomItemAction", () => {
     );
   });
 
-  test("returns auth error for EXTERNAL user", async () => {
-    mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
+  test("returns auth error for SALES user", async () => {
+    mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult = await addEngineeringBomItemAction(
       CONF_ID,
       validFormData
@@ -570,8 +570,8 @@ describe("updateEngineeringBomItemQtyAction", () => {
     expect(result.error).toBe(MSG.db.unknown);
   });
 
-  test("returns auth error for EXTERNAL user", async () => {
-    mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
+  test("returns auth error for SALES user", async () => {
+    mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
@@ -649,8 +649,8 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
     expect(result.error).toBe(MSG.db.unknown);
   });
 
-  test("returns auth error for EXTERNAL user", async () => {
-    mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
+  test("returns auth error for SALES user", async () => {
+    mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,
       ITEM_ID
@@ -713,8 +713,8 @@ describe("searchPartNumbersAction", () => {
     expect(result.error).toBe(MSG.db.unknown);
   });
 
-  test("does NOT require INTERNAL/ADMIN role (any authenticated user)", async () => {
-    mockGetUserData.mockResolvedValue(mockUser({ role: "EXTERNAL" }));
+  test("does NOT require ENGINEER/ADMIN role (any authenticated user)", async () => {
+    mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     mockSearchPartNumbers.mockResolvedValue([]);
     const result = await searchPartNumbersAction("test");
     expect(result.success).toBe(true);

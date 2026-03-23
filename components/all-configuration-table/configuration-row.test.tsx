@@ -102,7 +102,7 @@ function makeConfiguration(
 function makeUser(overrides?: Partial<{ id: string; role: Role; initials: string }>) {
   return {
     id: "user-1",
-    role: "INTERNAL" as Role,
+    role: "ENGINEER" as Role,
     initials: "TE",
     ...overrides,
   };
@@ -174,10 +174,10 @@ describe("ConfigurationRow", () => {
   });
 
   describe("canEdit — Edit button (navigation access)", () => {
-    test("INTERNAL user can open any configuration", () => {
+    test("ENGINEER user can open any configuration", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "INTERNAL" }
+        { id: "user-1", role: "ENGINEER" }
       );
 
       expect(
@@ -196,10 +196,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("EXTERNAL owner can open own configuration", () => {
+    test("SALES owner can open own configuration", () => {
       renderRow(
         { user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
-        { id: "user-1", role: "EXTERNAL" }
+        { id: "user-1", role: "SALES" }
       );
 
       expect(
@@ -207,10 +207,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("EXTERNAL non-owner cannot open configuration", () => {
+    test("SALES non-owner cannot open configuration", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "EXTERNAL" }
+        { id: "user-1", role: "SALES" }
       );
 
       expect(
@@ -220,10 +220,10 @@ describe("ConfigurationRow", () => {
   });
 
   describe("canDelete — Delete button (requires editable status)", () => {
-    test("INTERNAL user can delete DRAFT configuration", () => {
+    test("ENGINEER user can delete DRAFT configuration", () => {
       renderRow(
         { status: "DRAFT", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "INTERNAL" }
+        { id: "user-1", role: "ENGINEER" }
       );
 
       expect(
@@ -231,10 +231,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("INTERNAL user can delete SUBMITTED configuration", () => {
+    test("ENGINEER user can delete SUBMITTED configuration", () => {
       renderRow(
         { status: "SUBMITTED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "INTERNAL" }
+        { id: "user-1", role: "ENGINEER" }
       );
 
       expect(
@@ -242,10 +242,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("INTERNAL user cannot delete APPROVED configuration", () => {
+    test("ENGINEER user cannot delete APPROVED configuration", () => {
       renderRow(
         { status: "APPROVED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "INTERNAL" }
+        { id: "user-1", role: "ENGINEER" }
       );
 
       expect(
@@ -264,10 +264,10 @@ describe("ConfigurationRow", () => {
       ).toBeDisabled();
     });
 
-    test("EXTERNAL owner can delete own DRAFT configuration", () => {
+    test("SALES owner can delete own DRAFT configuration", () => {
       renderRow(
         { status: "DRAFT", user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
-        { id: "user-1", role: "EXTERNAL" }
+        { id: "user-1", role: "SALES" }
       );
 
       expect(
@@ -275,10 +275,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("EXTERNAL owner cannot delete own SUBMITTED configuration", () => {
+    test("SALES owner cannot delete own SUBMITTED configuration", () => {
       renderRow(
         { status: "SUBMITTED", user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
-        { id: "user-1", role: "EXTERNAL" }
+        { id: "user-1", role: "SALES" }
       );
 
       expect(
@@ -286,10 +286,10 @@ describe("ConfigurationRow", () => {
       ).toBeDisabled();
     });
 
-    test("EXTERNAL non-owner cannot delete", () => {
+    test("SALES non-owner cannot delete", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "EXTERNAL" }
+        { id: "user-1", role: "SALES" }
       );
 
       expect(
@@ -312,7 +312,7 @@ describe("ConfigurationRow", () => {
     test("BOM button links to /configurations/bom/{id} and is always enabled", () => {
       renderRow(
         { id: 42, user: { id: "other-user", email: "o@t.com", initials: "OT" } },
-        { role: "EXTERNAL" }
+        { role: "SALES" }
       );
 
       const bomLink = screen.getByLabelText("Visualizza distinta");

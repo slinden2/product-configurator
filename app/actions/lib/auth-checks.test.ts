@@ -4,7 +4,7 @@ import type { ConfigurationStatusType, Role } from "@/types";
 
 describe("isEditable", () => {
   describe("APPROVED and CLOSED are never editable", () => {
-    const roles: Role[] = ["EXTERNAL", "INTERNAL", "ADMIN"];
+    const roles: Role[] = ["SALES", "ENGINEER", "ADMIN"];
 
     test.each(roles)("APPROVED is not editable for %s", (role) => {
       expect(isEditable("APPROVED", role)).toBe(false);
@@ -15,31 +15,31 @@ describe("isEditable", () => {
     });
   });
 
-  describe("EXTERNAL role", () => {
+  describe("SALES role", () => {
     test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", "EXTERNAL")).toBe(true);
+      expect(isEditable("DRAFT", "SALES")).toBe(true);
     });
 
     test("cannot edit SUBMITTED", () => {
-      expect(isEditable("SUBMITTED", "EXTERNAL")).toBe(false);
+      expect(isEditable("SUBMITTED", "SALES")).toBe(false);
     });
 
     test("cannot edit IN_REVIEW", () => {
-      expect(isEditable("IN_REVIEW", "EXTERNAL")).toBe(false);
+      expect(isEditable("IN_REVIEW", "SALES")).toBe(false);
     });
   });
 
-  describe("INTERNAL role", () => {
+  describe("ENGINEER role", () => {
     test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", "INTERNAL")).toBe(true);
+      expect(isEditable("DRAFT", "ENGINEER")).toBe(true);
     });
 
     test("can edit SUBMITTED", () => {
-      expect(isEditable("SUBMITTED", "INTERNAL")).toBe(true);
+      expect(isEditable("SUBMITTED", "ENGINEER")).toBe(true);
     });
 
     test("can edit IN_REVIEW", () => {
-      expect(isEditable("IN_REVIEW", "INTERNAL")).toBe(true);
+      expect(isEditable("IN_REVIEW", "ENGINEER")).toBe(true);
     });
   });
 

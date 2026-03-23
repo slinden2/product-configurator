@@ -96,7 +96,7 @@ export async function signIn(formData: LoginSchema) {
       await db.insert(userProfiles).values({
         id: data.user.id,
         email: credentials.email,
-        role: "EXTERNAL",
+        role: "SALES",
       });
     }
   } catch (err) {

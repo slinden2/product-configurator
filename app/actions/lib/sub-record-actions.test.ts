@@ -79,7 +79,7 @@ describe("handleSubRecordAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
-      role: "INTERNAL",
+      role: "ENGINEER",
       initials: "TU",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig());
@@ -174,10 +174,10 @@ describe("handleSubRecordAction", () => {
     });
   });
 
-  test("returns error when EXTERNAL user tries to modify another's config", async () => {
+  test("returns error when SALES user tries to modify another's config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "other-user",
-      role: "EXTERNAL",
+      role: "SALES",
       initials: "OU",
     });
     const result = await handleSubRecordAction(insertOptions());
@@ -187,10 +187,10 @@ describe("handleSubRecordAction", () => {
     });
   });
 
-  test("INTERNAL user can modify another user's config", async () => {
+  test("ENGINEER user can modify another user's config", async () => {
     mockGetUserData.mockResolvedValue({
-      id: "internal-user",
-      role: "INTERNAL",
+      id: "engineer-user",
+      role: "ENGINEER",
       initials: "IU",
     });
     const queryFn = vi
@@ -220,10 +220,10 @@ describe("handleSubRecordAction", () => {
     });
   });
 
-  test("EXTERNAL cannot modify sub-records of SUBMITTED config", async () => {
+  test("SALES cannot modify sub-records of SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
-      role: "EXTERNAL",
+      role: "SALES",
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));

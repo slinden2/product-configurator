@@ -37,11 +37,11 @@ export const editConfigurationAction = async (
     return { success: false as const, error: MSG.config.notFound };
   }
 
-  // Authorization: owner, INTERNAL, or ADMIN
+  // Authorization: owner, ENGINEER, or ADMIN
   if (
     user.id !== ownerId &&
     user.role !== "ADMIN" &&
-    user.role !== "INTERNAL"
+    user.role !== "ENGINEER"
   ) {
     return { success: false as const, error: MSG.auth.unauthorized };
   }

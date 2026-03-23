@@ -91,7 +91,7 @@ export const ConfigurationStatus = [
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 
-export const Roles = ["ADMIN", "INTERNAL", "EXTERNAL"] as const;
+export const Roles = ["ADMIN", "ENGINEER", "SALES"] as const;
 export type Role = (typeof Roles)[number];
 
 export interface SelectOption {

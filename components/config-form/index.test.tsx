@@ -114,20 +114,20 @@ describe("ConfigForm", () => {
   });
 
   describe("Disabled state", () => {
-    test("disables the fieldset when status is SUBMITTED for EXTERNAL role", () => {
+    test("disables the fieldset when status is SUBMITTED for SALES role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="EXTERNAL" />
+        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="SALES" />
       );
 
       const fieldset = document.querySelector("fieldset");
       expect(fieldset).toBeDisabled();
     });
 
-    test("enables the fieldset when status is SUBMITTED for INTERNAL role", () => {
+    test("enables the fieldset when status is SUBMITTED for ENGINEER role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="ENGINEER" />
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -147,7 +147,7 @@ describe("ConfigForm", () => {
     test("enables the fieldset when status is DRAFT", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="EXTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="SALES" />
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -170,7 +170,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           formKey="config-1"
         />
       );
@@ -198,7 +198,7 @@ describe("ConfigForm", () => {
       const config = makeValidConfig();
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       const submitButton = screen.getByRole("button", {
@@ -217,7 +217,7 @@ describe("ConfigForm", () => {
       delete (config as Record<string, unknown>).user_id;
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(
@@ -254,10 +254,10 @@ describe("ConfigForm", () => {
   });
 
   describe("Notes visibility per role", () => {
-    test("EXTERNAL sees sales notes but not engineering notes", () => {
+    test("SALES sees sales notes but not engineering notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="EXTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="SALES" />
       );
 
       expect(
@@ -268,20 +268,20 @@ describe("ConfigForm", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("EXTERNAL can edit sales notes", () => {
+    test("SALES can edit sales notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="EXTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="SALES" />
       );
 
       const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
       expect(salesTextarea).not.toBeDisabled();
     });
 
-    test("INTERNAL sees both notes fields", () => {
+    test("ENGINEER sees both notes fields", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       expect(
@@ -292,20 +292,20 @@ describe("ConfigForm", () => {
       ).toBeInTheDocument();
     });
 
-    test("INTERNAL cannot edit sales notes", () => {
+    test("ENGINEER cannot edit sales notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
       expect(salesTextarea).toBeDisabled();
     });
 
-    test("INTERNAL can edit engineering notes", () => {
+    test("ENGINEER can edit engineering notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       const engTextarea = screen.getByPlaceholderText("Inserire eventuali note tecniche");
@@ -349,7 +349,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}
         />
@@ -372,7 +372,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}

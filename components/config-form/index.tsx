@@ -155,9 +155,9 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
                     name="sales_notes"
                     label="Note commerciali"
                     placeholder="Inserire eventuali note commerciali"
-                    disabled={userRole === "INTERNAL"}
+                    disabled={userRole === "ENGINEER"}
                   />
-                  {(userRole === "INTERNAL" || userRole === "ADMIN") && (
+                  {(userRole === "ENGINEER" || userRole === "ADMIN") && (
                     <TextareaField<ConfigSchema>
                       name="engineering_notes"
                       label="Note tecniche"

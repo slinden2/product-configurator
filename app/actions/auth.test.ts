@@ -214,7 +214,7 @@ describe("signIn", () => {
     expect(mockValues).toHaveBeenCalledWith({
       id: mockUser.id,
       email: "test@example.com",
-      role: "EXTERNAL",
+      role: "SALES",
     });
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });

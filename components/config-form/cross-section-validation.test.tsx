@@ -56,7 +56,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
@@ -80,7 +80,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
@@ -103,7 +103,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
@@ -124,7 +124,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
@@ -144,7 +144,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
@@ -165,7 +165,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
@@ -182,7 +182,7 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="INTERNAL" />
+        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
       );
 
       await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));

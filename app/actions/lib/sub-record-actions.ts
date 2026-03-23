@@ -113,7 +113,7 @@ export async function handleSubRecordAction<
   if (
     user.id !== configuration.user_id &&
     user.role !== "ADMIN" &&
-    user.role !== "INTERNAL"
+    user.role !== "ENGINEER"
   ) {
     return {
       success: false as const,

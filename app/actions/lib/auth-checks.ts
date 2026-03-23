@@ -5,8 +5,8 @@ import { ConfigurationStatusType, Role } from "@/types";
  * based on the User's Role and the Record's Status.
  * * Rules:
  * - APPROVED/CLOSED: Never editable by anyone.
- * - EXTERNAL: Editable only in DRAFT.
- * - INTERNAL/ADMIN: Editable in DRAFT, SUBMITTED, or IN_REVIEW.
+ * - SALES: Editable only in DRAFT.
+ * - ENGINEER/ADMIN: Editable in DRAFT, SUBMITTED, or IN_REVIEW.
  */
 export function isEditable(
   status: ConfigurationStatusType,
@@ -18,11 +18,11 @@ export function isEditable(
   }
 
   // 2. Role-based permissions for active states
-  if (role === "EXTERNAL") {
+  if (role === "SALES") {
     return status === "DRAFT";
   }
 
-  if (role === "INTERNAL" || role === "ADMIN") {
+  if (role === "ENGINEER" || role === "ADMIN") {
     return status === "DRAFT" || status === "SUBMITTED" || status === "IN_REVIEW";
   }
 

@@ -116,7 +116,7 @@ describe("editConfigurationAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
-      role: "INTERNAL",
+      role: "ENGINEER",
       initials: "TU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(mockConfig());
@@ -167,10 +167,10 @@ describe("editConfigurationAction", () => {
     });
   });
 
-  test("EXTERNAL user cannot edit another user's config", async () => {
+  test("SALES user cannot edit another user's config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "other-user",
-      role: "EXTERNAL",
+      role: "SALES",
       initials: "OU",
     });
     const result = await editConfigurationAction(
@@ -181,10 +181,10 @@ describe("editConfigurationAction", () => {
     expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
   });
 
-  test("INTERNAL user can edit another user's DRAFT config", async () => {
+  test("ENGINEER user can edit another user's DRAFT config", async () => {
     mockGetUserData.mockResolvedValue({
-      id: "internal-user",
-      role: "INTERNAL",
+      id: "engineer-user",
+      role: "ENGINEER",
       initials: "IU",
     });
     const result = await editConfigurationAction(
@@ -212,10 +212,10 @@ describe("editConfigurationAction", () => {
     expect(result).toEqual({ success: true });
   });
 
-  test("EXTERNAL cannot edit SUBMITTED config", async () => {
+  test("SALES cannot edit SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
-      role: "EXTERNAL",
+      role: "SALES",
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(

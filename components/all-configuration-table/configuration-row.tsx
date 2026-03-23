@@ -21,7 +21,7 @@ interface ConfigurationRowProps {
 }
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
-  const canEdit = ["ADMIN", "INTERNAL"].includes(user.role) || configuration.user.id === user.id;
+  const canEdit = ["ADMIN", "ENGINEER"].includes(user.role) || configuration.user.id === user.id;
   const canDelete = canEdit && isEditable(configuration.status, user.role);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

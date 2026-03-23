@@ -73,7 +73,7 @@ describe("deleteConfigurationAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
-      role: "INTERNAL",
+      role: "ENGINEER",
       initials: "TU",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig());
@@ -94,10 +94,10 @@ describe("deleteConfigurationAction", () => {
     expect(result).toEqual({ success: false, error: MSG.auth.userNotFound });
   });
 
-  test("EXTERNAL cannot delete another user's config", async () => {
+  test("SALES cannot delete another user's config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "other-user",
-      role: "EXTERNAL",
+      role: "SALES",
       initials: "OU",
     });
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
@@ -137,10 +137,10 @@ describe("deleteConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
-  test("EXTERNAL cannot delete SUBMITTED config", async () => {
+  test("SALES cannot delete SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
-      role: "EXTERNAL",
+      role: "SALES",
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));

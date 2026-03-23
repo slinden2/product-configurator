@@ -78,8 +78,8 @@ export async function getUserData() {
   };
 }
 
-// Gets all configurations for the user if the role is EXTERNAL.
-// For INTERNAL and ADMIN, gets all configurations
+// Gets all configurations for the user if the role is SALES.
+// For ENGINEER and ADMIN, gets all configurations
 export async function getUserConfigurations() {
   const user = await getUserData();
 
@@ -89,7 +89,7 @@ export async function getUserConfigurations() {
 
   const response = await db.query.configurations.findMany({
     where:
-      user.role === "EXTERNAL"
+      user.role === "SALES"
         ? eq(configurations.user_id, user.id)
         : undefined,
     columns: {
@@ -134,8 +134,8 @@ export async function getConfigurationWithTanksAndBays(id: number) {
     },
   });
 
-  // EXTERNAL users can only view/edit their own configurations
-  if (user.role === "EXTERNAL") {
+  // SALES users can only view/edit their own configurations
+  if (user.role === "SALES") {
     if (response?.user_id !== user.id) {
       return null;
     }
@@ -192,14 +192,14 @@ function canTransition(role: Role, from: ConfigurationStatusType, to: Configurat
   if (from === to) return true;
   if (role === "ADMIN") return true;
 
-  // EXTERNAL (Area Manager): Only their own DRAFT <-> SUBMITTED
-  if (role === "EXTERNAL") {
+  // SALES (Area Manager): Only their own DRAFT <-> SUBMITTED
+  if (role === "SALES") {
     return (from === "DRAFT" && to === "SUBMITTED") ||
       (from === "SUBMITTED" && to === "DRAFT");
   }
 
-  // INTERNAL (Technical Office): Can take into review and approve
-  if (role === "INTERNAL") {
+  // ENGINEER (Technical Office): Can take into review and approve
+  if (role === "ENGINEER") {
     const allowedTransitions = [
       { from: "DRAFT", to: "SUBMITTED" },
       { from: "SUBMITTED", to: "DRAFT" },
@@ -230,7 +230,7 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.statusAlreadyUpdated, 400);
   }
 
-  if (user.role === "EXTERNAL" && user.id !== configuration.user_id) {
+  if (user.role === "SALES" && user.id !== configuration.user_id) {
     throw new QueryError(MSG.auth.userUnauthorized, 403);
   }
 

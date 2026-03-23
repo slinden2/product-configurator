@@ -48,7 +48,7 @@ async function authorizeEngineeringBomAction(confId: number) {
     }
   }
 
-  if (user.role === "EXTERNAL") {
+  if (user.role === "SALES") {
     return {
       success: false as const,
       error: MSG.bom.unauthorized,

@@ -98,7 +98,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
         />
       );
@@ -113,7 +113,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           onSaveSuccess={onSaveSuccess}
         />
       );
@@ -143,7 +143,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -160,7 +160,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -193,7 +193,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={onDelete}
@@ -223,7 +223,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={onDelete}
@@ -251,7 +251,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
         />
       );
@@ -272,7 +272,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -307,12 +307,12 @@ describe("SubRecordForm — WaterTankForm", () => {
       expect(fieldset).toBeDisabled();
     });
 
-    test("disables fieldset when EXTERNAL and status is SUBMITTED", () => {
+    test("disables fieldset when SALES and status is SUBMITTED", () => {
       render(
         <WaterTankForm
           confId={1}
           confStatus="SUBMITTED"
-          userRole="EXTERNAL"
+          userRole="SALES"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -324,12 +324,12 @@ describe("SubRecordForm — WaterTankForm", () => {
       expect(fieldset).toBeDisabled();
     });
 
-    test("enables fieldset when INTERNAL and status is DRAFT", () => {
+    test("enables fieldset when ENGINEER and status is DRAFT", () => {
       render(
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -350,7 +350,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -374,7 +374,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
@@ -404,7 +404,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
         />
       );
@@ -418,7 +418,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           onSaveSuccess={onSaveSuccess}
         />
       );
@@ -444,7 +444,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           washBay={makeWashBay()}
           washBayIndex={1}
           onDelete={vi.fn()}
@@ -479,7 +479,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           washBay={makeWashBay()}
           washBayIndex={1}
           onDelete={onDelete}
@@ -509,7 +509,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
           washBay={makeWashBay({ has_gantry: true })}
           washBayIndex={1}
@@ -527,7 +527,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
           washBay={makeWashBay({ has_gantry: false })}
           washBayIndex={1}
@@ -544,7 +544,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
-          userRole="INTERNAL"
+          userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
           washBay={makeWashBay({ has_gantry: true, energy_chain_width: "L200", has_shelf_extension: true })}
           washBayIndex={1}

@@ -30,8 +30,8 @@ interface StatusFormProps {
 }
 
 const ALLOWED_STATUSES: Record<Role, ConfigurationStatusType[]> = {
-  EXTERNAL: ["DRAFT", "SUBMITTED"],
-  INTERNAL: ["DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED"],
+  SALES: ["DRAFT", "SUBMITTED"],
+  ENGINEER: ["DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED"],
   ADMIN: ["DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED", "CLOSED"],
 };
 
