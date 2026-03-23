@@ -39,15 +39,15 @@ const EngineeringBomTable = ({
   editable,
 }: EngineeringBomTableProps) => {
   const [dataArr, setDataArr] = useState(items);
+  const [sorting, setSorting] = useState<SortState>({
+    key: null,
+    direction: "asc",
+  });
   // Sync local state when items prop changes (e.g. after adding a row)
   useEffect(() => {
     setDataArr(items);
     setSorting({ key: null, direction: "asc" });
   }, [items]);
-  const [sorting, setSorting] = useState<SortState>({
-    key: null,
-    direction: "asc",
-  });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editQty, setEditQty] = useState<string>("");
   const [isPending, startTransition] = useTransition();
