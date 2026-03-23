@@ -8,7 +8,7 @@ import {
   configSchema,
   UpdateConfigSchema,
 } from "@/validation/config-schema";
-import { useForm } from "react-hook-form";
+import { FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import GeneralSection from "@/components/config-form/general-section";
 import BrushSection from "@/components/config-form/brush-section";
@@ -103,6 +103,18 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
     }
   }
 
+  function onInvalid(errors: FieldErrors<UpdateConfigSchema>) {
+    toast.error(MSG.toast.validationErrors);
+    const firstErrorKey = Object.keys(errors)[0];
+    if (firstErrorKey) {
+      const el = document.querySelector<HTMLElement>(`[name="${firstErrorKey}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus({ preventScroll: true });
+      }
+    }
+  }
+
   async function onSubmit(values: ConfigSchema) {
     if (hasEngineeringBom && id) {
       pendingValuesRef.current = values;
@@ -124,7 +136,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
   return (
     <div>
       <Form {...form}>
-        <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit)}>
+        <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
           <FormDisabledContext.Provider value={formIsDisabled}>
             <fieldset disabled={formIsDisabled}>
               <GeneralSection />

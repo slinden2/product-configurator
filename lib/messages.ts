@@ -89,6 +89,7 @@ export const MSG = {
       `Errore sconosciuto durante l'eliminazione (${name}).`,
     passwordResetEmailSent: "Email per resettare la password inviata.",
     passwordResetSuccess: "Password aggiornata con successo.",
+    validationErrors: "Errori di validazione: correggere i campi evidenziati.",
   },
   bomWarning: {
     title: "Distinta ingegneria presente",
