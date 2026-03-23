@@ -7,13 +7,10 @@ import ExportButton from "@/app/configurations/bom/[id]/export-button";
 import MetaDataTable from "@/app/configurations/bom/[id]/meta-data-table";
 import RegenerateButton from "@/app/configurations/bom/[id]/regenerate-button";
 import SnapshotButton from "@/app/configurations/bom/[id]/snapshot-button";
-import BackButton from "@/components/back-button";
-import { Button } from "@/components/ui/button";
+import ConfigNavigationBar from "@/components/config-navigation-bar";
 import { getBOM, getConfiguration, getUserData } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import { Edit } from "lucide-react";
-import Link from "next/link";
 import ExportCostsButton from "./export-costs-button";
 import { notFound, redirect } from "next/navigation";
 
@@ -52,18 +49,10 @@ const BOMView = async (props: BOMViewProps) => {
 
   return (
     <div className="space-y-6">
+      <ConfigNavigationBar confId={confId} activePage="bom" />
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <BackButton fallbackPath={"/configurations"} />
-          <h1 className="inline-block">Distinta</h1>
-        </div>
+        <h1 className="inline-block">Distinta</h1>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <Link href={`/configurations/edit/${params.id}`}>
-              <Edit />
-              <span>Modifica</span>
-            </Link>
-          </Button>
           {!hasEbom && editable && <SnapshotButton confId={confId} />}
           {hasEbom && editable && <RegenerateButton confId={confId} />}
           <ExportButton exportData={exportData} />

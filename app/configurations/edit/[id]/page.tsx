@@ -10,6 +10,7 @@ import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import { updateWashBaySchema } from "@/validation/wash-bay-schema";
 import StatusForm from "@/components/status-form";
+import ConfigNavigationBar from "@/components/config-navigation-bar";
 import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 
@@ -47,6 +48,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
 
   return (
     <div>
+      <ConfigNavigationBar confId={id} activePage="edit" />
       <div className="mb-6 sm:flex sm:gap-2">
         <div className="mb-6 sm:mb-0">
           <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>

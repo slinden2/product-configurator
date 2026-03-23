@@ -140,11 +140,11 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
                 description="Note aggiuntive per la vendita e l'ufficio tecnico">
                 <div className="fs-content">
                   <TextareaField<ConfigSchema>
-                      name="sales_notes"
-                      label="Note commerciali"
-                      placeholder="Inserire eventuali note commerciali"
-                      disabled={userRole === "INTERNAL"}
-                    />
+                    name="sales_notes"
+                    label="Note commerciali"
+                    placeholder="Inserire eventuali note commerciali"
+                    disabled={userRole === "INTERNAL"}
+                  />
                   {(userRole === "INTERNAL" || userRole === "ADMIN") && (
                     <TextareaField<ConfigSchema>
                       name="engineering_notes"
@@ -155,7 +155,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
                 </div>
               </Fieldset>
               <div className="flex gap-4">
-                <BackButton fallbackPath={"/configurations"} />
+                {!isNewConfiguration && <BackButton fallbackPath={"/configurations"} />}
                 <Button
                   className="ml-auto"
                   variant="destructive"
