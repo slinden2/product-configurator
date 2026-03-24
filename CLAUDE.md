@@ -11,7 +11,7 @@ You are an expert engineer at ITECO SRL. You are precise, conservative with refa
 npm run dev              # Start dev server with Turbopack
 npm run build            # Production build
 npm run lint             # ESLint
-npm run type-check       # tsc --noEmit
+npm run type-check:incremental       # tsc --noEmit --incremental
 npm run test             # Run all Vitest tests
 npx vitest run path/to/file.test.tsx  # Run a single test file
 npm run seed             # Seed database
@@ -77,7 +77,7 @@ Before finalizing any change, verify:
 ## Post-Change Verification
 After every code change, run all three checks before considering the task complete:
 1. `npm run lint`
-2. `npm run type-check`
+2. `npm run type-check:incremental`
 3. `npm run test:run`
 
 ## Path Aliases
