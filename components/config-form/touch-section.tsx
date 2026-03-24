@@ -34,6 +34,7 @@ const TouchSection = () => {
               name="touch_qty"
               dataType="number"
               label="Numero di pannelli"
+              description="Per l'opzione Gestione Piste occorrono due pannelli"
               items={selectFieldOptions.touchQtyOpts}
               fieldsToResetOnValue={[
                 {
@@ -74,13 +75,40 @@ const TouchSection = () => {
         </div>
         <div className="fs-row">
           <div className="fs-item">
-            <CheckboxField name="has_itecoweb" label="Itecoweb" />
+            <CheckboxField
+              name="has_itecoweb"
+              label="Itecoweb"
+              description={<>
+                <span>Comprensivo di:</span>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Dispositivo Itecoweb nel Q.E.</li>
+                  <li>Lettore schede nel Q.E.</li>
+                  <li>Programmatore schede da scrivania</li>
+                </ul></>
+              }
+            />
           </div>
           <div className="fs-item">
-            <CheckboxField name="has_card_reader" label="Lettore schede" />
+            <CheckboxField
+              name="has_card_reader"
+              label="Lettore schede"
+              description="Senza Itecoweb"
+            />
           </div>
           <div className="fs-item">
-            <CheckboxField name="is_fast" label="Portale fast" />
+            <CheckboxField
+              name="is_fast"
+              label="Portale fast"
+              description={<>
+                <span>Comprensivo di:</span>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Barre supplementari di risciacquo</li>
+                  <li>Semaforo posteriore</li>
+                  <li>Bracci lunghi per fotocellule</li>
+                  <li>Licenza piattaforma Itecoweb</li>
+                </ul></>
+              }
+            />
           </div>
         </div>
         {(hasItecowebWatch || hasCardReaderWatch) && (
@@ -90,6 +118,7 @@ const TouchSection = () => {
                 name="card_qty"
                 dataType="number"
                 label="Numero di schede"
+                description="Numero di schede disponibili per la selezione dei programmi"
                 items={selectFieldOptions.cardQtyOpts}
               />
             </div>

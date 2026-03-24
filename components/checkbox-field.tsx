@@ -27,7 +27,7 @@ interface ResetCheckboxConfig<TFieldValues extends FieldValues> {
 interface CheckboxFieldProps<TFieldValues extends FieldValues = FieldValues> {
   name: FieldPath<TFieldValues>; // Type-safe field name
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   disabled?: boolean;
   // Changed prop name slightly for consistency, accepts array of configs
   fieldsToResetOnUncheck?: Array<ResetCheckboxConfig<TFieldValues>>;
@@ -55,10 +55,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
     <FormField
       control={control}
       name={name} // Pass the generic name directly
-      render={({ field, fieldState }) => {
-        // Include fieldState for potential error styling
-        // Determine the checked state for the UI component.
-        // Treat undefined, null, or anything else as unchecked (false).
+      render={({ field }) => {
         const isChecked = field.value === true;
 
         return (
@@ -98,11 +95,10 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
               // aria-label={label} // Can be used if label text isn't sufficient
               />
             </FormControl>
-            <div className="space-y-1 leading-none">
+            <div className="space-y-2 leading-none">
               {/* Clicking label should also toggle checkbox */}
               <FormLabel className="cursor-pointer">{label}</FormLabel>
               {description && (
-                // Let description flow normally
                 <FormDescription>{description}</FormDescription>
               )}
             </div>

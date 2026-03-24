@@ -37,7 +37,7 @@ interface ResetConfig<TFieldValues extends FieldValues> {
 interface SelectFieldProps<TFieldValues extends FieldValues = FieldValues> {
   name: FieldPath<TFieldValues>; // Type-safe field name
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   disabled?: boolean;
   items: SelectOption[]; // Array of options { value: string | number, label: string }
   dataType: "string" | "number" | "boolean"; // *** NEW: Specify expected data type ***

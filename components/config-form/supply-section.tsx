@@ -31,6 +31,11 @@ const SupplySection = () => {
               name="supply_type"
               dataType="string"
               label="Tipo di alimentazione"
+              description={
+                supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.ENERGY_CHAIN
+                  ? "I dettagli relativi alla catena portacavi sono configurabili nel menù delle piste"
+                  : undefined
+              }
               items={selectFieldOptions.supplyTypes}
               fieldsToResetOnValue={[
                 {

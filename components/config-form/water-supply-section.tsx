@@ -29,13 +29,14 @@ const WaterSupplySection = () => {
       description="Configura le impostazioni per l'alimentazione dell'acqua e le pompe di rilancio"
     >
       <div className="fs-content">
-        <div className="fs-row md:items-start">
+        <div className="fs-row">
           <div className="fs-item">
-            <div className="space-y-3">
+            <div className="space-y-3 md:flex md:flex-col md:justify-between md:h-full">
               <SelectField<ConfigSchema>
                 name="water_1_type"
                 dataType="string"
                 label="Tipo acqua 1"
+                description="Gruppo EV acqua generale per locale tecnico"
                 items={withNoSelection(selectFieldOptions.waterTypes)}
                 fieldsToResetOnValue={[
                   {
@@ -93,11 +94,12 @@ const WaterSupplySection = () => {
             </div>
           )}
           <div className="fs-item">
-            <div className="space-y-3">
+            <div className="space-y-3 md:flex md:flex-col md:justify-between md:h-full">
               <SelectField<ConfigSchema>
                 name="water_2_type"
                 dataType="string"
                 label="Tipo acqua 2"
+                description="Gruppo EV acqua per doppia alimentazione"
                 items={withNoSelection(selectFieldOptions.waterTypes)}
                 fieldsToResetOnValue={[
                   {

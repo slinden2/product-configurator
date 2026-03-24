@@ -67,7 +67,7 @@ const ChemPumpSection = () => {
         {hasChemicalPumpWatch && (
           <div>
             <div className="fs-row">
-              <div className="fs-item my-4">
+              <div className="fs-item">
                 <SelectField<ConfigSchema>
                   name="chemical_qty"
                   dataType="number"
