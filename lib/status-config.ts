@@ -2,11 +2,11 @@ import { ConfigurationStatusType } from "@/types";
 
 export const STATUS_CONFIG: Record<
   ConfigurationStatusType,
-  { label: string; bgClass: string }
+  { label: string; color: string }
 > = {
-  DRAFT: { label: "Bozza", bgClass: "bg-slate-400" },
-  SUBMITTED: { label: "Inviato", bgClass: "bg-green-400" },
-  IN_REVIEW: { label: "In Revisione", bgClass: "bg-blue-400" },
-  APPROVED: { label: "Approvato", bgClass: "bg-amber-400" },
-  CLOSED: { label: "Chiuso", bgClass: "bg-rose-400" },
+  DRAFT: { label: "Bozza", color: "#94a3b8" },
+  SUBMITTED: { label: "Inviato", color: "#4ade80" },
+  IN_REVIEW: { label: "In Revisione", color: "#60a5fa" },
+  APPROVED: { label: "Approvato", color: "#fbbf24" },
+  CLOSED: { label: "Chiuso", color: "#fb7185" },
 };

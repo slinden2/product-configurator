@@ -34,7 +34,8 @@ const Dashboard = async () => {
           <Card key={status}>
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
               <div
-                className={`h-3 w-3 rounded-full ${STATUS_CONFIG[status].bgClass}`}
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: STATUS_CONFIG[status].color }}
               />
               <CardTitle className="text-sm font-medium">
                 {STATUS_CONFIG[status].label}

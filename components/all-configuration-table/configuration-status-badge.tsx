@@ -10,10 +10,11 @@ interface ConfigurationStatusBadgeProps {
 const ConfigurationStatusBadge = ({
   status,
 }: ConfigurationStatusBadgeProps) => {
-  const { label, bgClass } = STATUS_CONFIG[status];
+  const { label, color } = STATUS_CONFIG[status];
   return (
     <Badge
-      className={`${bgClass} hover:${bgClass} text-background`}>
+      className="text-background"
+      style={{ backgroundColor: color }}>
       {label}
     </Badge>
   );

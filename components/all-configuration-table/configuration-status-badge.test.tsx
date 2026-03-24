@@ -10,19 +10,18 @@ const testCases: [ConfigurationStatusType, string, string][] =
   ConfigurationStatus.map((status) => [
     status,
     STATUS_CONFIG[status].label,
-    STATUS_CONFIG[status].bgClass,
+    STATUS_CONFIG[status].color,
   ]);
 
 describe("ConfigurationStatusBadge", () => {
   test.each(testCases)(
-    "renders '%s' as '%s' with correct classes",
-    (status, expectedLabel, expectedBgClass) => {
+    "renders '%s' as '%s' with correct color",
+    (status, expectedLabel, expectedColor) => {
       render(<ConfigurationStatusBadge status={status} />);
 
       const badge = screen.getByText(expectedLabel);
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass(expectedBgClass);
-      expect(badge).toHaveClass(`hover:${expectedBgClass}`);
+      expect(badge).toHaveStyle({ backgroundColor: expectedColor });
     }
   );
 });
