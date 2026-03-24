@@ -111,9 +111,16 @@ const getWashBayComplicated = (id: number): WashBaySchema & { configuration_id: 
   has_gantry: true,
   energy_chain_width: "L250",
   has_shelf_extension: false,
+  ec_signal_cable_qty: 1,
+  ec_profinet_cable_qty: 1,
+  ec_water_1_tube_qty: 2,
+  ec_water_34_tube_qty: 0,
+  ec_r1_1_tube_qty: 1,
+  ec_r2_1_tube_qty: 1,
+  ec_r2_34_inox_tube_qty: 0,
+  ec_air_tube_qty: 1,
   is_first_bay: true,
   has_bay_dividers: false,
-
 })
 
 const configurationFast: ConfigSchema = {

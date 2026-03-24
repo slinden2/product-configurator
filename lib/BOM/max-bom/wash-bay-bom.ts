@@ -26,6 +26,17 @@ const PART_NUMBERS = {
   CHAIN_200: "CP-200",
   CHAIN_250: "CP-250",
   CHAIN_300: "CP-300",
+  // Energy chain hoses & cables (placeholder PNs)
+  EC_PROFINET_CABLE_LEFT: "XXXXX",
+  EC_PROFINET_CABLE_RIGHT: "XXXXX",
+  EC_POWER_CABLE: "XXXXX",
+  EC_SIGNAL_CABLE: "XXXXX",
+  EC_WATER_1_TUBE: "XXXXX",
+  EC_WATER_34_TUBE: "XXXXX",
+  EC_AIR_TUBE: "XXXXX",
+  EC_R1_1_TUBE: "XXXXX",
+  EC_R2_1_TUBE: "XXXXX",
+  EC_R2_34_INOX_TUBE: "XXXXX",
 } as const satisfies Record<string, string>;
 
 const hasEnergyChain = (config: WashBay & WithSupplyData) =>
@@ -242,5 +253,95 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
     conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L300"],
     qty: 1,
     _description: "Cable chain (300mm)",
+  },
+  // Energy chain hoses & cables
+  {
+    pn: PART_NUMBERS.EC_PROFINET_CABLE_LEFT,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_profinet_cable_qty ?? 0) > 0,
+      (config) => config.supply_side === "LEFT",
+    ],
+    qty: (config) => config.ec_profinet_cable_qty ?? 0,
+    _description: "Cavo Profinet per catenaria con palo a SX",
+  },
+  {
+    pn: PART_NUMBERS.EC_PROFINET_CABLE_RIGHT,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_profinet_cable_qty ?? 0) > 0,
+      (config) => config.supply_side === "RIGHT",
+    ],
+    qty: (config) => config.ec_profinet_cable_qty ?? 0,
+    _description: "Cavo Profinet per catenaria con palo a DX",
+  },
+  {
+    pn: PART_NUMBERS.EC_POWER_CABLE,
+    conditions: [hasEnergyChain],
+    qty: 1,
+    _description: "Cavo alimentazione 5G2,5 per catenaria",
+  },
+  {
+    pn: PART_NUMBERS.EC_SIGNAL_CABLE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_signal_cable_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_signal_cable_qty ?? 0,
+    _description: "Cavo segnali 12G1 per catenaria",
+  },
+  {
+    pn: PART_NUMBERS.EC_WATER_1_TUBE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_water_1_tube_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_water_1_tube_qty ?? 0,
+    _description: 'Tubo acqua 1" per catenaria',
+  },
+  {
+    pn: PART_NUMBERS.EC_WATER_34_TUBE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_water_34_tube_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_water_34_tube_qty ?? 0,
+    _description: 'Tubo acqua 3/4" per catenaria',
+  },
+  {
+    pn: PART_NUMBERS.EC_AIR_TUBE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_air_tube_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_air_tube_qty ?? 0,
+    _description: "Tubo aria 8x17 per catenaria",
+  },
+  {
+    pn: PART_NUMBERS.EC_R1_1_TUBE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_r1_1_tube_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_r1_1_tube_qty ?? 0,
+    _description: 'Tubo R1 1" per catenaria',
+  },
+  {
+    pn: PART_NUMBERS.EC_R2_1_TUBE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_r2_1_tube_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_r2_1_tube_qty ?? 0,
+    _description: 'Tubo R2 1" per catenaria',
+  },
+  {
+    pn: PART_NUMBERS.EC_R2_34_INOX_TUBE,
+    conditions: [
+      hasEnergyChain,
+      (config) => (config.ec_r2_34_inox_tube_qty ?? 0) > 0,
+    ],
+    qty: (config) => config.ec_r2_34_inox_tube_qty ?? 0,
+    _description: 'Tubo R2 3/4" INOX per catenaria',
   },
 ];

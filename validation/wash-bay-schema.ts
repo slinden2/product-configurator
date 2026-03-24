@@ -46,6 +46,14 @@ export const washBaySchema = z
     has_gantry: z.boolean().default(false),
     energy_chain_width: CableChainWidthEnum.optional(),
     has_shelf_extension: z.boolean().default(false),
+    ec_signal_cable_qty: z.number().min(1).max(2).optional(),
+    ec_profinet_cable_qty: z.number().min(0).max(1).optional(),
+    ec_water_1_tube_qty: z.number().min(1).max(2).optional(),
+    ec_water_34_tube_qty: z.number().min(0).max(2).optional(),
+    ec_r1_1_tube_qty: z.number().min(0).max(2).optional(),
+    ec_r2_1_tube_qty: z.number().min(0).max(2).optional(),
+    ec_r2_34_inox_tube_qty: z.number().min(0).max(3).optional(),
+    ec_air_tube_qty: z.number().min(0).max(1).optional(),
     is_first_bay: z.boolean().default(false),
     has_bay_dividers: z.boolean().default(false),
   })
@@ -72,6 +80,24 @@ export const washBaySchema = z
         path: ["pressure_washer_type"],
       });
     }
+
+    // When energy chain is active, signal cable and water 1" tube are required
+    if (data.has_gantry && data.energy_chain_width !== undefined) {
+      if (data.ec_signal_cable_qty === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: genericRequiredMessage,
+          path: ["ec_signal_cable_qty"],
+        });
+      }
+      if (data.ec_water_1_tube_qty === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: genericRequiredMessage,
+          path: ["ec_water_1_tube_qty"],
+        });
+      }
+    }
   });
 
 export type WashBaySchema = z.infer<typeof washBaySchema>;
@@ -90,6 +116,14 @@ export const washBayDefaults: WashBaySchema = {
   has_gantry: false,
   energy_chain_width: undefined,
   has_shelf_extension: false,
+  ec_signal_cable_qty: undefined,
+  ec_profinet_cable_qty: undefined,
+  ec_water_1_tube_qty: undefined,
+  ec_water_34_tube_qty: undefined,
+  ec_r1_1_tube_qty: undefined,
+  ec_r2_1_tube_qty: undefined,
+  ec_r2_34_inox_tube_qty: undefined,
+  ec_air_tube_qty: undefined,
   is_first_bay: false,
   has_bay_dividers: false,
 };

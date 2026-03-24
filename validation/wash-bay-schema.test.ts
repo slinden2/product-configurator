@@ -146,4 +146,105 @@ describe("washBaySchema", () => {
       ).toThrow();
     });
   });
+
+  describe("Energy chain hose/cable quantities", () => {
+    test("should accept all ec fields as undefined", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("should accept ec_profinet_cable_qty within range 0-1", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_profinet_cable_qty: 0,
+        }).success
+      ).toBe(true);
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_profinet_cable_qty: 1,
+        }).success
+      ).toBe(true);
+    });
+
+    test("should reject ec_profinet_cable_qty > 1", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_profinet_cable_qty: 2,
+        }).success
+      ).toBe(false);
+    });
+
+    test("should accept ec_r2_34_inox_tube_qty up to 3", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_r2_34_inox_tube_qty: 3,
+        }).success
+      ).toBe(true);
+    });
+
+    test("should reject ec_r2_34_inox_tube_qty > 3", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_r2_34_inox_tube_qty: 4,
+        }).success
+      ).toBe(false);
+    });
+
+    test("should reject ec_air_tube_qty > 1", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_air_tube_qty: 2,
+        }).success
+      ).toBe(false);
+    });
+
+    test("should require ec_signal_cable_qty when energy chain is active", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        has_gantry: true,
+        energy_chain_width: "L200",
+        ec_signal_cable_qty: undefined,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("should require ec_water_1_tube_qty when energy chain is active", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        has_gantry: true,
+        energy_chain_width: "L200",
+        ec_water_1_tube_qty: undefined,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("should pass when energy chain is active and required fields are set", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        has_gantry: true,
+        energy_chain_width: "L200",
+        ec_signal_cable_qty: 1,
+        ec_water_1_tube_qty: 1,
+      });
+      expect(result.success).toBe(true);
+    });
+  });
 });

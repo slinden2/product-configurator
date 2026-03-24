@@ -8,6 +8,7 @@ import {
   calculateLinePostAssyQty,
   calculateLinePostAssyQtyWithPanels,
   calculateSidePanelQty,
+  washBayBOM,
 } from "@/lib/BOM/max-bom/wash-bay-bom";
 import type { WashBay } from "@/db/schemas";
 import type { WithSupplyData } from "@/lib/BOM";
@@ -26,6 +27,14 @@ function makeConfig(overrides: Partial<WashBayConfig> = {}): WashBayConfig {
     has_gantry: false,
     energy_chain_width: null,
     has_shelf_extension: false,
+    ec_profinet_cable_qty: null,
+    ec_signal_cable_qty: null,
+    ec_water_1_tube_qty: null,
+    ec_water_34_tube_qty: null,
+    ec_air_tube_qty: null,
+    ec_r1_1_tube_qty: null,
+    ec_r2_1_tube_qty: null,
+    ec_r2_34_inox_tube_qty: null,
     is_first_bay: false,
     has_bay_dividers: false,
     created_at: new Date(),
@@ -139,5 +148,112 @@ describe("calculateSidePanelQty", () => {
   test("first bay + no central post → 2 (default)", () => {
     const config = makeConfig({ is_first_bay: true });
     expect(calculateSidePanelQty(config)).toBe(2);
+  });
+});
+
+// Helper: filter washBayBOM for a given config, return matching items
+function filterBOM(config: WashBayConfig) {
+  return washBayBOM
+    .filter((item) => item.conditions.every((fn) => fn(config)))
+    .map((item) => ({
+      pn: item.pn,
+      qty: typeof item.qty === "function" ? item.qty(config) : item.qty,
+      _description: item._description,
+    }));
+}
+
+describe("Energy chain hoses & cables BOM", () => {
+  test("power cable is always included when energy chain is active", () => {
+    const config = withEnergyChain();
+    const items = filterBOM(config);
+    const powerCable = items.find((i) =>
+      i._description.includes("Cavo alimentazione")
+    );
+    expect(powerCable).toBeDefined();
+    expect(powerCable!.qty).toBe(1);
+  });
+
+  test("no energy chain items when supply_type is not ENERGY_CHAIN", () => {
+    const config = makeConfig({ has_gantry: true });
+    const items = filterBOM(config);
+    const ecItems = items.filter((i) =>
+      i._description.includes("per catenaria")
+    );
+    expect(ecItems).toHaveLength(0);
+  });
+
+  test("profinet cable LEFT variant when supply_side is LEFT", () => {
+    const config = withEnergyChain({
+      ec_profinet_cable_qty: 1,
+      supply_side: "LEFT",
+    });
+    const items = filterBOM(config);
+    const profinet = items.filter((i) =>
+      i._description.includes("Cavo Profinet")
+    );
+    expect(profinet).toHaveLength(1);
+    expect(profinet[0]._description).toContain("SX");
+    expect(profinet[0].qty).toBe(1);
+  });
+
+  test("profinet cable RIGHT variant when supply_side is RIGHT", () => {
+    const config = withEnergyChain({
+      ec_profinet_cable_qty: 1,
+      supply_side: "RIGHT",
+    });
+    const items = filterBOM(config);
+    const profinet = items.filter((i) =>
+      i._description.includes("Cavo Profinet")
+    );
+    expect(profinet).toHaveLength(1);
+    expect(profinet[0]._description).toContain("DX");
+  });
+
+  test("no profinet cable when qty is 0", () => {
+    const config = withEnergyChain({ ec_profinet_cable_qty: 0 });
+    const items = filterBOM(config);
+    const profinet = items.filter((i) =>
+      i._description.includes("Cavo Profinet")
+    );
+    expect(profinet).toHaveLength(0);
+  });
+
+  test("signal cable qty matches field value", () => {
+    const config = withEnergyChain({ ec_signal_cable_qty: 2 });
+    const items = filterBOM(config);
+    const signal = items.find((i) => i._description.includes("Cavo segnali"));
+    expect(signal).toBeDefined();
+    expect(signal!.qty).toBe(2);
+  });
+
+  test("tube quantities match field values", () => {
+    const config = withEnergyChain({
+      ec_water_1_tube_qty: 2,
+      ec_water_34_tube_qty: 1,
+      ec_air_tube_qty: 1,
+      ec_r1_1_tube_qty: 2,
+      ec_r2_1_tube_qty: 1,
+      ec_r2_34_inox_tube_qty: 3,
+    });
+    const items = filterBOM(config);
+
+    expect(items.find((i) => i._description.includes('Tubo acqua 1"'))!.qty).toBe(2);
+    expect(items.find((i) => i._description.includes('Tubo acqua 3/4"'))!.qty).toBe(1);
+    expect(items.find((i) => i._description.includes("Tubo aria"))!.qty).toBe(1);
+    expect(items.find((i) => i._description.includes('Tubo R1 1"'))!.qty).toBe(2);
+    expect(items.find((i) => i._description.includes('Tubo R2 1"'))!.qty).toBe(1);
+    expect(items.find((i) => i._description.includes("R2 3/4"))!.qty).toBe(3);
+  });
+
+  test("tubes with qty 0 or null are excluded", () => {
+    const config = withEnergyChain({
+      ec_water_34_tube_qty: 0,
+      ec_air_tube_qty: null,
+      ec_r1_1_tube_qty: null,
+    });
+    const items = filterBOM(config);
+    expect(items.find((i) => i._description.includes('Tubo acqua 3/4"'))).toBeUndefined();
+    expect(items.find((i) => i._description.includes("Tubo aria"))).toBeUndefined();
+    expect(items.find((i) => i._description.includes('Tubo R1 1"'))).toBeUndefined();
   });
 });

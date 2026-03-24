@@ -113,5 +113,13 @@ export function transformWashBaySchemaToDbData(values: WashBaySchema) {
       | "L21_200BAR",
     energy_chain_width: values.energy_chain_width ?? null,
     has_shelf_extension: values.has_shelf_extension ?? false,
+    ec_signal_cable_qty: values.ec_signal_cable_qty ?? null,
+    ec_profinet_cable_qty: values.ec_profinet_cable_qty ?? null,
+    ec_water_1_tube_qty: values.ec_water_1_tube_qty ?? null,
+    ec_water_34_tube_qty: values.ec_water_34_tube_qty ?? null,
+    ec_r1_1_tube_qty: values.ec_r1_1_tube_qty ?? null,
+    ec_r2_1_tube_qty: values.ec_r2_1_tube_qty ?? null,
+    ec_r2_34_inox_tube_qty: values.ec_r2_34_inox_tube_qty ?? null,
+    ec_air_tube_qty: values.ec_air_tube_qty ?? null,
   };
 }
