@@ -26,17 +26,17 @@ const PART_NUMBERS = {
   CHAIN_200: "CP-200",
   CHAIN_250: "CP-250",
   CHAIN_300: "CP-300",
-  // Energy chain hoses & cables (placeholder PNs)
-  EC_PROFINET_CABLE_LEFT: "XXXXX",
-  EC_PROFINET_CABLE_RIGHT: "XXXXX",
-  EC_POWER_CABLE: "XXXXX",
-  EC_SIGNAL_CABLE: "XXXXX",
-  EC_WATER_1_TUBE: "XXXXX",
-  EC_WATER_34_TUBE: "XXXXX",
-  EC_AIR_TUBE: "XXXXX",
-  EC_R1_1_TUBE: "XXXXX",
-  EC_R2_1_TUBE: "XXXXX",
-  EC_R2_34_INOX_TUBE: "XXXXX",
+  // Energy chain hoses & cables
+  EC_PROFINET_CABLE_LEFT: "1100.112.003",
+  EC_PROFINET_CABLE_RIGHT: "1100.112.004",
+  EC_POWER_CABLE: "1100.112.001",
+  EC_SIGNAL_CABLE: "1100.112.002",
+  EC_WATER_1_TUBE: "1100.113.001",
+  EC_WATER_34_TUBE: "1100.113.002",
+  EC_AIR_TUBE: "1100.113.003",
+  EC_R1_1_TUBE: "9000.530.038",
+  EC_R2_1_TUBE: "9000.530.034",
+  EC_R2_34_INOX_TUBE: "9000.525.015",
 } as const satisfies Record<string, string>;
 
 const hasEnergyChain = (config: WashBay & WithSupplyData) =>
@@ -263,7 +263,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => config.supply_side === "LEFT",
     ],
     qty: (config) => config.ec_profinet_cable_qty ?? 0,
-    _description: "Cavo Profinet per catenaria con palo a SX",
+    _description: "Profinet cable for energy chain (left post)",
   },
   {
     pn: PART_NUMBERS.EC_PROFINET_CABLE_RIGHT,
@@ -273,13 +273,13 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => config.supply_side === "RIGHT",
     ],
     qty: (config) => config.ec_profinet_cable_qty ?? 0,
-    _description: "Cavo Profinet per catenaria con palo a DX",
+    _description: "Profinet cable for energy chain (right post)",
   },
   {
     pn: PART_NUMBERS.EC_POWER_CABLE,
     conditions: [hasEnergyChain],
     qty: 1,
-    _description: "Cavo alimentazione 5G2,5 per catenaria",
+    _description: "Power cable 5G2.5 for energy chain",
   },
   {
     pn: PART_NUMBERS.EC_SIGNAL_CABLE,
@@ -288,7 +288,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_signal_cable_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_signal_cable_qty ?? 0,
-    _description: "Cavo segnali 12G1 per catenaria",
+    _description: "Signal cable 12G1 for energy chain",
   },
   {
     pn: PART_NUMBERS.EC_WATER_1_TUBE,
@@ -297,7 +297,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_water_1_tube_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_water_1_tube_qty ?? 0,
-    _description: 'Tubo acqua 1" per catenaria',
+    _description: 'Water tube 1" for energy chain',
   },
   {
     pn: PART_NUMBERS.EC_WATER_34_TUBE,
@@ -306,7 +306,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_water_34_tube_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_water_34_tube_qty ?? 0,
-    _description: 'Tubo acqua 3/4" per catenaria',
+    _description: 'Water tube 3/4" for energy chain',
   },
   {
     pn: PART_NUMBERS.EC_AIR_TUBE,
@@ -315,7 +315,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_air_tube_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_air_tube_qty ?? 0,
-    _description: "Tubo aria 8x17 per catenaria",
+    _description: "Air tube 8x17 for energy chain",
   },
   {
     pn: PART_NUMBERS.EC_R1_1_TUBE,
@@ -324,7 +324,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_r1_1_tube_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_r1_1_tube_qty ?? 0,
-    _description: 'Tubo R1 1" per catenaria',
+    _description: 'R1 tube 1" for energy chain',
   },
   {
     pn: PART_NUMBERS.EC_R2_1_TUBE,
@@ -333,7 +333,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_r2_1_tube_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_r2_1_tube_qty ?? 0,
-    _description: 'Tubo R2 1" per catenaria',
+    _description: 'R2 tube 1" for energy chain',
   },
   {
     pn: PART_NUMBERS.EC_R2_34_INOX_TUBE,
@@ -342,6 +342,6 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
       (config) => (config.ec_r2_34_inox_tube_qty ?? 0) > 0,
     ],
     qty: (config) => config.ec_r2_34_inox_tube_qty ?? 0,
-    _description: 'Tubo R2 3/4" INOX per catenaria',
+    _description: 'R2 tube 3/4" INOX for energy chain',
   },
 ];

@@ -17,6 +17,17 @@ const PART_NUMBERS = {
   BOOM_HP: "450.39.000",
   REINFORCED_SHELF_ASSY_L: "1100.019.016",
   REINFORCED_SHELF_ASSY_R: "1100.019.017",
+  // Boom tubes & cables
+  BOOM_WATER_TUBE_LEFT: "450.29.101",
+  BOOM_WATER_TUBE_RIGHT: "450.29.102",
+  BOOM_AIR_TUBE_LEFT: "450.29.103",
+  BOOM_AIR_TUBE_RIGHT: "450.29.104",
+  BOOM_POWER_CABLE_LEFT: "450.29.105",
+  BOOM_SIGNAL_CABLE_LEFT: "450.29.106",
+  BOOM_POWER_CABLE_RIGHT: "450.29.107",
+  BOOM_SIGNAL_CABLE_RIGHT: "450.29.108",
+  BOOM_PROFINET_CABLE_LEFT: "450.29.109",
+  BOOM_PROFINET_CABLE_RIGHT: "450.29.110",
 } as const satisfies Record<string, string>;
 
 const usesStraightShelf = (config: GeneralBOMConfig): boolean => {
@@ -37,6 +48,21 @@ const usesShelf = (config: GeneralBOMConfig): boolean => {
 
 const usesEnergyChain = (config: GeneralBOMConfig): boolean => {
   return config.supply_type === "ENERGY_CHAIN";
+};
+
+const needsAir = (config: GeneralBOMConfig): boolean => {
+  return (
+    config.has_foam ||
+    (config.has_omz_pump && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS")
+  );
+};
+
+const needsProfinet = (config: GeneralBOMConfig): boolean => {
+  return (
+    config.touch_pos === "EXTERNAL" ||
+    config.touch_qty >= 2 ||
+    config.has_itecoweb
+  );
 };
 
 const hasDoubleWaterSupply = (config: GeneralBOMConfig): boolean => {
@@ -176,5 +202,66 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [usesEnergyChain, (config) => config.supply_side === "RIGHT"],
     qty: 1,
     _description: "Reinforced shelf (R)",
+  },
+  // Boom tubes & cables
+  {
+    pn: PART_NUMBERS.BOOM_WATER_TUBE_LEFT,
+    conditions: [usesBoom, (config) => config.supply_side === "LEFT"],
+    qty: 1,
+    _description: 'Water tube 1" for boom (left post)',
+  },
+  {
+    pn: PART_NUMBERS.BOOM_WATER_TUBE_RIGHT,
+    conditions: [usesBoom, (config) => config.supply_side === "RIGHT"],
+    qty: 1,
+    _description: 'Water tube 1" for boom (right post)',
+  },
+  {
+    pn: PART_NUMBERS.BOOM_AIR_TUBE_LEFT,
+    conditions: [usesBoom, (config) => config.supply_side === "LEFT", needsAir],
+    qty: 1,
+    _description: "Air tube for boom (left post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_AIR_TUBE_RIGHT,
+    conditions: [usesBoom, (config) => config.supply_side === "RIGHT", needsAir],
+    qty: 1,
+    _description: "Air tube for boom (right post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_POWER_CABLE_LEFT,
+    conditions: [usesBoom, (config) => config.supply_side === "LEFT"],
+    qty: 1,
+    _description: "Power cable 5G2.5 for boom (left post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_SIGNAL_CABLE_LEFT,
+    conditions: [usesBoom, (config) => config.supply_side === "LEFT"],
+    qty: 1,
+    _description: "Signal cable 12G1 for boom (left post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_POWER_CABLE_RIGHT,
+    conditions: [usesBoom, (config) => config.supply_side === "RIGHT"],
+    qty: 1,
+    _description: "Power cable 5G2.5 for boom (right post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_SIGNAL_CABLE_RIGHT,
+    conditions: [usesBoom, (config) => config.supply_side === "RIGHT"],
+    qty: 1,
+    _description: "Signal cable 12G1 for boom (right post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_PROFINET_CABLE_LEFT,
+    conditions: [usesBoom, (config) => config.supply_side === "LEFT", needsProfinet],
+    qty: 1,
+    _description: "Profinet cable for boom (left post)",
+  },
+  {
+    pn: PART_NUMBERS.BOOM_PROFINET_CABLE_RIGHT,
+    conditions: [usesBoom, (config) => config.supply_side === "RIGHT", needsProfinet],
+    qty: 1,
+    _description: "Profinet cable for boom (right post)",
   },
 ];
