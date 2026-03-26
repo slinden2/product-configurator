@@ -14,8 +14,8 @@ const PART_NUMBERS = {
   FESTOON_LINE_WITH_LONG_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST: "1100.300.052",
   HP_LANCE_ASSY: "1100.300.081",
   DETERGENT_LANCE_ASSY: "1100.300.082",
-  HP_LANCE_ASSY_WEEPING: "LT-IDRO-P", // TODO Add selections in front
-  DETERGENT_LANCE_ASSY_WEEPING: "LT-DET-P", // TODO Add selections in front
+  HP_LANCE_ASSY_WEEPING: "1100.300.083", // TODO Add selections in the form
+  DETERGENT_LANCE_ASSY_WEEPING: "1100.300.084", // TODO Add selections in the form 
   HOSE_REEL_ASSY: "1100.300.071",
   HOSE_REEL_ASSY_FOR_POST_PANEL_READY: "1100.300.072",
   SIDE_PANEL_ASSY: "1100.300.021",
@@ -36,6 +36,20 @@ const PART_NUMBERS = {
   EC_R1_1_TUBE: "9000.530.038",
   EC_R2_1_TUBE: "9000.530.034",
   EC_R2_34_INOX_TUBE: "9000.525.015",
+  // Pressure washer stuff
+  PW_21L_150BAR: "510.12.001", // TODO Add rules for this
+  PW_21L_200BAR: "510.12.003", // TODO Add rules for this
+  PW_INLET_OUTLET_W_ANTIFREEZE: "1100.062.001", // TODO Add rules for this
+  PW_INLET_OUTLET_WO_ANTIFREEZE: "1100.062.002", // TODO Add rules for this
+  PW_INLET_OUTLET_W_ANTIFREEZE_WO_P_RELEASE: "1100.062.003", // TODO Add rules for this
+  PW_INLET_OUTLET_WO_ANTIFREEZE_WO_P_RELEASE: "1100.062.004", // TODO Add rules for this
+  PW_INLET_OUTLET_W_MANUAL_ANTIFREEZE: "1100.062.005", // TODO Add rules for this
+  PW_ELECTRIC_PANEL_1PW_WO_P_RELEASE: "890.03.001", // TODO Add rules for this
+  PW_ELECTRIC_PANEL_2PW_WO_P_RELEASE: "890.03.002", // TODO Add rules for this
+  PW_ELECTRIC_PANEL_1PW_W_P_RELEASE: "890.03.021", // TODO Add rules for this
+  PW_ELECTRIC_PANEL_2PW_W_P_RELEASE: "890.03.022", // TODO Add rules for this
+  PW_MUSHROOM_BUTTON_ASSY: "1100.055.011", // TODO Add rules for this
+
 } as const satisfies Record<string, string>;
 
 const hasEnergyChain = (config: WashBay & WithSupplyData) =>

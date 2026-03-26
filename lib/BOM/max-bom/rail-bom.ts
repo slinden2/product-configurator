@@ -5,9 +5,13 @@ const PART_NUMBERS = {
   DOWELED_RAIL_TERMINALS: "450.45.031",
   DOWELED_RAILS_1M: "450.45.030",
   DOWELED_RAILS_3M: "450.45.035",
-  WELDED_RAIL_TERMINALS: "450.46.032",
-  WELDED_RAILS_1M: "450.46.030",
-  WELDED_RAILS_3M: "450.46.031",
+  WELDED_RECESSED_RAIL_TERMINALS: "450.46.032",
+  WELDED_RECESSED_RAILS_1M: "450.46.030",
+  WELDED_RECESSED_RAILS_3M: "450.46.031",
+  WELDED_RAIL_TERMINALS: "450.49.031", // TODO Add option for this in the config form
+  WELDED_RAILS_1M: "450.49.030", // TODO Add option for this in the config form
+  WELDED_RAILS_3M: "450.49.035", // TODO Add option for this in the config form
+  SHIM_KIT_FOR_RECESSED_RAILS: "450.35.011", // TODO Add rules for this
   PROXIMITY_PLATES: "450.35.010",
 } as const satisfies Record<string, string>;
 
@@ -43,13 +47,13 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Dowelled rail 1m",
   },
   {
-    pn: PART_NUMBERS.WELDED_RAIL_TERMINALS,
+    pn: PART_NUMBERS.WELDED_RECESSED_RAIL_TERMINALS,
     conditions: [(config) => config.rail_type === "WELDED"],
     qty: 1,
     _description: "Welded rail terminals",
   },
   {
-    pn: PART_NUMBERS.WELDED_RAILS_3M,
+    pn: PART_NUMBERS.WELDED_RECESSED_RAILS_3M,
     conditions: [
       (config) => config.rail_type === "WELDED",
       (config) => config.rail_length > 7,
@@ -58,7 +62,7 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Welded rail 3m",
   },
   {
-    pn: PART_NUMBERS.WELDED_RAILS_1M,
+    pn: PART_NUMBERS.WELDED_RECESSED_RAILS_1M,
     conditions: [(config) => config.rail_type === "WELDED"],
     qty: calculate1mRailQty,
     _description: "Welded rail 1m",

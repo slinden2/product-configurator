@@ -11,9 +11,8 @@ const PART_NUMBERS = {
   LATERAL_PREWASH_BARS: "450.36.004",
   LATERAL_RINSE_BARS: "450.36.005",
   LOW_PREWASH_BARS: "450.36.006",
-  LOW_POSTERIOR_PREWASH_BARS: "450.36.008", // TODO To be added in Excel or add form validation rules regarding this option
-  PREWASH_ARCH_7_NOZZLES: "NO_PN",
-  POSTERIOR_LATERAL_PREWASH_BARS_7_NOZZLES: "450.36.009",
+  PREWASH_ARCH_2_CHEMICALS: "450.36.007",
+  POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS: "450.36.008",
   FLOW_SWITCH: "450.36.060",
   FLOW_SWITCH_INOX: "450.36.060IN", // TODO To be added in BOM.
   RINSE_SOLENOIDS_PREWASH_ONBOARD: "450.36.070",
@@ -122,32 +121,20 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Lateral prewash bars",
   },
   {
-    pn: PART_NUMBERS.LOW_PREWASH_BARS,
-    conditions: [hasTwoChemicals, (config) => !hasChemicalRoofBar(config)],
-    qty: 1,
-    _description: "Low prewash bars",
-  },
-  {
-    pn: PART_NUMBERS.LOW_POSTERIOR_PREWASH_BARS,
-    conditions: [hasTwoChemicals, hasChemicalRoofBar],
-    qty: 1,
-    _description: "Low posterior prewash bars",
-  },
-  {
-    pn: PART_NUMBERS.PREWASH_ARCH_7_NOZZLES,
+    pn: PART_NUMBERS.PREWASH_ARCH_2_CHEMICALS,
     conditions: [
       (config) => config.brush_qty !== 2,
       hasTwoChemicals,
       (config) => !hasChemicalRoofBar(config),
     ],
     qty: 1,
-    _description: "Prewash Arch with 7 nozzles",
+    _description: "Prewash Arch for dual chemical",
   },
   {
-    pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS_7_NOZZLES,
+    pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS,
     conditions: [hasTwoChemicals, hasChemicalRoofBar],
     qty: 1,
-    _description: "Posterior prewash bars with 7 nozzles",
+    _description: "Posterior lateral prewash bars for dual chemical",
   },
   {
     pn: PART_NUMBERS.FLOW_SWITCH,

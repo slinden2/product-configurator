@@ -16,6 +16,7 @@ const PART_NUMBERS = {
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
+  EXT_EMERGENCY_STOP_ASSY: "1100.055.007" // TODO Add option for this in the config form
 } as const satisfies Record<string, string>;
 
 const uses1ExternalTouch = (config: GeneralBOMConfig): boolean => {

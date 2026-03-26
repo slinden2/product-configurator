@@ -12,6 +12,7 @@ const PART_NUMBERS = {
   ELECTRIC_PANEL_22KW: "890.02.002",
   INV_3KW_200L: "1100.024.053",
   INV_3KW_250L: "1100.024.054",
+  INV_4KW_400L: "1100.024.057",
   OUTLET_DOSATRON: "1100.024.055",
   OUTLET_PW: "1100.024.056",
 } as const satisfies Record<string, string>;
