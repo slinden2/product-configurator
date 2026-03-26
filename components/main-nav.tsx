@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
 import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -45,25 +46,30 @@ const MainNav = ({ user }: MainNavProps) => {
   ];
 
   return (
-    <div className="flex items-center justify-between w-full">
-      {/* Left side: Standard Nav for Medium+ screens */}
-      <nav className="hidden sm:flex items-center space-x-6">
-        {routes.map((route) => (
-          <Link
-            key={route.href}
-            href={route.href}
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              route.active
-                ? "text-primary font-semibold"
-                : "text-muted-foreground"
-            )}>
-            {route.label}
-          </Link>
-        ))}
-      </nav>
+    <div className="relative flex items-center justify-between w-full">
+      {/* Desktop: Logo + Nav */}
+      <div className="hidden sm:flex items-center gap-8">
+        <Link href="/">
+          <Image src="/iteco-logo.svg" alt="Iteco Logo" width={278} height={96} className="h-12 w-auto" />
+        </Link>
+        <nav className="flex items-center space-x-6">
+          {routes.map((route) => (
+            <Link
+              key={route.href}
+              href={route.href}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                route.active
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground"
+              )}>
+              {route.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
 
-      {/* Left side: Mobile Menu Button for Small screens */}
+      {/* Mobile: Hamburger (left) */}
       <div className="flex sm:hidden">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -73,7 +79,7 @@ const MainNav = ({ user }: MainNavProps) => {
           </SheetTrigger>
           <SheetContent side="left">
             <SheetHeader className="mb-4 border-b pb-4">
-              {/* TODO: Add logo */}
+              <Image src="/iteco-logo.svg" alt="Iteco Logo" width={278} height={96} className="h-10 w-auto" />
               <SheetTitle className="text-left">Menu</SheetTitle>
               <SheetDescription className="text-left">
                 Product Configurator
@@ -96,13 +102,27 @@ const MainNav = ({ user }: MainNavProps) => {
                 </SheetClose>
               ))}
             </nav>
+            <div className="mt-auto border-t pt-4">
+              {user ? (
+                <Logout />
+              ) : (
+                <Button asChild className="w-full">
+                  <Link href="/signup">Registrati</Link>
+                </Button>
+              )}
+            </div>
           </SheetContent>
         </Sheet>
       </div>
 
+      {/* Mobile: Centered Logo */}
+      <Link href="/" className="absolute left-1/2 -translate-x-1/2 sm:hidden">
+        <Image src="/iteco-logo.svg" alt="Iteco Logo" width={278} height={96} className="h-10 w-auto" />
+      </Link>
+
       <div className="flex items-center space-x-4">
         {user && (
-          <p className="hidden xs:block text-sm text-muted-foreground">
+          <p className="hidden md:block text-sm text-muted-foreground">
             {user.email}
           </p>
         )}
@@ -121,13 +141,15 @@ const MainNav = ({ user }: MainNavProps) => {
             <span className="h-5 w-5" />
           )}
         </Button>
-        {user ? (
-          <Logout />
-        ) : (
-          <Button asChild>
-            <Link href="/signup">Registrati</Link>
-          </Button>
-        )}
+        <div className="hidden sm:block">
+          {user ? (
+            <Logout />
+          ) : (
+            <Button asChild>
+              <Link href="/signup">Registrati</Link>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
