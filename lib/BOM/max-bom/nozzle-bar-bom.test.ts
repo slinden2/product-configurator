@@ -17,6 +17,7 @@ function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig
     acid_pump_pos: null,
     has_wax_pump: false,
     has_itecoweb: false,
+    machine_type: "STD",
     has_chemical_roof_bar: false,
     pump_outlet_omz: null,
     has_omz_pump: false,
@@ -60,6 +61,20 @@ const PNS = {
   FITTINGS_FOR_WAX_PUMP: "450.36.076",
   FITTINGS_FOR_RINSE_WITHOUT_PREWASH: "450.36.077",
   FITTINGS_FOR_DOUBLE_SUPPLY: "450.36.078",
+  // INOX
+  PREWASH_ARCH_INOX: "450.36.000IN",
+  RINSE_ARCH_INOX: "450.36.001IN",
+  POSTERIOR_LATERAL_PREWASH_BARS_INOX: "450.36.002IN",
+  FLOW_SWITCH_INOX: "450.36.060IN",
+  RINSE_SOLENOIDS_PREWASH_ONBOARD_INOX: "450.36.070IN",
+  RINSE_SOLENOID_PREWASH_WASH_BAY_INOX: "450.36.071IN",
+  PREWASH_SOLENOID_PREWASH_ONBOARD_INOX: "450.36.072IN",
+  PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX: "450.36.073IN",
+  FITTINGS_FOR_PREWASH_WASH_BAY_INOX: "450.36.074IN",
+  PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY_INOX: "450.36.075IN",
+  FITTINGS_FOR_WAX_PUMP_INOX: "450.36.076IN",
+  FITTINGS_FOR_RINSE_WITHOUT_PREWASH_INOX: "450.36.077IN",
+  FITTINGS_FOR_DOUBLE_SUPPLY_INOX: "450.36.078IN",
 };
 
 describe("nozzleBarBOM — rinse arch/bars", () => {
@@ -282,5 +297,146 @@ describe("nozzleBarBOM — other", () => {
     const config = makeConfig({ water_2_type: "RECYCLED", supply_type: "ENERGY_CHAIN" });
     expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY);
   });
+});
 
+describe("nozzleBarBOM — OMZ uses INOX variants", () => {
+  test("OMZ + brush_qty=3 → rinse arch INOX (not STD)", () => {
+    const config = makeConfig({ brush_qty: 3, machine_type: "OMZ" });
+    expect(pns(config)).toContain(PNS.RINSE_ARCH_INOX);
+    expect(pns(config)).not.toContain(PNS.RINSE_ARCH);
+  });
+
+  test("OMZ + rinse solenoid (prewash onboard) → INOX variant", () => {
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: true,
+      chemical_pump_pos: "ONBOARD",
+      chemical_qty: 1,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.RINSE_SOLENOIDS_PREWASH_ONBOARD_INOX);
+    expect(pns(config)).not.toContain(PNS.RINSE_SOLENOIDS_PREWASH_ONBOARD);
+  });
+
+  test("OMZ + rinse solenoid (prewash wash bay) → INOX variant", () => {
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.RINSE_SOLENOID_PREWASH_WASH_BAY_INOX);
+    expect(pns(config)).not.toContain(PNS.RINSE_SOLENOID_PREWASH_WASH_BAY);
+  });
+
+  test("OMZ + no chemicals → fittings for rinse without prewash INOX", () => {
+    const config = makeConfig({ brush_qty: 2, machine_type: "OMZ" });
+    expect(pns(config)).toContain(PNS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH_INOX);
+    expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH);
+  });
+
+  test("OMZ + 1 chemical, no roof bar → prewash arch INOX", () => {
+    const config = makeConfig({
+      brush_qty: 3,
+      has_chemical_pump: true,
+      chemical_qty: 1,
+      chemical_pump_pos: "ONBOARD",
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.PREWASH_ARCH_INOX);
+    expect(pns(config)).not.toContain(PNS.PREWASH_ARCH);
+  });
+
+  test("OMZ + 1 chemical + chemical roof bar → posterior lateral prewash bars INOX", () => {
+    const config = makeConfig({
+      brush_qty: 3,
+      has_chemical_pump: true,
+      chemical_qty: 1,
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+      has_chemical_roof_bar: true,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS_INOX);
+    expect(pns(config)).not.toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS);
+  });
+
+  test("OMZ + has_itecoweb → flow switch INOX", () => {
+    const config = makeConfig({ has_itecoweb: true, machine_type: "OMZ" });
+    expect(pns(config)).toContain(PNS.FLOW_SWITCH_INOX);
+    expect(pns(config)).not.toContain(PNS.FLOW_SWITCH);
+  });
+
+  test("OMZ + chemical onboard, no roof bar → prewash solenoid INOX (qty=1)", () => {
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: true,
+      chemical_pump_pos: "ONBOARD",
+      chemical_qty: 1,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX);
+    expect(pns(config)).not.toContain(PNS.PREWASH_SOLENOID_PREWASH_ONBOARD);
+    expect(qty(config, PNS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX)).toBe(1);
+  });
+
+  test("OMZ + chemical onboard + chemical roof bar → HP roof bar solenoids INOX", () => {
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: true,
+      chemical_pump_pos: "ONBOARD",
+      chemical_qty: 1,
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+      has_chemical_roof_bar: true,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX);
+    expect(pns(config)).not.toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD);
+  });
+
+  test("OMZ + chemical WASH_BAY, no roof bar → fittings for prewash INOX (qty=1)", () => {
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX);
+    expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_PREWASH_WASH_BAY);
+    expect(qty(config, PNS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX)).toBe(1);
+  });
+
+  test("OMZ + chemical WASH_BAY + chemical roof bar → HP roof bar solenoids wash bay INOX", () => {
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+      has_chemical_roof_bar: true,
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY_INOX);
+    expect(pns(config)).not.toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY);
+  });
+
+  test("OMZ + has_wax_pump → fittings for wax pump INOX", () => {
+    const config = makeConfig({ has_wax_pump: true, machine_type: "OMZ" });
+    expect(pns(config)).toContain(PNS.FITTINGS_FOR_WAX_PUMP_INOX);
+    expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_WAX_PUMP);
+  });
+
+  test("OMZ + double supply → fittings for double supply INOX", () => {
+    const config = makeConfig({
+      water_2_type: "RECYCLED",
+      supply_type: "STRAIGHT_SHELF",
+      machine_type: "OMZ",
+    });
+    expect(pns(config)).toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY_INOX);
+    expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY);
+  });
 });
