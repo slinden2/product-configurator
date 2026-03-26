@@ -48,10 +48,8 @@ const PNS = {
   PREWASH_ARCH_ACID_INOX: "450.36.003IN",
   LATERAL_PREWASH_BARS: "450.36.004",
   LATERAL_RINSE_BARS: "450.36.005",
-  LOW_PREWASH_BARS: "450.36.006",
-  LOW_POSTERIOR_PREWASH_BARS: "450.36.008",
-  PREWASH_ARCH_7_NOZZLES: "NO_PN",
-  POSTERIOR_LATERAL_PREWASH_BARS_7_NOZZLES: "450.36.009",
+  PREWASH_ARCH_2_CHEMICALS: "450.36.007",
+  POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS: "450.36.008",
   FLOW_SWITCH: "450.36.060",
   RINSE_SOLENOIDS_PREWASH_ONBOARD: "450.36.070",
   RINSE_SOLENOID_PREWASH_WASH_BAY: "450.36.071",
@@ -159,19 +157,18 @@ describe("nozzleBarBOM — prewash arch (1 chemical)", () => {
 });
 
 describe("nozzleBarBOM — prewash (2 chemicals)", () => {
-  test("2 chemicals, brush_qty=3, no chemical roof bar → low prewash bars + prewash arch 7 nozzles", () => {
+  test("2 chemicals, brush_qty=3, no chemical roof bar → prewash arch 2 chemicals", () => {
     const config = makeConfig({
       brush_qty: 3,
       has_chemical_pump: true,
       chemical_qty: 2,
       chemical_pump_pos: "ONBOARD",
     });
-    expect(pns(config)).toContain(PNS.LOW_PREWASH_BARS);
-    expect(pns(config)).toContain(PNS.PREWASH_ARCH_7_NOZZLES);
-    expect(pns(config)).not.toContain(PNS.LOW_POSTERIOR_PREWASH_BARS);
+    expect(pns(config)).toContain(PNS.PREWASH_ARCH_2_CHEMICALS);
+    expect(pns(config)).not.toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS);
   });
 
-  test("2 chemicals + chemical roof bar → low posterior prewash bars + 7 nozzles", () => {
+  test("2 chemicals + chemical roof bar → posterior lateral prewash bars 2 chemicals", () => {
     const config = makeConfig({
       brush_qty: 3,
       has_chemical_pump: true,
@@ -180,9 +177,8 @@ describe("nozzleBarBOM — prewash (2 chemicals)", () => {
       pump_outlet_omz: "HP_ROOF_BAR",
       has_chemical_roof_bar: true,
     });
-    expect(pns(config)).toContain(PNS.LOW_POSTERIOR_PREWASH_BARS);
-    expect(pns(config)).toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS_7_NOZZLES);
-    expect(pns(config)).not.toContain(PNS.LOW_PREWASH_BARS);
+    expect(pns(config)).toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS);
+    expect(pns(config)).not.toContain(PNS.PREWASH_ARCH_2_CHEMICALS);
   });
 });
 
