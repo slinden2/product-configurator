@@ -44,15 +44,15 @@ const PART_NUMBERS = {
   HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT: "9000.530.037",
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT: "9000.530.035",
   // OMZ
-  LOW_SPINNER_ASSY_OMZ: "940.10.000", // TODO Add in the BOM rules
-  HIGH_SPINNER_ASSY_OMZ: "940.09.000", // TODO Add in the BOM rules
-  HP_VALVE_ASSY_INOX: "450.50.302", // TODO Add in the BOM rules
-  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ: "9000.525.024", // TODO Add in the BOM rules
-  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT: "9000.525.022", // TODO Add in the BOM rules
-  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ: "9000.525.023", // TODO Add in the BOM rules
-  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT: "9000.525.021", // TODO Add in the BOM rules
-  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ: "9000.525.004", // TODO Add in the BOM rules
-  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT: "9000.525.020", // TODO Add in the BOM rules
+  LOW_SPINNER_ASSY_OMZ: "940.10.000",
+  HIGH_SPINNER_ASSY_OMZ: "940.09.000",
+  HP_VALVE_ASSY_INOX: "450.50.302",
+  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ: "9000.525.024",
+  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT: "9000.525.022",
+  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ: "9000.525.023",
+  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT: "9000.525.021",
+  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ: "9000.525.004",
+  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT: "9000.525.020",
 } as const satisfies Record<string, string>;
 
 const uses15kwPump = (config: GeneralBOMConfig): boolean => config.has_15kw_pump;
@@ -60,6 +60,8 @@ const uses30kwPump = (config: GeneralBOMConfig): boolean => config.has_30kw_pump
 const uses15kwOr30kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_15kw_pump || config.has_30kw_pump;
 const usesOMZPump = (config: GeneralBOMConfig): boolean => config.has_omz_pump;
+const isOMZ = (config: GeneralBOMConfig): boolean =>
+  config.machine_type === "OMZ";
 const usesHPRoofBar = (config: GeneralBOMConfig): boolean => {
   return (
     usesOMZPump(config) &&
@@ -468,5 +470,79 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) => (uses30kwPump(config) ? 2 : 1),
     _description: "Hose from shelf to T fitting (2 spinners) with extension",
+  },
+  // OMZ machine type
+  {
+    pn: PART_NUMBERS.LOW_SPINNER_ASSY_OMZ,
+    conditions: [isOMZ],
+    qty: 1,
+    _description: "Low spinner assembly OMZ",
+  },
+  {
+    pn: PART_NUMBERS.HIGH_SPINNER_ASSY_OMZ,
+    conditions: [isOMZ],
+    qty: 1,
+    _description: "High spinner assembly OMZ",
+  },
+  {
+    pn: PART_NUMBERS.HP_VALVE_ASSY_INOX,
+    conditions: [isOMZ],
+    qty: 1,
+    _description: "HP valve assembly inox OMZ",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ,
+    conditions: [isOMZ, (config) => !config.has_shelf_extension],
+    qty: 1,
+    _description: "Hose from shelf to T fitting (2 spinners) OMZ",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT,
+    conditions: [isOMZ, (config) => config.has_shelf_extension],
+    qty: 1,
+    _description:
+      "Hose from shelf to T fitting (2 spinners) OMZ with extension",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    conditions: [
+      isOMZ,
+      (config) => !config.has_shelf_extension,
+      (config) => config.supply_side === "RIGHT",
+    ],
+    qty: 2,
+    _description: "Hose from right shelf to valve assy (4 spinners) OMZ",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT,
+    conditions: [
+      isOMZ,
+      (config) => config.has_shelf_extension,
+      (config) => config.supply_side === "RIGHT",
+    ],
+    qty: 2,
+    _description:
+      "Hose from right shelf to valve assy (4 spinners) OMZ with extension",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    conditions: [
+      isOMZ,
+      (config) => !config.has_shelf_extension,
+      (config) => config.supply_side === "LEFT",
+    ],
+    qty: 2,
+    _description: "Hose from left shelf to valve assy (4 spinners) OMZ",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT,
+    conditions: [
+      isOMZ,
+      (config) => config.has_shelf_extension,
+      (config) => config.supply_side === "LEFT",
+    ],
+    qty: 2,
+    _description:
+      "Hose from left shelf to valve assy (4 spinners) OMZ with extension",
   },
 ];

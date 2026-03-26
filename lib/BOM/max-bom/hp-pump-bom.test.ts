@@ -18,6 +18,7 @@ function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig
     has_omz_pump: false,
     pump_outlet_omz: null,
     has_antifreeze: false,
+    machine_type: "STD",
     has_chemical_roof_bar: false,
     chassis_wash_sensor_type: null,
     supply_side: "LEFT",
@@ -76,6 +77,16 @@ const PNS = {
   HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT: "9000.530.036",
   HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT: "9000.530.037",
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT: "9000.530.035",
+  // OMZ
+  LOW_SPINNER_ASSY_OMZ: "940.10.000",
+  HIGH_SPINNER_ASSY_OMZ: "940.09.000",
+  HP_VALVE_ASSY_INOX: "450.50.302",
+  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ: "9000.525.024",
+  HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT: "9000.525.022",
+  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ: "9000.525.023",
+  HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT: "9000.525.021",
+  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ: "9000.525.004",
+  HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT: "9000.525.020",
 };
 
 describe("hpPumpBOM — pump selection", () => {
@@ -338,5 +349,61 @@ describe("hpPumpBOM — hoses for spinners (with shelf extension)", () => {
     });
     expect(pns(config)).toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT);
     expect(pns(config)).not.toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS);
+  });
+});
+
+describe("hpPumpBOM — OMZ machine type components", () => {
+  test("machine_type OMZ → includes spinner assemblies and valve", () => {
+    const config = makeConfig({ machine_type: "OMZ" });
+    expect(pns(config)).toContain(PNS.LOW_SPINNER_ASSY_OMZ);
+    expect(pns(config)).toContain(PNS.HIGH_SPINNER_ASSY_OMZ);
+    expect(pns(config)).toContain(PNS.HP_VALVE_ASSY_INOX);
+  });
+
+  test("machine_type STD → excludes OMZ parts", () => {
+    const config = makeConfig({ machine_type: "STD" });
+    expect(pns(config)).not.toContain(PNS.LOW_SPINNER_ASSY_OMZ);
+    expect(pns(config)).not.toContain(PNS.HIGH_SPINNER_ASSY_OMZ);
+    expect(pns(config)).not.toContain(PNS.HP_VALVE_ASSY_INOX);
+  });
+
+  test("OMZ + !has_shelf_extension → T-fitting hose without extension", () => {
+    const config = makeConfig({ machine_type: "OMZ", has_shelf_extension: false });
+    expect(pns(config)).toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ);
+    expect(pns(config)).not.toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT);
+  });
+
+  test("OMZ + has_shelf_extension → T-fitting hose with extension", () => {
+    const config = makeConfig({ machine_type: "OMZ", has_shelf_extension: true });
+    expect(pns(config)).toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT);
+    expect(pns(config)).not.toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ);
+  });
+
+  test("OMZ + LEFT + !has_shelf_extension → left hose (qty=2)", () => {
+    const config = makeConfig({ machine_type: "OMZ", supply_side: "LEFT", has_shelf_extension: false });
+    expect(pns(config)).toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
+    expect(pns(config)).not.toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
+    expect(qty(config, PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ)).toBe(2);
+  });
+
+  test("OMZ + LEFT + has_shelf_extension → left hose with extension (qty=2)", () => {
+    const config = makeConfig({ machine_type: "OMZ", supply_side: "LEFT", has_shelf_extension: true });
+    expect(pns(config)).toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT);
+    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
+    expect(qty(config, PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT)).toBe(2);
+  });
+
+  test("OMZ + RIGHT + !has_shelf_extension → right hose (qty=2)", () => {
+    const config = makeConfig({ machine_type: "OMZ", supply_side: "RIGHT", has_shelf_extension: false });
+    expect(pns(config)).toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
+    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
+    expect(qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ)).toBe(2);
+  });
+
+  test("OMZ + RIGHT + has_shelf_extension → right hose with extension (qty=2)", () => {
+    const config = makeConfig({ machine_type: "OMZ", supply_side: "RIGHT", has_shelf_extension: true });
+    expect(pns(config)).toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT);
+    expect(pns(config)).not.toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
+    expect(qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT)).toBe(2);
   });
 });
