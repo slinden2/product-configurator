@@ -15,6 +15,7 @@ type MappedConfigData = Partial<typeof configurations.$inferSelect>;
 function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
   return {
     name: values.name,
+    machine_type: values.machine_type,
     description: values.description,
     sales_notes: values.sales_notes,
     engineering_notes: values.engineering_notes,

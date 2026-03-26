@@ -6,10 +6,11 @@ import { railSchema } from "@/validation/configuration/rail-schema";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
 import { z } from "zod";
-import { zodEnums } from "./configuration";
+import { MachineTypeEnum } from "./configuration/general-schema";
 
 export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
+  machine_type: MachineTypeEnum,
   description: z.string().default(""),
   sales_notes: z.string().default(""),
   engineering_notes: z.string().default(""),
@@ -80,6 +81,7 @@ export type SelectConfigSchema = z.infer<typeof selectConfigSchema>;
 
 export const configDefaults: ConfigSchema = {
   name: "",
+  machine_type: "STD",
   description: "",
   sales_notes: "",
   engineering_notes: "",

@@ -5,6 +5,7 @@ import { WaterTank, waterTanks } from "@/db/schemas/water-tanks";
 import {
   BrushColors,
   BrushTypes,
+  MachineTypes,
   ChassisWashSensorTypes,
   ChemPumpPos,
   ConfigurationStatus,
@@ -40,6 +41,7 @@ export type ConfigurationWithWaterTanksAndWashBays = Configuration & {
   wash_bays: WashBay[];
 };
 
+export const machineTypeEnum = pgEnum("machine_type", MachineTypes);
 export const brushTypeEnum = pgEnum("brush_type", BrushTypes);
 export const brushColorEnum = pgEnum("brush_color", BrushColors);
 export const chemPumpPosEnum = pgEnum("chemical_pump_pos", ChemPumpPos);
@@ -76,6 +78,7 @@ export const configurationStatusEnum = pgEnum(
 export const configurations = pgTable("configurations", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),
+  machine_type: machineTypeEnum("machine_type").notNull().default("STD"),
   description: varchar({ length: 255 }).notNull().default(""),
   brush_qty: integer().notNull(),
   brush_type: brushTypeEnum(),

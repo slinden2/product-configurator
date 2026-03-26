@@ -51,6 +51,7 @@ import { MSG } from "@/lib/messages";
 function makeValidFormData() {
   return {
     name: "Test Config",
+    machine_type: "STD",
     description: "",
     brush_qty: 0,
     brush_type: undefined,

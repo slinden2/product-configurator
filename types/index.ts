@@ -1,3 +1,6 @@
+export const MachineTypes = ["STD", "OMZ"] as const;
+export type MachineType = (typeof MachineTypes)[number];
+
 export const BrushTypes = ["THREAD", "MIXED", "CARLITE"] as const;
 export type BrushType = (typeof BrushTypes)[number];
 

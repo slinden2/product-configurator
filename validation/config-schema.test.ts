@@ -5,6 +5,7 @@ import { describe, test, expect } from "vitest";
 const validBase = {
   // Base
   name: "Test Config",
+  machine_type: "STD",
   description: "",
   // Brush
   brush_qty: 0,

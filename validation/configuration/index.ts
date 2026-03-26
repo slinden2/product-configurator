@@ -1,5 +1,9 @@
 import { SelectOptionGroup } from "@/types";
 import {
+  MachineTypeEnum,
+  machineTypeOpts,
+} from "@/validation/configuration/general-schema";
+import {
   BrushColorEnum,
   BrushTypeEnum,
   brushColors,
@@ -61,6 +65,7 @@ import {
 import { waterTankOpts } from "@/validation/water-tank-schema";
 
 export const zodEnums = {
+  MachineTypeEnum,
   BrushTypeEnum,
   BrushColorEnum,
   ChemicalPumpPosEnum,
@@ -82,6 +87,7 @@ export const zodEnums = {
 };
 
 export const selectFieldOptions: SelectOptionGroup = {
+  machineTypeOpts,
   brushNums,
   brushTypes,
   brushColors,

@@ -26,6 +26,7 @@ export function makeValidConfig(overrides: Partial<UpdateConfigSchema> = {}): Up
   return {
     user_id: "test-user-123",
     name: "Test Config",
+    machine_type: "STD",
     description: "",
     brush_qty: 0,
     brush_type: undefined,
@@ -92,7 +93,7 @@ export function renderWithConfigFormProvider(
     getValues = form.getValues;
     return (
       <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(() => {})}>
+        <form onSubmit={form.handleSubmit(() => { })}>
           {children}
         </form>
       </FormProvider>
