@@ -392,6 +392,95 @@ describe("SubRecordForm — WaterTankForm", () => {
         expect(onSaved).toHaveBeenCalledWith("tank-10");
       });
     });
+
+    test("notifies parent dirty state is false after successful save", async () => {
+      const onDirtyChange = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={onDirtyChange}
+          onSaved={vi.fn()}
+        />
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("tank-10", true);
+      });
+
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("tank-10", false);
+      });
+    });
+
+    test("notifies parent dirty state is false when discarding via Annulla", async () => {
+      const onDirtyChange = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={onDirtyChange}
+        />
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("tank-10", true);
+      });
+
+      await userEvent.click(screen.getByRole("button", { name: /annulla/i }));
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("tank-10", false);
+      });
+    });
+
+    test("does not call onSaved when server action fails", async () => {
+      mockEditWaterTank.mockResolvedValueOnce({ success: false, error: "Errore server" });
+      const onSaved = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={vi.fn()}
+          onSaved={onSaved}
+        />
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Errore server");
+      });
+      expect(onSaved).not.toHaveBeenCalled();
+    });
   });
 });
 

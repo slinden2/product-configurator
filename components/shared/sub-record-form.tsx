@@ -113,6 +113,12 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     if (formKey) onDirtyChange?.(formKey, formState.isDirty);
   }, [formState.isDirty, formKey, onDirtyChange]);
 
+  useEffect(() => {
+    if (formState.isSubmitSuccessful) {
+      reset(form.getValues());
+    }
+  }, [formState.isSubmitSuccessful, reset, form]);
+
   // --- Derived State ---
   const isEditing = !!entityData?.id;
   const isSaveOrCancelDisabled =
@@ -133,7 +139,10 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
             MSG.toast.entityUpdated(entityName, entityIndex)
           );
           reset(values);
-          if (formKey) onSaved?.(formKey);
+          if (formKey) {
+            onSaved?.(formKey);
+            onDirtyChange?.(formKey, false);
+          }
         } else {
           const result = await insertAction(parentId, values);
           if (!result.success) {
@@ -170,6 +179,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       entityName,
       formKey,
       onSaved,
+      onDirtyChange,
     ]
   );
 
@@ -249,11 +259,12 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
 
   const handleCancel = useCallback(() => {
     reset(entityData ?? entityDefaults);
+    if (formKey) onDirtyChange?.(formKey, false);
     // Hide add form if cancelling add mode
     if (!isEditing) {
       onSaveSuccess(entityName);
     }
-  }, [reset, entityData, entityDefaults, isEditing, onSaveSuccess, entityName]);
+  }, [reset, entityData, entityDefaults, isEditing, onSaveSuccess, entityName, formKey, onDirtyChange]);
 
   return (
     <div>

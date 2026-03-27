@@ -387,5 +387,99 @@ describe("ConfigForm", () => {
         expect(onSaved).toHaveBeenCalledWith("config-1");
       });
     });
+
+    test("notifies parent dirty state is false after successful save", async () => {
+      const onDirtyChange = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onDirtyChange={onDirtyChange}
+          onSaved={vi.fn()}
+        />
+      );
+
+      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      await userEvent.type(nameInput, " modificato");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("config-1", true);
+      });
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i })
+      );
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("config-1", false);
+      });
+    });
+
+    test("notifies parent dirty state is false when discarding via Annulla", async () => {
+      const onDirtyChange = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onDirtyChange={onDirtyChange}
+        />
+      );
+
+      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      await userEvent.type(nameInput, " modificato");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("config-1", true);
+      });
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /annulla/i })
+      );
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("config-1", false);
+      });
+    });
+
+    test("does not call onSaved when server action fails", async () => {
+      mockEditAction.mockResolvedValueOnce({ success: false, error: "Errore server" });
+      const onSaved = vi.fn();
+      const onDirtyChange = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onDirtyChange={onDirtyChange}
+          onSaved={onSaved}
+        />
+      );
+
+      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      await userEvent.type(nameInput, " modificato");
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i })
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Errore server");
+      });
+      expect(onSaved).not.toHaveBeenCalled();
+    });
   });
 });

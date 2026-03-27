@@ -65,6 +65,12 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
     if (formKey) onDirtyChange?.(formKey, form.formState.isDirty);
   }, [form.formState.isDirty, formKey, onDirtyChange]);
 
+  useEffect(() => {
+    if (form.formState.isSubmitSuccessful) {
+      form.reset(form.getValues());
+    }
+  }, [form.formState.isSubmitSuccessful, form]);
+
   async function executeSubmit(values: ConfigSchema) {
     try {
       setIsSubmitting(true);
@@ -76,14 +82,19 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           return;
         }
         const result = await editConfigurationAction(id, configuration.user_id, values);
-        if (!result.success) {
+        if (result.success) {
+          toast.success(MSG.toast.configUpdated);
+
+          form.reset(values);
+
+          if (formKey) {
+            onSaved?.(formKey);
+            // Explicitly notify the parent that the form is no longer dirty
+            onDirtyChange?.(formKey, false);
+          }
+        } else {
           toast.error(result.error);
-          setIsSubmitting(false);
-          return;
         }
-        toast.success(MSG.toast.configUpdated);
-        form.reset(values);
-        if (formKey) onSaved?.(formKey);
       } else {
         const result = await insertConfigurationAction(values);
         if (!result.success) {
@@ -169,9 +180,13 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
               <div className="flex gap-4">
                 {!isNewConfiguration && <BackButton fallbackPath={"/configurations"} />}
                 <Button
+                  type="button"
                   className="ml-auto"
                   variant="destructive"
-                  onClick={() => form.reset()}
+                  onClick={() => {
+                    form.reset()
+                    if (formKey) onDirtyChange?.(formKey, false);
+                  }}
                   disabled={formIsDisabled}
                 >
                   Annulla
