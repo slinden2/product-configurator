@@ -318,7 +318,13 @@ const FormContainer = ({
         </TabsContent>
       </Tabs>
 
-      <ResponsiveModal open={isUnsavedModalOpen} onOpenChange={setIsUnsavedModalOpen}>
+      <ResponsiveModal
+        open={isUnsavedModalOpen}
+        onOpenChange={(open) => {
+          setIsUnsavedModalOpen(open);
+          if (!open) setPendingTab(null);
+        }}
+      >
         <ResponsiveModalContent side="bottom">
           <ResponsiveModalHeader className="mb-4">
             <ResponsiveModalTitle>Modifiche non salvate</ResponsiveModalTitle>
