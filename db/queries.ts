@@ -178,11 +178,12 @@ export const insertConfiguration = async (
 
 export const updateConfiguration = async (
   confId: number,
-  configurationData: UpdateConfigSchema
+  configurationData: UpdateConfigSchema,
+  txOrDb: DatabaseType | TransactionType = db
 ): Promise<{ id: number }> => {
   const setData = transformConfigToDbUpdate(configurationData);
 
-  const [updatedConfiguration] = await db
+  const [updatedConfiguration] = await txOrDb
     .update(configurations)
     .set(setData)
     .where(eq(configurations.id, confId))
@@ -407,8 +408,11 @@ export async function getEngineeringBomItems(confId: number) {
   });
 }
 
-export async function hasEngineeringBom(confId: number) {
-  const result = await db
+export async function hasEngineeringBom(
+  confId: number,
+  txOrDb: DatabaseType | TransactionType = db
+) {
+  const result = await txOrDb
     .select({ count: sql<number>`count(*)::int` })
     .from(engineeringBomItems)
     .where(eq(engineeringBomItems.configuration_id, confId));
@@ -429,10 +433,34 @@ export async function insertEngineeringBomItems(
  * Individual item removal uses soft delete (is_deleted toggle) so the UI
  * can display removed items with visual distinction and allow restoration.
  */
-export async function deleteAllEngineeringBomItems(confId: number) {
-  await db
+export async function deleteAllEngineeringBomItems(
+  confId: number,
+  txOrDb: DatabaseType | TransactionType = db
+) {
+  await txOrDb
     .delete(engineeringBomItems)
     .where(eq(engineeringBomItems.configuration_id, confId));
+}
+
+export async function resetWashBayEnergyChainFields(
+  configurationId: number,
+  txOrDb: DatabaseType | TransactionType = db
+) {
+  await txOrDb
+    .update(washBays)
+    .set({
+      energy_chain_width: null,
+      has_shelf_extension: false,
+      ec_signal_cable_qty: null,
+      ec_profinet_cable_qty: null,
+      ec_water_1_tube_qty: null,
+      ec_water_34_tube_qty: null,
+      ec_r1_1_tube_qty: null,
+      ec_r2_1_tube_qty: null,
+      ec_r2_34_inox_tube_qty: null,
+      ec_air_tube_qty: null,
+    })
+    .where(eq(washBays.configuration_id, configurationId));
 }
 
 export async function getConfigurationStatusCounts() {

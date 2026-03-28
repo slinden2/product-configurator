@@ -7,6 +7,7 @@ const mockGetConfigurationWithTanksAndBays = vi.fn();
 const mockUpdateConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
+const mockResetWashBayEnergyChainFields = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -17,6 +18,8 @@ vi.mock("@/db/queries", () => ({
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
+  resetWashBayEnergyChainFields: (...args: unknown[]) =>
+    mockResetWashBayEnergyChainFields(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -24,6 +27,15 @@ vi.mock("@/db/queries", () => ({
       this.name = "QueryError";
       this.errorCode = errorCode;
     }
+  },
+}));
+
+const mockTx = {};
+vi.mock("@/db", () => ({
+  db: {
+    transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) =>
+      cb(mockTx)
+    ),
   },
 }));
 
@@ -48,7 +60,7 @@ import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
-function makeValidFormData() {
+function makeValidFormData(overrides: Record<string, unknown> = {}) {
   return {
     name: "Test Config",
     machine_type: "STD",
@@ -94,6 +106,7 @@ function makeValidFormData() {
     has_card_reader: false,
     card_qty: 0,
     is_fast: false,
+    ...overrides,
   };
 }
 
@@ -106,6 +119,7 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
     user_id: OWNER_ID,
     status: "DRAFT",
     name: "Test",
+    supply_type: "STRAIGHT_SHELF",
     ...overrides,
   };
 }
@@ -124,6 +138,7 @@ describe("editConfigurationAction", () => {
     mockUpdateConfiguration.mockResolvedValue({ id: CONF_ID });
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
+    mockResetWashBayEnergyChainFields.mockResolvedValue(undefined);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
@@ -289,7 +304,10 @@ describe("editConfigurationAction", () => {
       makeValidFormData()
     );
     expect(result.success).toBe(true);
-    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(CONF_ID);
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx
+    );
   });
 
   test("does NOT delete engineering BOM when it does not exist", async () => {
@@ -313,5 +331,77 @@ describe("editConfigurationAction", () => {
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurations/bom/${CONF_ID}`
     );
+  });
+
+  // --- Energy chain field reset ---
+
+  test("resets wash bay energy chain fields when supply_type changes from ENERGY_CHAIN", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN" })
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      OWNER_ID,
+      makeValidFormData({ supply_type: "STRAIGHT_SHELF" })
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayEnergyChainFields).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx
+    );
+  });
+
+  test("resets wash bay energy chain fields when supply_type changes from ENERGY_CHAIN to BOOM", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN" })
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      OWNER_ID,
+      makeValidFormData({
+        supply_type: "BOOM",
+        has_post_frame: false,
+        supply_fixing_type: "POST",
+      })
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayEnergyChainFields).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx
+    );
+  });
+
+  test("does NOT reset energy chain fields when supply_type stays ENERGY_CHAIN", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN" })
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      OWNER_ID,
+      makeValidFormData({
+        supply_type: "ENERGY_CHAIN",
+        rail_length: 25,
+        supply_fixing_type: "POST",
+      })
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayEnergyChainFields).not.toHaveBeenCalled();
+  });
+
+  test("does NOT reset energy chain fields when supply_type changes between non-EC values", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "STRAIGHT_SHELF" })
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      OWNER_ID,
+      makeValidFormData({
+        supply_type: "BOOM",
+        has_post_frame: false,
+        supply_fixing_type: "POST",
+      })
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayEnergyChainFields).not.toHaveBeenCalled();
   });
 });

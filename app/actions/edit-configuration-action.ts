@@ -1,11 +1,13 @@
 "use server";
 
+import { db } from "@/db";
 import {
   deleteAllEngineeringBomItems,
   getConfigurationWithTanksAndBays,
   getUserData,
   hasEngineeringBom,
   QueryError,
+  resetWashBayEnergyChainFields,
   updateConfiguration,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -55,13 +57,23 @@ export const editConfigurationAction = async (
   }
 
   try {
-    await updateConfiguration(confId, { ...validation.data, user_id: ownerId });
+    const supplyTypeChangedFromEC =
+      configuration.supply_type === "ENERGY_CHAIN" &&
+      validation.data.supply_type !== "ENERGY_CHAIN";
 
-    // Delete engineering BOM if it exists — config changes invalidate the snapshot
-    const ebomExists = await hasEngineeringBom(confId);
-    if (ebomExists) {
-      await deleteAllEngineeringBomItems(confId);
-    }
+    await db.transaction(async (tx) => {
+      await updateConfiguration(confId, { ...validation.data, user_id: ownerId }, tx);
+
+      if (supplyTypeChangedFromEC) {
+        await resetWashBayEnergyChainFields(confId, tx);
+      }
+
+      // Delete engineering BOM if it exists — config changes invalidate the snapshot
+      const ebomExists = await hasEngineeringBom(confId, tx);
+      if (ebomExists) {
+        await deleteAllEngineeringBomItems(confId, tx);
+      }
+    });
 
     revalidatePath(`/configurations/edit/${confId}`);
     revalidatePath(`/configurations/bom/${confId}`);
