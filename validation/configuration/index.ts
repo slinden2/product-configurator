@@ -34,7 +34,9 @@ import {
   touchPositionOpts,
 } from "@/validation/configuration/touch-schema";
 import {
+  DowelTypeEnum,
   RailTypeEnum,
+  dowelTypes,
   railGuideNum,
   railLengths,
   railTypes,
@@ -76,6 +78,7 @@ export const zodEnums = {
   WaterTypeEnum,
   WaterPump1Enum,
   WaterPump2Enum,
+  DowelTypeEnum,
   RailTypeEnum,
   ChassisWashSensorTypeEnum,
   HPPumpOutlet15kwEnum,
@@ -104,6 +107,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   railTypes,
   railLengths,
   railGuideNum,
+  dowelTypes,
   hpPumpOutlet15kwTypes,
   hpPumpOutlet30kwTypes,
   omzPumpOutletTypes,

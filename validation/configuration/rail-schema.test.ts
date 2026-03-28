@@ -1,5 +1,6 @@
 import { genericRequiredMessage } from "@/validation/common";
 import {
+  DowelTypeEnum,
   RailTypeEnum,
   railSchema,
 } from "@/validation/configuration/rail-schema";
@@ -10,15 +11,18 @@ function createRailObject({
   rail_type,
   rail_length,
   rail_guide_qty,
+  dowel_type,
 }: {
   rail_type: keyof typeof RailTypeEnum.enum;
   rail_length: number | string;
   rail_guide_qty: number | string;
+  dowel_type?: keyof typeof DowelTypeEnum.enum;
 }) {
   return {
     rail_type,
     rail_length,
     rail_guide_qty,
+    dowel_type,
   };
 }
 
@@ -29,6 +33,7 @@ describe("railSchema", () => {
         rail_type: RailTypeEnum.enum.DOWELED,
         rail_length: 21,
         rail_guide_qty: 1,
+        dowel_type: DowelTypeEnum.enum.ZINCATO,
       });
       expect(() => railSchema.parse(validData)).not.toThrow();
     });
@@ -68,6 +73,7 @@ describe("railSchema", () => {
         rail_type: RailTypeEnum.enum.DOWELED,
         rail_length: 6,
         rail_guide_qty: 1,
+        dowel_type: DowelTypeEnum.enum.ZINCATO,
       });
       expect(() => railSchema.parse(invalidData)).toThrow();
     });
@@ -86,6 +92,7 @@ describe("railSchema", () => {
         rail_type: RailTypeEnum.enum.DOWELED,
         rail_length: 21,
         rail_guide_qty: -1,
+        dowel_type: DowelTypeEnum.enum.ZINCATO,
       });
       expect(() => railSchema.parse(invalidData)).toThrow();
     });
@@ -106,6 +113,7 @@ describe("railSchema", () => {
         rail_type: RailTypeEnum.enum.DOWELED,
         rail_length: "21",
         rail_guide_qty: 1,
+        dowel_type: DowelTypeEnum.enum.ZINCATO,
       });
       const parsedData = railSchema.parse(validData);
       expect(parsedData.rail_length).toBe(21);

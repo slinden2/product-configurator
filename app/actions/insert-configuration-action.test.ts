@@ -69,6 +69,7 @@ function makeValidFormData() {
     rail_type: "DOWELED",
     rail_length: 21,
     rail_guide_qty: 0,
+    dowel_type: "ZINCATO",
     has_15kw_pump: false,
     pump_outlet_1_15kw: undefined,
     pump_outlet_2_15kw: undefined,

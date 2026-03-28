@@ -37,6 +37,7 @@ const validBase = {
   rail_type: "DOWELED",
   rail_length: 21,
   rail_guide_qty: 0,
+  dowel_type: "ZINCATO",
   // HP pump (all off)
   has_15kw_pump: false,
   pump_outlet_1_15kw: undefined,

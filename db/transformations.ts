@@ -61,6 +61,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     water_2_type: values.water_2_type ?? null,
     water_2_pump: values.water_2_pump ?? null,
     supply_fixing_type: values.supply_fixing_type ?? null,
+    dowel_type: values.dowel_type ?? null,
     touch_pos: values.touch_pos ?? null,
     touch_fixing_type: values.touch_fixing_type ?? null,
     pump_outlet_1_15kw: values.pump_outlet_1_15kw ?? null,

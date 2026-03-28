@@ -44,6 +44,9 @@ export type EnergyChainWidthType = (typeof EnergyChainWidths)[number];
 export const RailTypes = ["DOWELED", "WELDED"] as const;
 export type RailTypeType = (typeof RailTypes)[number];
 
+export const DowelTypes = ["ZINCATO", "INOX", "CHIMICO"] as const;
+export type DowelType = (typeof DowelTypes)[number];
+
 export const TouchPos = ["INTERNAL", "EXTERNAL"] as const;
 export type TouchPosType = (typeof TouchPos)[number];
 

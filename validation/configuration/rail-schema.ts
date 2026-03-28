@@ -14,6 +14,14 @@ export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Da tassellare", "Da saldare incassato"]
 );
 
+export const DowelTypeEnum = z.enum(["ZINCATO", "INOX", "CHIMICO"], {
+  message: genericRequiredMessage,
+});
+export const dowelTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  DowelTypeEnum,
+  ["Zincato", "Inox", "Chimico"]
+);
+
 export const railLengths: SelectOption[] = [
   { value: 7, label: "7 metri" },
   { value: 21, label: "21 metri" },
@@ -52,6 +60,7 @@ export const railSchema = z
       .min(0)
       .max(2)
       .default(0),
+    dowel_type: DowelTypeEnum.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.rail_type === undefined) {
@@ -66,6 +75,13 @@ export const railSchema = z
         code: z.ZodIssueCode.custom,
         message: genericRequiredMessage,
         path: ["rail_length"],
+      });
+    }
+    if (data.rail_type === "DOWELED" && data.dowel_type === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["dowel_type"],
       });
     }
   });

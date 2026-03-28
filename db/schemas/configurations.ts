@@ -9,6 +9,7 @@ import {
   ChassisWashSensorTypes,
   ChemPumpPos,
   ConfigurationStatus,
+  DowelTypes,
   HpPump15kwOutlets,
   HpPump30kwOutlets,
   HpPumpOMZkwOutlets,
@@ -52,6 +53,7 @@ export const supplyTypeEnum = pgEnum("supply_type", SupplyTypes);
 export const supplySideEnum = pgEnum("supply_side", SupplySides);
 export const supplyFixType = pgEnum("supply_fix_type", SupplyFixTypes);
 export const railTypeEnum = pgEnum("rail_type", RailTypes);
+export const dowelTypeEnum = pgEnum("dowel_type", DowelTypes);
 export const touchPosEnum = pgEnum("touch_pos", TouchPos);
 export const touchFixTypeEnum = pgEnum("touch_fix_type", TouchFixTypes);
 export const hpPump15kwOutletTypeEnum = pgEnum(
@@ -105,6 +107,7 @@ export const configurations = pgTable("configurations", {
   rail_type: railTypeEnum("rail_type").notNull(),
   rail_length: integer().notNull(),
   rail_guide_qty: integer().notNull(),
+  dowel_type: dowelTypeEnum("dowel_type"),
   touch_qty: integer().notNull(),
   touch_pos: touchPosEnum("touch_pos"),
   touch_fixing_type: touchFixTypeEnum("touch_fix_type"),
