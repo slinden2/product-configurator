@@ -13,6 +13,10 @@ const PART_NUMBERS = {
   WELDED_RAILS_3M: "450.49.035", // TODO Add option for this in the config form
   SHIM_KIT_FOR_RECESSED_RAILS: "450.35.011", // TODO Add rules for this
   PROXIMITY_PLATES: "450.35.010",
+  ZINC_DOWEL: "XXX", // TODO Add part number
+  STAINLESS_DOWEL: "XXX", // TODO Add part number
+  RESIN_DOWEL: "XXX", // TODO Add part number
+  RESIN: "XXX", // TODO Add part number
 } as const satisfies Record<string, string>;
 
 export const calculate3mRailQty = (config: GeneralBOMConfig): number =>
@@ -20,6 +24,9 @@ export const calculate3mRailQty = (config: GeneralBOMConfig): number =>
 
 export const calculate1mRailQty = (config: GeneralBOMConfig): number =>
   (config.rail_length - 6) % 3;
+
+export const calculateDowelQty = (config: GeneralBOMConfig): number =>
+  44 + calculate1mRailQty(config) * 6 + calculate3mRailQty(config) * 10;
 
 export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
@@ -72,5 +79,42 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [() => true], // These are always in BOM.
     qty: 1,
     _description: "Proximity plates",
+  },
+  {
+    pn: PART_NUMBERS.ZINC_DOWEL,
+    conditions: [
+      (config) => config.rail_type === "DOWELED",
+      (config) => config.dowel_type === "ZINCATO",
+    ],
+    qty: calculateDowelQty,
+    _description: "Zinc dowels",
+  },
+  {
+    pn: PART_NUMBERS.STAINLESS_DOWEL,
+    conditions: [
+      (config) => config.rail_type === "DOWELED",
+      (config) => config.dowel_type === "INOX",
+    ],
+    qty: calculateDowelQty,
+    _description: "Stainless steel dowels",
+  },
+  {
+    pn: PART_NUMBERS.RESIN_DOWEL,
+    conditions: [
+      (config) => config.rail_type === "DOWELED",
+      (config) => config.dowel_type === "CHIMICO",
+    ],
+    qty: calculateDowelQty,
+    _description: "Resin dowels",
+  },
+  {
+    // TODO: Adjust resin quantity rules
+    pn: PART_NUMBERS.RESIN,
+    conditions: [
+      (config) => config.rail_type === "DOWELED",
+      (config) => config.dowel_type === "CHIMICO",
+    ],
+    qty: 1,
+    _description: "Resin for chemical dowels",
   },
 ];

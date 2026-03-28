@@ -7,6 +7,7 @@ vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValu
 import {
   calculate3mRailQty,
   calculate1mRailQty,
+  calculateDowelQty,
 } from "@/lib/BOM/max-bom/rail-bom";
 
 // Helper: build a minimal config with just rail_length set
@@ -74,5 +75,23 @@ describe("BOM inclusion conditions for rail items", () => {
 
   test("1m rails ARE included when rail_length = 26 (26 % 3 = 2 → truthy)", () => {
     expect(!!(26 % 3)).toBe(true);
+  });
+});
+
+describe("calculateDowelQty", () => {
+  test("rail_length = 7 → 44 + 1×6 + 0×10 = 50", () => {
+    expect(calculateDowelQty(cfg(7))).toBe(50);
+  });
+
+  test("rail_length = 21 → 44 + 0×6 + 5×10 = 94", () => {
+    expect(calculateDowelQty(cfg(21))).toBe(94);
+  });
+
+  test("rail_length = 25 → 44 + 1×6 + 6×10 = 110", () => {
+    expect(calculateDowelQty(cfg(25))).toBe(110);
+  });
+
+  test("rail_length = 26 → 44 + 2×6 + 6×10 = 116", () => {
+    expect(calculateDowelQty(cfg(26))).toBe(116);
   });
 });
