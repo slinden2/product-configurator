@@ -207,13 +207,13 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.FLOW_SWITCH,
     conditions: [(config) => config.has_itecoweb, (config) => !isOMZ(config)],
     qty: 1,
-    _description: "Float switch",
+    _description: "Flow switch",
   },
   {
     pn: PART_NUMBERS.FLOW_SWITCH_INOX,
     conditions: [(config) => config.has_itecoweb, isOMZ],
     qty: 1,
-    _description: "Float switch",
+    _description: "Flow switch",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD,
@@ -236,7 +236,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description:
-      "Prewash solenoid (prewash onboard) (only when double prewash and hp roof bar with chemical)",
+      "Prewash solenoid (prewash onboard) (only when double prewash and HP roof bar with chemical)",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX,
@@ -259,7 +259,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description:
-      "Prewash solenoid (prewash onboard) (only when double prewash and hp roof bar with chemical)",
+      "Prewash solenoid (prewash onboard) (only when double prewash and HP roof bar with chemical)",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD,
@@ -270,7 +270,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !isOMZ(config),
     ],
     qty: 1,
-    _description: "Prewash solenoids (hp roof bar prewash onboard)",
+    _description: "Prewash solenoids (HP roof bar prewash onboard)",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX,
@@ -281,7 +281,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       isOMZ
     ],
     qty: 1,
-    _description: "Prewash solenoids (hp roof bar prewash onboard)",
+    _description: "Prewash solenoids (HP roof bar prewash onboard)",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY,
@@ -304,7 +304,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description:
-      "Fittings for prewash (prewash in wash bay) (only when double prewash and hp roof bar with chemical)",
+      "Fittings for prewash (prewash in wash bay) (only when double prewash and HP roof bar with chemical)",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX,
@@ -327,7 +327,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description:
-      "Fittings for prewash (prewash in wash bay) (only when double prewash and hp roof bar with chemical)",
+      "Fittings for prewash (prewash in wash bay) (only when double prewash and HP roof bar with chemical)",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY,
@@ -338,7 +338,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !isOMZ(config),
     ],
     qty: 1,
-    _description: "Prewash solenoids (hp roof bar and prewash in wash bay)",
+    _description: "Prewash solenoids (HP roof bar and prewash in wash bay)",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY_INOX,
@@ -349,7 +349,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       isOMZ
     ],
     qty: 1,
-    _description: "Prewash solenoids (hp roof bar and prewash in wash bay)",
+    _description: "Prewash solenoids (HP roof bar and prewash in wash bay)",
   },
 
   // Acid

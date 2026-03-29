@@ -148,7 +148,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_antifreeze,
     ],
     qty: 1,
-    _description: "15kW pump outlet with antifreeze",
+    _description: "15kW pump outlet, with antifreeze",
   },
   {
     pn: PART_NUMBERS.PNEUMATIC_VALVE_15KW_NO_ANTIFREEZE,
@@ -159,7 +159,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !config.has_antifreeze,
     ],
     qty: 1,
-    _description: "15kW pump outlet no antifreeze",
+    _description: "15kW pump outlet, no antifreeze",
   },
   {
     pn: PART_NUMBERS.TWO_PNEUMATIC_VALVES_15KW_WITH_ANTIFREEZE,
@@ -170,7 +170,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_antifreeze,
     ],
     qty: 1,
-    _description: "2 x 15kW pump outlet with antifreeze",
+    _description: "2 x 15kW pump outlet, with antifreeze",
   },
   {
     pn: PART_NUMBERS.TWO_PNEUMATIC_VALVES_15KW_NO_ANTIFREEZE,
@@ -181,7 +181,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !config.has_antifreeze,
     ],
     qty: 1,
-    _description: "2 x 15kW pump outlet no antifreeze",
+    _description: "2 x 15kW pump outlet, no antifreeze",
   },
   {
     pn: PART_NUMBERS.PNEUMATIC_VALVE_30KW_WITH_ANTIFREEZE,
@@ -192,7 +192,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_antifreeze,
     ],
     qty: 1,
-    _description: "30kW pump outlet with antifreeze",
+    _description: "30kW pump outlet, with antifreeze",
   },
   {
     pn: PART_NUMBERS.PNEUMATIC_VALVE_30KW_NO_ANTIFREEZE,
@@ -203,7 +203,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !config.has_antifreeze,
     ],
     qty: 1,
-    _description: "30kW pump outlet no antifreeze",
+    _description: "30kW pump outlet, no antifreeze",
   },
   {
     pn: PART_NUMBERS.TWO_PNEUMATIC_VALVES_30KW_WITH_ANTIFREEZE,
@@ -214,7 +214,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_antifreeze,
     ],
     qty: 1,
-    _description: "2 x 30kW pump outlet with antifreeze",
+    _description: "2 x 30kW pump outlet, with antifreeze",
   },
   {
     pn: PART_NUMBERS.TWO_PNEUMATIC_VALVES_30KW_NO_ANTIFREEZE,
@@ -225,7 +225,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !config.has_antifreeze,
     ],
     qty: 1,
-    _description: "2 x 30kW pump outlet no antifreeze",
+    _description: "2 x 30kW pump outlet, no antifreeze",
   },
   {
     pn: PART_NUMBERS.CHASSIS_WASH_15KW,
@@ -264,7 +264,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
         ),
     ],
     qty: 1,
-    _description: "Chassis wash (30kW), lateral+horizontal",
+    _description: "Chassis wash (30kW), lateral + horizontal",
   },
   {
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_POST,
@@ -488,7 +488,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.HP_VALVE_ASSY_INOX,
     conditions: [isOMZ],
     qty: 1,
-    _description: "HP valve assembly inox OMZ",
+    _description: "HP valve assembly INOX OMZ",
   },
   {
     pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ,

@@ -45,7 +45,7 @@ describe("brushBOM — blue-silver", () => {
     expect(result.map((i) => i.pn)).toContain("450.17.001"); // horizontal
   });
 
-  test("brush_qty=2, CARLITE, BLUE_SILVER → vertical carlite included", () => {
+  test("brush_qty=2, CARLITE, BLUE_SILVER → vertical Carlite included", () => {
     expect(pns(cfg(2, "CARLITE", "BLUE_SILVER"))).toContain("450.16.004");
   });
 });

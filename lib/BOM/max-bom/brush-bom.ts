@@ -117,7 +117,7 @@ const blueSilver: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 2,
-    _description: "Vertical brush, carlite, blue-silver",
+    _description: "Vertical brush, Carlite, blue-silver",
   },
   {
     pn: PART_NUMBERS.BLUE_SILVER.CARLITE.HORIZONTAL,
@@ -127,7 +127,7 @@ const blueSilver: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "BLUE_SILVER",
     ],
     qty: 1,
-    _description: "Horizontal brush, carlite, blue-silver",
+    _description: "Horizontal brush, Carlite, blue-silver",
   },
 ];
 
@@ -183,7 +183,7 @@ const greenBlack: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 2,
-    _description: "Vertical brush, carlite, green-black",
+    _description: "Vertical brush, Carlite, green-black",
   },
 
   {
@@ -194,7 +194,7 @@ const greenBlack: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "GREEN_BLACK",
     ],
     qty: 1,
-    _description: "Horizontal brush, carlite, green-black",
+    _description: "Horizontal brush, Carlite, green-black",
   },
 ];
 
@@ -250,7 +250,7 @@ const greenSilver: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 2,
-    _description: "Vertical brush, carlite, green-silver",
+    _description: "Vertical brush, Carlite, green-silver",
   },
   {
     pn: PART_NUMBERS.GREEN_SILVER.CARLITE.HORIZONTAL,
@@ -260,7 +260,7 @@ const greenSilver: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "GREEN_SILVER",
     ],
     qty: 1,
-    _description: "Horizontal brush, carlite, green-silver",
+    _description: "Horizontal brush, Carlite, green-silver",
   },
 ];
 
@@ -316,7 +316,7 @@ const red: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "RED",
     ],
     qty: 2,
-    _description: "Vertical brush, carlite, red",
+    _description: "Vertical brush, Carlite, red",
   },
   {
     pn: PART_NUMBERS.RED.CARLITE.HORIZONTAL,
@@ -326,7 +326,7 @@ const red: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_color === "RED",
     ],
     qty: 1,
-    _description: "Horizontal brush, carlite, red",
+    _description: "Horizontal brush, Carlite, red",
   },
 ];
 

@@ -12,18 +12,18 @@ export const gruBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.ZERO_BRUSHES,
     conditions: [(config) => config.brush_qty === 0],
     qty: 1,
-    _description: "GRU - Zero brushes",
+    _description: "GRU - zero brushes",
   },
   {
     pn: PART_NUMBERS.TWO_BRUSHES,
     conditions: [(config) => config.brush_qty === 2],
     qty: 1,
-    _description: "GRU - Two brushes",
+    _description: "GRU - two brushes",
   },
   {
     pn: PART_NUMBERS.THREE_BRUSHES,
     conditions: [(config) => config.brush_qty === 3],
     qty: 1,
-    _description: "GRU - Three brushes",
+    _description: "GRU - three brushes",
   },
 ];

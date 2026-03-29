@@ -48,7 +48,7 @@ const PNS = {
 };
 
 describe("waterSupplyBOM — solenoids", () => {
-  test("water_1_type set, has_antifreeze=true → solenoid with antifreeze", () => {
+  test("water_1_type set, has_antifreeze=true → solenoid, with antifreeze", () => {
     const config = makeConfig({ water_1_type: "NETWORK", has_antifreeze: true });
     expect(pns(config)).toContain(PNS.WASH_BAY_SOLENOID_WITH_ANTIFREEZE);
     expect(pns(config)).not.toContain(PNS.WASH_BAY_SOLENOID_NO_ANTIFREEZE);

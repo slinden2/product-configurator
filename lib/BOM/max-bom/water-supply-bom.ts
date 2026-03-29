@@ -59,7 +59,7 @@ export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_antifreeze,
     ],
     qty: 1,
-    _description: "Wash bay solenoid with antifreeze",
+    _description: "Wash bay solenoid, with antifreeze",
   },
   {
     pn: PART_NUMBERS.WASH_BAY_SOLENOID_NO_ANTIFREEZE,
@@ -78,7 +78,7 @@ export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_antifreeze,
     ],
     qty: 1,
-    _description: "2nd wash bay solenoid with antifreeze",
+    _description: "2nd wash bay solenoid, with antifreeze",
   },
   {
     pn: PART_NUMBERS.BOOST_PUMP_15KW,
