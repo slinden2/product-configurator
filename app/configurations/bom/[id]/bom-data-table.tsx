@@ -22,9 +22,11 @@ interface SortState {
 }
 
 const BOMDataTable = ({ items }: BOMDataTableProps) => {
-  const [dataArr, setDataArr] = useState<BOMItemWithDescription[]>(items);
+  const [dataArr, setDataArr] = useState<BOMItemWithDescription[]>(() =>
+    [...items].sort((a, b) => a.pn.localeCompare(b.pn))
+  );
   const [sorting, setSorting] = useState<SortState>({
-    key: null,
+    key: "pn",
     direction: "asc",
   });
 

@@ -38,15 +38,17 @@ const EngineeringBomTable = ({
   confId,
   editable,
 }: EngineeringBomTableProps) => {
-  const [dataArr, setDataArr] = useState(items);
+  const sortByPn = (arr: EngineeringBomItem[]) =>
+    [...arr].sort((a, b) => a.pn.localeCompare(b.pn));
+  const [dataArr, setDataArr] = useState(() => sortByPn(items));
   const [sorting, setSorting] = useState<SortState>({
-    key: null,
+    key: "pn",
     direction: "asc",
   });
   // Sync local state when items prop changes (e.g. after adding a row)
   useEffect(() => {
-    setDataArr(items);
-    setSorting({ key: null, direction: "asc" });
+    setDataArr(sortByPn(items));
+    setSorting({ key: "pn", direction: "asc" });
   }, [items]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editQty, setEditQty] = useState<string>("");
