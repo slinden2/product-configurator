@@ -111,16 +111,16 @@ export type Role = (typeof Roles)[number];
 export const BomTags = [
   "FRAME",
   "BRUSHES",
-  "DOSING_PUMPS",
-  "WATER_SUPPLY",
   "RINSE_BARS",
   "PREWASH_BARS",
   "ACID_BARS",
-  "SUPPLY",
-  "RAILS",
-  "ELECTRICAL",
+  "DOSING_PUMPS",
   "FAST",
+  "ELECTRICAL",
   "HP_PUMPS",
+  "RAILS",
+  "SUPPLY",
+  "WATER_SUPPLY",
   "MISC",
 ] as const;
 export type BomTag = (typeof BomTags)[number];
@@ -128,16 +128,16 @@ export type BomTag = (typeof BomTags)[number];
 export const BomTagLabels: Record<BomTag, string> = {
   FRAME: "Struttura",
   BRUSHES: "Spazzole",
-  DOSING_PUMPS: "Pompe dosatrici",
-  WATER_SUPPLY: "Alimentazione acqua",
   RINSE_BARS: "Barre risciacquo",
   PREWASH_BARS: "Barre prelavaggio",
   ACID_BARS: "Barre acido",
-  SUPPLY: "Alimentazione portale",
-  RAILS: "Rotaie",
-  ELECTRICAL: "Elettrica",
+  DOSING_PUMPS: "Pompe dosatrici",
   FAST: "Fast",
+  ELECTRICAL: "Elettrica",
   HP_PUMPS: "Pompe HP",
+  RAILS: "Rotaie",
+  SUPPLY: "Alimentazione portale",
+  WATER_SUPPLY: "Alimentazione acqua",
   MISC: "Varie",
 };
 
