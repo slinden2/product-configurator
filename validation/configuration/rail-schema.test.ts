@@ -38,7 +38,7 @@ describe("railSchema", () => {
       expect(() => railSchema.parse(validData)).not.toThrow();
     });
 
-    test("should validate successfully with minimum rail length and zero guide quantity", () => {
+    test("should validate successfully with WELDED type, minimum rail length and zero guide quantity", () => {
       const validData = createRailObject({
         rail_type: RailTypeEnum.enum.WELDED,
         rail_length: 7,
@@ -47,11 +47,29 @@ describe("railSchema", () => {
       expect(() => railSchema.parse(validData)).not.toThrow();
     });
 
-    test("should validate successfully with maximum rail length and maximum guide quantity", () => {
+    test("should validate successfully with WELDED type, maximum rail length and maximum guide quantity", () => {
       const validData = createRailObject({
         rail_type: RailTypeEnum.enum.WELDED,
         rail_length: 26,
         rail_guide_qty: 2,
+      });
+      expect(() => railSchema.parse(validData)).not.toThrow();
+    });
+
+    test("should validate successfully with WELDED_RECESSED type without dowel_type", () => {
+      const validData = createRailObject({
+        rail_type: RailTypeEnum.enum.WELDED_RECESSED,
+        rail_length: 25,
+        rail_guide_qty: 1,
+      });
+      expect(() => railSchema.parse(validData)).not.toThrow();
+    });
+
+    test("should validate successfully with WELDED_RECESSED type at minimum length", () => {
+      const validData = createRailObject({
+        rail_type: RailTypeEnum.enum.WELDED_RECESSED,
+        rail_length: 7,
+        rail_guide_qty: 0,
       });
       expect(() => railSchema.parse(validData)).not.toThrow();
     });

@@ -8,10 +8,10 @@ const PART_NUMBERS = {
   WELDED_RECESSED_RAIL_TERMINALS: "450.46.032",
   WELDED_RECESSED_RAILS_1M: "450.46.030",
   WELDED_RECESSED_RAILS_3M: "450.46.031",
-  WELDED_RAIL_TERMINALS: "450.49.031", // TODO Add option for this in the config form
-  WELDED_RAILS_1M: "450.49.030", // TODO Add option for this in the config form
-  WELDED_RAILS_3M: "450.49.035", // TODO Add option for this in the config form
-  SHIM_KIT_FOR_RECESSED_RAILS: "450.35.011", // TODO Add rules for this
+  WELDED_RAIL_TERMINALS: "450.49.031",
+  WELDED_RAILS_1M: "450.49.030",
+  WELDED_RAILS_3M: "450.49.035",
+  SHIM_KIT_FOR_RECESSED_RAILS: "450.35.011",
   PROXIMITY_PLATES: "450.35.010",
   ZINC_DOWEL: "XXX", // TODO Add part number
   STAINLESS_DOWEL: "XXX", // TODO Add part number
@@ -55,12 +55,36 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.WELDED_RECESSED_RAIL_TERMINALS,
+    conditions: [(config) => config.rail_type === "WELDED_RECESSED"],
+    qty: 1,
+    _description: "Welded recessed rail terminals",
+  },
+  {
+    pn: PART_NUMBERS.WELDED_RECESSED_RAILS_3M,
+    conditions: [
+      (config) => config.rail_type === "WELDED_RECESSED",
+      (config) => config.rail_length > 7,
+    ],
+    qty: calculate3mRailQty,
+    _description: "Welded recessed rail 3m",
+  },
+  {
+    pn: PART_NUMBERS.WELDED_RECESSED_RAILS_1M,
+    conditions: [
+      (config) => config.rail_type === "WELDED_RECESSED",
+      (config) => !!(config.rail_length % 3),
+    ],
+    qty: calculate1mRailQty,
+    _description: "Welded recessed rail 1m",
+  },
+  {
+    pn: PART_NUMBERS.WELDED_RAIL_TERMINALS,
     conditions: [(config) => config.rail_type === "WELDED"],
     qty: 1,
     _description: "Welded rail terminals",
   },
   {
-    pn: PART_NUMBERS.WELDED_RECESSED_RAILS_3M,
+    pn: PART_NUMBERS.WELDED_RAILS_3M,
     conditions: [
       (config) => config.rail_type === "WELDED",
       (config) => config.rail_length > 7,
@@ -69,8 +93,11 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Welded rail 3m",
   },
   {
-    pn: PART_NUMBERS.WELDED_RECESSED_RAILS_1M,
-    conditions: [(config) => config.rail_type === "WELDED"],
+    pn: PART_NUMBERS.WELDED_RAILS_1M,
+    conditions: [
+      (config) => config.rail_type === "WELDED",
+      (config) => !!(config.rail_length % 3),
+    ],
     qty: calculate1mRailQty,
     _description: "Welded rail 1m",
   },
@@ -82,9 +109,9 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.SHIM_KIT_FOR_RECESSED_RAILS,
-    conditions: [config => config.rail_type === "WELDED"],
+    conditions: [(config) => config.rail_type === "WELDED_RECESSED"],
     qty: 1,
-    _description: "Shim kit for receded rails",
+    _description: "Shim kit for recessed rails",
   },
   {
     pn: PART_NUMBERS.ZINC_DOWEL,

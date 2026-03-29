@@ -8,6 +8,7 @@ import {
   calculate3mRailQty,
   calculate1mRailQty,
   calculateDowelQty,
+  railBOM,
 } from "@/lib/BOM/max-bom/rail-bom";
 
 // Helper: build a minimal config with just rail_length set
@@ -75,6 +76,60 @@ describe("BOM inclusion conditions for rail items", () => {
 
   test("1m rails ARE included when rail_length = 26 (26 % 3 = 2 → truthy)", () => {
     expect(!!(26 % 3)).toBe(true);
+  });
+});
+
+// Helper: build a minimal config with rail_type, rail_length, and optional dowel_type
+const railCfg = (
+  rail_type: "DOWELED" | "WELDED" | "WELDED_RECESSED",
+  rail_length: number,
+  dowel_type?: "ZINCATO" | "INOX" | "CHIMICO"
+) =>
+  ({
+    rail_type,
+    rail_length,
+    dowel_type,
+  } as Parameters<typeof calculate3mRailQty>[0]);
+
+function evalConditions(
+  item: (typeof railBOM)[number],
+  config: Parameters<typeof calculate3mRailQty>[0]
+): boolean {
+  return item.conditions.every((fn) => fn(config));
+}
+
+describe("railBOM part number routing by rail_type", () => {
+  const DOWELED_TERMINALS = "450.45.031";
+  const WELDED_RECESSED_TERMINALS = "450.46.032";
+  const WELDED_TERMINALS = "450.49.031";
+  const SHIM_KIT = "450.35.011";
+
+  test("DOWELED config uses doweled terminals (450.45.031)", () => {
+    const item = railBOM.find((i) => i.pn === DOWELED_TERMINALS)!;
+    expect(evalConditions(item, railCfg("DOWELED", 25, "ZINCATO"))).toBe(true);
+    expect(evalConditions(item, railCfg("WELDED", 25))).toBe(false);
+    expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(false);
+  });
+
+  test("WELDED_RECESSED config uses recessed terminals (450.46.032)", () => {
+    const item = railBOM.find((i) => i.pn === WELDED_RECESSED_TERMINALS)!;
+    expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(true);
+    expect(evalConditions(item, railCfg("WELDED", 25))).toBe(false);
+    expect(evalConditions(item, railCfg("DOWELED", 25, "ZINCATO"))).toBe(false);
+  });
+
+  test("WELDED config uses welded terminals (450.49.031)", () => {
+    const item = railBOM.find((i) => i.pn === WELDED_TERMINALS)!;
+    expect(evalConditions(item, railCfg("WELDED", 25))).toBe(true);
+    expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(false);
+    expect(evalConditions(item, railCfg("DOWELED", 25, "ZINCATO"))).toBe(false);
+  });
+
+  test("shim kit (450.35.011) only included for WELDED_RECESSED", () => {
+    const item = railBOM.find((i) => i.pn === SHIM_KIT)!;
+    expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(true);
+    expect(evalConditions(item, railCfg("WELDED", 25))).toBe(false);
+    expect(evalConditions(item, railCfg("DOWELED", 25, "ZINCATO"))).toBe(false);
   });
 });
 

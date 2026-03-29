@@ -35,7 +35,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
       | "ENERGY_CHAIN",
     supply_side: values.supply_side as "TBD" | "LEFT" | "RIGHT",
     has_post_frame: values.has_post_frame,
-    rail_type: values.rail_type as "DOWELED" | "WELDED",
+    rail_type: values.rail_type as "DOWELED" | "WELDED" | "WELDED_RECESSED",
     rail_length: values.rail_length as number,
     rail_guide_qty: values.rail_guide_qty,
     touch_qty: values.touch_qty as number,

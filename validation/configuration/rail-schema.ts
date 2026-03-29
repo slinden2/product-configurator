@@ -6,12 +6,12 @@ import {
 } from "@/validation/common";
 import { z } from "zod";
 
-export const RailTypeEnum = z.enum(["DOWELED", "WELDED"], {
+export const RailTypeEnum = z.enum(["DOWELED", "WELDED", "WELDED_RECESSED"], {
   message: genericRequiredMessage,
 });
 export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   RailTypeEnum,
-  ["Da tassellare", "Da saldare incassato"]
+  ["Da tassellare", "Da saldare", "Da saldare incassato"]
 );
 
 export const DowelTypeEnum = z.enum(["ZINCATO", "INOX", "CHIMICO"], {

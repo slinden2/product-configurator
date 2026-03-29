@@ -41,7 +41,7 @@ export type SupplyFixType = (typeof SupplyFixTypes)[number];
 export const EnergyChainWidths = ["L150", "L200", "L250", "L300"] as const;
 export type EnergyChainWidthType = (typeof EnergyChainWidths)[number];
 
-export const RailTypes = ["DOWELED", "WELDED"] as const;
+export const RailTypes = ["DOWELED", "WELDED", "WELDED_RECESSED"] as const;
 export type RailTypeType = (typeof RailTypes)[number];
 
 export const DowelTypes = ["ZINCATO", "INOX", "CHIMICO"] as const;
