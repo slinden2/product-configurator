@@ -81,6 +81,12 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Proximity plates",
   },
   {
+    pn: PART_NUMBERS.SHIM_KIT_FOR_RECESSED_RAILS,
+    conditions: [config => config.rail_type === "WELDED"],
+    qty: 1,
+    _description: "Shim kit for receded rails",
+  },
+  {
     pn: PART_NUMBERS.ZINC_DOWEL,
     conditions: [
       (config) => config.rail_type === "DOWELED",
