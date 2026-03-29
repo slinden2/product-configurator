@@ -103,7 +103,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         />
       );
 
-      expect(screen.getByText("Aggiungi Nuovo Serbatoio")).toBeInTheDocument();
+      expect(screen.getByText("Aggiungi nuovo Serbatoio")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /aggiungi/i })).toBeInTheDocument();
     });
 
@@ -498,7 +498,7 @@ describe("SubRecordForm — WashBayForm", () => {
         />
       );
 
-      expect(screen.getByText("Aggiungi Nuova Pista")).toBeInTheDocument();
+      expect(screen.getByText("Aggiungi nuova Pista")).toBeInTheDocument();
     });
 
     test("calls insertAction on submit", async () => {

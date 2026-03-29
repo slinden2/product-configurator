@@ -355,7 +355,7 @@ describe("Multi-step field dependency chains", () => {
       expect(getValues().has_post_frame).toBe(true);
 
       // Change to ENERGY_CHAIN (not BOOM)
-      await selectRadixOption("Tipo di alimentazione", "Catena Portacavi");
+      await selectRadixOption("Tipo di alimentazione", "Catena portacavi");
 
       expect(getValues().supply_type).toBe("ENERGY_CHAIN");
       expect(getValues().has_post_frame).toBe(false);

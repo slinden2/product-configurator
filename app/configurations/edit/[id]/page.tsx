@@ -51,7 +51,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
       <ConfigNavigationBar confId={id} activePage="edit" />
       <div className="mb-6 sm:flex sm:gap-2">
         <div className="mb-6 sm:mb-0">
-          <h1 className="text-3xl font-bold mb-2">Modifica Configurazione</h1>
+          <h1 className="text-3xl font-bold mb-2">Modifica configurazione</h1>
           <p className="text-muted-foreground">
             Modifica con il form sottostante la configurazione del tuo cliente.
           </p>

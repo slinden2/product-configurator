@@ -28,6 +28,19 @@ const PART_NUMBERS = {
   BOOM_SIGNAL_CABLE_RIGHT: "450.29.108",
   BOOM_PROFINET_CABLE_LEFT: "450.29.109",
   BOOM_PROFINET_CABLE_RIGHT: "450.29.110",
+  // Energy chain tubes & cables
+  EC_POWER_CABLE_LEFT: "450.73.001",
+  EC_SIGNAL_CABLE_LEFT: "450.73.002",
+  EC_POWER_CABLE_RIGHT: "450.73.003",
+  EC_SIGNAL_CABLE_RIGHT: "450.73.004",
+  EC_GEN_WATER_TUBE_LEFT: "450.74.001",
+  EC_PREWASH_WATER_TUBE_LEFT: "450.74.002",
+  EC_AIR_TUBE_HP_VALVE_LEFT: "450.74.003",
+  EC_AIR_TUBE_FOAM_LEFT: "450.74.004",
+  EC_GEN_WATER_TUBE_RIGHT: "450.74.005",
+  EC_PREWASH_WATER_TUBE_RIGHT: "450.74.006",
+  EC_AIR_TUBE_HP_VALVE_RIGHT: "450.74.007",
+  EC_AIR_TUBE_FOAM_RIGHT: "450.74.008",
 } as const satisfies Record<string, string>;
 
 const usesStraightShelf = (config: GeneralBOMConfig): boolean => {
@@ -63,6 +76,21 @@ const needsProfinet = (config: GeneralBOMConfig): boolean => {
     config.touch_qty >= 2 ||
     config.has_itecoweb
   );
+};
+
+const needsExtraCable = (config: GeneralBOMConfig): boolean => {
+  return config.touch_pos === "EXTERNAL" || config.touch_qty >= 2;
+};
+
+const ecWashBayChemTubeQty = (config: GeneralBOMConfig): number => {
+  const twoChemInWashBay =
+    config.chemical_qty === 2 && config.chemical_pump_pos === "WASH_BAY";
+  const chemAndAcidInWashBay =
+    config.chemical_qty === 1 &&
+    config.chemical_pump_pos === "WASH_BAY" &&
+    config.has_acid_pump &&
+    config.acid_pump_pos === "WASH_BAY";
+  return twoChemInWashBay || chemAndAcidInWashBay ? 2 : 1;
 };
 
 const hasDoubleWaterSupply = (config: GeneralBOMConfig): boolean => {
@@ -263,5 +291,112 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [usesBoom, (config) => config.supply_side === "RIGHT", needsProfinet],
     qty: 1,
     _description: "Profinet cable for boom (right post)",
+  },
+  // Energy chain shelf-to-panel cables
+  {
+    pn: PART_NUMBERS.EC_POWER_CABLE_LEFT,
+    conditions: [usesEnergyChain, (config) => config.supply_side === "LEFT"],
+    qty: 1,
+    _description: "Power cable 5G2.5 from shelf to panel (left)",
+  },
+  {
+    pn: PART_NUMBERS.EC_SIGNAL_CABLE_LEFT,
+    conditions: [usesEnergyChain, (config) => config.supply_side === "LEFT"],
+    qty: (config) => (needsExtraCable(config) ? 2 : 1),
+    _description: "Signal cable 12G1 from shelf to panel (left)",
+  },
+  {
+    pn: PART_NUMBERS.EC_POWER_CABLE_RIGHT,
+    conditions: [usesEnergyChain, (config) => config.supply_side === "RIGHT"],
+    qty: 1,
+    _description: "Power cable 5G2.5 from shelf to panel (right)",
+  },
+  {
+    pn: PART_NUMBERS.EC_SIGNAL_CABLE_RIGHT,
+    conditions: [usesEnergyChain, (config) => config.supply_side === "RIGHT"],
+    qty: (config) => (needsExtraCable(config) ? 2 : 1),
+    _description: "Signal cable 12G1 from shelf to panel (right)",
+  },
+  // Energy chain shelf-to-EV group water tubes (1")
+  {
+    pn: PART_NUMBERS.EC_GEN_WATER_TUBE_LEFT,
+    conditions: [usesEnergyChain, (config) => config.supply_side === "LEFT"],
+    qty: (config) => (hasDoubleWaterSupply(config) ? 2 : 1),
+    _description: 'Water tube 1" from shelf to EV group (left)',
+  },
+  {
+    pn: PART_NUMBERS.EC_GEN_WATER_TUBE_RIGHT,
+    conditions: [usesEnergyChain, (config) => config.supply_side === "RIGHT"],
+    qty: (config) => (hasDoubleWaterSupply(config) ? 2 : 1),
+    _description: 'Water tube 1" from shelf to EV group (right)',
+  },
+  // Energy chain shelf-to-EV group water tubes (3/4") — only when chemical pumps are in wash bay
+  {
+    pn: PART_NUMBERS.EC_PREWASH_WATER_TUBE_LEFT,
+    conditions: [
+      usesEnergyChain,
+      (config) => config.supply_side === "LEFT",
+      (config) => config.has_chemical_pump,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
+    ],
+    qty: ecWashBayChemTubeQty,
+    _description: 'Water tube 3/4" from shelf to EV group (left)',
+  },
+  {
+    pn: PART_NUMBERS.EC_PREWASH_WATER_TUBE_RIGHT,
+    conditions: [
+      usesEnergyChain,
+      (config) => config.supply_side === "RIGHT",
+      (config) => config.has_chemical_pump,
+      (config) => config.chemical_pump_pos === "WASH_BAY",
+    ],
+    qty: ecWashBayChemTubeQty,
+    _description: 'Water tube 3/4" from shelf to EV group (right)',
+  },
+  // Energy chain shelf-to-HP-valve air tubes — OMZ machine type, or OMZ pump with HP roof bar spinners
+  {
+    pn: PART_NUMBERS.EC_AIR_TUBE_HP_VALVE_LEFT,
+    conditions: [
+      usesEnergyChain,
+      (config) => config.supply_side === "LEFT",
+      (config) =>
+        config.machine_type === "OMZ" ||
+        (config.has_omz_pump && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
+    ],
+    qty: 1,
+    _description: "Air tube from shelf to HP valve group (left)",
+  },
+  {
+    pn: PART_NUMBERS.EC_AIR_TUBE_HP_VALVE_RIGHT,
+    conditions: [
+      usesEnergyChain,
+      (config) => config.supply_side === "RIGHT",
+      (config) =>
+        config.machine_type === "OMZ" ||
+        (config.has_omz_pump && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
+    ],
+    qty: 1,
+    _description: "Air tube from shelf to HP valve group (right)",
+  },
+  // Energy chain shelf-to-chemical-bay air tubes — only with foam
+  {
+    pn: PART_NUMBERS.EC_AIR_TUBE_FOAM_LEFT,
+    conditions: [
+      usesEnergyChain,
+      (config) => config.supply_side === "LEFT",
+      (config) => config.has_foam,
+    ],
+    qty: 1,
+    _description: "Air tube from shelf to chemical bay (left)",
+  },
+  {
+    pn: PART_NUMBERS.EC_AIR_TUBE_FOAM_RIGHT,
+    conditions: [
+      usesEnergyChain,
+      (config) => config.supply_side === "RIGHT",
+      (config) => config.has_foam,
+    ],
+    qty: 1,
+    _description: "Air tube from shelf to chemical bay (right)",
   },
 ];

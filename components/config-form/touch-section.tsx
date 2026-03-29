@@ -34,7 +34,7 @@ const TouchSection = () => {
               name="touch_qty"
               dataType="number"
               label="Numero di pannelli"
-              description="Per l'opzione Gestione Piste occorrono due pannelli"
+              description="Per l'opzione gestione piste occorrono due pannelli"
               items={selectFieldOptions.touchQtyOpts}
               fieldsToResetOnValue={[
                 {

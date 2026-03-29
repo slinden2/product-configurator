@@ -35,7 +35,7 @@ const SnapshotButton = ({ confId }: SnapshotButtonProps) => {
       onClick={handleSnapshot}
     >
       {isPending ? <Spinner className="h-4 w-4" /> : <Workflow className="h-4 w-4" />}
-      <span>Genera distinta ingegneria</span>
+      <span>Genera distinta di commessa</span>
     </Button>
   );
 };

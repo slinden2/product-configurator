@@ -34,11 +34,11 @@ export const MSG = {
       "Con alimentazione a catena portacavi, è obbligatoria almeno una pista con portale e larghezza catena configurata.",
   },
   bom: {
-    unauthorized: "Non autorizzato a modificare la distinta ingegneria.",
+    unauthorized: "Non autorizzato a modificare la distinta di commessa.",
     unauthorizedState:
-      "Non autorizzato a modificare la distinta ingegneria in questo stato.",
+      "Non autorizzato a modificare la distinta di commessa in questo stato.",
     alreadyExists:
-      "La distinta ingegneria esiste già. Usa 'Rigenera' per sovrascriverla.",
+      "La distinta di commessa esiste già. Usa 'Rigenera' per sovrascriverla.",
     invalidQty: "Quantità non valida.",
     rowNotFound: "Riga non trovata.",
   },
@@ -59,8 +59,8 @@ export const MSG = {
     statusUpdated: "Stato aggiornato.",
     statusUpdateFailed: "Impossibile aggiornare lo stato.",
     deleteError: "Errore durante l'eliminazione.",
-    bomGenerated: "Distinta ingegneria generata.",
-    bomRegenerated: "Distinta ingegneria rigenerata.",
+    bomGenerated: "Distinta di commessa generata.",
+    bomRegenerated: "Distinta di commessa rigenerata.",
     qtyUpdated: "Quantità aggiornata.",
     qtyInvalid: "Quantità non valida (minimo 1).",
     rowAdded: "Riga aggiunta.",
@@ -94,9 +94,9 @@ export const MSG = {
     validationErrors: "Errori di validazione: correggere i campi evidenziati.",
   },
   bomWarning: {
-    title: "Distinta ingegneria presente",
+    title: "Distinta di commessa presente",
     description:
-      "Salvando le modifiche alla configurazione, la distinta ingegneria verrà eliminata e dovrà essere rigenerata. Continuare?",
+      "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
     confirm: "Salva e elimina distinta",
   },
 } as const;

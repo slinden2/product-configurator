@@ -4,7 +4,6 @@ import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
 import { selectFieldOptions } from "@/validation/configuration";
 import { WashBaySchema } from "@/validation/wash-bay-schema";
-import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 interface WashBayFieldsProps {

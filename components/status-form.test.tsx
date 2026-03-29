@@ -63,7 +63,7 @@ describe("StatusForm", () => {
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "In Revisione" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: "In revisione" })).not.toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Approvato" })).not.toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
     });
@@ -77,7 +77,7 @@ describe("StatusForm", () => {
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "In Revisione" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "In revisione" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Approvato" })).toBeInTheDocument();
       expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
     });
@@ -91,7 +91,7 @@ describe("StatusForm", () => {
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "In Revisione" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "In revisione" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Approvato" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Chiuso" })).toBeInTheDocument();
     });
@@ -155,7 +155,7 @@ describe("StatusForm", () => {
         <StatusForm confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />
       );
 
-      await selectStatus("In Revisione");
+      await selectStatus("In revisione");
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(MSG.toast.statusUpdateFailed);

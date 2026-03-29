@@ -14,7 +14,7 @@ export const SupplyTypeEnum = z.enum(
 
 export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplyTypeEnum,
-  ["Mensola Dritta", "Braccio Mobile", "Catena Portacavi"]
+  ["Mensola dritta", "Braccio mobile", "Catena portacavi"]
 );
 
 export const CableChainWidthEnum = z.enum(["L150", "L200", "L250", "L300"], {

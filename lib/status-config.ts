@@ -6,7 +6,7 @@ export const STATUS_CONFIG: Record<
 > = {
   DRAFT: { label: "Bozza", color: "#94a3b8" },
   SUBMITTED: { label: "Inviato", color: "#4ade80" },
-  IN_REVIEW: { label: "In Revisione", color: "#60a5fa" },
+  IN_REVIEW: { label: "In revisione", color: "#60a5fa" },
   APPROVED: { label: "Approvato", color: "#fbbf24" },
   CLOSED: { label: "Chiuso", color: "#fb7185" },
 };

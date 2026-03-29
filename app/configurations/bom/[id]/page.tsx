@@ -67,7 +67,7 @@ const BOMView = async (props: BOMViewProps) => {
 
       {hasEbom && ebomCreatedAt && (
         <p className="text-sm text-muted-foreground">
-          Distinta ingegneria generata il{" "}
+          Distinta di commessa generata il{" "}
           {formatDateDDMMYYYYHHMM(ebomCreatedAt)}
           {ebomRulesVersion && <> — regole v{ebomRulesVersion}</>}
           {ebomRulesVersion && ebomRulesVersion !== BOM_RULES_VERSION && (

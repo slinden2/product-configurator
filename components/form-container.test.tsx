@@ -106,7 +106,7 @@ describe("FormContainer", () => {
       expect(screen.getByRole("button", { name: /salva configurazione/i })).toBeInTheDocument();
       // Should NOT have tabs
       expect(screen.queryByText("Serbatoi")).not.toBeInTheDocument();
-      expect(screen.queryByText("Piste Lavaggio")).not.toBeInTheDocument();
+      expect(screen.queryByText("Piste lavaggio")).not.toBeInTheDocument();
     });
   });
 
@@ -126,7 +126,7 @@ describe("FormContainer", () => {
 
       expect(screen.getByRole("tab", { name: "Configurazione" })).toBeInTheDocument();
       expect(screen.getByRole("tab", { name: "Serbatoi" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Piste Lavaggio" })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Piste lavaggio" })).toBeInTheDocument();
     });
 
     test("switching to Serbatoi tab shows water tank management", async () => {
@@ -134,20 +134,20 @@ describe("FormContainer", () => {
 
       await userEvent.click(screen.getByRole("tab", { name: "Serbatoi" }));
 
-      expect(screen.getByText("Gestione Serbatoi")).toBeInTheDocument();
+      expect(screen.getByText("Gestione serbatoi")).toBeInTheDocument();
       expect(screen.getByText("Serbatoio 1")).toBeInTheDocument();
     });
 
-    test("switching to Piste Lavaggio tab shows wash bay management", async () => {
+    test("switching to Piste lavaggio tab shows wash bay management", async () => {
       render(<FormContainer {...defaultProps} />);
 
-      await userEvent.click(screen.getByRole("tab", { name: "Piste Lavaggio" }));
+      await userEvent.click(screen.getByRole("tab", { name: "Piste lavaggio" }));
 
-      expect(screen.getByText("Gestione Piste")).toBeInTheDocument();
+      expect(screen.getByText("Gestione piste")).toBeInTheDocument();
       expect(screen.getByText("Pista 1")).toBeInTheDocument();
     });
 
-    test("shows Aggiungi Serbatoio button on tanks tab", async () => {
+    test("shows Aggiungi serbatoio button on tanks tab", async () => {
       render(<FormContainer {...defaultProps} />);
 
       await userEvent.click(screen.getByRole("tab", { name: "Serbatoi" }));
@@ -155,31 +155,31 @@ describe("FormContainer", () => {
       expect(screen.getByRole("button", { name: /aggiungi serbatoio/i })).toBeInTheDocument();
     });
 
-    test("shows Aggiungi Pista button on bays tab", async () => {
+    test("shows Aggiungi pista button on bays tab", async () => {
       render(<FormContainer {...defaultProps} />);
 
-      await userEvent.click(screen.getByRole("tab", { name: "Piste Lavaggio" }));
+      await userEvent.click(screen.getByRole("tab", { name: "Piste lavaggio" }));
 
       expect(screen.getByRole("button", { name: /aggiungi pista/i })).toBeInTheDocument();
     });
 
-    test("clicking Aggiungi Serbatoio shows add form and hides button", async () => {
+    test("clicking Aggiungi serbatoio shows add form and hides button", async () => {
       render(<FormContainer {...defaultProps} />);
 
       await userEvent.click(screen.getByRole("tab", { name: "Serbatoi" }));
       await userEvent.click(screen.getByRole("button", { name: /aggiungi serbatoio/i }));
 
-      expect(screen.getByText("Aggiungi Nuovo Serbatoio")).toBeInTheDocument();
+      expect(screen.getByText("Aggiungi nuovo Serbatoio")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /aggiungi serbatoio/i })).not.toBeInTheDocument();
     });
 
-    test("clicking Aggiungi Pista shows add form and hides button", async () => {
+    test("clicking Aggiungi pista shows add form and hides button", async () => {
       render(<FormContainer {...defaultProps} />);
 
-      await userEvent.click(screen.getByRole("tab", { name: "Piste Lavaggio" }));
+      await userEvent.click(screen.getByRole("tab", { name: "Piste lavaggio" }));
       await userEvent.click(screen.getByRole("button", { name: /aggiungi pista/i }));
 
-      expect(screen.getByText("Aggiungi Nuova Pista")).toBeInTheDocument();
+      expect(screen.getByText("Aggiungi nuova Pista")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /aggiungi pista/i })).not.toBeInTheDocument();
     });
   });
@@ -254,7 +254,7 @@ describe("FormContainer", () => {
         />
       );
 
-      await userEvent.click(screen.getByRole("tab", { name: "Piste Lavaggio" }));
+      await userEvent.click(screen.getByRole("tab", { name: "Piste lavaggio" }));
 
       expect(
         screen.getByText(/catena portacavi è obbligatoria almeno una pista/)
@@ -274,7 +274,7 @@ describe("FormContainer", () => {
         />
       );
 
-      await userEvent.click(screen.getByRole("tab", { name: "Piste Lavaggio" }));
+      await userEvent.click(screen.getByRole("tab", { name: "Piste lavaggio" }));
 
       expect(
         screen.queryByText(/catena portacavi è obbligatoria almeno una pista/)

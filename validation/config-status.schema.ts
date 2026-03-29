@@ -13,7 +13,7 @@ export const configStatusOpts: SelectOption[] =
   generateSelectOptionsFromZodEnum(configStatusEnum, [
     "Bozza",
     "Inviato",
-    "In Revisione",
+    "In revisione",
     "Approvato",
     "Chiuso",
   ]);

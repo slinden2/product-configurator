@@ -137,7 +137,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
   const generalRanges: { startRow: number, endRow: number }[] = [];
 
   // General BOM section
-  addSectionTitle("Distinta Generale");
+  addSectionTitle("Distinta generale");
   sheet.addRow([]);
   const generalHeaderRow = sheet.addRow(headers);
   headerRowNums.push(generalHeaderRow.number);
@@ -165,7 +165,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
 
   // Title
   const titleRow = sheet.getRow(currentRow++);
-  titleRow.getCell(1).value = "Riepilogo Costi";
+  titleRow.getCell(1).value = "Riepilogo costi";
   titleRow.getCell(1).font = { bold: true, size: 16 };
   titleRow.height = 25;
 
@@ -196,7 +196,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
 
   // Data rows
   const sections = [
-    { name: "Distinta Generale", ranges: generalRanges },
+    { name: "Distinta generale", ranges: generalRanges },
     { name: "Serbatoi", ranges: waterTankRanges },
     { name: "Piste", ranges: washBayRanges },
   ];

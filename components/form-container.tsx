@@ -43,7 +43,7 @@ interface ConfigurationFormProps {
 const TABS_CONFIG = [
   { value: "config", label: "Configurazione" },
   { value: "tanks", label: "Serbatoi" },
-  { value: "bays", label: "Piste Lavaggio" },
+  { value: "bays", label: "Piste lavaggio" },
 ];
 
 interface EntityTabContentProps {
@@ -229,11 +229,11 @@ const FormContainer = ({
 
         <TabsContent value="tanks" className="space-y-4">
           <EntityTabContent
-            title="Gestione Serbatoi"
+            title="Gestione serbatoi"
             showAddForm={showAddWaterTankForm}
             onShowAddForm={() => setShowAddWaterTankForm(true)}
             showAddButton={showAddEntityButton}
-            addButtonLabel="Aggiungi Serbatoio"
+            addButtonLabel="Aggiungi serbatoio"
             renderForms={() =>
               waterTanks.map((wt, index) => (
                 <WaterTankForm
@@ -269,11 +269,11 @@ const FormContainer = ({
 
         <TabsContent value="bays" className="space-y-4">
           <EntityTabContent
-            title="Gestione Piste"
+            title="Gestione piste"
             showAddForm={showAddWashBayForm}
             onShowAddForm={() => setShowAddWashBayForm(true)}
             showAddButton={showAddEntityButton}
-            addButtonLabel="Aggiungi Pista"
+            addButtonLabel="Aggiungi pista"
             warning={
               configuration?.supply_type === "ENERGY_CHAIN" &&
               !washBays.some((wb) => wb.has_gantry && wb.energy_chain_width) ? (

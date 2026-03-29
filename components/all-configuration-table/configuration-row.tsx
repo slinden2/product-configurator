@@ -104,7 +104,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       <ConfirmModal
         isOpen={isConfirmDeleteOpen}
         onOpenChange={setIsConfirmDeleteOpen}
-        title="Conferma Eliminazione"
+        title="Conferma eliminazione"
         description={
           <>
             Sei sicuro di voler eliminare la configurazione{" "}
