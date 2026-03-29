@@ -28,6 +28,7 @@ export const ebomTagEnum = pgEnum("ebom_tag", [
   "ELECTRICAL",
   "FAST",
   "HP_PUMPS",
+  "MISC",
 ]);
 
 export type EngineeringBomItem = typeof engineeringBomItems.$inferSelect;

@@ -6,7 +6,7 @@ import BOMCard from "@/components/bom-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EngineeringBomItem } from "@/db/schemas";
 import { BOMItemWithDescription } from "@/lib/BOM";
-import { BomTag, BomTagLabels } from "@/types";
+import { BomTag, BomTagLabels, BomTags } from "@/types";
 
 // ── General section ─────────────────────────────────────────────────────
 
@@ -27,16 +27,17 @@ export function GeneralSection({
     const tagged = hasTagData(engineeringItems);
     if (tagged) {
       const tagGroups = groupByTag(engineeringItems);
+      const availableTags = [...BomTags];
       return (
         <BOMCard title="Distinta generale">
           {Array.from(tagGroups.entries()).map(([tag, items]) => (
             <TagGroup key={tag} tag={tag}>
               <EngineeringBomTable items={items} confId={confId} editable={editable} />
-              {editable && (
-                <AddBomItemForm confId={confId} category="GENERAL" categoryIndex={0} tag={tag} />
-              )}
             </TagGroup>
           ))}
+          {editable && (
+            <AddBomItemForm confId={confId} category="GENERAL" categoryIndex={0} availableTags={availableTags} />
+          )}
         </BOMCard>
       );
     }

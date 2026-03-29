@@ -121,6 +121,7 @@ export const BomTags = [
   "ELECTRICAL",
   "FAST",
   "HP_PUMPS",
+  "MISC",
 ] as const;
 export type BomTag = (typeof BomTags)[number];
 
@@ -137,6 +138,7 @@ export const BomTagLabels: Record<BomTag, string> = {
   ELECTRICAL: "Elettrica",
   FAST: "Fast",
   HP_PUMPS: "Pompe HP",
+  MISC: "Varie",
 };
 
 export interface SelectOption {

@@ -20,10 +20,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { PartNumber } from "@/db/schemas";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MSG } from "@/lib/messages";
-import { BomTag } from "@/types";
+import { BomTag, BomTagLabels } from "@/types";
 import { toast } from "sonner";
 
 interface AddBomItemFormProps {
@@ -31,13 +38,15 @@ interface AddBomItemFormProps {
   category: "GENERAL" | "WATER_TANK" | "WASH_BAY";
   categoryIndex: number;
   tag?: BomTag;
+  availableTags?: BomTag[];
 }
 
 const AddBomItemForm = ({
   confId,
   category,
   categoryIndex,
-  tag,
+  tag: fixedTag,
+  availableTags,
 }: AddBomItemFormProps) => {
   const [mode, setMode] = useState<"catalog" | "custom">("catalog");
   const [open, setOpen] = useState(false);
@@ -48,6 +57,11 @@ const AddBomItemForm = ({
   const [isPending, startTransition] = useTransition();
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Tag selector (only used when availableTags is provided)
+  const [selectedTag, setSelectedTag] = useState<BomTag | undefined>(
+    fixedTag ?? availableTags?.[0]
+  );
 
   // Custom mode fields
   const [customPn, setCustomPn] = useState("");
@@ -104,7 +118,7 @@ const AddBomItemForm = ({
             category,
             category_index: categoryIndex,
             is_custom: false,
-            tag,
+            tag: selectedTag,
           });
           setSelectedPn(null);
           setQty("1");
@@ -129,7 +143,7 @@ const AddBomItemForm = ({
             category,
             category_index: categoryIndex,
             is_custom: true,
-            tag,
+            tag: selectedTag,
           });
           setCustomPn("");
           setCustomDescription("");
@@ -229,6 +243,24 @@ const AddBomItemForm = ({
           className="w-20 text-center"
           placeholder="Qtà"
         />
+
+        {availableTags && (
+          <Select
+            value={selectedTag}
+            onValueChange={(v) => setSelectedTag(v as BomTag)}
+          >
+            <SelectTrigger className="w-[200px] text-sm">
+              <SelectValue placeholder="Gruppo..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableTags.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {BomTagLabels[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Button
           variant="outline"
