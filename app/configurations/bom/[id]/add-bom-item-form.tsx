@@ -23,18 +23,21 @@ import { PartNumber } from "@/db/schemas";
 import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MSG } from "@/lib/messages";
+import { BomTag } from "@/types";
 import { toast } from "sonner";
 
 interface AddBomItemFormProps {
   confId: number;
   category: "GENERAL" | "WATER_TANK" | "WASH_BAY";
   categoryIndex: number;
+  tag?: BomTag;
 }
 
 const AddBomItemForm = ({
   confId,
   category,
   categoryIndex,
+  tag,
 }: AddBomItemFormProps) => {
   const [mode, setMode] = useState<"catalog" | "custom">("catalog");
   const [open, setOpen] = useState(false);
@@ -101,6 +104,7 @@ const AddBomItemForm = ({
             category,
             category_index: categoryIndex,
             is_custom: false,
+            tag,
           });
           setSelectedPn(null);
           setQty("1");
@@ -125,6 +129,7 @@ const AddBomItemForm = ({
             category,
             category_index: categoryIndex,
             is_custom: true,
+            tag,
           });
           setCustomPn("");
           setCustomDescription("");

@@ -5,7 +5,7 @@ import {
 } from "@/db/queries";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { BOM, BOMItemWithCost, BOMItemWithDescription, enrichWithCosts } from "@/lib/BOM";
-import { Role } from "@/types";
+import { BomTag, BomTags, Role } from "@/types";
 
 // ── Grouping ────────────────────────────────────────────────────────────
 
@@ -43,6 +43,25 @@ export function groupEbomByCategory(
   }
 
   return { general, waterTanks, washBays };
+}
+
+// ── Tag grouping ────────────────────────────────────────────────────────
+
+export function groupByTag<T extends { tag?: BomTag | null }>(
+  items: T[]
+): Map<BomTag, T[]> {
+  const map = new Map<BomTag, T[]>();
+  for (const tag of BomTags) {
+    const tagItems = items.filter((i) => i.tag === tag);
+    if (tagItems.length > 0) {
+      map.set(tag, tagItems);
+    }
+  }
+  return map;
+}
+
+export function hasTagData(items: { tag?: BomTag | null }[]): boolean {
+  return items.some((i) => i.tag != null);
 }
 
 // ── Export data builders ────────────────────────────────────────────────

@@ -440,3 +440,71 @@ describe("nozzleBarBOM — OMZ uses INOX variants", () => {
     expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY);
   });
 });
+
+describe("nozzleBarBOM — tags", () => {
+  const itemsByPn = (pn: string) => nozzleBarBOM.filter((i) => i.pn === pn);
+
+  test("rinse section items have tag RINSE_BARS", () => {
+    const rinsePns = [
+      PNS.RINSE_ARCH,
+      PNS.RINSE_ARCH_INOX,
+      PNS.LATERAL_RINSE_BARS,
+      PNS.RINSE_SOLENOIDS_PREWASH_ONBOARD,
+      PNS.RINSE_SOLENOIDS_PREWASH_ONBOARD_INOX,
+      PNS.RINSE_SOLENOID_PREWASH_WASH_BAY,
+      PNS.RINSE_SOLENOID_PREWASH_WASH_BAY_INOX,
+      PNS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH,
+      PNS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH_INOX,
+    ];
+    for (const pn of rinsePns) {
+      const items = itemsByPn(pn);
+      expect(items.length).toBeGreaterThan(0);
+      items.forEach((item) => expect(item.tag).toBe("RINSE_BARS"));
+    }
+  });
+
+  test("prewash section items have tag PREWASH_BARS", () => {
+    const prewashPns = [
+      PNS.PREWASH_ARCH,
+      PNS.PREWASH_ARCH_INOX,
+      PNS.LATERAL_PREWASH_BARS,
+      PNS.PREWASH_ARCH_2_CHEMICALS,
+      PNS.FLOW_SWITCH,
+      PNS.FLOW_SWITCH_INOX,
+    ];
+    for (const pn of prewashPns) {
+      const items = itemsByPn(pn);
+      expect(items.length).toBeGreaterThan(0);
+      items.forEach((item) => expect(item.tag).toBe("PREWASH_BARS"));
+    }
+  });
+
+  test("acid section items have tag ACID_BARS", () => {
+    const acidPns = [PNS.PREWASH_ARCH_ACID_INOX];
+    for (const pn of acidPns) {
+      const items = itemsByPn(pn);
+      expect(items.length).toBeGreaterThan(0);
+      items.forEach((item) => expect(item.tag).toBe("ACID_BARS"));
+    }
+  });
+
+  test("wax and double supply fittings (Other section) have tag RINSE_BARS", () => {
+    const otherPns = [
+      PNS.FITTINGS_FOR_WAX_PUMP,
+      PNS.FITTINGS_FOR_WAX_PUMP_INOX,
+      PNS.FITTINGS_FOR_DOUBLE_SUPPLY,
+      PNS.FITTINGS_FOR_DOUBLE_SUPPLY_INOX,
+    ];
+    for (const pn of otherPns) {
+      const items = itemsByPn(pn);
+      expect(items.length).toBeGreaterThan(0);
+      items.forEach((item) => expect(item.tag).toBe("RINSE_BARS"));
+    }
+  });
+
+  test("every item in nozzleBarBOM has a defined tag", () => {
+    nozzleBarBOM.forEach((item) => {
+      expect(item.tag).toBeDefined();
+    });
+  });
+});

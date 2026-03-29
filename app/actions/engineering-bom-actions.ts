@@ -114,6 +114,7 @@ function flattenBomToItems(
     is_added: false,
     is_custom: !tsePns.has(item.pn),
     sort_order: sortOrder,
+    tag: item.tag ?? null,
     bom_rules_version: BOM_RULES_VERSION,
   });
 
@@ -216,7 +217,7 @@ export async function addEngineeringBomItemAction(
     };
   }
 
-  const { pn, qty, description, category, category_index, is_custom } =
+  const { pn, qty, description, category, category_index, is_custom, tag } =
     validation.data;
 
   try {
@@ -233,6 +234,7 @@ export async function addEngineeringBomItemAction(
       is_deleted: false,
       is_added: true,
       is_custom: is_custom ?? false,
+      tag: tag ?? null,
       sort_order: sql`(
         SELECT COALESCE(MAX(${engineeringBomItems.sort_order}), -1) + 1 
         FROM ${engineeringBomItems} 

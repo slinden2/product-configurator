@@ -13,6 +13,8 @@ import {
   getEarliestCreatedAt,
   getBomRulesVersion,
   buildEbomCostExportData,
+  groupByTag,
+  hasTagData,
 } from "@/app/configurations/bom/[id]/bom-helpers";
 import { EngineeringBomItem } from "@/db/schemas";
 
@@ -34,6 +36,7 @@ function makeItem(
     is_deleted: false,
     is_added: false,
     sort_order: 0,
+    tag: null,
     bom_rules_version: null,
     created_at: new Date("2026-03-20T10:00:00Z"),
     updated_at: new Date("2026-03-20T10:00:00Z"),
@@ -233,5 +236,58 @@ describe("buildEbomCostExportData", () => {
 
     // Should query with deduplicated PNs
     expect(mockGetPartNumbersByArray).toHaveBeenCalledWith(["PN-001"]);
+  });
+});
+
+describe("groupByTag", () => {
+  test("returns empty map for empty array", () => {
+    expect(groupByTag([])).toEqual(new Map());
+  });
+
+  test("groups items by tag in BomTags order", () => {
+    const items = [
+      makeItem({ id: 1, tag: "BRUSHES" }),
+      makeItem({ id: 2, tag: "FRAME" }),
+      makeItem({ id: 3, tag: "BRUSHES" }),
+    ];
+    const result = groupByTag(items);
+    const keys = Array.from(result.keys());
+    expect(keys).toEqual(["FRAME", "BRUSHES"]);
+    expect(result.get("FRAME")).toHaveLength(1);
+    expect(result.get("BRUSHES")).toHaveLength(2);
+  });
+
+  test("excludes tags with no matching items", () => {
+    const items = [makeItem({ id: 1, tag: "RAILS" })];
+    const result = groupByTag(items);
+    expect(result.size).toBe(1);
+    expect(result.has("RAILS")).toBe(true);
+    expect(result.has("BRUSHES")).toBe(false);
+  });
+
+  test("items with null tag are excluded", () => {
+    const items = [
+      makeItem({ id: 1, tag: null }),
+      makeItem({ id: 2, tag: "HP_PUMPS" }),
+    ];
+    const result = groupByTag(items);
+    expect(result.size).toBe(1);
+    expect(result.has("HP_PUMPS")).toBe(true);
+  });
+});
+
+describe("hasTagData", () => {
+  test("returns false for empty array", () => {
+    expect(hasTagData([])).toBe(false);
+  });
+
+  test("returns false when all items have null tags", () => {
+    const items = [makeItem({ tag: null }), makeItem({ tag: null })];
+    expect(hasTagData(items)).toBe(false);
+  });
+
+  test("returns true when at least one item has a tag", () => {
+    const items = [makeItem({ tag: null }), makeItem({ tag: "FRAME" })];
+    expect(hasTagData(items)).toBe(true);
   });
 });

@@ -10,11 +10,13 @@ import {
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/max-bom";
+import { BomTag } from "@/types";
 
 export interface BOMItem {
   pn: string;
   qty: number;
   _description: string;
+  tag?: BomTag;
 }
 
 export interface WithBOMItems {
@@ -183,6 +185,7 @@ export class BOM {
         qty:
           typeof item.qty === "function" ? item.qty(configuration) : item.qty,
         _description: item._description,
+        tag: item.tag,
       }));
   }
 

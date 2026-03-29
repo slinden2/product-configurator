@@ -108,6 +108,37 @@ export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 export const Roles = ["ADMIN", "ENGINEER", "SALES"] as const;
 export type Role = (typeof Roles)[number];
 
+export const BomTags = [
+  "FRAME",
+  "BRUSHES",
+  "DOSING_PUMPS",
+  "WATER_SUPPLY",
+  "RINSE_BARS",
+  "PREWASH_BARS",
+  "ACID_BARS",
+  "SUPPLY",
+  "RAILS",
+  "ELECTRICAL",
+  "FAST",
+  "HP_PUMPS",
+] as const;
+export type BomTag = (typeof BomTags)[number];
+
+export const BomTagLabels: Record<BomTag, string> = {
+  FRAME: "Struttura",
+  BRUSHES: "Spazzole",
+  DOSING_PUMPS: "Pompe dosatrici",
+  WATER_SUPPLY: "Alimentazione acqua",
+  RINSE_BARS: "Barre risciacquo",
+  PREWASH_BARS: "Barre prelavaggio",
+  ACID_BARS: "Barre acido",
+  SUPPLY: "Alimentazione portale",
+  RAILS: "Rotaie",
+  ELECTRICAL: "Elettrica",
+  FAST: "Fast",
+  HP_PUMPS: "Pompe HP",
+};
+
 export interface SelectOption {
   value: string | number;
   label: string;

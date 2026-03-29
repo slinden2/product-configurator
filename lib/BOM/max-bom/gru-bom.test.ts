@@ -4,6 +4,7 @@ vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockRes
 vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
 
 import { gruBOM } from "@/lib/BOM/max-bom/gru-bom";
+import { GeneralMaxBOM } from "@/lib/BOM/max-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
 const cfg = (brush_qty: number) =>
@@ -35,5 +36,13 @@ describe("gruBOM", () => {
     for (const qty of [0, 2, 3]) {
       expect(included(cfg(qty) as GeneralBOMConfig)).toHaveLength(1);
     }
+  });
+});
+
+describe("GeneralMaxBOM — tag coverage", () => {
+  test("every item in GeneralMaxBOM has a defined tag", () => {
+    GeneralMaxBOM.forEach((item) => {
+      expect(item.tag, `item ${item.pn} (${item._description}) is missing a tag`).toBeDefined();
+    });
   });
 });

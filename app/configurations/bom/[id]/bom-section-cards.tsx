@@ -1,10 +1,12 @@
 import AddBomItemForm from "@/app/configurations/bom/[id]/add-bom-item-form";
+import { groupByTag, hasTagData } from "@/app/configurations/bom/[id]/bom-helpers";
 import BOMDataTable from "@/app/configurations/bom/[id]/bom-data-table";
 import EngineeringBomTable from "@/app/configurations/bom/[id]/engineering-bom-table";
 import BOMCard from "@/components/bom-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EngineeringBomItem } from "@/db/schemas";
 import { BOMItemWithDescription } from "@/lib/BOM";
+import { BomTag, BomTagLabels } from "@/types";
 
 // ── General section ─────────────────────────────────────────────────────
 
@@ -21,27 +23,54 @@ export function GeneralSection({
   confId,
   editable,
 }: GeneralSectionProps) {
+  if (engineeringItems) {
+    const tagged = hasTagData(engineeringItems);
+    if (tagged) {
+      const tagGroups = groupByTag(engineeringItems);
+      return (
+        <BOMCard title="Distinta generale">
+          {Array.from(tagGroups.entries()).map(([tag, items]) => (
+            <TagGroup key={tag} tag={tag}>
+              <EngineeringBomTable items={items} confId={confId} editable={editable} />
+              {editable && (
+                <AddBomItemForm confId={confId} category="GENERAL" categoryIndex={0} tag={tag} />
+              )}
+            </TagGroup>
+          ))}
+        </BOMCard>
+      );
+    }
+    // Legacy snapshot without tags — flat list
+    return (
+      <BOMCard title="Distinta generale">
+        <EngineeringBomTable items={engineeringItems} confId={confId} editable={editable} />
+        {editable && (
+          <AddBomItemForm confId={confId} category="GENERAL" categoryIndex={0} />
+        )}
+      </BOMCard>
+    );
+  }
+
+  const tagGroups = groupByTag(calculatedItems!);
   return (
     <BOMCard title="Distinta generale">
-      {engineeringItems ? (
-        <>
-          <EngineeringBomTable
-            items={engineeringItems}
-            confId={confId}
-            editable={editable}
-          />
-          {editable && (
-            <AddBomItemForm
-              confId={confId}
-              category="GENERAL"
-              categoryIndex={0}
-            />
-          )}
-        </>
-      ) : (
-        <BOMDataTable items={calculatedItems!} />
-      )}
+      {Array.from(tagGroups.entries()).map(([tag, items]) => (
+        <TagGroup key={tag} tag={tag}>
+          <BOMDataTable items={items} />
+        </TagGroup>
+      ))}
     </BOMCard>
+  );
+}
+
+function TagGroup({ tag, children }: { tag: BomTag; children: React.ReactNode }) {
+  return (
+    <div className="mb-6">
+      <h3 className="text-base font-semibold mb-2 px-2 text-muted-foreground uppercase tracking-wide">
+        {BomTagLabels[tag]}
+      </h3>
+      {children}
+    </div>
   );
 }
 

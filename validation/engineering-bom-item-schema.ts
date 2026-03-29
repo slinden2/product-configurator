@@ -1,3 +1,4 @@
+import { BomTags } from "@/types";
 import { z } from "zod";
 
 export const engineeringBomItemSchema = z.object({
@@ -7,6 +8,7 @@ export const engineeringBomItemSchema = z.object({
   category: z.enum(["GENERAL", "WATER_TANK", "WASH_BAY"]),
   category_index: z.number().int().min(0),
   is_custom: z.boolean().optional().default(false),
+  tag: z.enum(BomTags).nullable().optional(),
 });
 
 export type EngineeringBomItemFormData = z.infer<

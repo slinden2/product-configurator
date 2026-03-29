@@ -15,6 +15,21 @@ export const ebomCategoryEnum = pgEnum("ebom_category", [
   "WASH_BAY",
 ]);
 
+export const ebomTagEnum = pgEnum("ebom_tag", [
+  "FRAME",
+  "BRUSHES",
+  "DOSING_PUMPS",
+  "WATER_SUPPLY",
+  "RINSE_BARS",
+  "PREWASH_BARS",
+  "ACID_BARS",
+  "SUPPLY",
+  "RAILS",
+  "ELECTRICAL",
+  "FAST",
+  "HP_PUMPS",
+]);
+
 export type EngineeringBomItem = typeof engineeringBomItems.$inferSelect;
 export type NewEngineeringBomItem = typeof engineeringBomItems.$inferInsert;
 
@@ -33,6 +48,7 @@ export const engineeringBomItems = pgTable("engineering_bom_items", {
   is_deleted: boolean("is_deleted").notNull().default(false),
   is_added: boolean("is_added").notNull().default(false),
   sort_order: integer("sort_order").notNull(),
+  tag: ebomTagEnum("tag"),
   bom_rules_version: varchar("bom_rules_version", { length: 20 }),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()

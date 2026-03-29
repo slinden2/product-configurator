@@ -62,18 +62,21 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [(config) => config.brush_qty === 3, (config) => !isOMZ(config)],
     qty: 1,
     _description: "Rinse arch",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.RINSE_ARCH_INOX,
     conditions: [(config) => config.brush_qty === 3, (config) => isOMZ(config)],
     qty: 1,
     _description: "Rinse arch",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.LATERAL_RINSE_BARS,
     conditions: [(config) => config.brush_qty === 2],
     qty: 1,
     _description: "Lateral rinse bars",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.RINSE_SOLENOIDS_PREWASH_ONBOARD,
@@ -85,6 +88,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Rinse solenoids (prewash onboard)",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.RINSE_SOLENOIDS_PREWASH_ONBOARD_INOX,
@@ -96,6 +100,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Rinse solenoids (prewash onboard)",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.RINSE_SOLENOID_PREWASH_WASH_BAY,
@@ -107,6 +112,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Rinse solenoid (prewash in wash bay)",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.RINSE_SOLENOID_PREWASH_WASH_BAY_INOX,
@@ -118,6 +124,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Rinse solenoid (prewash in wash bay)",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH,
@@ -129,6 +136,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Fittings for rinse without prewash",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH_INOX,
@@ -140,6 +148,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Fittings for rinse without prewash",
+    tag: "RINSE_BARS",
   },
 
   // Prewash
@@ -153,6 +162,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash arch",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_ARCH_INOX,
@@ -164,18 +174,21 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash arch",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS,
     conditions: [hasOneChemical, hasChemicalRoofBar, (config) => !isOMZ(config)],
     qty: 1,
     _description: "Posterior lateral prewash bars",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS_INOX,
     conditions: [hasOneChemical, hasChemicalRoofBar, isOMZ],
     qty: 1,
     _description: "Posterior lateral prewash bars",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.LATERAL_PREWASH_BARS,
@@ -186,6 +199,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Lateral prewash bars",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_ARCH_2_CHEMICALS,
@@ -196,24 +210,28 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash arch for dual chemical",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS,
     conditions: [hasTwoChemicals, hasChemicalRoofBar],
     qty: 1,
     _description: "Posterior lateral prewash bars for dual chemical",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.FLOW_SWITCH,
     conditions: [(config) => config.has_itecoweb, (config) => !isOMZ(config)],
     qty: 1,
     _description: "Flow switch",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.FLOW_SWITCH_INOX,
     conditions: [(config) => config.has_itecoweb, isOMZ],
     qty: 1,
     _description: "Flow switch",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD,
@@ -225,6 +243,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) => config.chemical_qty || 1,
     _description: "Prewash solenoid (prewash onboard)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD,
@@ -237,6 +256,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     qty: 1,
     _description:
       "Prewash solenoid (prewash onboard) (only when double prewash and HP roof bar with chemical)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX,
@@ -248,6 +268,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) => config.chemical_qty || 1,
     _description: "Prewash solenoid (prewash onboard)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX,
@@ -260,6 +281,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     qty: 1,
     _description:
       "Prewash solenoid (prewash onboard) (only when double prewash and HP roof bar with chemical)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD,
@@ -271,6 +293,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash solenoids (HP roof bar prewash onboard)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX,
@@ -282,6 +305,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash solenoids (HP roof bar prewash onboard)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY,
@@ -293,6 +317,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) => config.chemical_qty || 1,
     _description: "Fittings for prewash (prewash in wash bay)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY,
@@ -305,6 +330,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     qty: 1,
     _description:
       "Fittings for prewash (prewash in wash bay) (only when double prewash and HP roof bar with chemical)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX,
@@ -316,6 +342,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) => config.chemical_qty || 1,
     _description: "Fittings for prewash (prewash in wash bay)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX,
@@ -328,6 +355,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     qty: 1,
     _description:
       "Fittings for prewash (prewash in wash bay) (only when double prewash and HP roof bar with chemical)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY,
@@ -339,6 +367,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash solenoids (HP roof bar and prewash in wash bay)",
+    tag: "PREWASH_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY_INOX,
@@ -350,6 +379,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Prewash solenoids (HP roof bar and prewash in wash bay)",
+    tag: "PREWASH_BARS",
   },
 
   // Acid
@@ -358,6 +388,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [(config) => config.has_acid_pump],
     qty: 1,
     _description: "Prewash arch with acid",
+    tag: "ACID_BARS",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX,
@@ -367,6 +398,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Acid solenoid (acid onboard)",
+    tag: "ACID_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_PREWASH_WASH_BAY_INOX,
@@ -376,20 +408,23 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Fittings for acid (acid in wash bay)",
+    tag: "ACID_BARS",
   },
 
-  // Other
+  // Other (grouped with rinse bars)
   {
     pn: PART_NUMBERS.FITTINGS_FOR_WAX_PUMP,
     conditions: [(config) => config.has_wax_pump, (config) => !isOMZ(config)],
     qty: 1,
     _description: "Fittings for wax pump",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_WAX_PUMP_INOX,
     conditions: [(config) => config.has_wax_pump, isOMZ],
     qty: 1,
     _description: "Fittings for wax pump",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_DOUBLE_SUPPLY,
@@ -400,6 +435,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Fittings for double supply",
+    tag: "RINSE_BARS",
   },
   {
     pn: PART_NUMBERS.FITTINGS_FOR_DOUBLE_SUPPLY_INOX,
@@ -410,5 +446,6 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Fittings for double supply",
+    tag: "RINSE_BARS",
   },
 ];
