@@ -54,13 +54,13 @@ describe("waterSupplyBOM — solenoids", () => {
     expect(pns(config)).not.toContain(PNS.WASH_BAY_SOLENOID_NO_ANTIFREEZE);
   });
 
-  test("water_1_type set, !has_antifreeze, no water_2 → solenoid without antifreeze (qty=1)", () => {
+  test("water_1_type set, !has_antifreeze, no water_2 → solenoid, no antifreeze (qty=1)", () => {
     const config = makeConfig({ water_1_type: "NETWORK", has_antifreeze: false, water_2_type: null });
     expect(pns(config)).toContain(PNS.WASH_BAY_SOLENOID_NO_ANTIFREEZE);
     expect(qty(config, PNS.WASH_BAY_SOLENOID_NO_ANTIFREEZE)).toBe(1);
   });
 
-  test("water_1 + water_2 set, !has_antifreeze → solenoid without antifreeze (qty=2)", () => {
+  test("water_1 + water_2 set, !has_antifreeze → solenoid, no antifreeze (qty=2)", () => {
     const config = makeConfig({ water_1_type: "NETWORK", water_2_type: "RECYCLED", has_antifreeze: false });
     expect(pns(config)).toContain(PNS.WASH_BAY_SOLENOID_NO_ANTIFREEZE);
     expect(qty(config, PNS.WASH_BAY_SOLENOID_NO_ANTIFREEZE)).toBe(2);

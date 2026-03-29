@@ -69,7 +69,7 @@ export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) =>
       hasWater2Solenoid(config) && !config.has_antifreeze ? 2 : 1,
-    _description: "Wash bay solenoid without antifreeze",
+    _description: "Wash bay solenoid, no antifreeze",
   },
   {
     pn: PART_NUMBERS.WASH_BAY_2ND_SOLENOID_WITH_ANTIFREEZE,

@@ -269,7 +269,7 @@ describe("hpPumpBOM — OMZ pump / HP roof bar", () => {
     expect(pns(config)).not.toContain(PNS.CHEMICAL_ROOF_BAR);
   });
 
-  test("omz + HP_ROOF_BAR_SPINNERS → HP valve assy + high spinners + HP roof bar", () => {
+  test("omz + HP_ROOF_BAR_SPINNERS → HP valve assembly + high spinners + HP roof bar", () => {
     const config = makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR_SPINNERS" });
     expect(pns(config)).toContain(PNS.HP_VALVE_ASSY);
     expect(pns(config)).toContain(PNS.HIGH_SPINNERS_4X43L);

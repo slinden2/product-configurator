@@ -123,7 +123,7 @@ describe("dosingPumpBOM — acid pump (ONBOARD position)", () => {
 });
 
 describe("dosingPumpBOM — dosatrons (WASH_BAY position)", () => {
-  test("chemical WASH_BAY, !has_antifreeze → dosatron without antifreeze (qty=chemical_qty)", () => {
+  test("chemical WASH_BAY, !has_antifreeze → dosatron, no antifreeze (qty=chemical_qty)", () => {
     const config = makeConfig({
       has_chemical_pump: true,
       chemical_pump_pos: "WASH_BAY",
@@ -145,7 +145,7 @@ describe("dosingPumpBOM — dosatrons (WASH_BAY position)", () => {
     expect(pns(config)).not.toContain(PNS.DOSATRON_NO_ANTIFREEZE);
   });
 
-  test("acid WASH_BAY, !has_antifreeze → dosatron acid without antifreeze", () => {
+  test("acid WASH_BAY, !has_antifreeze → dosatron acid, no antifreeze", () => {
     const config = makeConfig({
       has_acid_pump: true,
       acid_pump_pos: "WASH_BAY",

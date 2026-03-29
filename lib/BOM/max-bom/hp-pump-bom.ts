@@ -352,7 +352,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
         ),
     ],
     qty: 1,
-    _description: "High bars (2x150)",
+    _description: "High bars (2x150l)",
   },
   {
     pn: PART_NUMBERS.LOW_MEDIUM_SPINNERS_4X150L,
@@ -417,7 +417,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.supply_side === "RIGHT",
     ],
     qty: 1,
-    _description: "Hose from right shelf to valve assy (4 spinners)",
+    _description: "Hose from right shelf to valve assembly (4 spinners)",
   },
   {
     pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
@@ -427,7 +427,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.supply_side === "LEFT",
     ],
     qty: 1,
-    _description: "Hose from left shelf to valve assy (4 spinners)",
+    _description: "Hose from left shelf to valve assembly (4 spinners)",
   },
   {
     pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS,
@@ -448,7 +448,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description:
-      "Hose from right shelf to valve assy (4 spinners) with extension",
+      "Hose from right shelf to valve assembly (4 spinners) with extension",
   },
   {
     pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT,
@@ -459,7 +459,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description:
-      "Hose from left shelf to valve assy (4 spinners) with extension",
+      "Hose from left shelf to valve assembly (4 spinners) with extension",
   },
   {
     pn: PART_NUMBERS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_W_EXT,
@@ -511,7 +511,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.supply_side === "RIGHT",
     ],
     qty: 2,
-    _description: "Hose from right shelf to valve assy (4 spinners) OMZ",
+    _description: "Hose from right shelf to valve assembly (4 spinners) OMZ",
   },
   {
     pn: PART_NUMBERS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT,
@@ -522,7 +522,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 2,
     _description:
-      "Hose from right shelf to valve assy (4 spinners) OMZ with extension",
+      "Hose from right shelf to valve assembly (4 spinners) OMZ with extension",
   },
   {
     pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
@@ -532,7 +532,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.supply_side === "LEFT",
     ],
     qty: 2,
-    _description: "Hose from left shelf to valve assy (4 spinners) OMZ",
+    _description: "Hose from left shelf to valve assembly (4 spinners) OMZ",
   },
   {
     pn: PART_NUMBERS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT,
@@ -543,6 +543,6 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 2,
     _description:
-      "Hose from left shelf to valve assy (4 spinners) OMZ with extension",
+      "Hose from left shelf to valve assembly (4 spinners) OMZ with extension",
   },
 ];

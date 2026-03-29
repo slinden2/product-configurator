@@ -61,13 +61,13 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.RINSE_ARCH,
     conditions: [(config) => config.brush_qty === 3, (config) => !isOMZ(config)],
     qty: 1,
-    _description: "Rinse Arch",
+    _description: "Rinse arch",
   },
   {
     pn: PART_NUMBERS.RINSE_ARCH_INOX,
     conditions: [(config) => config.brush_qty === 3, (config) => isOMZ(config)],
     qty: 1,
-    _description: "Rinse Arch",
+    _description: "Rinse arch",
   },
   {
     pn: PART_NUMBERS.LATERAL_RINSE_BARS,
@@ -152,7 +152,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !isOMZ(config),
     ],
     qty: 1,
-    _description: "Prewash Arch",
+    _description: "Prewash arch",
   },
   {
     pn: PART_NUMBERS.PREWASH_ARCH_INOX,
@@ -163,7 +163,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => isOMZ(config),
     ],
     qty: 1,
-    _description: "Prewash Arch",
+    _description: "Prewash arch",
   },
   {
     pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS,
@@ -195,7 +195,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => !hasChemicalRoofBar(config),
     ],
     qty: 1,
-    _description: "Prewash Arch for dual chemical",
+    _description: "Prewash arch for dual chemical",
   },
   {
     pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS,
@@ -357,7 +357,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.PREWASH_ARCH_ACID_INOX,
     conditions: [(config) => config.has_acid_pump],
     qty: 1,
-    _description: "Prewash Arch with acid",
+    _description: "Prewash arch with acid",
   },
   {
     pn: PART_NUMBERS.PREWASH_SOLENOID_PREWASH_ONBOARD_INOX,
