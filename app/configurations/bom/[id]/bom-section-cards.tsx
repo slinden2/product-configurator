@@ -1,5 +1,5 @@
 import AddBomItemForm from "@/app/configurations/bom/[id]/add-bom-item-form";
-import { groupByTag, hasTagData } from "@/app/configurations/bom/[id]/bom-helpers";
+import { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 import BOMDataTable from "@/app/configurations/bom/[id]/bom-data-table";
 import EngineeringBomTable from "@/app/configurations/bom/[id]/engineering-bom-table";
 import BOMCard from "@/components/bom-card";

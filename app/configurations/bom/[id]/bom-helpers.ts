@@ -5,7 +5,7 @@ import {
 } from "@/db/queries";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { BOM, BOMItemWithCost, BOMItemWithDescription, enrichWithCosts } from "@/lib/BOM";
-import { BomTag, BomTags, Role } from "@/types";
+import { Role } from "@/types";
 
 // ── Grouping ────────────────────────────────────────────────────────────
 
@@ -47,22 +47,7 @@ export function groupEbomByCategory(
 
 // ── Tag grouping ────────────────────────────────────────────────────────
 
-export function groupByTag<T extends { tag?: BomTag | null }>(
-  items: T[]
-): Map<BomTag, T[]> {
-  const map = new Map<BomTag, T[]>();
-  for (const tag of BomTags) {
-    const tagItems = items.filter((i) => i.tag === tag);
-    if (tagItems.length > 0) {
-      map.set(tag, tagItems);
-    }
-  }
-  return map;
-}
-
-export function hasTagData(items: { tag?: BomTag | null }[]): boolean {
-  return items.some((i) => i.tag != null);
-}
+export { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 
 // ── Export data builders ────────────────────────────────────────────────
 
@@ -89,6 +74,7 @@ export async function buildEbomCostExportData(
     qty: i.qty,
     _description: "",
     description: i.description,
+    tag: i.tag ?? undefined,
   });
 
   const { general, waterTanks, washBays } = groupEbomByCategory(activeItems);

@@ -1,5 +1,7 @@
+import { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 import { UserData } from "@/db/queries";
 import { BOMItemWithCost } from "@/lib/BOM";
+import { BomTag, BomTagLabels } from "@/types";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
@@ -59,7 +61,6 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
     applyBorder(row, bgColor);
   };
 
-
   const addSectionTitle = (title: string, skipSpacing = false) => {
     if (!skipSpacing) {
       sheet.addRow([]);
@@ -84,6 +85,34 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
     titleRow.height = 20;
   };
 
+  const addColumnHeaders = () => {
+    sheet.addRow([]);
+    const headerRow = sheet.addRow(headers);
+    headerRowNums.push(headerRow.number);
+    sheet.getCell(`${unitCostColumn.letter}${headerRow.number}`).alignment = { horizontal: "center" };
+    sheet.getCell(`${totalCostColumn.letter}${headerRow.number}`).alignment = { horizontal: "center" };
+  };
+
+  const addTagGroupSubtotal = (label: string, startRow: number, endRow: number) => {
+    const subtotalRow = sheet.addRow([]);
+    subtotalRow.getCell(1).value = label;
+    subtotalRow.getCell(5).value = {
+      formula: `SUM(${totalCostColumn.letter}${startRow}:${totalCostColumn.letter}${endRow})`,
+    };
+    subtotalRow.eachCell({ includeEmpty: true }, cell => {
+      cell.font = { bold: true };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2CC" } };
+    });
+    subtotalRow.getCell(5).numFmt = '€ #,##0.00';
+    subtotalRow.getCell(5).alignment = { horizontal: "right" };
+  };
+
   const addBOMSection = (boms: BOM[], title: string, itemPrefix?: string): { startRow: number, endRow: number }[] => {
     if (boms.length === 0) return [];
 
@@ -91,7 +120,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
     const ranges: { startRow: number, endRow: number }[] = [];
 
     boms.forEach((bom, index) => {
-      if (itemPrefix && boms.length > 1) {
+      if (itemPrefix) {
         sheet.addRow([]);
         const subTitleRow = sheet.addRow([`${itemPrefix} ${index + 1}`]);
         subTitleRow.getCell(1).font = { bold: true, size: 12 };
@@ -102,17 +131,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
         };
       }
 
-      sheet.addRow([]);
-      const headerRow = sheet.addRow(headers);
-      headerRowNums.push(headerRow.number);
-
-      // Center align the cost columns
-      sheet.getCell(`${unitCostColumn.letter}${headerRow.number}`).alignment = {
-        horizontal: "center",
-      };
-      sheet.getCell(`${totalCostColumn.letter}${headerRow.number}`).alignment = {
-        horizontal: "center",
-      };
+      addColumnHeaders();
 
       const startRow = sheet.rowCount + 1;
       bom.forEach((item, i) => {
@@ -121,6 +140,9 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
       });
       const endRow = sheet.rowCount;
       ranges.push({ startRow, endRow });
+      if (itemPrefix) {
+        addTagGroupSubtotal(`Subtotale ${itemPrefix} ${index + 1}`, startRow, endRow);
+      }
     });
 
     return ranges;
@@ -138,20 +160,42 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
 
   // General BOM section
   addSectionTitle("Distinta generale");
-  sheet.addRow([]);
-  const generalHeaderRow = sheet.addRow(headers);
-  headerRowNums.push(generalHeaderRow.number);
-  sheet.getCell(`${unitCostColumn.letter}${generalHeaderRow.number}`).alignment = { horizontal: "center" };
-  sheet.getCell(`${totalCostColumn.letter}${generalHeaderRow.number}`).alignment = { horizontal: "center" };
 
-  const generalStartRow = sheet.rowCount + 1;
-  generalBOM.forEach((item, i) => {
-    const bgColor = i % 2 === 0 ? rowBgColors.light : rowBgColors.dark;
-    addItemRow(item, bgColor);
-  });
-  const generalEndRow = sheet.rowCount;
-  if (generalEndRow >= generalStartRow) {
-    generalRanges.push({ startRow: generalStartRow, endRow: generalEndRow });
+  if (hasTagData(generalBOM)) {
+    const tagGroups = groupByTag(generalBOM);
+    tagGroups.forEach((items, tag: BomTag) => {
+      sheet.addRow([]);
+      const subTitleRow = sheet.addRow([BomTagLabels[tag]]);
+      subTitleRow.getCell(1).font = { bold: true, size: 12 };
+      subTitleRow.getCell(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9E1F2" }
+      };
+
+      addColumnHeaders();
+
+      const startRow = sheet.rowCount + 1;
+      items.forEach((item, i) => {
+        const bgColor = i % 2 === 0 ? rowBgColors.light : rowBgColors.dark;
+        addItemRow(item, bgColor);
+      });
+      const endRow = sheet.rowCount;
+      generalRanges.push({ startRow, endRow });
+      addTagGroupSubtotal(`Subtotale ${BomTagLabels[tag]}`, startRow, endRow);
+    });
+  } else {
+    // Legacy: flat list (no tags)
+    addColumnHeaders();
+    const startRow = sheet.rowCount + 1;
+    generalBOM.forEach((item, i) => {
+      const bgColor = i % 2 === 0 ? rowBgColors.light : rowBgColors.dark;
+      addItemRow(item, bgColor);
+    });
+    const endRow = sheet.rowCount;
+    if (endRow >= startRow) {
+      generalRanges.push({ startRow, endRow });
+    }
   }
 
   // Water Tanks sections
