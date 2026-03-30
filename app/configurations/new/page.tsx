@@ -1,7 +1,12 @@
 import FormContainer from "@/components/form-container";
+import { getUserData } from "@/db/queries";
+import { redirect } from "next/navigation";
 import React from "react";
 
-const NewConfiguration = () => {
+const NewConfiguration = async () => {
+  const user = await getUserData();
+  if (!user) redirect("/login");
+
   return (
     <div>
       <div className="mb-6">

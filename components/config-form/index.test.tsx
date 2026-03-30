@@ -184,7 +184,6 @@ describe("ConfigForm", () => {
       await waitFor(() => {
         expect(mockEditAction).toHaveBeenCalledWith(
           1,
-          "test-user-123",
           expect.objectContaining({ name: "Test Config" })
         );
       });

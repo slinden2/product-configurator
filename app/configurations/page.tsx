@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { getUserConfigurations } from "@/db/queries";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import React from "react";
 
 const Configurations = async () => {
   const configurations = await getUserConfigurations();
+  if (!configurations) redirect("/login");
 
   return (
     <div className="space-y-6">

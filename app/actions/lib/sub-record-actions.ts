@@ -8,7 +8,10 @@ import {
   hasEngineeringBom,
   deleteAllEngineeringBomItems,
   touchConfigurationUpdatedAt,
+  type DatabaseType,
+  type TransactionType,
 } from "@/db/queries";
+import { db } from "@/db";
 import { MSG } from "@/lib/messages";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
@@ -35,7 +38,8 @@ interface InsertSubRecordOptions<TFormSchema extends z.ZodTypeAny>
   schema: TFormSchema;
   queryFn: (
     parentId: number,
-    data: z.infer<TFormSchema>
+    data: z.infer<TFormSchema>,
+    tx: DatabaseType | TransactionType
   ) => Promise<QueryResult>;
 }
 
@@ -48,7 +52,8 @@ interface EditSubRecordOptions<TFormSchema extends z.ZodTypeAny>
   queryFn: (
     parentId: number,
     recordId: number,
-    data: z.infer<TFormSchema>
+    data: z.infer<TFormSchema>,
+    tx: DatabaseType | TransactionType
   ) => Promise<QueryResult>;
 }
 
@@ -57,7 +62,8 @@ interface DeleteSubRecordOptions extends SubRecordOptionsBase {
   recordId: number;
   queryFn: (
     parentId: number,
-    recordId: number
+    recordId: number,
+    tx: DatabaseType | TransactionType
   ) => Promise<QueryResult>;
 }
 
@@ -129,36 +135,39 @@ export async function handleSubRecordAction<
     };
   }
 
-  // --- 4. Database Operation ---
+  // --- 4. Database Operation (atomic transaction) ---
   try {
-    let result: QueryResult;
-    switch (options.actionType) {
-      case "insert":
-        result = await options.queryFn(parentId, validatedData!);
-        break;
-      case "edit":
-        result = await options.queryFn(parentId, options.recordId, validatedData!);
-        break;
-      case "delete":
-        result = await options.queryFn(parentId, options.recordId);
-        break;
-    }
+    let operationResult!: QueryResult;
 
-    // --- 5. Touch parent configuration's updated_at ---
-    await touchConfigurationUpdatedAt(parentId);
+    await db.transaction(async (tx) => {
+      switch (options.actionType) {
+        case "insert":
+          operationResult = await options.queryFn(parentId, validatedData!, tx);
+          break;
+        case "edit":
+          operationResult = await options.queryFn(parentId, options.recordId, validatedData!, tx);
+          break;
+        case "delete":
+          operationResult = await options.queryFn(parentId, options.recordId, tx);
+          break;
+      }
 
-    // --- 6. Delete engineering BOM if it exists — config changes invalidate the snapshot ---
-    const ebomExists = await hasEngineeringBom(parentId);
-    if (ebomExists) {
-      await deleteAllEngineeringBomItems(parentId);
-    }
+      // Touch parent configuration's updated_at
+      await touchConfigurationUpdatedAt(parentId, tx);
 
-    // --- 7. Cache Revalidation ---
+      // Delete engineering BOM if it exists — config changes invalidate the snapshot
+      const ebomExists = await hasEngineeringBom(parentId, tx);
+      if (ebomExists) {
+        await deleteAllEngineeringBomItems(parentId, tx);
+      }
+    });
+
+    // --- 5. Cache Revalidation ---
     revalidatePath(revalidatePathStr);
     revalidatePath(`/configurations/bom/${parentId}`);
 
-    // --- 8. Return Success ---
-    return { success: true as const, data: result };
+    // --- 6. Return Success ---
+    return { success: true as const, data: operationResult };
   } catch (err) {
     console.error(`Failed to ${actionType} ${entityName}:`, err);
     if (err instanceof QueryError) {
@@ -166,9 +175,6 @@ export async function handleSubRecordAction<
     }
     if (err instanceof DatabaseError) {
       return { success: false as const, error: MSG.db.error };
-    }
-    if (err instanceof Error) {
-      return { success: false as const, error: err.message };
     }
     return {
       success: false as const,

@@ -1,11 +1,8 @@
 "use server";
 
-import { db } from "@/db";
-import { getConfiguration, getUserData, QueryError } from "@/db/queries";
+import { deleteConfiguration, getConfiguration, getUserData, QueryError } from "@/db/queries";
 import { DatabaseError } from "pg";
-import { configurations } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
-import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 
@@ -13,7 +10,7 @@ export const deleteConfigurationAction = async (id: number, userId: string) => {
   const user = await getUserData();
 
   if (!user) {
-    return { success: false as const, error: MSG.auth.userNotFound };
+    return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
   if (user.id !== userId && user.role !== "ADMIN") {
@@ -35,8 +32,9 @@ export const deleteConfigurationAction = async (id: number, userId: string) => {
   }
 
   try {
-    await db.delete(configurations).where(eq(configurations.id, id));
+    await deleteConfiguration(id);
     revalidatePath("/configurations");
+    revalidatePath("/");
     return { success: true as const };
   } catch (err) {
     console.error("Failed to delete configuration:", err);

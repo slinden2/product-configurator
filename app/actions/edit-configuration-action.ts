@@ -18,7 +18,6 @@ import { isEditable } from "@/app/actions/lib/auth-checks";
 
 export const editConfigurationAction = async (
   confId: number,
-  ownerId: string,
   formData: unknown
 ) => {
   const validation = configSchema.safeParse(formData);
@@ -30,7 +29,7 @@ export const editConfigurationAction = async (
   const user = await getUserData();
 
   if (!user) {
-    return { success: false as const, error: MSG.auth.userNotFound };
+    return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
   const configuration = await getConfigurationWithTanksAndBays(confId);
@@ -41,7 +40,7 @@ export const editConfigurationAction = async (
 
   // Authorization: owner, ENGINEER, or ADMIN
   if (
-    user.id !== ownerId &&
+    user.id !== configuration.user_id &&
     user.role !== "ADMIN" &&
     user.role !== "ENGINEER"
   ) {
@@ -62,7 +61,7 @@ export const editConfigurationAction = async (
       validation.data.supply_type !== "ENERGY_CHAIN";
 
     await db.transaction(async (tx) => {
-      await updateConfiguration(confId, { ...validation.data, user_id: ownerId }, tx);
+      await updateConfiguration(confId, { ...validation.data, user_id: configuration.user_id }, tx);
 
       if (supplyTypeChangedFromEC) {
         await resetWashBayEnergyChainFields(confId, tx);

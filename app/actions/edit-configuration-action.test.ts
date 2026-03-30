@@ -145,7 +145,6 @@ describe("editConfigurationAction", () => {
   test("returns success when owner edits DRAFT config", async () => {
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({ success: true });
@@ -153,7 +152,7 @@ describe("editConfigurationAction", () => {
   });
 
   test("returns validation error for invalid form data", async () => {
-    const result = await editConfigurationAction(CONF_ID, OWNER_ID, {
+    const result = await editConfigurationAction(CONF_ID, {
       name: "",
     });
     expect(result.success).toBe(false);
@@ -165,17 +164,15 @@ describe("editConfigurationAction", () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
-    expect(result).toEqual({ success: false, error: MSG.auth.userNotFound });
+    expect(result).toEqual({ success: false, error: MSG.auth.userNotAuthenticated });
   });
 
   test("returns error when configuration not found", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(null);
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({
@@ -192,7 +189,6 @@ describe("editConfigurationAction", () => {
     });
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
@@ -206,7 +202,6 @@ describe("editConfigurationAction", () => {
     });
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({ success: true });
@@ -223,7 +218,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({ success: true });
@@ -240,7 +234,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result.success).toBe(false);
@@ -253,7 +246,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result.success).toBe(false);
@@ -266,7 +258,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result.success).toBe(false);
@@ -279,7 +270,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({ success: false, error: "Non trovata." });
@@ -289,7 +279,6 @@ describe("editConfigurationAction", () => {
     mockUpdateConfiguration.mockRejectedValue(new TypeError("unexpected"));
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result).toEqual({ success: false, error: MSG.db.unknown });
@@ -301,7 +290,6 @@ describe("editConfigurationAction", () => {
     mockHasEngineeringBom.mockResolvedValue(true);
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result.success).toBe(true);
@@ -315,7 +303,6 @@ describe("editConfigurationAction", () => {
     mockHasEngineeringBom.mockResolvedValue(false);
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData()
     );
     expect(result.success).toBe(true);
@@ -324,7 +311,7 @@ describe("editConfigurationAction", () => {
 
   test("revalidates both edit and BOM paths after successful update", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    await editConfigurationAction(CONF_ID, OWNER_ID, makeValidFormData());
+    await editConfigurationAction(CONF_ID, makeValidFormData());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurations/edit/${CONF_ID}`
@@ -342,7 +329,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData({ supply_type: "STRAIGHT_SHELF" })
     );
     expect(result.success).toBe(true);
@@ -358,7 +344,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData({
         supply_type: "BOOM",
         has_post_frame: false,
@@ -378,7 +363,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData({
         supply_type: "ENERGY_CHAIN",
         rail_length: 25,
@@ -395,7 +379,6 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      OWNER_ID,
       makeValidFormData({
         supply_type: "BOOM",
         has_post_frame: false,

@@ -81,7 +81,7 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
           setIsSubmitting(false);
           return;
         }
-        const result = await editConfigurationAction(id, configuration.user_id, values);
+        const result = await editConfigurationAction(id, values);
         if (result.success) {
           toast.success(MSG.toast.configUpdated);
 
