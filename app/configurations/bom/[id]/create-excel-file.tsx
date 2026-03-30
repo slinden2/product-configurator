@@ -5,9 +5,24 @@ import { BomTag, BomTagLabels } from "@/types";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-type BOM = BOMItemWithCost[];
+export type BOM = BOMItemWithCost[];
 
-export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], washBayBOMs: BOM[], user: NonNullable<UserData>) {
+const COLORS = {
+  white: "ffffff",
+  lightGray: "f0f0f0",
+  sectionTitleBg: "4472C4",
+  sectionTitleFont: "FFFFFF",
+  subSectionBg: "D9E1F2",
+  subtotalBg: "FFF2CC",
+  grandTotalBg: "FFD966",
+} as const;
+
+export function buildCostWorkbook(
+  generalBOM: BOM,
+  waterTankBOMs: BOM[],
+  washBayBOMs: BOM[],
+  user: NonNullable<UserData>
+): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = user.initials || user.id;
   const sheet = workbook.addWorksheet("Costi");
@@ -19,7 +34,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
     { key: "qty", width: 10 },
     { key: "unit_cost", width: 13 },
     { key: "total_cost", width: 13 },
-  ]
+  ];
 
   sheet.getColumn("description").alignment = { wrapText: true };
 
@@ -29,13 +44,13 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
   const totalCostColumn = sheet.getColumn("total_cost");
   totalCostColumn.numFmt = '€ #,##0.00';
 
-  const headers = ["Codice", "Descrizione", "Qta", "Costo Unit.", "Costo Tot."]
-  const headerRowNums: number[] = []
+  const headers = ["Codice", "Descrizione", "Qta", "Costo Unit.", "Costo Tot."];
+  const headerRowNums: number[] = [];
 
   const rowBgColors = {
-    light: "ffffff",
-    dark: "f0f0f0"
-  }
+    light: COLORS.white,
+    dark: COLORS.lightGray,
+  };
 
   // Helpers
   const applyBorder = (row: ExcelJS.Row, bgColor: string) => {
@@ -74,9 +89,9 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "4472C4" }
+        fgColor: { argb: COLORS.sectionTitleBg },
       };
-      cell.font = { bold: true, size: 14, color: { argb: "FFFFFF" } };
+      cell.font = { bold: true, size: 14, color: { argb: COLORS.sectionTitleFont } };
       cell.alignment = { vertical: "middle", horizontal: "left", shrinkToFit: false };
     });
 
@@ -107,7 +122,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2CC" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.subtotalBg } };
     });
     subtotalRow.getCell(5).numFmt = '€ #,##0.00';
     subtotalRow.getCell(5).alignment = { horizontal: "right" };
@@ -127,7 +142,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
         subTitleRow.getCell(1).fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "D9E1F2" }
+          fgColor: { argb: COLORS.subSectionBg },
         };
       }
 
@@ -170,7 +185,7 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
       subTitleRow.getCell(1).fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "D9E1F2" }
+        fgColor: { argb: COLORS.subSectionBg },
       };
 
       addColumnHeaders();
@@ -277,28 +292,37 @@ export async function createExcelFile(generalBOM: BOM, waterTankBOMs: BOM[], was
       bottom: { style: "thin" },
       right: { style: "thin" },
     };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD966" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.grandTotalBg } };
   });
   totalRowObj.getCell(2).numFmt = '€ #,##0.00';
   totalRowObj.getCell(2).alignment = { horizontal: "right" };
 
   // Header styling
   headerRowNums.forEach(rowNum => {
-    const row = sheet.getRow(rowNum)
+    const row = sheet.getRow(rowNum);
     row.eachCell({ includeEmpty: true }, cell => {
-      cell.font = { bold: true }
-      cell.alignment = { horizontal: "center" }
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center" };
       cell.border = {
         top: { style: 'thin' },
         left: { style: 'thin' },
         bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      }
+        right: { style: 'thin' },
+      };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBgColors.dark } };
-    })
-  })
+    });
+  });
 
-  // Write to file
+  return workbook;
+}
+
+export async function createExcelFile(
+  generalBOM: BOM,
+  waterTankBOMs: BOM[],
+  washBayBOMs: BOM[],
+  user: NonNullable<UserData>
+) {
+  const workbook = buildCostWorkbook(generalBOM, waterTankBOMs, washBayBOMs, user);
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   saveAs(blob, "costi.xlsx");
