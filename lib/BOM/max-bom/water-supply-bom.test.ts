@@ -5,20 +5,7 @@ vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValu
 
 import { waterSupplyBOM } from "@/lib/BOM/max-bom/water-supply-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
-
-function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
-  return {
-    id: 1,
-    water_1_type: "NETWORK",
-    water_1_pump: null,
-    water_2_type: null,
-    water_2_pump: null,
-    has_antifreeze: false,
-    inv_pump_outlet_dosatron_qty: null,
-    inv_pump_outlet_pw_qty: null,
-    ...overrides,
-  } as GeneralBOMConfig;
-}
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
   waterSupplyBOM

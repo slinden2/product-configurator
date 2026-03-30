@@ -26,7 +26,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-  const configurationData = await getConfigurationWithTanksAndBays(id);
+  const configurationData = await getConfigurationWithTanksAndBays(id, user);
   if (!configurationData) notFound();
 
   const { water_tanks, wash_bays, ...configuration } = configurationData;

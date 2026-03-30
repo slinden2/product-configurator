@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { SelectOption } from "@/types";
+import { BrushColors, BrushTypes, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 
-export const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
+export const BrushTypeEnum = z.enum(BrushTypes, {
   message: genericRequiredMessage,
 });
 export const brushTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
@@ -13,10 +13,7 @@ export const brushTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Filo", "Misto", "Carlite"]
 );
 
-export const BrushColorEnum = z.enum(
-  ["BLUE_SILVER", "GREEN_SILVER", "RED", "GREEN_BLACK"],
-  { message: genericRequiredMessage }
-);
+export const BrushColorEnum = z.enum(BrushColors, { message: genericRequiredMessage });
 export const brushColors: SelectOption[] = generateSelectOptionsFromZodEnum(
   BrushColorEnum,
   ["Blu/Argento", "Verde/Argento", "Rosso", "Verde/Nero"]

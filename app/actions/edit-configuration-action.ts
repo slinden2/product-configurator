@@ -32,7 +32,7 @@ export const editConfigurationAction = async (
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
-  const configuration = await getConfigurationWithTanksAndBays(confId);
+  const configuration = await getConfigurationWithTanksAndBays(confId, user);
 
   if (!configuration) {
     return { success: false as const, error: MSG.config.notFound };

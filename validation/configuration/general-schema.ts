@@ -1,10 +1,11 @@
+import { MachineTypes } from "@/types";
 import { z } from "zod";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 
-export const MachineTypeEnum = z.enum(["STD", "OMZ"], {
+export const MachineTypeEnum = z.enum(MachineTypes, {
   message: genericRequiredMessage,
 });
 

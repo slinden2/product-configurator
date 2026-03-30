@@ -1,12 +1,12 @@
 import { NOT_SELECTED_LABEL } from "@/lib/utils";
-import { SelectOption } from "@/types";
+import { DowelTypes, RailTypes, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const RailTypeEnum = z.enum(["DOWELED", "WELDED", "WELDED_RECESSED"], {
+export const RailTypeEnum = z.enum(RailTypes, {
   message: genericRequiredMessage,
 });
 export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
@@ -14,7 +14,7 @@ export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Da tassellare", "Da saldare", "Da saldare incassato"]
 );
 
-export const DowelTypeEnum = z.enum(["ZINCATO", "INOX", "CHIMICO"], {
+export const DowelTypeEnum = z.enum(DowelTypes, {
   message: genericRequiredMessage,
 });
 export const dowelTypes: SelectOption[] = generateSelectOptionsFromZodEnum(

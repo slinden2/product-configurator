@@ -24,7 +24,7 @@ import {
   transformWaterTankSchemaToDbData,
 } from "./transformations";
 import { WashBaySchema } from "@/validation/wash-bay-schema";
-import { ConfigStatusSchema } from "@/validation/config-status.schema";
+import { ConfigStatusSchema } from "@/validation/config-status-schema";
 import { ConfigurationStatusType, Role } from "@/types";
 
 export type DatabaseType = typeof db;
@@ -115,13 +115,10 @@ export async function getUserConfigurations() {
   return response;
 }
 
-export async function getConfigurationWithTanksAndBays(id: number) {
-  const user = await getUserData();
-
-  if (!user) {
-    return null;
-  }
-
+export async function getConfigurationWithTanksAndBays(
+  id: number,
+  user: NonNullable<UserData>
+) {
   const response = await db.query.configurations.findFirst({
     where: eq(configurations.id, id),
     with: {
@@ -399,8 +396,8 @@ export const deleteWashBay = async (
   };
 };
 
-export async function getBOM(id: number) {
-  const configuration = await getConfigurationWithTanksAndBays(id);
+export async function getBOM(id: number, user: NonNullable<UserData>) {
+  const configuration = await getConfigurationWithTanksAndBays(id, user);
   if (configuration) {
     const bom = BOM.init(configuration);
     return bom;

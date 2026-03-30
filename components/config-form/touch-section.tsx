@@ -75,7 +75,7 @@ const TouchSection = () => {
         </div>
         <div className="fs-row">
           <div className="fs-item">
-            <CheckboxField
+            <CheckboxField<ConfigSchema>
               name="has_itecoweb"
               label="Itecoweb"
               description={<>
@@ -89,14 +89,14 @@ const TouchSection = () => {
             />
           </div>
           <div className="fs-item">
-            <CheckboxField
+            <CheckboxField<ConfigSchema>
               name="has_card_reader"
               label="Lettore schede"
               description="Senza Itecoweb"
             />
           </div>
           <div className="fs-item">
-            <CheckboxField
+            <CheckboxField<ConfigSchema>
               name="is_fast"
               label="Portale fast"
               description={<>
@@ -114,7 +114,7 @@ const TouchSection = () => {
         {(hasItecowebWatch || hasCardReaderWatch) && (
           <div className="fs-row">
             <div className="fs-item w-1/2 md:w-1/3">
-              <SelectField
+              <SelectField<ConfigSchema>
                 name="card_qty"
                 dataType="number"
                 label="Numero di schede"

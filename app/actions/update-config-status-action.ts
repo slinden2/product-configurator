@@ -2,7 +2,7 @@
 
 import { getUserData, QueryError, updateConfigStatus } from "@/db/queries";
 import { MSG } from "@/lib/messages";
-import { configStatusSchema } from "@/validation/config-status.schema";
+import { configStatusSchema } from "@/validation/config-status-schema";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 

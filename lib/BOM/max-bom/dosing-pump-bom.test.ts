@@ -5,23 +5,7 @@ vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValu
 
 import { dosingPumpBOM } from "@/lib/BOM/max-bom/dosing-pump-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
-
-function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
-  return {
-    id: 1,
-    has_shampoo_pump: false,
-    has_wax_pump: false,
-    has_chemical_pump: false,
-    chemical_qty: null,
-    chemical_pump_pos: null,
-    has_foam: false,
-    has_acid_pump: false,
-    acid_pump_pos: null,
-    has_antifreeze: false,
-    has_itecoweb: false,
-    ...overrides,
-  } as GeneralBOMConfig;
-}
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
   dosingPumpBOM

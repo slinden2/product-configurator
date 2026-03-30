@@ -6,17 +6,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDateDDMMYYHHMM(date: Date): string {
-  return new Date(date).toLocaleDateString("it-IT", {
-    year: "2-digit",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
 export function formatDateDDMMYYYYHHMM(date: Date): string {
   return new Date(date).toLocaleDateString("it-IT", {
     year: "numeric",

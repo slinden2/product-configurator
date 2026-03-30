@@ -1,14 +1,11 @@
-import { SelectOption } from "@/types";
+import { ChassisWashSensorTypes, HpPump15kwOutlets, HpPump30kwOutlets, HpPumpOMZkwOutlets, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const HPPumpOutlet15kwEnum = z.enum(
-  ["CHASSIS_WASH", "LOW_SPINNERS", "LOW_BARS", "HIGH_BARS"],
-  { message: genericRequiredMessage }
-);
+export const HPPumpOutlet15kwEnum = z.enum(HpPump15kwOutlets, { message: genericRequiredMessage });
 
 export const hpPumpOutlet15kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet15kwEnum, [
@@ -18,16 +15,7 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
     "Barre HP alte",
   ]);
 
-export const HPPumpOutlet30kwEnum = z.enum(
-  [
-    "CHASSIS_WASH_HORIZONTAL",
-    "CHASSIS_WASH_LATERAL_HORIZONTAL",
-    "LOW_SPINNERS_HIGH_BARS",
-    "LOW_MEDIUM_SPINNERS",
-    "HIGH_MEDIUM_SPINNERS",
-  ],
-  { message: genericRequiredMessage }
-);
+export const HPPumpOutlet30kwEnum = z.enum(HpPump30kwOutlets, { message: genericRequiredMessage });
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet30kwEnum, [
@@ -38,10 +26,7 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
     "2 robottine alte + 2 medie",
   ]);
 
-export const ChassisWashSensorTypeEnum = z.enum(
-  ["SINGLE_POST", "DOUBLE_POST", "SINGLE_WALL", "DOUBLE_WALL"],
-  { message: genericRequiredMessage }
-);
+export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, { message: genericRequiredMessage });
 
 export const chassisWashSensorTypeOpts: SelectOption[] =
   generateSelectOptionsFromZodEnum(ChassisWashSensorTypeEnum, [
@@ -70,10 +55,7 @@ export function hasAnyChassiswashOutlet(data: {
   );
 }
 
-export const OMZPumpOutletEnum = z.enum(
-  ["HP_ROOF_BAR", "SPINNERS", "HP_ROOF_BAR_SPINNERS"],
-  { message: genericRequiredMessage }
-);
+export const OMZPumpOutletEnum = z.enum(HpPumpOMZkwOutlets, { message: genericRequiredMessage });
 
 export const omzPumpOutletTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(OMZPumpOutletEnum, [

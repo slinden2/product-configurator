@@ -1,11 +1,11 @@
-import { SelectOption } from "@/types";
+import { ChemPumpPos, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const ChemicalPumpPosEnum = z.enum(["ONBOARD", "WASH_BAY"], {
+export const ChemicalPumpPosEnum = z.enum(ChemPumpPos, {
   message: genericRequiredMessage,
 });
 

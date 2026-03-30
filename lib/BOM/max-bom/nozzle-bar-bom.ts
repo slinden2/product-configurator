@@ -1,5 +1,6 @@
 import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { isOMZ } from "@/lib/BOM/max-bom/conditions";
 
 const PART_NUMBERS = {
   PREWASH_ARCH: "450.36.000",
@@ -52,8 +53,6 @@ const hasOneChemical = (config: GeneralBOMConfig): boolean =>
 const hasTwoChemicals = (config: GeneralBOMConfig): boolean =>
   config.has_chemical_pump && config.chemical_qty === 2;
 
-const isOMZ = (config: GeneralBOMConfig): boolean =>
-  config.machine_type === "OMZ";
 
 export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   // Rinse

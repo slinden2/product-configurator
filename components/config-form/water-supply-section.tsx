@@ -120,7 +120,7 @@ const WaterSupplySection = () => {
           {!isInvPump1Selected && <div className="fs-item" />}
         </div>
         <div className="">
-          <CheckboxField name="has_antifreeze" label="Scarico invernale" />
+          <CheckboxField<ConfigSchema> name="has_antifreeze" label="Scarico invernale" />
         </div>
       </div>
     </Fieldset>

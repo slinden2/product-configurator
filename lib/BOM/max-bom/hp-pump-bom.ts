@@ -1,5 +1,6 @@
 import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { isOMZ, usesOMZPump, usesHPRoofBar } from "@/lib/BOM/max-bom/conditions";
 import { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 
 const PART_NUMBERS = {
@@ -59,16 +60,6 @@ const uses15kwPump = (config: GeneralBOMConfig): boolean => config.has_15kw_pump
 const uses30kwPump = (config: GeneralBOMConfig): boolean => config.has_30kw_pump;
 const uses15kwOr30kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_15kw_pump || config.has_30kw_pump;
-const usesOMZPump = (config: GeneralBOMConfig): boolean => config.has_omz_pump;
-const isOMZ = (config: GeneralBOMConfig): boolean =>
-  config.machine_type === "OMZ";
-const usesHPRoofBar = (config: GeneralBOMConfig): boolean => {
-  return (
-    usesOMZPump(config) &&
-    (config.pump_outlet_omz === "HP_ROOF_BAR" ||
-      config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS")
-  );
-};
 
 const usesHPDeviationValveKit = (config: GeneralBOMConfig) => {
   return (
