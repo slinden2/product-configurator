@@ -164,8 +164,8 @@ const AddBomItemForm = ({
       : customPn.trim().length > 0;
 
   return (
-    <div className="space-y-2 px-2 pb-3">
-      <div className="flex items-center gap-2">
+    <div className="space-y-2 px-2 py-3">
+      <div className="flex flex-wrap items-center gap-2">
         {mode === "catalog" ? (
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -173,7 +173,7 @@ const AddBomItemForm = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-[400px] justify-between font-mono text-sm"
+                className="min-w-0 w-full sm:w-[400px] justify-between font-mono text-sm"
               >
                 <span className="truncate">
                   {selectedPn
@@ -183,7 +183,7 @@ const AddBomItemForm = ({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0" align="start">
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
                   placeholder="Cerca per codice o descrizione (usa % come jolly)..."
@@ -224,14 +224,14 @@ const AddBomItemForm = ({
             <Input
               value={customPn}
               onChange={(e) => setCustomPn(e.target.value)}
-              className="w-[160px] font-mono text-sm"
+              className="w-full sm:w-[160px] font-mono text-sm"
               placeholder="Codice"
               maxLength={25}
             />
             <Input
               value={customDescription}
               onChange={(e) => setCustomDescription(e.target.value)}
-              className="w-[240px] text-sm"
+              className="w-full sm:w-[240px] text-sm"
               placeholder="Descrizione"
               maxLength={255}
             />
@@ -252,7 +252,7 @@ const AddBomItemForm = ({
             value={selectedTag}
             onValueChange={(v) => setSelectedTag(v as BomTag)}
           >
-            <SelectTrigger className="w-[200px] text-sm">
+            <SelectTrigger className="w-full sm:w-[200px] text-sm">
               <SelectValue placeholder="Gruppo..." />
             </SelectTrigger>
             <SelectContent>
