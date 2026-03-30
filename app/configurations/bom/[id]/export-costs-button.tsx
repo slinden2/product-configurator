@@ -24,7 +24,7 @@ const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => {
   };
 
   return (
-    <Button variant="outline" onClick={handleExportBOM}>
+    <Button variant="outline" size="sm" onClick={handleExportBOM}>
       <Share />
       <span>Esporta costi</span>
     </Button>

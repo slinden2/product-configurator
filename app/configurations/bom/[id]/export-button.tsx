@@ -22,9 +22,9 @@ const ExportButton = ({ exportData }: ExportButtonProps) => {
   };
 
   return (
-    <Button variant="outline" onClick={handleExportBOM}>
+    <Button variant="outline" size="sm" onClick={handleExportBOM}>
       <Share />
-      <span>Esporta</span>
+      <span>Esporta distinta di produzione</span>
     </Button>
   );
 };

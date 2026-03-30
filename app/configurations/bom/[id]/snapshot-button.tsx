@@ -31,6 +31,7 @@ const SnapshotButton = ({ confId }: SnapshotButtonProps) => {
   return (
     <Button
       variant="outline"
+      size="sm"
       disabled={isPending}
       onClick={handleSnapshot}
     >
