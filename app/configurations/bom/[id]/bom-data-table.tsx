@@ -51,25 +51,25 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
   }
 
   return (
-    <Table className="mb-3 rounded-lg font-mono table-fixed">
+    <Table className="mb-3 rounded-lg font-mono">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-16">POS</TableHead>
+          <TableHead className="w-16 hidden sm:table-cell">POS</TableHead>
           <TableHead
-            className="w-32 py-2 cursor-pointer"
+            className="w-32 py-2 cursor-pointer whitespace-nowrap"
             onClick={() => sortTable("pn")}>
             <span className="flex items-center">
               Codice <ArrowDownUp size={16} className="ml-1" />
             </span>
           </TableHead>
           <TableHead
-            className="py-2 cursor-pointer"
+            className="w-full py-2 cursor-pointer"
             onClick={() => sortTable("description")}>
             <span className="flex items-center">
               Descrizione <ArrowDownUp size={16} className="ml-1" />
             </span>
           </TableHead>
-          <TableHead className="w-24 py-2 text-center">
+          <TableHead className="w-24 py-2 text-center whitespace-nowrap">
             Qtà
           </TableHead>
         </TableRow>
@@ -77,9 +77,9 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
       <TableBody className="text-sm">
         {dataArr.map((item, key) => (
           <TableRow key={key}>
-            <TableCell>{key + 1}</TableCell>
-            <TableCell className="w-32 py-2">{item.pn}</TableCell>
-            <TableCell className="py-2">
+            <TableCell className="hidden sm:table-cell">{key + 1}</TableCell>
+            <TableCell className="w-32 py-2 whitespace-nowrap">{item.pn}</TableCell>
+            <TableCell className="py-2 break-words min-w-0">
               {item.description}
             </TableCell>
             <TableCell className="w-24 py-2 text-center">

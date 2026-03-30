@@ -138,12 +138,12 @@ const EngineeringBomTable = ({
   }
 
   return (
-    <Table className="mb-3 rounded-lg font-mono table-fixed">
+    <Table className="mb-3 rounded-lg font-mono">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-16">POS</TableHead>
+          <TableHead className="w-16 hidden sm:table-cell">POS</TableHead>
           <TableHead
-            className="w-32 py-2 cursor-pointer"
+            className="w-32 py-2 cursor-pointer whitespace-nowrap"
             onClick={() => sortTable("pn")}
           >
             <span className="flex items-center">
@@ -151,28 +151,28 @@ const EngineeringBomTable = ({
             </span>
           </TableHead>
           <TableHead
-            className="py-2 cursor-pointer"
+            className="w-full py-2 cursor-pointer"
             onClick={() => sortTable("description")}
           >
             <span className="flex items-center">
               Descrizione <ArrowDownUp size={16} className="ml-1" />
             </span>
           </TableHead>
-          <TableHead className="w-24 py-2 text-center">
+          <TableHead className="w-24 py-2 text-center whitespace-nowrap">
             Qtà
           </TableHead>
           {editable && (
-            <TableHead className="w-24 py-2 text-center">Azioni</TableHead>
+            <TableHead className="w-24 py-2 text-center whitespace-nowrap">Azioni</TableHead>
           )}
         </TableRow>
       </TableHeader>
       <TableBody className="text-sm">
         {dataArr.map((item, index) => (
           <TableRow key={item.id} className={cn(getRowClassName(item))}>
-            <TableCell>{index + 1}</TableCell>
+            <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
             <TableCell
               className={cn(
-                "w-32 py-2",
+                "w-32 py-2 whitespace-nowrap",
                 item.is_deleted && "line-through"
               )}
             >
@@ -180,7 +180,7 @@ const EngineeringBomTable = ({
             </TableCell>
             <TableCell
               className={cn(
-                "py-2",
+                "py-2 break-words min-w-0",
                 item.is_deleted && "line-through"
               )}
             >
