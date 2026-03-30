@@ -175,9 +175,11 @@ const AddBomItemForm = ({
                 aria-expanded={open}
                 className="w-[400px] justify-between font-mono text-sm"
               >
-                {selectedPn
-                  ? `${selectedPn.pn} — ${selectedPn.description.slice(0, 40)}`
-                  : "Cerca codice articolo..."}
+                <span className="truncate">
+                  {selectedPn
+                    ? `${selectedPn.pn} — ${selectedPn.description}`
+                    : "Cerca codice articolo..."}
+                </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -203,6 +205,7 @@ const AddBomItemForm = ({
                           value={pn.pn}
                           onSelect={() => handleSelect(pn)}
                           className="font-mono text-xs"
+                          title={`${pn.pn} — ${pn.description}`}
                         >
                           <span className="font-semibold mr-2">{pn.pn}</span>
                           <span className="text-muted-foreground truncate">

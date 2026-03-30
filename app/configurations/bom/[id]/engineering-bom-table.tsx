@@ -138,12 +138,12 @@ const EngineeringBomTable = ({
   }
 
   return (
-    <Table className="mb-3 rounded-lg font-mono">
+    <Table className="mb-3 rounded-lg font-mono table-fixed">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <TableHead className="w-16">POS</TableHead>
           <TableHead
-            className="table-cell w-32 py-2 cursor-pointer"
+            className="w-32 py-2 cursor-pointer"
             onClick={() => sortTable("pn")}
           >
             <span className="flex items-center">
@@ -151,14 +151,14 @@ const EngineeringBomTable = ({
             </span>
           </TableHead>
           <TableHead
-            className="table-cell flex-1 py-2 cursor-pointer"
+            className="py-2 cursor-pointer"
             onClick={() => sortTable("description")}
           >
             <span className="flex items-center">
               Descrizione <ArrowDownUp size={16} className="ml-1" />
             </span>
           </TableHead>
-          <TableHead className="table-cell w-24 py-2 text-center">
+          <TableHead className="w-24 py-2 text-center">
             Qtà
           </TableHead>
           {editable && (
@@ -172,7 +172,7 @@ const EngineeringBomTable = ({
             <TableCell>{index + 1}</TableCell>
             <TableCell
               className={cn(
-                "table-cell w-24 py-2",
+                "w-32 py-2",
                 item.is_deleted && "line-through"
               )}
             >
@@ -180,7 +180,7 @@ const EngineeringBomTable = ({
             </TableCell>
             <TableCell
               className={cn(
-                "table-cell flex-1 py-2",
+                "py-2",
                 item.is_deleted && "line-through"
               )}
             >
@@ -193,7 +193,7 @@ const EngineeringBomTable = ({
             </TableCell>
             <TableCell
               className={cn(
-                "table-cell w-24 py-2 text-center",
+                "w-24 py-2 text-center",
                 item.is_deleted && "line-through"
               )}
             >
