@@ -194,6 +194,64 @@ describe("Cross-section validation (superRefine)", () => {
     });
   });
 
+  describe("Regression: non-inverter pump submission", () => {
+    test("submits successfully with boost pump and outlet quantities at 0", async () => {
+      // Regression: inv_pump_outlet fields must default to 0 when no inverter pump is selected.
+      // Previously, changing water_1_pump from inverter to non-inverter reset outlets to undefined,
+      // causing z.number() validation failure and blocking all form submissions.
+      const config = makeValidConfig({
+        water_1_type: "NETWORK",
+        water_1_pump: "BOOST_15KW",
+        inv_pump_outlet_dosatron_qty: 0,
+        inv_pump_outlet_pw_qty: 0,
+      });
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      await waitFor(() => {
+        expect(mockEditAction).toHaveBeenCalled();
+      });
+    });
+
+    test("submits successfully with no water pump configured", async () => {
+      // Regression: default config (no inverter pump) must pass validation
+      const config = makeValidConfig({
+        water_1_type: "NETWORK",
+        water_1_pump: undefined,
+        inv_pump_outlet_dosatron_qty: 0,
+        inv_pump_outlet_pw_qty: 0,
+      });
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      await waitFor(() => {
+        expect(mockEditAction).toHaveBeenCalled();
+      });
+    });
+  });
+
   describe("Valid submissions proceed", () => {
     test("submits successfully with valid energy chain + long rail", async () => {
       const config = makeValidConfig({

@@ -179,9 +179,9 @@ describe("Multi-step field dependency chains", () => {
       await userEvent.click(options[0]);
 
       expect(getValues().water_1_pump).toBe("BOOST_15KW");
-      // Inverter outlets should be reset
-      expect(getValues().inv_pump_outlet_dosatron_qty).toBe(undefined);
-      expect(getValues().inv_pump_outlet_pw_qty).toBe(undefined);
+      // Inverter outlets must reset to 0 (not undefined) to satisfy z.number() in inverterPumpSchema
+      expect(getValues().inv_pump_outlet_dosatron_qty).toBe(0);
+      expect(getValues().inv_pump_outlet_pw_qty).toBe(0);
     });
   });
 

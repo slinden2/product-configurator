@@ -69,6 +69,31 @@ describe("waterSupplySchema", () => {
     expect(() => waterSupplySchema.parse(validData)).not.toThrow();
   });
 
+  describe("Regression: undefined outlet values", () => {
+    test("should throw if inv_pump_outlet_dosatron_qty is undefined (non-inverter pump)", () => {
+      // Regression: when water_1_pump changes away from inverter, outlets must reset to 0
+      // not undefined — z.number() rejects undefined and blocks all form submissions
+      const invalidData = {
+        ...createWaterSupplyObject("NETWORK", "BOOST_15KW", undefined, undefined, false),
+        inv_pump_outlet_dosatron_qty: undefined,
+        inv_pump_outlet_pw_qty: undefined,
+      };
+      expect(() => waterSupplySchema.parse(invalidData)).toThrow();
+    });
+
+    test("should validate when non-inverter pump has outlet quantities at 0", () => {
+      const validData = createWaterSupplyObject(
+        "NETWORK",
+        "BOOST_15KW",
+        undefined,
+        undefined,
+        false,
+        { inv_pump_outlet_dosatron_qty: 0, inv_pump_outlet_pw_qty: 0 },
+      );
+      expect(() => waterSupplySchema.parse(validData)).not.toThrow();
+    });
+  });
+
   describe("Inverter pump tests", () => {
     test("should throw if inverter pump is selected but less than two outlets are configured", () => {
       const invalidData = createWaterSupplyObject(

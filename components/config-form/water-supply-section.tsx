@@ -70,6 +70,7 @@ const WaterSupplySection = () => {
                       "inv_pump_outlet_dosatron_qty",
                       "inv_pump_outlet_pw_qty",
                     ],
+                    resetToValue: 0,
                   },
                 ]}
               />
