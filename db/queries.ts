@@ -80,13 +80,7 @@ export async function getUserData() {
 
 // Gets all configurations for the user if the role is SALES.
 // For ENGINEER and ADMIN, gets all configurations
-export async function getUserConfigurations() {
-  const user = await getUserData();
-
-  if (!user) {
-    return null;
-  }
-
+export async function getUserConfigurations(user: NonNullable<UserData>) {
   const response = await db.query.configurations.findMany({
     where:
       user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined,

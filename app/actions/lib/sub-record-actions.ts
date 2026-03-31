@@ -156,6 +156,12 @@ export async function handleSubRecordAction<
             tx,
           );
           break;
+        default: {
+          const _exhaustive: never = options;
+          throw new Error(
+            `Unknown action type: ${(options as { actionType: string }).actionType}`,
+          );
+        }
       }
 
       // Touch parent configuration's updated_at

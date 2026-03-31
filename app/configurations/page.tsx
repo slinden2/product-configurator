@@ -1,14 +1,15 @@
 import AllConfigurationsTable from "@/components/all-configuration-table";
 import { Button } from "@/components/ui/button";
-import { getUserConfigurations } from "@/db/queries";
+import { getUserConfigurations, getUserData } from "@/db/queries";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
 
 const Configurations = async () => {
-  const configurations = await getUserConfigurations();
-  if (!configurations) redirect("/login");
+  const user = await getUserData();
+  if (!user) redirect("/login");
+  const configurations = await getUserConfigurations(user);
 
   return (
     <div className="space-y-6">
