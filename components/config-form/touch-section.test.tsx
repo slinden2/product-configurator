@@ -32,7 +32,9 @@ describe("TouchSection", () => {
   test("renders section title, selects, and checkboxes", () => {
     renderTouchSection();
 
-    expect(screen.getByText("Configurazione quadro elettrico")).toBeInTheDocument();
+    expect(
+      screen.getByText("Configurazione quadro elettrico"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Numero di pannelli")).toBeInTheDocument();
     expect(screen.getByText("Posizione touch")).toBeInTheDocument();
     expect(screen.getByText("Fissaggio touch esterno")).toBeInTheDocument();
@@ -63,13 +65,17 @@ describe("TouchSection", () => {
     test("touch_fixing_type is enabled when touch_qty is 2", () => {
       renderTouchSection({ touch_qty: 2 });
 
-      expect(screen.getByLabelText("Fissaggio touch esterno")).not.toBeDisabled();
+      expect(
+        screen.getByLabelText("Fissaggio touch esterno"),
+      ).not.toBeDisabled();
     });
 
     test("touch_fixing_type is enabled when touch_qty is 1 and touch_pos is EXTERNAL", () => {
       renderTouchSection({ touch_qty: 1, touch_pos: "EXTERNAL" });
 
-      expect(screen.getByLabelText("Fissaggio touch esterno")).not.toBeDisabled();
+      expect(
+        screen.getByLabelText("Fissaggio touch esterno"),
+      ).not.toBeDisabled();
     });
   });
 

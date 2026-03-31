@@ -40,7 +40,10 @@ describe("GeneralSection", () => {
   test("name input updates form value", async () => {
     const { getValues } = renderGeneralSection();
 
-    await userEvent.type(screen.getByLabelText("Nome del cliente"), "Acme Corp");
+    await userEvent.type(
+      screen.getByLabelText("Nome del cliente"),
+      "Acme Corp",
+    );
 
     expect(getValues().name).toBe("Acme Corp");
   });
@@ -48,15 +51,23 @@ describe("GeneralSection", () => {
   test("description textarea updates form value", async () => {
     const { getValues } = renderGeneralSection();
 
-    await userEvent.type(screen.getByLabelText("Descrizione"), "Test description");
+    await userEvent.type(
+      screen.getByLabelText("Descrizione"),
+      "Test description",
+    );
 
     expect(getValues().description).toBe("Test description");
   });
 
   test("displays pre-filled values from configuration", () => {
-    renderGeneralSection({ name: "Existing Client", description: "Existing desc" });
+    renderGeneralSection({
+      name: "Existing Client",
+      description: "Existing desc",
+    });
 
-    expect(screen.getByLabelText("Nome del cliente")).toHaveValue("Existing Client");
+    expect(screen.getByLabelText("Nome del cliente")).toHaveValue(
+      "Existing Client",
+    );
     expect(screen.getByLabelText("Descrizione")).toHaveValue("Existing desc");
   });
 });

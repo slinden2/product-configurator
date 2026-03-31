@@ -1,14 +1,18 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { gruBOM } from "@/lib/BOM/max-bom/gru-bom";
 import { GeneralMaxBOM } from "@/lib/BOM/max-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
 const cfg = (brush_qty: number) =>
-  ({ brush_qty } as Parameters<typeof gruBOM[0]["conditions"][0]>[0]);
+  ({ brush_qty }) as Parameters<(typeof gruBOM)[0]["conditions"][0]>[0];
 
 const included = (config: GeneralBOMConfig) =>
   gruBOM.filter((item) => item.conditions.every((fn) => fn(config)));
@@ -42,7 +46,10 @@ describe("gruBOM", () => {
 describe("GeneralMaxBOM — tag coverage", () => {
   test("every item in GeneralMaxBOM has a defined tag", () => {
     GeneralMaxBOM.forEach((item) => {
-      expect(item.tag, `item ${item.pn} (${item._description}) is missing a tag`).toBeDefined();
+      expect(
+        item.tag,
+        `item ${item.pn} (${item._description}) is missing a tag`,
+      ).toBeDefined();
     });
   });
 });

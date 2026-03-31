@@ -89,9 +89,7 @@ export async function getUserConfigurations() {
 
   const response = await db.query.configurations.findMany({
     where:
-      user.role === "SALES"
-        ? eq(configurations.user_id, user.id)
-        : undefined,
+      user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined,
     columns: {
       id: true,
       status: true,
@@ -117,7 +115,7 @@ export async function getUserConfigurations() {
 
 export async function getConfigurationWithTanksAndBays(
   id: number,
-  user: NonNullable<UserData>
+  user: NonNullable<UserData>,
 ) {
   const response = await db.query.configurations.findFirst({
     where: eq(configurations.id, id),
@@ -157,7 +155,7 @@ export async function getWashBaysByConfigId(configId: number) {
 
 export const insertConfiguration = async (
   newConfiguration: ConfigSchema,
-  userId: string
+  userId: string,
 ) => {
   const dbData = transformConfigToDbInsert(newConfiguration, userId);
 
@@ -180,7 +178,7 @@ export const deleteConfiguration = async (id: number) => {
 export const updateConfiguration = async (
   confId: number,
   configurationData: UpdateConfigSchema,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ): Promise<{ id: number }> => {
   const setData = transformConfigToDbUpdate(configurationData);
 
@@ -199,7 +197,7 @@ export const updateConfiguration = async (
 
 export const touchConfigurationUpdatedAt = async (
   confId: number,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   await txOrDb
     .update(configurations)
@@ -207,14 +205,20 @@ export const touchConfigurationUpdatedAt = async (
     .where(eq(configurations.id, confId));
 };
 
-function canTransition(role: Role, from: ConfigurationStatusType, to: ConfigurationStatusType): boolean {
+function canTransition(
+  role: Role,
+  from: ConfigurationStatusType,
+  to: ConfigurationStatusType,
+): boolean {
   if (from === to) return true;
   if (role === "ADMIN") return true;
 
   // SALES (Area Manager): Only their own DRAFT <-> SUBMITTED
   if (role === "SALES") {
-    return (from === "DRAFT" && to === "SUBMITTED") ||
-      (from === "SUBMITTED" && to === "DRAFT");
+    return (
+      (from === "DRAFT" && to === "SUBMITTED") ||
+      (from === "SUBMITTED" && to === "DRAFT")
+    );
   }
 
   // ENGINEER (Technical Office): Can take into review and approve
@@ -228,7 +232,7 @@ function canTransition(role: Role, from: ConfigurationStatusType, to: Configurat
       { from: "APPROVED", to: "IN_REVIEW" },
     ];
 
-    return allowedTransitions.some(t => t.from === from && t.to === to);
+    return allowedTransitions.some((t) => t.from === from && t.to === to);
   }
 
   return false;
@@ -237,7 +241,7 @@ function canTransition(role: Role, from: ConfigurationStatusType, to: Configurat
 export const updateConfigStatus = async (
   confId: number,
   user: NonNullable<UserData>,
-  statusData: ConfigStatusSchema
+  statusData: ConfigStatusSchema,
 ) => {
   const configuration = await getConfiguration(confId);
 
@@ -267,13 +271,11 @@ export const updateConfigStatus = async (
   if (
     configuration.supply_type === "ENERGY_CHAIN" &&
     forwardStatuses.indexOf(statusData.status) >
-      forwardStatuses.indexOf(
-        configuration.status as ConfigurationStatusType
-      )
+      forwardStatuses.indexOf(configuration.status as ConfigurationStatusType)
   ) {
     const bays = await getWashBaysByConfigId(confId);
     const hasValidBay = bays.some(
-      (wb) => wb.has_gantry && wb.energy_chain_width
+      (wb) => wb.has_gantry && wb.energy_chain_width,
     );
     if (!hasValidBay) {
       throw new QueryError(MSG.config.energyChainRequiresGantry, 400);
@@ -287,10 +289,7 @@ export const updateConfigStatus = async (
     .returning({ id: configurations.id });
 
   if (!response) {
-    throw new QueryError(
-      MSG.config.updateNotFoundOrUnauthorized,
-      404
-    );
+    throw new QueryError(MSG.config.updateNotFoundOrUnauthorized, 404);
   }
 
   return response;
@@ -299,7 +298,7 @@ export const updateConfigStatus = async (
 export const insertWaterTank = async (
   confId: number,
   newWaterTank: WaterTankSchema,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const dbData = transformWaterTankSchemaToDbData(newWaterTank);
 
@@ -315,14 +314,19 @@ export const updateWaterTank = async (
   confId: number,
   waterTankId: number,
   waterTank: WaterTankSchema,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const dbData = transformWaterTankSchemaToDbData(waterTank);
 
   const [id] = await txOrDb
     .update(waterTanks)
     .set(dbData)
-    .where(and(eq(waterTanks.id, waterTankId), eq(waterTanks.configuration_id, confId)))
+    .where(
+      and(
+        eq(waterTanks.id, waterTankId),
+        eq(waterTanks.configuration_id, confId),
+      ),
+    )
     .returning({ id: waterTanks.id });
 
   return { success: true, id };
@@ -331,15 +335,15 @@ export const updateWaterTank = async (
 export const deleteWaterTank = async (
   confId: number,
   waterTankId: number,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const [id] = await txOrDb
     .delete(waterTanks)
     .where(
       and(
         eq(waterTanks.id, waterTankId),
-        eq(waterTanks.configuration_id, confId)
-      )
+        eq(waterTanks.configuration_id, confId),
+      ),
     )
     .returning({ id: waterTanks.id });
 
@@ -349,7 +353,7 @@ export const deleteWaterTank = async (
 export const insertWashBay = async (
   confId: number,
   newWashBay: WashBaySchema,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const dbData = transformWashBaySchemaToDbData(newWashBay);
 
@@ -365,14 +369,16 @@ export const updateWashBay = async (
   confId: number,
   washBayId: number,
   washBay: WashBaySchema,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const dbData = transformWashBaySchemaToDbData(washBay);
 
   const [id] = await txOrDb
     .update(washBays)
     .set(dbData)
-    .where(and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)))
+    .where(
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
+    )
     .returning({ id: washBays.id });
 
   return { success: true, id };
@@ -381,12 +387,12 @@ export const updateWashBay = async (
 export const deleteWashBay = async (
   confId: number,
   washBayId: number,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const [id] = await txOrDb
     .delete(washBays)
     .where(
-      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId))
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
     )
     .returning({ id: washBays.id });
 
@@ -426,7 +432,7 @@ export async function getEngineeringBomItems(confId: number) {
 
 export async function hasEngineeringBom(
   confId: number,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) {
   const result = await txOrDb
     .select({ count: sql<number>`count(*)::int` })
@@ -436,7 +442,7 @@ export async function hasEngineeringBom(
 }
 
 export async function insertEngineeringBomItems(
-  items: NewEngineeringBomItem[]
+  items: NewEngineeringBomItem[],
 ) {
   if (items.length === 0) return;
   await db.insert(engineeringBomItems).values(items);
@@ -451,7 +457,7 @@ export async function insertEngineeringBomItems(
  */
 export async function deleteAllEngineeringBomItems(
   confId: number,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) {
   await txOrDb
     .delete(engineeringBomItems)
@@ -460,7 +466,7 @@ export async function deleteAllEngineeringBomItems(
 
 export async function resetWashBayEnergyChainFields(
   configurationId: number,
-  txOrDb: DatabaseType | TransactionType = db
+  txOrDb: DatabaseType | TransactionType = db,
 ) {
   await txOrDb
     .update(washBays)
@@ -503,7 +509,7 @@ export async function searchPartNumbers(query: string, limit = 20) {
   return db.query.partNumbers.findMany({
     where: or(
       ilike(partNumbers.pn, pattern),
-      ilike(partNumbers.description, pattern)
+      ilike(partNumbers.description, pattern),
     ),
     limit,
     orderBy: [asc(partNumbers.pn)],

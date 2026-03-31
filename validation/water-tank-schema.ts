@@ -11,7 +11,7 @@ export const WaterTankTypeEnum = z.enum(WaterTankTypes, {
 
 export const waterTankOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterTankTypeEnum,
-  ["2000L", "2000L Jolly", "2500L", "4500L"]
+  ["2000L", "2000L Jolly", "2500L", "4500L"],
 );
 
 export const waterTankSchema = z
@@ -64,7 +64,7 @@ export const waterTankSchema = z
 export type WaterTankSchema = z.infer<typeof waterTankSchema>;
 
 export const updateWaterTankSchema = waterTankSchema.and(
-  z.object({ id: z.number(), configuration_id: z.number() })
+  z.object({ id: z.number(), configuration_id: z.number() }),
 );
 export type UpdateWaterTankSchema = z.infer<typeof updateWaterTankSchema>;
 

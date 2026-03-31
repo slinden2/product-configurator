@@ -8,7 +8,7 @@ import { DatabaseError } from "pg";
 
 export const updateConfigStatusAction = async (
   confId: number,
-  formData: unknown
+  formData: unknown,
 ) => {
   const validation = configStatusSchema.safeParse(formData);
 

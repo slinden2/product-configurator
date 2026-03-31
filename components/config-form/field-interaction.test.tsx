@@ -27,11 +27,7 @@ function renderSections(
       defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
     });
     getValues = form.getValues;
-    return (
-      <FormProvider {...form}>
-        {sections}
-      </FormProvider>
-    );
+    return <FormProvider {...form}>{sections}</FormProvider>;
   };
 
   render(<Wrapper />);
@@ -177,7 +173,9 @@ describe("Multi-step field dependency chains", () => {
       // There are two "Pompa di rilancio" fields (water 1 and water 2). Target the first.
       const allPumpTriggers = screen.getAllByLabelText("Pompa di rilancio");
       await userEvent.click(allPumpTriggers[0]);
-      const options = screen.getAllByRole("option", { name: "Pompa di rilancio 1.5kW" });
+      const options = screen.getAllByRole("option", {
+        name: "Pompa di rilancio 1.5kW",
+      });
       await userEvent.click(options[0]);
 
       expect(getValues().water_1_pump).toBe("BOOST_15KW");
@@ -262,7 +260,9 @@ describe("Multi-step field dependency chains", () => {
       const allUscita1Triggers = screen.getAllByLabelText("Uscita 1");
       // The OMZ trigger is the one that's not disabled
       const omzTrigger = allUscita1Triggers.find(
-        (el) => !el.hasAttribute("disabled") && el.getAttribute("aria-disabled") !== "true"
+        (el) =>
+          !el.hasAttribute("disabled") &&
+          el.getAttribute("aria-disabled") !== "true",
       );
       expect(omzTrigger).toBeDefined();
       await userEvent.click(omzTrigger!);

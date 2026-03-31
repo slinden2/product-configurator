@@ -1,7 +1,11 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { nozzleBarBOM } from "@/lib/BOM/max-bom/nozzle-bar-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
@@ -15,7 +19,7 @@ const pns = (config: GeneralBOMConfig) =>
 const qty = (config: GeneralBOMConfig, pn: string) => {
   // Find first matching item with this pn (there may be duplicate pns for different conditions)
   const item = nozzleBarBOM.find(
-    (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
+    (i) => i.pn === pn && i.conditions.every((fn) => fn(config)),
   );
   if (!item) return undefined;
   return typeof item.qty === "function" ? item.qty(config) : item.qty;
@@ -76,7 +80,11 @@ describe("nozzleBarBOM — rinse arch/bars", () => {
 
 describe("nozzleBarBOM — rinse solenoid and fittings", () => {
   test("brush_qty=2, no chemicals → fittings for rinse without prewash", () => {
-    const config = makeConfig({ brush_qty: 2, has_chemical_pump: false, has_acid_pump: false });
+    const config = makeConfig({
+      brush_qty: 2,
+      has_chemical_pump: false,
+      has_acid_pump: false,
+    });
     expect(pns(config)).toContain(PNS.FITTINGS_FOR_RINSE_WITHOUT_PREWASH);
     expect(pns(config)).not.toContain(PNS.RINSE_SOLENOIDS_PREWASH_ONBOARD);
     expect(pns(config)).not.toContain(PNS.RINSE_SOLENOID_PREWASH_WASH_BAY);
@@ -159,7 +167,9 @@ describe("nozzleBarBOM — prewash (2 chemicals)", () => {
       chemical_pump_pos: "ONBOARD",
     });
     expect(pns(config)).toContain(PNS.PREWASH_ARCH_2_CHEMICALS);
-    expect(pns(config)).not.toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS);
+    expect(pns(config)).not.toContain(
+      PNS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS,
+    );
   });
 
   test("2 chemicals + chemical roof bar → posterior lateral prewash bars 2 chemicals", () => {
@@ -171,7 +181,9 @@ describe("nozzleBarBOM — prewash (2 chemicals)", () => {
       pump_outlet_omz: "HP_ROOF_BAR",
       has_chemical_roof_bar: true,
     });
-    expect(pns(config)).toContain(PNS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS);
+    expect(pns(config)).toContain(
+      PNS.POSTERIOR_LATERAL_PREWASH_BARS_2_CHEMICALS,
+    );
     expect(pns(config)).not.toContain(PNS.PREWASH_ARCH_2_CHEMICALS);
   });
 });
@@ -182,7 +194,9 @@ describe("nozzleBarBOM — flow switch (itecoweb)", () => {
   });
 
   test("has_itecoweb=false → flow switch not included", () => {
-    expect(pns(makeConfig({ has_itecoweb: false }))).not.toContain(PNS.FLOW_SWITCH);
+    expect(pns(makeConfig({ has_itecoweb: false }))).not.toContain(
+      PNS.FLOW_SWITCH,
+    );
   });
 });
 
@@ -218,7 +232,9 @@ describe("nozzleBarBOM — prewash solenoids (chemical onboard)", () => {
       pump_outlet_omz: "HP_ROOF_BAR",
       has_chemical_roof_bar: true,
     });
-    expect(pns(config)).toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD);
+    expect(pns(config)).toContain(
+      PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD,
+    );
   });
 });
 
@@ -244,36 +260,52 @@ describe("nozzleBarBOM — prewash fittings (chemical wash bay)", () => {
       pump_outlet_omz: "HP_ROOF_BAR",
       has_chemical_roof_bar: true,
     });
-    expect(pns(config)).toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY);
+    expect(pns(config)).toContain(
+      PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY,
+    );
   });
 });
 
 describe("nozzleBarBOM — acid pump", () => {
   test("has_acid_pump → acid prewash arch inox included", () => {
-    expect(pns(makeConfig({ has_acid_pump: true, acid_pump_pos: "ONBOARD" }))).toContain(PNS.PREWASH_ARCH_ACID_INOX);
+    expect(
+      pns(makeConfig({ has_acid_pump: true, acid_pump_pos: "ONBOARD" })),
+    ).toContain(PNS.PREWASH_ARCH_ACID_INOX);
   });
 
   test("acid ONBOARD → acid solenoid onboard inox", () => {
-    expect(pns(makeConfig({ has_acid_pump: true, acid_pump_pos: "ONBOARD" }))).toContain("450.36.072IN");
+    expect(
+      pns(makeConfig({ has_acid_pump: true, acid_pump_pos: "ONBOARD" })),
+    ).toContain("450.36.072IN");
   });
 
   test("acid WASH_BAY → fittings for acid wash bay inox", () => {
-    expect(pns(makeConfig({ has_acid_pump: true, acid_pump_pos: "WASH_BAY" }))).toContain("450.36.074IN");
+    expect(
+      pns(makeConfig({ has_acid_pump: true, acid_pump_pos: "WASH_BAY" })),
+    ).toContain("450.36.074IN");
   });
 });
 
 describe("nozzleBarBOM — other", () => {
   test("has_wax_pump → fittings for wax pump", () => {
-    expect(pns(makeConfig({ has_wax_pump: true }))).toContain(PNS.FITTINGS_FOR_WAX_PUMP);
+    expect(pns(makeConfig({ has_wax_pump: true }))).toContain(
+      PNS.FITTINGS_FOR_WAX_PUMP,
+    );
   });
 
   test("water_2_type set + supply_type != ENERGY_CHAIN → fittings for double supply", () => {
-    const config = makeConfig({ water_2_type: "RECYCLED", supply_type: "STRAIGHT_SHELF" });
+    const config = makeConfig({
+      water_2_type: "RECYCLED",
+      supply_type: "STRAIGHT_SHELF",
+    });
     expect(pns(config)).toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY);
   });
 
   test("water_2_type set + supply_type = ENERGY_CHAIN → fittings for double supply NOT included", () => {
-    const config = makeConfig({ water_2_type: "RECYCLED", supply_type: "ENERGY_CHAIN" });
+    const config = makeConfig({
+      water_2_type: "RECYCLED",
+      supply_type: "ENERGY_CHAIN",
+    });
     expect(pns(config)).not.toContain(PNS.FITTINGS_FOR_DOUBLE_SUPPLY);
   });
 });
@@ -371,8 +403,12 @@ describe("nozzleBarBOM — OMZ uses INOX variants", () => {
       has_chemical_roof_bar: true,
       machine_type: "OMZ",
     });
-    expect(pns(config)).toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX);
-    expect(pns(config)).not.toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD);
+    expect(pns(config)).toContain(
+      PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD_INOX,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_ONBOARD,
+    );
   });
 
   test("OMZ + chemical WASH_BAY, no roof bar → fittings for prewash INOX (qty=1)", () => {
@@ -399,8 +435,12 @@ describe("nozzleBarBOM — OMZ uses INOX variants", () => {
       has_chemical_roof_bar: true,
       machine_type: "OMZ",
     });
-    expect(pns(config)).toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY_INOX);
-    expect(pns(config)).not.toContain(PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY);
+    expect(pns(config)).toContain(
+      PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY_INOX,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.PREWASH_SOLENOIDS_HP_ROOF_BAR_PREWASH_WASH_BAY,
+    );
   });
 
   test("OMZ + has_wax_pump → fittings for wax pump INOX", () => {

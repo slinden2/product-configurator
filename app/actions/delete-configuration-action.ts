@@ -1,6 +1,11 @@
 "use server";
 
-import { deleteConfiguration, getConfiguration, getUserData, QueryError } from "@/db/queries";
+import {
+  deleteConfiguration,
+  getConfiguration,
+  getUserData,
+  QueryError,
+} from "@/db/queries";
 import { DatabaseError } from "pg";
 import { MSG } from "@/lib/messages";
 import { revalidatePath } from "next/cache";

@@ -118,13 +118,16 @@ describe("insertConfigurationAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await insertConfigurationAction(makeValidFormData());
-    expect(result).toEqual({ success: false, error: MSG.auth.userNotAuthenticated });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.userNotAuthenticated,
+    });
     expect(mockInsertConfiguration).not.toHaveBeenCalled();
   });
 
   test("returns error message on QueryError", async () => {
     mockInsertConfiguration.mockRejectedValue(
-      new QueryError("Impossibile creare la configurazione.", 500)
+      new QueryError("Impossibile creare la configurazione.", 500),
     );
     const result = await insertConfigurationAction(makeValidFormData());
     expect(result.success).toBe(false);

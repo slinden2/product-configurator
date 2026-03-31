@@ -56,14 +56,23 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       await waitFor(() => {
         expect(
-          screen.getByText("Con la catena portacavi le rotaie devono essere almeno 25 metri.")
+          screen.getByText(
+            "Con la catena portacavi le rotaie devono essere almeno 25 metri.",
+          ),
         ).toBeInTheDocument();
       });
 
@@ -80,14 +89,23 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       await waitFor(() => {
         expect(
-          screen.getByText("Per un portale fast le rotaie devono essere da 7 metri.")
+          screen.getByText(
+            "Per un portale fast le rotaie devono essere da 7 metri.",
+          ),
         ).toBeInTheDocument();
       });
 
@@ -103,10 +121,17 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       // Wait for validation to process
       await waitFor(() => {
@@ -124,10 +149,17 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       await waitFor(() => {
         expect(mockEditAction).not.toHaveBeenCalled();
@@ -144,10 +176,17 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       await waitFor(() => {
         expect(mockEditAction).not.toHaveBeenCalled();
@@ -165,10 +204,17 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       await waitFor(() => {
         expect(mockEditAction).toHaveBeenCalled();
@@ -182,10 +228,17 @@ describe("Cross-section validation (superRefine)", () => {
       });
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /salva configurazione/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
 
       await waitFor(() => {
         expect(mockEditAction).toHaveBeenCalled();

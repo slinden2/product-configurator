@@ -14,14 +14,13 @@ const testCases: [ConfigurationStatusType, string, string][] =
   ]);
 
 describe("ConfigurationStatusBadge", () => {
-  test.each(testCases)(
-    "renders '%s' as '%s' with correct color",
-    (status, expectedLabel, expectedColor) => {
-      render(<ConfigurationStatusBadge status={status} />);
+  test.each(
+    testCases,
+  )("renders '%s' as '%s' with correct color", (status, expectedLabel, expectedColor) => {
+    render(<ConfigurationStatusBadge status={status} />);
 
-      const badge = screen.getByText(expectedLabel);
-      expect(badge).toBeInTheDocument();
-      expect(badge).toHaveStyle({ backgroundColor: expectedColor });
-    }
-  );
+    const badge = screen.getByText(expectedLabel);
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveStyle({ backgroundColor: expectedColor });
+  });
 });

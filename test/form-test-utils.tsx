@@ -4,7 +4,12 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ConfigSchema, configDefaults, configSchema, UpdateConfigSchema } from "@/validation/config-schema";
+import {
+  ConfigSchema,
+  configDefaults,
+  configSchema,
+  UpdateConfigSchema,
+} from "@/validation/config-schema";
 
 // --- Reusable Radix Select interaction ---
 
@@ -22,7 +27,9 @@ export async function selectRadixOption(labelText: string, optionText: string) {
 
 // --- Config form test data ---
 
-export function makeValidConfig(overrides: Partial<UpdateConfigSchema> = {}): UpdateConfigSchema {
+export function makeValidConfig(
+  overrides: Partial<UpdateConfigSchema> = {},
+): UpdateConfigSchema {
   return {
     user_id: "test-user-123",
     name: "Test Config",
@@ -94,9 +101,7 @@ export function renderWithConfigFormProvider(
     getValues = form.getValues;
     return (
       <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(() => { })}>
-          {children}
-        </form>
+        <form onSubmit={form.handleSubmit(() => {})}>{children}</form>
       </FormProvider>
     );
   };

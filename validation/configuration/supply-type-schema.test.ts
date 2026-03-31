@@ -22,7 +22,7 @@ describe("supplyTypeSchema", () => {
           supply_side: "LEFT",
           supply_fixing_type: undefined,
           has_post_frame: false,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -33,7 +33,7 @@ describe("supplyTypeSchema", () => {
           supply_side: "RIGHT",
           supply_fixing_type: "POST",
           has_post_frame: true,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -44,7 +44,7 @@ describe("supplyTypeSchema", () => {
           supply_side: "LEFT",
           supply_fixing_type: "WALL",
           has_post_frame: false,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -55,7 +55,7 @@ describe("supplyTypeSchema", () => {
           supply_side: "LEFT",
           supply_fixing_type: "WALL",
           has_post_frame: true,
-        })
+        }),
       ).toThrow("Telaio disponibile solo con fissaggio a Palo.");
     });
 
@@ -78,7 +78,7 @@ describe("supplyTypeSchema", () => {
           supply_side: "RIGHT",
           supply_fixing_type: "WALL",
           has_post_frame: false,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -111,7 +111,7 @@ describe("supplyTypeSchema", () => {
           supply_side: "LEFT",
           supply_fixing_type: "POST",
           has_post_frame: false,
-        })
+        }),
       ).not.toThrow();
     });
 

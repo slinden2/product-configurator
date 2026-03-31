@@ -121,7 +121,7 @@ const HPPumpSection = () => {
                 dataType="string"
                 label="Sensore ultrasuoni lavachassis"
                 items={withNoSelection(
-                  selectFieldOptions.chassisWashSensorTypeOpts
+                  selectFieldOptions.chassisWashSensorTypeOpts,
                 )}
               />
             </div>
@@ -161,8 +161,9 @@ const HPPumpSection = () => {
               ]}
             />
             <div
-              className={`md:mt-2 ${showChemicalRoofBar ? "opacity-100" : "opacity-0"
-                }`}
+              className={`md:mt-2 ${
+                showChemicalRoofBar ? "opacity-100" : "opacity-0"
+              }`}
             >
               <CheckboxField<ConfigSchema>
                 name="has_chemical_roof_bar"

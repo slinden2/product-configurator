@@ -1,10 +1,12 @@
 import { Configuration, EngineeringBomItem } from "@/db/schemas";
-import {
-  getEngineeringBomItems,
-  hasEngineeringBom,
-} from "@/db/queries";
+import { getEngineeringBomItems, hasEngineeringBom } from "@/db/queries";
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import { BOM, BOMItemWithCost, BOMItemWithDescription, enrichWithCosts } from "@/lib/BOM";
+import {
+  BOM,
+  BOMItemWithCost,
+  BOMItemWithDescription,
+  enrichWithCosts,
+} from "@/lib/BOM";
 import { Role } from "@/types";
 
 // ── Grouping ────────────────────────────────────────────────────────────
@@ -16,7 +18,7 @@ export interface GroupedEbomItems {
 }
 
 export function groupEbomByCategory(
-  items: EngineeringBomItem[]
+  items: EngineeringBomItem[],
 ): GroupedEbomItems {
   const general: EngineeringBomItem[] = [];
   const waterTanks = new Map<number, EngineeringBomItem[]>();
@@ -52,7 +54,7 @@ export { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 // ── Export data builders ────────────────────────────────────────────────
 
 export function buildEbomExportData(
-  activeItems: EngineeringBomItem[]
+  activeItems: EngineeringBomItem[],
 ): BOMItemWithDescription[] {
   return activeItems.map((i) => ({
     pn: i.pn,
@@ -63,7 +65,7 @@ export function buildEbomExportData(
 }
 
 export async function buildEbomCostExportData(
-  activeItems: EngineeringBomItem[]
+  activeItems: EngineeringBomItem[],
 ): Promise<{
   generalBOM: BOMItemWithCost[];
   waterTankBOMs: BOMItemWithCost[][];
@@ -82,12 +84,12 @@ export async function buildEbomCostExportData(
   const generalBOM = await enrichWithCosts(general.map(toBomItem));
   const waterTankBOMs = await Promise.all(
     Array.from(waterTanks.values()).map((items) =>
-      enrichWithCosts(items.map(toBomItem))
+      enrichWithCosts(items.map(toBomItem)),
     ),
   );
   const washBayBOMs = await Promise.all(
     Array.from(washBays.values()).map((items) =>
-      enrichWithCosts(items.map(toBomItem))
+      enrichWithCosts(items.map(toBomItem)),
     ),
   );
 
@@ -121,7 +123,7 @@ export async function prepareBOMPageData(
   confId: number,
   bom: BOM,
   configuration: Configuration,
-  userRole: Role
+  userRole: Role,
 ): Promise<BOMPageData> {
   const clientName = bom.getClientName();
   const description = bom.getDescription();
@@ -166,18 +168,14 @@ export async function prepareBOMPageData(
 
 // ── Metadata ────────────────────────────────────────────────────────────
 
-export function getEarliestCreatedAt(
-  items: EngineeringBomItem[]
-): Date | null {
+export function getEarliestCreatedAt(items: EngineeringBomItem[]): Date | null {
   if (items.length === 0) return null;
   return items.reduce((earliest, item) =>
-    item.created_at < earliest.created_at ? item : earliest
+    item.created_at < earliest.created_at ? item : earliest,
   ).created_at;
 }
 
-export function getBomRulesVersion(
-  items: EngineeringBomItem[]
-): string | null {
+export function getBomRulesVersion(items: EngineeringBomItem[]): string | null {
   if (items.length === 0) return null;
   return items[0].bom_rules_version;
 }

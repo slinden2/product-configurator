@@ -5,7 +5,7 @@ import { describe, test, expect } from "vitest";
 function createBrushObject(
   brushQty: number | undefined,
   brushType: BrushType | undefined,
-  brushColor: BrushColorType | undefined
+  brushColor: BrushColorType | undefined,
 ) {
   return {
     brush_qty: brushQty,
@@ -36,14 +36,14 @@ describe("brushSchema", () => {
     test("should fail when brush_qty is 1 (only 0, 2, 3 are valid)", () => {
       const invalidData = createBrushObject(1, "THREAD", "BLUE_SILVER");
       expect(() => brushSchema.parse(invalidData)).toThrow(
-        "Numero di spazzole deve essere 0, 2 o 3."
+        "Numero di spazzole deve essere 0, 2 o 3.",
       );
     });
 
     test("should fail when brush_qty is 4", () => {
       const invalidData = createBrushObject(4, "THREAD", "BLUE_SILVER");
       expect(() => brushSchema.parse(invalidData)).toThrow(
-        "Numero di spazzole deve essere 0, 2 o 3."
+        "Numero di spazzole deve essere 0, 2 o 3.",
       );
     });
 
@@ -60,7 +60,7 @@ describe("brushSchema", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const typeError = result.error.issues.find(
-          (issue) => issue.path[0] === "brush_type"
+          (issue) => issue.path[0] === "brush_type",
         );
         expect(typeError).toBeDefined();
       }
@@ -72,7 +72,7 @@ describe("brushSchema", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const colorError = result.error.issues.find(
-          (issue) => issue.path[0] === "brush_color"
+          (issue) => issue.path[0] === "brush_color",
         );
         expect(colorError).toBeDefined();
       }

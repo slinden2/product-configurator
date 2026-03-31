@@ -90,15 +90,13 @@ const EngineeringBomTable = ({
         await updateEngineeringBomItemQtyAction(confId, itemId, newQty);
         setDataArr((prev) =>
           prev.map((item) =>
-            item.id === itemId ? { ...item, qty: newQty } : item
-          )
+            item.id === itemId ? { ...item, qty: newQty } : item,
+          ),
         );
         setEditingId(null);
         toast.success(MSG.toast.qtyUpdated);
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : MSG.toast.updateError
-        );
+        toast.error(err instanceof Error ? err.message : MSG.toast.updateError);
       }
     });
   }
@@ -113,13 +111,15 @@ const EngineeringBomTable = ({
           prev.map((item) =>
             item.id === itemId
               ? { ...item, is_deleted: !item.is_deleted }
-              : item
-          )
+              : item,
+          ),
         );
-        toast.success(wasDeleted ? MSG.toast.rowRestored : MSG.toast.rowDeleted);
+        toast.success(
+          wasDeleted ? MSG.toast.rowRestored : MSG.toast.rowDeleted,
+        );
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : MSG.toast.operationError
+          err instanceof Error ? err.message : MSG.toast.operationError,
         );
       }
     });
@@ -129,10 +129,7 @@ const EngineeringBomTable = ({
     if (item.is_deleted) return "opacity-50 bg-muted/30";
     if (item.is_custom) return "bg-orange-500/10";
     if (item.is_added) return "bg-green-500/10";
-    if (
-      item.original_qty !== null &&
-      item.qty !== item.original_qty
-    )
+    if (item.original_qty !== null && item.qty !== item.original_qty)
       return "bg-yellow-500/10";
     return "";
   }
@@ -162,7 +159,9 @@ const EngineeringBomTable = ({
             Qtà
           </TableHead>
           {editable && (
-            <TableHead className="w-24 py-2 text-center whitespace-nowrap">Azioni</TableHead>
+            <TableHead className="w-24 py-2 text-center whitespace-nowrap">
+              Azioni
+            </TableHead>
           )}
         </TableRow>
       </TableHeader>
@@ -173,7 +172,7 @@ const EngineeringBomTable = ({
             <TableCell
               className={cn(
                 "w-32 py-2 whitespace-nowrap",
-                item.is_deleted && "line-through"
+                item.is_deleted && "line-through",
               )}
             >
               {item.pn}
@@ -181,12 +180,15 @@ const EngineeringBomTable = ({
             <TableCell
               className={cn(
                 "py-2 break-words min-w-0",
-                item.is_deleted && "line-through"
+                item.is_deleted && "line-through",
               )}
             >
               {item.description}
               {item.is_custom && !item.is_deleted && (
-                <Badge variant="outline" className="ml-2 text-orange-500 border-orange-500 text-[10px] px-1 py-0">
+                <Badge
+                  variant="outline"
+                  className="ml-2 text-orange-500 border-orange-500 text-[10px] px-1 py-0"
+                >
                   WIP
                 </Badge>
               )}
@@ -194,7 +196,7 @@ const EngineeringBomTable = ({
             <TableCell
               className={cn(
                 "w-24 py-2 text-center",
-                item.is_deleted && "line-through"
+                item.is_deleted && "line-through",
               )}
             >
               {editingId === item.id ? (

@@ -51,7 +51,7 @@ describe("ResetPasswordForm", () => {
       expect(screen.getByLabelText("Password")).toBeInTheDocument();
       expect(screen.getByLabelText("Conferma password")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       ).toBeInTheDocument();
     });
   });
@@ -64,16 +64,16 @@ describe("ResetPasswordForm", () => {
       await user.type(screen.getByLabelText("Password"), "newpass123");
       await user.type(screen.getByLabelText("Conferma password"), "newpass123");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockResetPassword).toHaveBeenCalledWith(
           { password: "newpass123", confirmPassword: "newpass123" },
-          "test-code-123"
+          "test-code-123",
         );
         expect(mockToastSuccess).toHaveBeenCalledWith(
-          MSG.toast.passwordResetSuccess
+          MSG.toast.passwordResetSuccess,
         );
         expect(mockPush).toHaveBeenCalledWith("/login");
       });
@@ -91,12 +91,12 @@ describe("ResetPasswordForm", () => {
       await user.type(screen.getByLabelText("Password"), "newpass123");
       await user.type(screen.getByLabelText("Conferma password"), "newpass123");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
-          "Errore durante l'autenticazione."
+          "Errore durante l'autenticazione.",
         );
         expect(mockPush).not.toHaveBeenCalled();
       });
@@ -107,9 +107,12 @@ describe("ResetPasswordForm", () => {
       render(<ResetPasswordForm />);
 
       await user.type(screen.getByLabelText("Password"), "newpass123");
-      await user.type(screen.getByLabelText("Conferma password"), "different456");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "different456",
+      );
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
@@ -124,7 +127,7 @@ describe("ResetPasswordForm", () => {
       await user.type(screen.getByLabelText("Password"), "ab");
       await user.type(screen.getByLabelText("Conferma password"), "ab");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
@@ -141,13 +144,13 @@ describe("ResetPasswordForm", () => {
       await user.type(screen.getByLabelText("Password"), "newpass123");
       await user.type(screen.getByLabelText("Conferma password"), "newpass123");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockResetPassword).toHaveBeenCalledWith(
           { password: "newpass123", confirmPassword: "newpass123" },
-          null
+          null,
         );
       });
     });

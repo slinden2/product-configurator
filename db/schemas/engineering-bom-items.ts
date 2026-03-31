@@ -67,5 +67,5 @@ export const engineeringBomItemsRelations = relations(
       fields: [engineeringBomItems.configuration_id],
       references: [configurations.id],
     }),
-  })
+  }),
 );

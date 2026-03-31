@@ -41,9 +41,7 @@ export type WithSupplyData = Pick<
 export type GeneralBOMConfig = Configuration & { has_shelf_extension: boolean };
 
 /** Enrich BOM items with cost data from the DB. Shared by BOM class and bom-helpers. */
-export async function enrichWithCosts<
-  T extends { pn: string },
->(
+export async function enrichWithCosts<T extends { pn: string }>(
   items: T[],
 ): Promise<(T & { cost: number })[]> {
   const uniquePns = [...new Set(items.map((i) => i.pn))];
@@ -96,7 +94,10 @@ export class BOM {
     const descriptionMap = await this._fetchDescriptions(allItems);
 
     // Phase 3: attach descriptions
-    const generalBOM = this._attachDescriptions(generalFiltered, descriptionMap);
+    const generalBOM = this._attachDescriptions(
+      generalFiltered,
+      descriptionMap,
+    );
     const waterTankBOMs = waterTankFiltered.map((items) =>
       this._attachDescriptions(items, descriptionMap),
     );
@@ -119,7 +120,10 @@ export class BOM {
   async buildWaterTankBOM(): Promise<BOMItemWithDescription[][]> {
     return await Promise.all(
       this.configuration.water_tanks.map(async (waterTank) => {
-        const filtered = this._filterAndResolve(this.waterTankMaxBOM, waterTank);
+        const filtered = this._filterAndResolve(
+          this.waterTankMaxBOM,
+          waterTank,
+        );
         const descriptionMap = await this._fetchDescriptions(filtered);
         return this._attachDescriptions(filtered, descriptionMap);
       }),

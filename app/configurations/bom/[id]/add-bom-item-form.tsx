@@ -60,7 +60,7 @@ const AddBomItemForm = ({
 
   // Tag selector (only used when availableTags is provided)
   const [selectedTag, setSelectedTag] = useState<BomTag | undefined>(
-    fixedTag ?? availableTags?.[0]
+    fixedTag ?? availableTags?.[0],
   );
 
   // Custom mode fields
@@ -124,9 +124,7 @@ const AddBomItemForm = ({
           setQty("1");
           toast.success(MSG.toast.rowAdded);
         } catch (err) {
-          toast.error(
-            err instanceof Error ? err.message : MSG.toast.addError
-          );
+          toast.error(err instanceof Error ? err.message : MSG.toast.addError);
         }
       });
     } else {
@@ -150,18 +148,13 @@ const AddBomItemForm = ({
           setQty("1");
           toast.success(MSG.toast.customRowAdded);
         } catch (err) {
-          toast.error(
-            err instanceof Error ? err.message : MSG.toast.addError
-          );
+          toast.error(err instanceof Error ? err.message : MSG.toast.addError);
         }
       });
     }
   }
 
-  const canAdd =
-    mode === "catalog"
-      ? !!selectedPn
-      : customPn.trim().length > 0;
+  const canAdd = mode === "catalog" ? !!selectedPn : customPn.trim().length > 0;
 
   return (
     <div className="space-y-2 px-2 py-3">
@@ -183,7 +176,10 @@ const AddBomItemForm = ({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <PopoverContent
+              className="w-[var(--radix-popover-trigger-width)] p-0"
+              align="start"
+            >
               <Command shouldFilter={false}>
                 <CommandInput
                   placeholder="Cerca per codice o descrizione (usa % come jolly)..."
@@ -285,9 +281,7 @@ const AddBomItemForm = ({
             setCustomDescription("");
           }}
           title={
-            mode === "catalog"
-              ? "Inserimento manuale"
-              : "Cerca da catalogo"
+            mode === "catalog" ? "Inserimento manuale" : "Cerca da catalogo"
           }
         >
           <Pencil size={14} />

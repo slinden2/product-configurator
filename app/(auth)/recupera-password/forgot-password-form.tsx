@@ -33,7 +33,8 @@ const ForgotPasswordForm = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-6">
+        className="flex flex-col gap-6"
+      >
         <InputField<AuthSchema>
           name="email"
           label="Email"

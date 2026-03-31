@@ -1,7 +1,11 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
@@ -14,7 +18,7 @@ const pns = (config: GeneralBOMConfig) =>
 
 const qty = (config: GeneralBOMConfig, pn: string) => {
   const item = electricBOM.find(
-    (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
+    (i) => i.pn === pn && i.conditions.every((fn) => fn(config)),
   );
   if (!item) return undefined;
   return typeof item.qty === "function" ? item.qty(config) : item.qty;
@@ -38,7 +42,9 @@ const PNS = {
 
 describe("electricBOM — RFID reader", () => {
   test("has_card_reader=true → RFID reader included", () => {
-    expect(pns(makeConfig({ has_card_reader: true }))).toContain(PNS.RFID_READER);
+    expect(pns(makeConfig({ has_card_reader: true }))).toContain(
+      PNS.RFID_READER,
+    );
   });
 
   test("has_itecoweb=true → RFID reader included", () => {
@@ -64,19 +70,32 @@ describe("electricBOM — RFID cards", () => {
 
 describe("electricBOM — HP roof bar commands", () => {
   test("has_omz_pump + pump_outlet_omz=HP_ROOF_BAR → included", () => {
-    expect(pns(makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR" }))).toContain(PNS.HP_ROOF_BAR_COMMANDS);
+    expect(
+      pns(makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR" })),
+    ).toContain(PNS.HP_ROOF_BAR_COMMANDS);
   });
 
   test("has_omz_pump + pump_outlet_omz=HP_ROOF_BAR_SPINNERS → included", () => {
-    expect(pns(makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR_SPINNERS" }))).toContain(PNS.HP_ROOF_BAR_COMMANDS);
+    expect(
+      pns(
+        makeConfig({
+          has_omz_pump: true,
+          pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
+        }),
+      ),
+    ).toContain(PNS.HP_ROOF_BAR_COMMANDS);
   });
 
   test("has_omz_pump + pump_outlet_omz=SPINNERS → NOT included", () => {
-    expect(pns(makeConfig({ has_omz_pump: true, pump_outlet_omz: "SPINNERS" }))).not.toContain(PNS.HP_ROOF_BAR_COMMANDS);
+    expect(
+      pns(makeConfig({ has_omz_pump: true, pump_outlet_omz: "SPINNERS" })),
+    ).not.toContain(PNS.HP_ROOF_BAR_COMMANDS);
   });
 
   test("no OMZ pump → HP roof bar commands not included", () => {
-    expect(pns(makeConfig({ has_omz_pump: false, pump_outlet_omz: "HP_ROOF_BAR" }))).not.toContain(PNS.HP_ROOF_BAR_COMMANDS);
+    expect(
+      pns(makeConfig({ has_omz_pump: false, pump_outlet_omz: "HP_ROOF_BAR" })),
+    ).not.toContain(PNS.HP_ROOF_BAR_COMMANDS);
   });
 });
 
@@ -86,7 +105,9 @@ describe("electricBOM — thermostat (antifreeze)", () => {
   });
 
   test("has_antifreeze=false → thermostat not included", () => {
-    expect(pns(makeConfig({ has_antifreeze: false }))).not.toContain(PNS.THERMOSTAT);
+    expect(pns(makeConfig({ has_antifreeze: false }))).not.toContain(
+      PNS.THERMOSTAT,
+    );
   });
 });
 
@@ -119,7 +140,13 @@ describe("electricBOM — touch configuration", () => {
   });
 
   test("touch_qty=1, touch_pos=EXTERNAL → closing plate (not sunshade)", () => {
-    const result = pns(makeConfig({ touch_qty: 1, touch_pos: "EXTERNAL", touch_fixing_type: "WALL" }));
+    const result = pns(
+      makeConfig({
+        touch_qty: 1,
+        touch_pos: "EXTERNAL",
+        touch_fixing_type: "WALL",
+      }),
+    );
     expect(result).toContain(PNS.CLOSING_PLATE);
     expect(result).not.toContain(PNS.SUNSHADE);
   });
@@ -127,13 +154,25 @@ describe("electricBOM — touch configuration", () => {
 
 describe("electricBOM — external console variants", () => {
   test("touch_qty=1, EXTERNAL, WALL → wall one-touch console", () => {
-    const result = pns(makeConfig({ touch_qty: 1, touch_pos: "EXTERNAL", touch_fixing_type: "WALL" }));
+    const result = pns(
+      makeConfig({
+        touch_qty: 1,
+        touch_pos: "EXTERNAL",
+        touch_fixing_type: "WALL",
+      }),
+    );
     expect(result).toContain(PNS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH);
     expect(result).not.toContain(PNS.EXTERNAL_CONSOLE_POST_ONE_TOUCH);
   });
 
   test("touch_qty=1, EXTERNAL, POST → post one-touch console", () => {
-    const result = pns(makeConfig({ touch_qty: 1, touch_pos: "EXTERNAL", touch_fixing_type: "POST" }));
+    const result = pns(
+      makeConfig({
+        touch_qty: 1,
+        touch_pos: "EXTERNAL",
+        touch_fixing_type: "POST",
+      }),
+    );
     expect(result).toContain(PNS.EXTERNAL_CONSOLE_POST_ONE_TOUCH);
     expect(result).not.toContain(PNS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH);
   });

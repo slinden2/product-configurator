@@ -10,7 +10,8 @@ const GeneralSection = () => {
   return (
     <Fieldset
       title="Informazioni generali"
-      description="Compila i dati del cliente e la descrizione dell'impianto">
+      description="Compila i dati del cliente e la descrizione dell'impianto"
+    >
       <div className="fs-content">
         <InputField<ConfigSchema>
           name="name"

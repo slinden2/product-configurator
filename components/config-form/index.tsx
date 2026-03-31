@@ -44,7 +44,16 @@ interface ConfigurationFormProps {
   hasEngineeringBom?: boolean;
 }
 
-const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChange, onSaved, hasEngineeringBom }: ConfigurationFormProps) => {
+const ConfigForm = ({
+  id,
+  configuration,
+  status,
+  userRole,
+  formKey,
+  onDirtyChange,
+  onSaved,
+  hasEngineeringBom,
+}: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showBomWarning, setShowBomWarning] = useState(false);
   const pendingValuesRef = useRef<ConfigSchema | null>(null);
@@ -52,7 +61,10 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
 
   const isNewConfiguration = !id && !configuration && !status;
 
-  const formIsDisabled = isSubmitting || (!isNewConfiguration && (!status || !userRole || !isEditable(status, userRole)));
+  const formIsDisabled =
+    isSubmitting ||
+    (!isNewConfiguration &&
+      (!status || !userRole || !isEditable(status, userRole)));
 
   const form = useForm<UpdateConfigSchema>({
     resolver: zodResolver(configSchema),
@@ -118,7 +130,9 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
     toast.error(MSG.toast.validationErrors);
     const firstErrorKey = Object.keys(errors)[0];
     if (firstErrorKey) {
-      const el = document.querySelector<HTMLElement>(`[name="${firstErrorKey}"]`);
+      const el = document.querySelector<HTMLElement>(
+        `[name="${firstErrorKey}"]`,
+      );
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         el.focus({ preventScroll: true });
@@ -147,7 +161,10 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
   return (
     <div>
       <Form {...form}>
-        <form id={formKey ? `form-${formKey}` : undefined} onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
+        <form
+          id={formKey ? `form-${formKey}` : undefined}
+          onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+        >
           <FormDisabledContext.Provider value={formIsDisabled}>
             <fieldset disabled={formIsDisabled}>
               <GeneralSection />
@@ -160,7 +177,8 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
               <HPPumpSection />
               <Fieldset
                 title="Note"
-                description="Note aggiuntive per la vendita e l'ufficio tecnico">
+                description="Note aggiuntive per la vendita e l'ufficio tecnico"
+              >
                 <div className="fs-content">
                   <TextareaField<ConfigSchema>
                     name="sales_notes"
@@ -178,20 +196,26 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
                 </div>
               </Fieldset>
               <div className="flex gap-4">
-                {!isNewConfiguration && <BackButton fallbackPath={"/configurations"} />}
+                {!isNewConfiguration && (
+                  <BackButton fallbackPath={"/configurations"} />
+                )}
                 <Button
                   type="button"
                   className="ml-auto"
                   variant="destructive"
                   onClick={() => {
-                    form.reset()
+                    form.reset();
                     if (formKey) onDirtyChange?.(formKey, false);
                   }}
                   disabled={formIsDisabled}
                 >
                   Annulla
                 </Button>
-                <Button className="flex items-center gap-2" type="submit" disabled={formIsDisabled}>
+                <Button
+                  className="flex items-center gap-2"
+                  type="submit"
+                  disabled={formIsDisabled}
+                >
                   {isSubmitting ? (
                     <Spinner className="h-4 w-4 text-foreground" />
                   ) : (
@@ -207,7 +231,9 @@ const ConfigForm = ({ id, configuration, status, userRole, formKey, onDirtyChang
       <BomWarningDialog
         open={showBomWarning}
         onOpenChange={setShowBomWarning}
-        onCancel={() => { pendingValuesRef.current = null; }}
+        onCancel={() => {
+          pendingValuesRef.current = null;
+        }}
         onConfirm={handleBomWarningConfirm}
       />
     </div>

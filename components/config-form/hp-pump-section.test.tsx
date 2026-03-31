@@ -137,7 +137,10 @@ describe("HPPumpSection", () => {
     });
 
     test("chemical roof bar checkbox is visible when outlet is HP_ROOF_BAR", () => {
-      renderHPPumpSection({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR" });
+      renderHPPumpSection({
+        has_omz_pump: true,
+        pump_outlet_omz: "HP_ROOF_BAR",
+      });
 
       const chemBarLabel = screen.getByText("Con barra di prelavaggio");
       const wrapper = chemBarLabel.closest("div.opacity-0, div.opacity-100");

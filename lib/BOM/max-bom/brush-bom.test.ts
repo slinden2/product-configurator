@@ -1,13 +1,21 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { brushBOM } from "@/lib/BOM/max-bom/brush-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
-const cfg = (brush_qty: number, brush_type: string | null, brush_color: string | null): GeneralBOMConfig =>
-  ({ brush_qty, brush_type, brush_color } as GeneralBOMConfig);
+const cfg = (
+  brush_qty: number,
+  brush_type: string | null,
+  brush_color: string | null,
+): GeneralBOMConfig =>
+  ({ brush_qty, brush_type, brush_color }) as GeneralBOMConfig;
 
 const pns = (config: GeneralBOMConfig) =>
   brushBOM
@@ -17,7 +25,9 @@ const pns = (config: GeneralBOMConfig) =>
 const qtys = (config: GeneralBOMConfig) =>
   brushBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
-    .map((item) => (typeof item.qty === "function" ? item.qty(config) : item.qty));
+    .map((item) =>
+      typeof item.qty === "function" ? item.qty(config) : item.qty,
+    );
 
 describe("brushBOM — no brushes (brush_qty=0)", () => {
   test("brush_qty=0 → no brush items included", () => {
@@ -29,7 +39,7 @@ describe("brushBOM — no brushes (brush_qty=0)", () => {
 describe("brushBOM — blue-silver", () => {
   test("brush_qty=2, THREAD, BLUE_SILVER → 1 vertical brush (qty=2), no horizontal", () => {
     const result = brushBOM.filter((item) =>
-      item.conditions.every((fn) => fn(cfg(2, "THREAD", "BLUE_SILVER")))
+      item.conditions.every((fn) => fn(cfg(2, "THREAD", "BLUE_SILVER"))),
     );
     expect(result).toHaveLength(1);
     expect(result[0].pn).toBe("450.16.003");
@@ -38,7 +48,7 @@ describe("brushBOM — blue-silver", () => {
 
   test("brush_qty=3, THREAD, BLUE_SILVER → vertical + horizontal", () => {
     const result = brushBOM.filter((item) =>
-      item.conditions.every((fn) => fn(cfg(3, "THREAD", "BLUE_SILVER")))
+      item.conditions.every((fn) => fn(cfg(3, "THREAD", "BLUE_SILVER"))),
     );
     expect(result).toHaveLength(2);
     expect(result.map((i) => i.pn)).toContain("450.16.003"); // vertical

@@ -21,7 +21,9 @@ import { EngineeringBomItem } from "@/db/schemas";
 // --- Helpers ---
 
 function makeItem(
-  overrides: Partial<EngineeringBomItem> & { bom_rules_version?: string | null } = {}
+  overrides: Partial<EngineeringBomItem> & {
+    bom_rules_version?: string | null;
+  } = {},
 ): EngineeringBomItem {
   return {
     id: 1,
@@ -223,9 +225,7 @@ describe("buildEbomCostExportData", () => {
   });
 
   test("deduplicates part numbers before querying", async () => {
-    mockGetPartNumbersByArray.mockResolvedValue([
-      { pn: "PN-001", cost: "10" },
-    ]);
+    mockGetPartNumbersByArray.mockResolvedValue([{ pn: "PN-001", cost: "10" }]);
 
     const items = [
       makeItem({ id: 1, pn: "PN-001", qty: 1 }),

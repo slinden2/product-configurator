@@ -17,7 +17,12 @@ interface BomWarningDialogProps {
   onConfirm: () => void;
 }
 
-const BomWarningDialog = ({ open, onOpenChange, onCancel, onConfirm }: BomWarningDialogProps) => {
+const BomWarningDialog = ({
+  open,
+  onOpenChange,
+  onCancel,
+  onConfirm,
+}: BomWarningDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -28,9 +33,7 @@ const BomWarningDialog = ({ open, onOpenChange, onCancel, onConfirm }: BomWarnin
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>
-            Annulla
-          </AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>Annulla</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

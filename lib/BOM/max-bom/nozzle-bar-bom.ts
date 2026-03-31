@@ -53,12 +53,14 @@ const hasOneChemical = (config: GeneralBOMConfig): boolean =>
 const hasTwoChemicals = (config: GeneralBOMConfig): boolean =>
   config.has_chemical_pump && config.chemical_qty === 2;
 
-
 export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   // Rinse
   {
     pn: PART_NUMBERS.RINSE_ARCH,
-    conditions: [(config) => config.brush_qty === 3, (config) => !isOMZ(config)],
+    conditions: [
+      (config) => config.brush_qty === 3,
+      (config) => !isOMZ(config),
+    ],
     qty: 1,
     _description: "Rinse arch",
     tag: "RINSE_BARS",
@@ -83,7 +85,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_qty > 0,
       (config) => config.has_chemical_pump || config.has_acid_pump,
       hasPrewashOrAcidOnBoard,
-      config => !isOMZ(config),
+      (config) => !isOMZ(config),
     ],
     qty: 1,
     _description: "Rinse solenoids (prewash onboard)",
@@ -95,7 +97,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_qty > 0,
       (config) => config.has_chemical_pump || config.has_acid_pump,
       hasPrewashOrAcidOnBoard,
-      isOMZ
+      isOMZ,
     ],
     qty: 1,
     _description: "Rinse solenoids (prewash onboard)",
@@ -107,7 +109,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_qty > 0,
       (config) => config.has_chemical_pump || config.has_acid_pump,
       (config) => !hasPrewashOrAcidOnBoard(config),
-      config => !isOMZ(config),
+      (config) => !isOMZ(config),
     ],
     qty: 1,
     _description: "Rinse solenoid (prewash in wash bay)",
@@ -119,7 +121,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.brush_qty > 0,
       (config) => config.has_chemical_pump || config.has_acid_pump,
       (config) => !hasPrewashOrAcidOnBoard(config),
-      isOMZ
+      isOMZ,
     ],
     qty: 1,
     _description: "Rinse solenoid (prewash in wash bay)",
@@ -177,7 +179,11 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.POSTERIOR_LATERAL_PREWASH_BARS,
-    conditions: [hasOneChemical, hasChemicalRoofBar, (config) => !isOMZ(config)],
+    conditions: [
+      hasOneChemical,
+      hasChemicalRoofBar,
+      (config) => !isOMZ(config),
+    ],
     qty: 1,
     _description: "Posterior lateral prewash bars",
     tag: "PREWASH_BARS",
@@ -300,7 +306,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_chemical_pump,
       (config) => config.chemical_pump_pos === "ONBOARD",
       hasChemicalRoofBar,
-      isOMZ
+      isOMZ,
     ],
     qty: 1,
     _description: "Prewash solenoids (HP roof bar prewash onboard)",
@@ -337,7 +343,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_chemical_pump,
       (config) => config.chemical_pump_pos === "WASH_BAY",
       (config) => !hasChemicalRoofBar(config),
-      isOMZ
+      isOMZ,
     ],
     qty: (config) => config.chemical_qty || 1,
     _description: "Fittings for prewash (prewash in wash bay)",
@@ -349,7 +355,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       hasTwoChemicals,
       (config) => config.chemical_pump_pos === "WASH_BAY",
       hasChemicalRoofBar,
-      isOMZ
+      isOMZ,
     ],
     qty: 1,
     _description:
@@ -374,7 +380,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.has_chemical_pump,
       (config) => config.chemical_pump_pos === "WASH_BAY",
       hasChemicalRoofBar,
-      isOMZ
+      isOMZ,
     ],
     qty: 1,
     _description: "Prewash solenoids (HP roof bar and prewash in wash bay)",

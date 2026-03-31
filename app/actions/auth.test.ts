@@ -345,10 +345,9 @@ describe("forgotPassword", () => {
     const result = await forgotPassword({ email: "test@example.com" });
 
     expect(result).toEqual({ success: true });
-    expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
-      "test@example.com",
-      { redirectTo: "http://localhost:3000/resetta-password" }
-    );
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith("test@example.com", {
+      redirectTo: "http://localhost:3000/resetta-password",
+    });
   });
 
   test("returns error when Supabase fails", async () => {
@@ -383,7 +382,7 @@ describe("resetPassword", () => {
   test("returns missing code error when code is null", async () => {
     const result = await resetPassword(
       { password: "newpass123", confirmPassword: "newpass123" },
-      null
+      null,
     );
 
     expect(result).toEqual({
@@ -400,7 +399,7 @@ describe("resetPassword", () => {
 
     const result = await resetPassword(
       { password: "newpass123", confirmPassword: "newpass123" },
-      "bad-code"
+      "bad-code",
     );
 
     expect(result).toEqual({
@@ -418,7 +417,7 @@ describe("resetPassword", () => {
 
     const result = await resetPassword(
       { password: "newpass123", confirmPassword: "newpass123" },
-      "valid-code"
+      "valid-code",
     );
 
     expect(result).toEqual({
@@ -433,7 +432,7 @@ describe("resetPassword", () => {
 
     const result = await resetPassword(
       { password: "newpass123", confirmPassword: "newpass123" },
-      "valid-code"
+      "valid-code",
     );
 
     expect(result).toEqual({ success: true });
@@ -443,7 +442,7 @@ describe("resetPassword", () => {
   test("returns validation error for invalid input", async () => {
     const result = await resetPassword(
       { password: "ab", confirmPassword: "ab" },
-      "valid-code"
+      "valid-code",
     );
 
     expect(result).toEqual({

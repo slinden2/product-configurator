@@ -50,7 +50,14 @@ const MainNav = ({ user }: MainNavProps) => {
       {/* Desktop: Logo + Nav */}
       <div className="hidden sm:flex items-center gap-8">
         <Link href="/">
-          <Image src="/iteco-logo.svg" alt="Iteco Logo" width={278} height={96} className="h-12 w-auto" loading="eager" />
+          <Image
+            src="/iteco-logo.svg"
+            alt="Iteco Logo"
+            width={278}
+            height={96}
+            className="h-12 w-auto"
+            loading="eager"
+          />
         </Link>
         <nav className="flex items-center space-x-6">
           {routes.map((route) => (
@@ -61,8 +68,9 @@ const MainNav = ({ user }: MainNavProps) => {
                 "text-sm font-medium transition-colors hover:text-primary",
                 route.active
                   ? "text-primary font-semibold"
-                  : "text-muted-foreground"
-              )}>
+                  : "text-muted-foreground",
+              )}
+            >
               {route.label}
             </Link>
           ))}
@@ -79,7 +87,14 @@ const MainNav = ({ user }: MainNavProps) => {
           </SheetTrigger>
           <SheetContent side="left">
             <SheetHeader className="mb-4 border-b pb-4">
-              <Image src="/iteco-logo.svg" alt="Iteco Logo" width={278} height={96} className="h-10 w-auto" loading="eager" />
+              <Image
+                src="/iteco-logo.svg"
+                alt="Iteco Logo"
+                width={278}
+                height={96}
+                className="h-10 w-auto"
+                loading="eager"
+              />
               <SheetTitle className="text-left">Menu</SheetTitle>
               <SheetDescription className="text-left">
                 Product Configurator
@@ -95,8 +110,9 @@ const MainNav = ({ user }: MainNavProps) => {
                       "text-base font-medium transition-colors hover:text-primary p-2 rounded-md",
                       route.active
                         ? "text-primary bg-muted"
-                        : "text-muted-foreground hover:bg-muted/50"
-                    )}>
+                        : "text-muted-foreground hover:bg-muted/50",
+                    )}
+                  >
                     {route.label}
                   </Link>
                 </SheetClose>
@@ -117,7 +133,14 @@ const MainNav = ({ user }: MainNavProps) => {
 
       {/* Mobile: Centered Logo */}
       <Link href="/" className="absolute left-1/2 -translate-x-1/2 sm:hidden">
-        <Image src="/iteco-logo.svg" alt="Iteco Logo" width={278} height={96} className="h-10 w-auto" loading="eager" />
+        <Image
+          src="/iteco-logo.svg"
+          alt="Iteco Logo"
+          width={278}
+          height={96}
+          className="h-10 w-auto"
+          loading="eager"
+        />
       </Link>
 
       <div className="flex items-center space-x-4">
@@ -130,7 +153,8 @@ const MainNav = ({ user }: MainNavProps) => {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          aria-label="Toggle theme">
+          aria-label="Toggle theme"
+        >
           {mounted ? (
             resolvedTheme === "dark" ? (
               <Sun className="h-5 w-5" />

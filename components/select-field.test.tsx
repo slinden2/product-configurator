@@ -115,7 +115,12 @@ describe("SelectField", () => {
 
     test("stores a number value when dataType is number", async () => {
       const { getValues } = renderSelectField({
-        props: { name: "count", label: "Size", dataType: "number", items: numberItems },
+        props: {
+          name: "count",
+          label: "Size",
+          dataType: "number",
+          items: numberItems,
+        },
       });
 
       await selectOption("Size", "Large");
@@ -156,7 +161,11 @@ describe("SelectField", () => {
       const { getValues } = renderSelectField({
         props: {
           fieldsToResetOnValue: [
-            { triggerValue: "red", fieldsToReset: ["related"], invertTrigger: true },
+            {
+              triggerValue: "red",
+              fieldsToReset: ["related"],
+              invertTrigger: true,
+            },
           ],
         },
         defaults: { related: "initial" },

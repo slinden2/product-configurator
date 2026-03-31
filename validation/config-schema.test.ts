@@ -91,7 +91,7 @@ describe("configSchema", () => {
         rail_length: 21,
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Con la catena portacavi le rotaie devono essere almeno 25 metri."
+        "Con la catena portacavi le rotaie devono essere almeno 25 metri.",
       );
     });
 
@@ -105,7 +105,7 @@ describe("configSchema", () => {
         rail_length: 7,
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Con la catena portacavi le rotaie devono essere almeno 25 metri."
+        "Con la catena portacavi le rotaie devono essere almeno 25 metri.",
       );
     });
   });
@@ -127,7 +127,7 @@ describe("configSchema", () => {
         rail_length: 21,
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Per un portale fast le rotaie devono essere da 7 metri."
+        "Per un portale fast le rotaie devono essere da 7 metri.",
       );
     });
 
@@ -140,7 +140,7 @@ describe("configSchema", () => {
         rail_length: 25,
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Per un portale fast le rotaie devono essere da 7 metri."
+        "Per un portale fast le rotaie devono essere da 7 metri.",
       );
     });
   });
@@ -178,7 +178,7 @@ describe("configSchema", () => {
         has_shampoo_pump: true,
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Non puoi selezionare la pompa sapone se non ci sono spazzole."
+        "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
       );
     });
 
@@ -192,7 +192,7 @@ describe("configSchema", () => {
         acid_pump_pos: "WASH_BAY",
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Non puoi selezionare la pompa acido per un portale a 2 spazzole."
+        "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
       );
     });
 
@@ -206,7 +206,7 @@ describe("configSchema", () => {
         pump_outlet_omz: "SPINNERS",
       };
       expect(() => configSchema.parse(data)).toThrow(
-        "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole."
+        "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
       );
     });
 

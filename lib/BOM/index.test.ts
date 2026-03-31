@@ -10,7 +10,10 @@ vi.mock("@/db/queries", () => ({
 
 import { BOM, BOMItemWithDescription, GeneralBOMConfig } from "@/lib/BOM";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
-import { makeConfigWithBaysAndTanks as makeConfig, makeWashBay } from "@/test/bom-test-utils";
+import {
+  makeConfigWithBaysAndTanks as makeConfig,
+  makeWashBay,
+} from "@/test/bom-test-utils";
 
 // Spy item: captures the config passed to it (always excludes itself from results)
 function makeSpyItem(captured: { value: unknown }) {
@@ -79,14 +82,20 @@ describe("BOM.generateExportData (static)", () => {
     const result = BOM.generateExportData(general, tanks, bays);
     expect(result.map((i) => i.pn)).toEqual([
       "G1",
-      "T1", "T2", "T3",
-      "B1", "B2", "B3",
+      "T1",
+      "T2",
+      "T3",
+      "B1",
+      "B2",
+      "B3",
     ]);
   });
 });
 
 describe("buildGeneralBOM — has_shelf_extension derivation", () => {
-  async function getShelfExtension(washBays: ReturnType<typeof makeWashBay>[]): Promise<boolean> {
+  async function getShelfExtension(
+    washBays: ReturnType<typeof makeWashBay>[],
+  ): Promise<boolean> {
     const config = makeConfig({ wash_bays: washBays });
     const bom = BOM.init(config);
     const captured: { value: unknown } = { value: undefined };
@@ -100,15 +109,27 @@ describe("buildGeneralBOM — has_shelf_extension derivation", () => {
   });
 
   test("bay with has_gantry=true but has_shelf_extension=false → false", async () => {
-    expect(await getShelfExtension([makeWashBay({ has_gantry: true, has_shelf_extension: false })])).toBe(false);
+    expect(
+      await getShelfExtension([
+        makeWashBay({ has_gantry: true, has_shelf_extension: false }),
+      ]),
+    ).toBe(false);
   });
 
   test("bay with has_gantry=false but has_shelf_extension=true → false", async () => {
-    expect(await getShelfExtension([makeWashBay({ has_gantry: false, has_shelf_extension: true })])).toBe(false);
+    expect(
+      await getShelfExtension([
+        makeWashBay({ has_gantry: false, has_shelf_extension: true }),
+      ]),
+    ).toBe(false);
   });
 
   test("bay with has_gantry=true AND has_shelf_extension=true → true", async () => {
-    expect(await getShelfExtension([makeWashBay({ has_gantry: true, has_shelf_extension: true })])).toBe(true);
+    expect(
+      await getShelfExtension([
+        makeWashBay({ has_gantry: true, has_shelf_extension: true }),
+      ]),
+    ).toBe(true);
   });
 
   test("multiple bays, only second one triggers → true", async () => {
@@ -121,7 +142,9 @@ describe("buildGeneralBOM — has_shelf_extension derivation", () => {
 });
 
 describe("buildWashBayBOM — uses_3000_posts detection", () => {
-  async function getUses3000Posts(washBays: ReturnType<typeof makeWashBay>[]): Promise<boolean | undefined> {
+  async function getUses3000Posts(
+    washBays: ReturnType<typeof makeWashBay>[],
+  ): Promise<boolean | undefined> {
     const config = makeConfig({ wash_bays: washBays });
     const bom = BOM.init(config);
     const captured: { value: unknown } = { value: undefined };
@@ -138,17 +161,23 @@ describe("buildWashBayBOM — uses_3000_posts detection", () => {
   });
 
   test("bay with 0+0 lances → uses_3000_posts=false", async () => {
-    const uses = await getUses3000Posts([makeWashBay({ hp_lance_qty: 0, det_lance_qty: 0 })]);
+    const uses = await getUses3000Posts([
+      makeWashBay({ hp_lance_qty: 0, det_lance_qty: 0 }),
+    ]);
     expect(uses).toBe(false);
   });
 
   test("bay with 2+0 lances → uses_3000_posts=false (total=2, not > 2)", async () => {
-    const uses = await getUses3000Posts([makeWashBay({ hp_lance_qty: 2, det_lance_qty: 0 })]);
+    const uses = await getUses3000Posts([
+      makeWashBay({ hp_lance_qty: 2, det_lance_qty: 0 }),
+    ]);
     expect(uses).toBe(false);
   });
 
   test("bay with 2+2 lances → uses_3000_posts=true (total=4 > 2)", async () => {
-    const uses = await getUses3000Posts([makeWashBay({ hp_lance_qty: 2, det_lance_qty: 2 })]);
+    const uses = await getUses3000Posts([
+      makeWashBay({ hp_lance_qty: 2, det_lance_qty: 2 }),
+    ]);
     expect(uses).toBe(true);
   });
 
@@ -160,14 +189,23 @@ describe("buildWashBayBOM — uses_3000_posts detection", () => {
     const config = makeConfig({ wash_bays: bays });
     const bom = BOM.init(config);
     const capturedValues: unknown[] = [];
-    bom.washBayMaxBOM = [{
-      pn: "SPY",
-      conditions: [(c: unknown) => { capturedValues.push(c); return false; }],
-      qty: 1,
-      _description: "spy",
-    }] as typeof bom.washBayMaxBOM;
+    bom.washBayMaxBOM = [
+      {
+        pn: "SPY",
+        conditions: [
+          (c: unknown) => {
+            capturedValues.push(c);
+            return false;
+          },
+        ],
+        qty: 1,
+        _description: "spy",
+      },
+    ] as typeof bom.washBayMaxBOM;
     await bom.buildWashBayBOM();
-    const allUse3000 = capturedValues.every((c) => (c as { uses_3000_posts?: boolean }).uses_3000_posts === true);
+    const allUse3000 = capturedValues.every(
+      (c) => (c as { uses_3000_posts?: boolean }).uses_3000_posts === true,
+    );
     expect(allUse3000).toBe(true);
   });
 });
@@ -182,12 +220,19 @@ describe("buildWashBayBOM — supply data propagation", () => {
     });
     const bom = BOM.init(config);
     const capturedValues: unknown[] = [];
-    bom.washBayMaxBOM = [{
-      pn: "SPY",
-      conditions: [(c: unknown) => { capturedValues.push(c); return false; }],
-      qty: 1,
-      _description: "spy",
-    }] as typeof bom.washBayMaxBOM;
+    bom.washBayMaxBOM = [
+      {
+        pn: "SPY",
+        conditions: [
+          (c: unknown) => {
+            capturedValues.push(c);
+            return false;
+          },
+        ],
+        qty: 1,
+        _description: "spy",
+      },
+    ] as typeof bom.washBayMaxBOM;
     await bom.buildWashBayBOM();
     expect(capturedValues).toHaveLength(2);
     for (const c of capturedValues as Record<string, unknown>[]) {

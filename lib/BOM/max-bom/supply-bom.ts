@@ -252,7 +252,11 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.BOOM_AIR_TUBE_RIGHT,
-    conditions: [usesBoom, (config) => config.supply_side === "RIGHT", needsAir],
+    conditions: [
+      usesBoom,
+      (config) => config.supply_side === "RIGHT",
+      needsAir,
+    ],
     qty: 1,
     _description: "Air tube for boom (right post)",
   },
@@ -282,13 +286,21 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.BOOM_PROFINET_CABLE_LEFT,
-    conditions: [usesBoom, (config) => config.supply_side === "LEFT", needsProfinet],
+    conditions: [
+      usesBoom,
+      (config) => config.supply_side === "LEFT",
+      needsProfinet,
+    ],
     qty: 1,
     _description: "Profinet cable for boom (left post)",
   },
   {
     pn: PART_NUMBERS.BOOM_PROFINET_CABLE_RIGHT,
-    conditions: [usesBoom, (config) => config.supply_side === "RIGHT", needsProfinet],
+    conditions: [
+      usesBoom,
+      (config) => config.supply_side === "RIGHT",
+      needsProfinet,
+    ],
     qty: 1,
     _description: "Profinet cable for boom (right post)",
   },
@@ -361,7 +373,8 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.supply_side === "LEFT",
       (config) =>
         config.machine_type === "OMZ" ||
-        (config.has_omz_pump && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
+        (config.has_omz_pump &&
+          config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
     ],
     qty: 1,
     _description: "Air tube from shelf to HP valve group (left)",
@@ -373,7 +386,8 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) => config.supply_side === "RIGHT",
       (config) =>
         config.machine_type === "OMZ" ||
-        (config.has_omz_pump && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
+        (config.has_omz_pump &&
+          config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
     ],
     qty: 1,
     _description: "Air tube from shelf to HP valve group (right)",

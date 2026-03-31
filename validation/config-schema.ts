@@ -26,7 +26,11 @@ export const configSchema = baseSchema
   .and(touchSchema)
   .superRefine((data, ctx) => {
     // Limit rail length to 25 if energy chain is selected
-    if (data.supply_type === "ENERGY_CHAIN" && data.rail_length && data.rail_length < 25) {
+    if (
+      data.supply_type === "ENERGY_CHAIN" &&
+      data.rail_length &&
+      data.rail_length < 25
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
@@ -46,35 +50,38 @@ export const configSchema = baseSchema
     if (data.brush_qty === 0 && data.has_shampoo_pump) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
-      })
+        message:
+          "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
+      });
     }
     // Disallow acid pump if brush quantity is 2
     if (data.brush_qty === 2 && data.has_acid_pump) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
-      })
+        message:
+          "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
+      });
     }
     // Disallow OMZ pump for 2 brush configurations
     if (data.brush_qty === 2 && data.has_omz_pump) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
-      })
+        message:
+          "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
+      });
     }
   });
 
 export type ConfigSchema = z.infer<typeof configSchema>;
 
 export const updateConfigSchema = configSchema.and(
-  z.object({ user_id: z.string() })
+  z.object({ user_id: z.string() }),
 );
 
 export type UpdateConfigSchema = z.infer<typeof updateConfigSchema>;
 
 export const selectConfigSchema = configSchema.and(
-  z.object({ id: z.number(), user_id: z.string() })
+  z.object({ id: z.number(), user_id: z.string() }),
 );
 
 export type SelectConfigSchema = z.infer<typeof selectConfigSchema>;

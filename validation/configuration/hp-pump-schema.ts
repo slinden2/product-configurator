@@ -1,11 +1,19 @@
-import { ChassisWashSensorTypes, HpPump15kwOutlets, HpPump30kwOutlets, HpPumpOMZkwOutlets, SelectOption } from "@/types";
+import {
+  ChassisWashSensorTypes,
+  HpPump15kwOutlets,
+  HpPump30kwOutlets,
+  HpPumpOMZkwOutlets,
+  SelectOption,
+} from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const HPPumpOutlet15kwEnum = z.enum(HpPump15kwOutlets, { message: genericRequiredMessage });
+export const HPPumpOutlet15kwEnum = z.enum(HpPump15kwOutlets, {
+  message: genericRequiredMessage,
+});
 
 export const hpPumpOutlet15kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet15kwEnum, [
@@ -15,7 +23,9 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
     "Barre HP alte",
   ]);
 
-export const HPPumpOutlet30kwEnum = z.enum(HpPump30kwOutlets, { message: genericRequiredMessage });
+export const HPPumpOutlet30kwEnum = z.enum(HpPump30kwOutlets, {
+  message: genericRequiredMessage,
+});
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(HPPumpOutlet30kwEnum, [
@@ -26,7 +36,9 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
     "2 robottine alte + 2 medie",
   ]);
 
-export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, { message: genericRequiredMessage });
+export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, {
+  message: genericRequiredMessage,
+});
 
 export const chassisWashSensorTypeOpts: SelectOption[] =
   generateSelectOptionsFromZodEnum(ChassisWashSensorTypeEnum, [
@@ -55,7 +67,9 @@ export function hasAnyChassiswashOutlet(data: {
   );
 }
 
-export const OMZPumpOutletEnum = z.enum(HpPumpOMZkwOutlets, { message: genericRequiredMessage });
+export const OMZPumpOutletEnum = z.enum(HpPumpOMZkwOutlets, {
+  message: genericRequiredMessage,
+});
 
 export const omzPumpOutletTypes: SelectOption[] =
   generateSelectOptionsFromZodEnum(OMZPumpOutletEnum, [
@@ -71,7 +85,7 @@ function validatePumpOutlets<T>(
   pumpOutlet2: T | undefined,
   ctx: z.RefinementCtx,
   chassisWashOption: T | T[],
-  errorPaths: string[]
+  errorPaths: string[],
 ) {
   if (!hasPump) {
     return;
@@ -146,7 +160,7 @@ function validatePumpOutlets<T>(
 function transformPumpOutlets<
   TData extends Partial<Record<TKey1 | TKey2, unknown>>, // Ensure keys exist
   TKey1 extends keyof TData,
-  TKey2 extends keyof TData
+  TKey2 extends keyof TData,
 >(data: TData, pumpOutlet1Key: TKey1, pumpOutlet2Key: TKey2): TData {
   const pumpOutlet1 = data[pumpOutlet1Key];
   const pumpOutlet2 = data[pumpOutlet2Key];
@@ -187,12 +201,12 @@ const hpPump15kwDiscriminatedUnion = z
           data.pump_outlet_2_15kw,
           ctx,
           HPPumpOutlet15kwEnum.enum.CHASSIS_WASH,
-          ["pump_outlet_1_15kw", "pump_outlet_2_15kw"]
-        )
+          ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
+        ),
       )
       .transform((data) =>
-        transformPumpOutlets(data, "pump_outlet_1_15kw", "pump_outlet_2_15kw")
-      )
+        transformPumpOutlets(data, "pump_outlet_1_15kw", "pump_outlet_2_15kw"),
+      ),
   );
 
 const hpPump30kwDiscriminatedUnion = z
@@ -224,12 +238,12 @@ const hpPump30kwDiscriminatedUnion = z
             HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_HORIZONTAL,
             HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_LATERAL_HORIZONTAL,
           ],
-          ["pump_outlet_1_30kw", "pump_outlet_2_30kw"]
-        )
+          ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
+        ),
       )
       .transform((data) =>
-        transformPumpOutlets(data, "pump_outlet_1_30kw", "pump_outlet_2_30kw")
-      )
+        transformPumpOutlets(data, "pump_outlet_1_30kw", "pump_outlet_2_30kw"),
+      ),
   );
 
 const hpPumpOmzDiscriminatedUnion = z
@@ -278,7 +292,7 @@ const hpPumpOmzDiscriminatedUnion = z
             });
           }
         }
-      })
+      }),
   );
 
 // --- Final Combined Schema ---
@@ -288,7 +302,7 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
   .and(
     z.object({
       chassis_wash_sensor_type: ChassisWashSensorTypeEnum.optional(),
-    })
+    }),
   )
   .superRefine((data, ctx) => {
     // Final check: cannot have both 15kW and 30kW pumps

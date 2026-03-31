@@ -1,11 +1,17 @@
-import { integer, numeric, pgTable, timestamp, varchar, boolean, pgEnum } from "drizzle-orm/pg-core";
+import {
+  integer,
+  numeric,
+  pgTable,
+  timestamp,
+  varchar,
+  boolean,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 
 export type PartNumber = typeof partNumbers.$inferSelect;
 export type NewPartNumber = typeof partNumbers.$inferInsert;
 
 export const pnTypeEnum = pgEnum("pn_type", ["PART", "ASSY"]);
-
-
 
 export const partNumbers = pgTable("part_numbers", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

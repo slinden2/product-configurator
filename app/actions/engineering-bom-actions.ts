@@ -22,12 +22,15 @@ import { engineeringBomItemSchema } from "@/validation/engineering-bom-item-sche
 import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-async function prepareBomItems(configuration: NonNullable<
-  Awaited<ReturnType<typeof getConfigurationWithTanksAndBays>>
->) {
+async function prepareBomItems(
+  configuration: NonNullable<
+    Awaited<ReturnType<typeof getConfigurationWithTanksAndBays>>
+  >,
+) {
   const confId = configuration.id;
   const bom = BOM.init(configuration);
-  const { generalBOM, waterTankBOMs, washBayBOMs } = await bom.buildCompleteBOM();
+  const { generalBOM, waterTankBOMs, washBayBOMs } =
+    await bom.buildCompleteBOM();
   const tsePns = await getTsePns(generalBOM, waterTankBOMs, washBayBOMs);
 
   return flattenBomToItems(
@@ -35,7 +38,7 @@ async function prepareBomItems(configuration: NonNullable<
     generalBOM,
     waterTankBOMs,
     washBayBOMs,
-    tsePns
+    tsePns,
   );
 }
 
@@ -45,14 +48,14 @@ async function authorizeEngineeringBomAction(confId: number) {
     return {
       success: false as const,
       error: MSG.auth.userNotAuthenticated,
-    }
+    };
   }
 
   if (user.role === "SALES") {
     return {
       success: false as const,
       error: MSG.bom.unauthorized,
-    }
+    };
   }
 
   const configuration = await getConfigurationWithTanksAndBays(confId, user);
@@ -60,14 +63,14 @@ async function authorizeEngineeringBomAction(confId: number) {
     return {
       success: false as const,
       error: MSG.config.notFound,
-    }
+    };
   }
 
   if (!isEditable(configuration.status, user.role)) {
     return {
       success: false as const,
       error: MSG.bom.unauthorizedState,
-    }
+    };
   }
 
   return { user, configuration, success: true as const };
@@ -76,7 +79,7 @@ async function authorizeEngineeringBomAction(confId: number) {
 async function getTsePns(
   generalBOM: BOMItemWithDescription[],
   waterTankBOMs: BOMItemWithDescription[][],
-  washBayBOMs: BOMItemWithDescription[][]
+  washBayBOMs: BOMItemWithDescription[][],
 ): Promise<Set<string>> {
   const allPns = [
     ...generalBOM.map((i) => i.pn),
@@ -93,7 +96,7 @@ function flattenBomToItems(
   generalBOM: BOMItemWithDescription[],
   waterTankBOMs: BOMItemWithDescription[][],
   washBayBOMs: BOMItemWithDescription[][],
-  tsePns: Set<string>
+  tsePns: Set<string>,
 ): NewEngineeringBomItem[] {
   const items: NewEngineeringBomItem[] = [];
 
@@ -101,7 +104,7 @@ function flattenBomToItems(
     item: BOMItemWithDescription,
     category: "GENERAL" | "WATER_TANK" | "WASH_BAY",
     categoryIndex: number,
-    sortOrder: number
+    sortOrder: number,
   ): NewEngineeringBomItem => ({
     configuration_id: confId,
     category,
@@ -148,11 +151,11 @@ export async function snapshotEngineeringBomAction(confId: number) {
     return {
       success: false as const,
       error: MSG.bom.alreadyExists,
-    }
+    };
   }
 
   try {
-    const items = await prepareBomItems(auth.configuration)
+    const items = await prepareBomItems(auth.configuration);
     await insertEngineeringBomItems(items);
 
     revalidatePath(`/configurations/bom/${confId}`);
@@ -176,7 +179,7 @@ export async function regenerateEngineeringBomAction(confId: number) {
   }
 
   try {
-    const items = await prepareBomItems(auth.configuration)
+    const items = await prepareBomItems(auth.configuration);
     await db.transaction(async (tx) => {
       await tx
         .delete(engineeringBomItems)
@@ -202,7 +205,7 @@ export async function regenerateEngineeringBomAction(confId: number) {
 
 export async function addEngineeringBomItemAction(
   confId: number,
-  formData: unknown
+  formData: unknown,
 ) {
   // 1. Unified Authorization Check
   const auth = await authorizeEngineeringBomAction(confId);
@@ -247,7 +250,6 @@ export async function addEngineeringBomItemAction(
     // 4. Cache Invalidation
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
-
   } catch (err) {
     console.error("Failed to add BOM item:", err);
     if (err instanceof QueryError) {
@@ -263,7 +265,7 @@ export async function addEngineeringBomItemAction(
 export async function updateEngineeringBomItemQtyAction(
   confId: number,
   itemId: number,
-  qty: number
+  qty: number,
 ) {
   const auth = await authorizeEngineeringBomAction(confId);
   if (!auth.success) {
@@ -274,7 +276,7 @@ export async function updateEngineeringBomItemQtyAction(
     return {
       success: false as const,
       error: MSG.bom.invalidQty,
-    }
+    };
   }
 
   try {
@@ -284,8 +286,8 @@ export async function updateEngineeringBomItemQtyAction(
       .where(
         and(
           eq(engineeringBomItems.id, itemId),
-          eq(engineeringBomItems.configuration_id, confId)
-        )
+          eq(engineeringBomItems.configuration_id, confId),
+        ),
       )
       .returning({ id: engineeringBomItems.id });
 
@@ -293,7 +295,7 @@ export async function updateEngineeringBomItemQtyAction(
       return {
         success: false as const,
         error: MSG.bom.rowNotFound,
-      }
+      };
     }
 
     revalidatePath(`/configurations/bom/${confId}`);
@@ -312,7 +314,7 @@ export async function updateEngineeringBomItemQtyAction(
 
 export async function toggleDeleteEngineeringBomItemAction(
   confId: number,
-  itemId: number
+  itemId: number,
 ) {
   const auth = await authorizeEngineeringBomAction(confId);
   if (!auth.success) {
@@ -323,7 +325,7 @@ export async function toggleDeleteEngineeringBomItemAction(
     const item = await db.query.engineeringBomItems.findFirst({
       where: and(
         eq(engineeringBomItems.id, itemId),
-        eq(engineeringBomItems.configuration_id, confId)
+        eq(engineeringBomItems.configuration_id, confId),
       ),
       columns: { is_deleted: true },
     });
@@ -332,7 +334,7 @@ export async function toggleDeleteEngineeringBomItemAction(
       return {
         success: false as const,
         error: MSG.bom.rowNotFound,
-      }
+      };
     }
 
     await db

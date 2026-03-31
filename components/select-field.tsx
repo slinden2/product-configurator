@@ -97,7 +97,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
   const watchedValue = useWatch({ control, name });
 
   const parseValue = (
-    val: string
+    val: string,
   ): PathValue<TFieldValues, FieldPath<TFieldValues>> | undefined => {
     if (val === NOT_SELECTED_VALUE) {
       return undefined;

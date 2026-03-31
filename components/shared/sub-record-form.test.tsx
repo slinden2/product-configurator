@@ -43,7 +43,9 @@ import { selectRadixOption } from "@/test/form-test-utils";
 
 // --- Test Data ---
 
-function makeWaterTank(overrides: Partial<UpdateWaterTankSchema> = {}): UpdateWaterTankSchema {
+function makeWaterTank(
+  overrides: Partial<UpdateWaterTankSchema> = {},
+): UpdateWaterTankSchema {
   return {
     id: 10,
     configuration_id: 1,
@@ -57,7 +59,9 @@ function makeWaterTank(overrides: Partial<UpdateWaterTankSchema> = {}): UpdateWa
   } as UpdateWaterTankSchema;
 }
 
-function makeWashBay(overrides: Partial<UpdateWashBaySchema> = {}): UpdateWashBaySchema {
+function makeWashBay(
+  overrides: Partial<UpdateWashBaySchema> = {},
+): UpdateWashBaySchema {
   return {
     id: 20,
     configuration_id: 1,
@@ -100,11 +104,13 @@ describe("SubRecordForm — WaterTankForm", () => {
           confStatus="DRAFT"
           userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText("Aggiungi nuovo Serbatoio")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /aggiungi/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /aggiungi/i }),
+      ).toBeInTheDocument();
     });
 
     test("calls insertAction on submit and fires onSaveSuccess", async () => {
@@ -115,7 +121,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           confStatus="DRAFT"
           userRole="ENGINEER"
           onSaveSuccess={onSaveSuccess}
-        />
+        />,
       );
 
       // Fill required fields
@@ -128,7 +134,7 @@ describe("SubRecordForm — WaterTankForm", () => {
       await waitFor(() => {
         expect(mockInsertWaterTank).toHaveBeenCalledWith(
           1,
-          expect.objectContaining({ type: "L2000", outlet_w_valve_qty: 1 })
+          expect.objectContaining({ type: "L2000", outlet_w_valve_qty: 1 }),
         );
       });
 
@@ -148,11 +154,13 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText("Serbatoio 1")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /salva/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /salva/i }),
+      ).toBeInTheDocument();
     });
 
     test("calls editAction on submit", async () => {
@@ -165,7 +173,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       // Change a field to make form dirty
@@ -177,7 +185,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         expect(mockEditWaterTank).toHaveBeenCalledWith(
           1,
           10,
-          expect.objectContaining({ inlet_w_float_qty: 2 })
+          expect.objectContaining({ inlet_w_float_qty: 2 }),
         );
       });
 
@@ -198,11 +206,13 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={onDelete}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       // Click delete button to open confirmation dialog
-      await userEvent.click(screen.getByRole("button", { name: /elimina serbatoio 1/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /elimina serbatoio 1/i }),
+      );
 
       // Confirm in the dialog
       expect(screen.getByText("Conferma eliminazione")).toBeInTheDocument();
@@ -228,11 +238,13 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={onDelete}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       // Click delete button to open confirmation dialog
-      await userEvent.click(screen.getByRole("button", { name: /elimina serbatoio 1/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /elimina serbatoio 1/i }),
+      );
 
       // Cancel in the dialog
       expect(screen.getByText("Conferma eliminazione")).toBeInTheDocument();
@@ -245,7 +257,10 @@ describe("SubRecordForm — WaterTankForm", () => {
 
   describe("Error handling", () => {
     test("shows error toast when insert fails", async () => {
-      mockInsertWaterTank.mockResolvedValueOnce({ success: false, error: "Errore DB" });
+      mockInsertWaterTank.mockResolvedValueOnce({
+        success: false,
+        error: "Errore DB",
+      });
 
       render(
         <WaterTankForm
@@ -253,7 +268,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           confStatus="DRAFT"
           userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       await selectRadixOption("Tipo di serbatoio", "2000L");
@@ -266,7 +281,10 @@ describe("SubRecordForm — WaterTankForm", () => {
     });
 
     test("shows error toast when edit fails", async () => {
-      mockEditWaterTank.mockResolvedValueOnce({ success: false, error: "Errore aggiornamento" });
+      mockEditWaterTank.mockResolvedValueOnce({
+        success: false,
+        error: "Errore aggiornamento",
+      });
 
       render(
         <WaterTankForm
@@ -277,7 +295,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       await selectRadixOption("Ingressi c/ galleggiante", "2");
@@ -300,7 +318,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -317,7 +335,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -334,7 +352,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTankIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -357,7 +375,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           onSaveSuccess={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
-        />
+        />,
       );
 
       await selectRadixOption("Ingressi c/ galleggiante", "2");
@@ -382,7 +400,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
-        />
+        />,
       );
 
       await selectRadixOption("Ingressi c/ galleggiante", "2");
@@ -408,7 +426,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
           onSaved={vi.fn()}
-        />
+        />,
       );
 
       await selectRadixOption("Ingressi c/ galleggiante", "2");
@@ -438,7 +456,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           onSaveSuccess={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
-        />
+        />,
       );
 
       await selectRadixOption("Ingressi c/ galleggiante", "2");
@@ -455,7 +473,10 @@ describe("SubRecordForm — WaterTankForm", () => {
     });
 
     test("does not call onSaved when server action fails", async () => {
-      mockEditWaterTank.mockResolvedValueOnce({ success: false, error: "Errore server" });
+      mockEditWaterTank.mockResolvedValueOnce({
+        success: false,
+        error: "Errore server",
+      });
       const onSaved = vi.fn();
 
       render(
@@ -470,7 +491,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
-        />
+        />,
       );
 
       await selectRadixOption("Ingressi c/ galleggiante", "2");
@@ -495,7 +516,7 @@ describe("SubRecordForm — WashBayForm", () => {
           confStatus="DRAFT"
           userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText("Aggiungi nuova Pista")).toBeInTheDocument();
@@ -509,7 +530,7 @@ describe("SubRecordForm — WashBayForm", () => {
           confStatus="DRAFT"
           userRole="ENGINEER"
           onSaveSuccess={onSaveSuccess}
-        />
+        />,
       );
 
       // Submit with defaults (hp_lance_qty=0, det_lance_qty=0 are valid)
@@ -518,7 +539,7 @@ describe("SubRecordForm — WashBayForm", () => {
       await waitFor(() => {
         expect(mockInsertWashBay).toHaveBeenCalledWith(
           1,
-          expect.objectContaining({ hp_lance_qty: 0 })
+          expect.objectContaining({ hp_lance_qty: 0 }),
         );
       });
 
@@ -538,7 +559,7 @@ describe("SubRecordForm — WashBayForm", () => {
           washBayIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText("Pista 1")).toBeInTheDocument();
@@ -552,7 +573,7 @@ describe("SubRecordForm — WashBayForm", () => {
         expect(mockEditWashBay).toHaveBeenCalledWith(
           1,
           20,
-          expect.objectContaining({ has_gantry: true })
+          expect.objectContaining({ has_gantry: true }),
         );
       });
 
@@ -573,11 +594,13 @@ describe("SubRecordForm — WashBayForm", () => {
           washBayIndex={1}
           onDelete={onDelete}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       // Click delete button to open confirmation dialog
-      await userEvent.click(screen.getByRole("button", { name: /elimina pista 1/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /elimina pista 1/i }),
+      );
 
       // Confirm in the dialog
       expect(screen.getByText("Conferma eliminazione")).toBeInTheDocument();
@@ -604,11 +627,13 @@ describe("SubRecordForm — WashBayForm", () => {
           washBayIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText("Larghezza catena")).toBeInTheDocument();
-      expect(screen.getByText("Con prolunga per mensola alim.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Con prolunga per mensola alim."),
+      ).toBeInTheDocument();
     });
 
     test("hides energy chain fields when has_gantry is false", () => {
@@ -622,7 +647,7 @@ describe("SubRecordForm — WashBayForm", () => {
           washBayIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.queryByText("Larghezza catena")).not.toBeInTheDocument();
@@ -635,11 +660,15 @@ describe("SubRecordForm — WashBayForm", () => {
           confStatus="DRAFT"
           userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
-          washBay={makeWashBay({ has_gantry: true, energy_chain_width: "L200", has_shelf_extension: true })}
+          washBay={makeWashBay({
+            has_gantry: true,
+            energy_chain_width: "L200",
+            has_shelf_extension: true,
+          })}
           washBayIndex={1}
           onDelete={vi.fn()}
           onSaveSuccess={vi.fn()}
-        />
+        />,
       );
 
       // Verify fields are visible

@@ -3,7 +3,10 @@ import { describe, test, expect, vi } from "vitest";
 vi.mock("file-saver", () => ({ saveAs: vi.fn() }));
 
 import ExcelJS from "exceljs";
-import { buildCostWorkbook, type BOM } from "@/app/configurations/bom/[id]/create-excel-file";
+import {
+  buildCostWorkbook,
+  type BOM,
+} from "@/app/configurations/bom/[id]/create-excel-file";
 import type { UserData } from "@/db/queries";
 
 // --- Helpers ---
@@ -31,7 +34,11 @@ function cellValue(sheet: ExcelJS.Worksheet, row: number, col: number) {
   return sheet.getRow(row).getCell(col).value;
 }
 
-function cellFormula(sheet: ExcelJS.Worksheet, row: number, col: number): string | null {
+function cellFormula(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  col: number,
+): string | null {
   const val = sheet.getRow(row).getCell(col).value;
   if (typeof val === "object" && val !== null && "formula" in val) {
     return (val as { formula: string }).formula;
@@ -41,7 +48,7 @@ function cellFormula(sheet: ExcelJS.Worksheet, row: number, col: number): string
 
 function findCellValues(sheet: ExcelJS.Worksheet): string[] {
   const values: string[] = [];
-  sheet.eachRow(row => {
+  sheet.eachRow((row) => {
     const v = row.getCell(1).value;
     if (typeof v === "string") values.push(v);
   });
@@ -89,7 +96,7 @@ describe("general BOM without tags (legacy)", () => {
     const items: BOM = [makeCostItem({ pn: "A" }), makeCostItem({ pn: "B" })];
     const wb = buildCostWorkbook(items, [], [], makeUser());
     const values = findCellValues(getSheet(wb));
-    expect(values.some(v => v.startsWith("Subtotale"))).toBe(false);
+    expect(values.some((v) => v.startsWith("Subtotale"))).toBe(false);
   });
 });
 
@@ -104,7 +111,9 @@ describe("general BOM with tags (grouped)", () => {
     // FRAME comes before BRUSHES in BomTags order
     expect(values).toContain("Struttura");
     expect(values).toContain("Spazzole");
-    expect(values.indexOf("Struttura")).toBeLessThan(values.indexOf("Spazzole"));
+    expect(values.indexOf("Struttura")).toBeLessThan(
+      values.indexOf("Spazzole"),
+    );
     expect(values).toContain("Subtotale Struttura");
     expect(values).toContain("Subtotale Spazzole");
   });
@@ -112,14 +121,24 @@ describe("general BOM with tags (grouped)", () => {
 
 describe("water tank and wash bay sections", () => {
   test("shows subtitle even with a single water tank / wash bay", () => {
-    const wb = buildCostWorkbook([], [[makeCostItem()]], [[makeCostItem()]], makeUser());
+    const wb = buildCostWorkbook(
+      [],
+      [[makeCostItem()]],
+      [[makeCostItem()]],
+      makeUser(),
+    );
     const values = findCellValues(getSheet(wb));
     expect(values).toContain("Serbatoio 1");
     expect(values).toContain("Pista 1");
   });
 
   test("shows subtitles for each item when multiple", () => {
-    const wb = buildCostWorkbook([], [[makeCostItem()], [makeCostItem()]], [[makeCostItem()], [makeCostItem()]], makeUser());
+    const wb = buildCostWorkbook(
+      [],
+      [[makeCostItem()], [makeCostItem()]],
+      [[makeCostItem()], [makeCostItem()]],
+      makeUser(),
+    );
     const values = findCellValues(getSheet(wb));
     expect(values).toContain("Serbatoio 1");
     expect(values).toContain("Serbatoio 2");
@@ -128,7 +147,12 @@ describe("water tank and wash bay sections", () => {
   });
 
   test("shows subtotals for each water tank and wash bay", () => {
-    const wb = buildCostWorkbook([], [[makeCostItem()], [makeCostItem()]], [[makeCostItem()]], makeUser());
+    const wb = buildCostWorkbook(
+      [],
+      [[makeCostItem()], [makeCostItem()]],
+      [[makeCostItem()]],
+      makeUser(),
+    );
     const values = findCellValues(getSheet(wb));
     expect(values).toContain("Subtotale Serbatoio 1");
     expect(values).toContain("Subtotale Serbatoio 2");
@@ -139,7 +163,7 @@ describe("water tank and wash bay sections", () => {
     const wb = buildCostWorkbook([], [[makeCostItem()]], [], makeUser());
     const sheet = getSheet(wb);
     let subtotalFormula: string | null = null;
-    sheet.eachRow(row => {
+    sheet.eachRow((row) => {
       if (row.getCell(1).value === "Subtotale Serbatoio 1") {
         const val = row.getCell(5).value;
         if (typeof val === "object" && val !== null && "formula" in val) {

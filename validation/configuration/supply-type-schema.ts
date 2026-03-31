@@ -1,4 +1,10 @@
-import { EnergyChainWidths, SelectOption, SupplyFixTypes, SupplySides, SupplyTypes } from "@/types";
+import {
+  EnergyChainWidths,
+  SelectOption,
+  SupplyFixTypes,
+  SupplySides,
+  SupplyTypes,
+} from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
@@ -11,7 +17,7 @@ export const SupplyTypeEnum = z.enum(SupplyTypes, {
 
 export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplyTypeEnum,
-  ["Mensola dritta", "Braccio mobile", "Catena portacavi"]
+  ["Mensola dritta", "Braccio mobile", "Catena portacavi"],
 );
 
 export const CableChainWidthEnum = z.enum(EnergyChainWidths, {
@@ -41,7 +47,7 @@ export const SupplySideEnum = z.enum(SupplySides, {
 });
 export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplySideEnum,
-  ["Da definire", "Sinistra", "Destra"]
+  ["Da definire", "Sinistra", "Destra"],
 );
 
 export const supplyTypeSchema = z

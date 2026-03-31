@@ -32,11 +32,7 @@ function renderInputField({
     getValues = form.getValues;
     return (
       <FormProvider {...form}>
-        <InputField<TestForm>
-          name="title"
-          label="Titolo"
-          {...props}
-        />
+        <InputField<TestForm> name="title" label="Titolo" {...props} />
       </FormProvider>
     );
   };
@@ -58,7 +54,9 @@ describe("InputField", () => {
     test("renders placeholder when provided", () => {
       renderInputField({ props: { placeholder: "Inserire il titolo" } });
 
-      expect(screen.getByPlaceholderText("Inserire il titolo")).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Inserire il titolo"),
+      ).toBeInTheDocument();
     });
 
     test("disables the input when disabled prop is true", () => {
@@ -88,7 +86,10 @@ describe("InputField", () => {
     test("forwards autoComplete to the input element", () => {
       renderInputField({ props: { autoComplete: "email" } });
 
-      expect(screen.getByRole("textbox")).toHaveAttribute("autocomplete", "email");
+      expect(screen.getByRole("textbox")).toHaveAttribute(
+        "autocomplete",
+        "email",
+      );
     });
 
     test("forwards maxLength to the input element", async () => {

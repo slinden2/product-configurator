@@ -60,7 +60,7 @@ describe("updateConfigStatusAction", () => {
     expect(mockUpdateConfigStatus).toHaveBeenCalledWith(
       CONF_ID,
       { id: "user-1", role: "ENGINEER", initials: "TU" },
-      { status: "SUBMITTED" }
+      { status: "SUBMITTED" },
     );
   });
 
@@ -92,7 +92,7 @@ describe("updateConfigStatusAction", () => {
 
   test("returns error on QueryError (e.g. invalid transition)", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
-      new QueryError("Stato non autorizzato.", 403)
+      new QueryError("Stato non autorizzato.", 403),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "IN_REVIEW",
@@ -105,7 +105,7 @@ describe("updateConfigStatusAction", () => {
 
   test("returns error when energy chain constraint is not met", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
-      new QueryError(MSG.config.energyChainRequiresGantry, 400)
+      new QueryError(MSG.config.energyChainRequiresGantry, 400),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "SUBMITTED",

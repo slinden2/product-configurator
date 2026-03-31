@@ -76,7 +76,10 @@ describe("deleteConfigurationAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
-    expect(result).toEqual({ success: false, error: MSG.auth.userNotAuthenticated });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.userNotAuthenticated,
+    });
   });
 
   test("SALES cannot delete another user's config", async () => {

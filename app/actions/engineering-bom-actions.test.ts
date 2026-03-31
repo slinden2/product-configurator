@@ -170,7 +170,7 @@ function setupDefaultMocks() {
         delete: mockTxDelete,
         insert: mockTxInsert,
       });
-    }
+    },
   );
 }
 
@@ -188,10 +188,7 @@ describe("snapshotEngineeringBomAction", () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
-    expect(result).toHaveProperty(
-      "error",
-      MSG.auth.userNotAuthenticated
-    );
+    expect(result).toHaveProperty("error", MSG.auth.userNotAuthenticated);
   });
 
   test("returns error when user is SALES", async () => {
@@ -210,7 +207,7 @@ describe("snapshotEngineeringBomAction", () => {
 
   test("returns error when config is APPROVED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "APPROVED" })
+      mockConfig({ status: "APPROVED" }),
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -219,7 +216,7 @@ describe("snapshotEngineeringBomAction", () => {
 
   test("returns error when config is CLOSED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "CLOSED" })
+      mockConfig({ status: "CLOSED" }),
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -229,7 +226,7 @@ describe("snapshotEngineeringBomAction", () => {
   test("ADMIN can snapshot SUBMITTED config", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "ADMIN" }));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "SUBMITTED" })
+      mockConfig({ status: "SUBMITTED" }),
     );
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);
@@ -278,10 +275,10 @@ describe("snapshotEngineeringBomAction", () => {
 
     const insertedItems = mockInsertEngineeringBomItems.mock.calls[0][0];
     const catalogItem = insertedItems.find(
-      (i: { pn: string }) => i.pn === "PN-001"
+      (i: { pn: string }) => i.pn === "PN-001",
     );
     const customItem = insertedItems.find(
-      (i: { pn: string }) => i.pn === "PN-002"
+      (i: { pn: string }) => i.pn === "PN-002",
     );
     expect(catalogItem.is_custom).toBe(false);
     expect(customItem.is_custom).toBe(true);
@@ -292,7 +289,7 @@ describe("snapshotEngineeringBomAction", () => {
 
     const insertedItems = mockInsertEngineeringBomItems.mock.calls[0][0];
     const categories = insertedItems.map(
-      (i: { category: string }) => i.category
+      (i: { category: string }) => i.category,
     );
     expect(categories).toEqual([
       "GENERAL",
@@ -313,7 +310,7 @@ describe("snapshotEngineeringBomAction", () => {
   test("revalidates BOM path on success", async () => {
     await snapshotEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`
+      `/configurations/bom/${CONF_ID}`,
     );
   });
 
@@ -354,21 +351,20 @@ describe("regenerateEngineeringBomAction", () => {
   test("revalidates BOM path on success", async () => {
     await regenerateEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`
+      `/configurations/bom/${CONF_ID}`,
     );
   });
 
   test("returns error when user is SALES", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
-    const result: ActionResult =
-      await regenerateEngineeringBomAction(CONF_ID);
+    const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
   test("returns error when config is APPROVED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "APPROVED" })
+      mockConfig({ status: "APPROVED" }),
     );
     const result = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -376,8 +372,7 @@ describe("regenerateEngineeringBomAction", () => {
 
   test("returns generic error on transaction failure", async () => {
     mockTransaction.mockRejectedValue(new Error("TX failed"));
-    const result: ActionResult =
-      await regenerateEngineeringBomAction(CONF_ID);
+    const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
   });
@@ -423,7 +418,7 @@ describe("addEngineeringBomItemAction", () => {
   test("revalidates BOM path on success", async () => {
     await addEngineeringBomItemAction(CONF_ID, validFormData);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`
+      `/configurations/bom/${CONF_ID}`,
     );
   });
 
@@ -473,19 +468,17 @@ describe("addEngineeringBomItemAction", () => {
     mockValues.mockRejectedValueOnce(new Error("Unique constraint"));
     const result: ActionResult = await addEngineeringBomItemAction(
       CONF_ID,
-      validFormData
+      validFormData,
     );
     expect(result.success).toBe(false);
-    expect(result.error).toBe(
-      "Errore sconosciuto."
-    );
+    expect(result.error).toBe("Errore sconosciuto.");
   });
 
   test("returns auth error for SALES user", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult = await addEngineeringBomItemAction(
       CONF_ID,
-      validFormData
+      validFormData,
     );
     expect(result.success).toBe(false);
     expect(result.error).toContain(MSG.bom.unauthorized);
@@ -501,11 +494,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
   });
 
   test("succeeds with valid qty", async () => {
-    const result = await updateEngineeringBomItemQtyAction(
-      CONF_ID,
-      ITEM_ID,
-      3
-    );
+    const result = await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
     expect(result.success).toBe(true);
     expect(mockUpdate).toHaveBeenCalled();
   });
@@ -513,7 +502,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
   test("revalidates BOM path on success", async () => {
     await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`
+      `/configurations/bom/${CONF_ID}`,
     );
   });
 
@@ -521,7 +510,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
-      0
+      0,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.invalidQty);
@@ -532,7 +521,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
-      -1
+      -1,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.invalidQty);
@@ -542,7 +531,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
-      1.5
+      1.5,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.invalidQty);
@@ -553,7 +542,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       999,
-      3
+      3,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.rowNotFound);
@@ -564,7 +553,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
-      3
+      3,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
@@ -575,7 +564,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
-      3
+      3,
     );
     expect(result.success).toBe(false);
     expect(result.error).toContain(MSG.bom.unauthorized);
@@ -583,13 +572,9 @@ describe("updateEngineeringBomItemQtyAction", () => {
 
   test("returns error when config is CLOSED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "CLOSED" })
+      mockConfig({ status: "CLOSED" }),
     );
-    const result = await updateEngineeringBomItemQtyAction(
-      CONF_ID,
-      ITEM_ID,
-      3
-    );
+    const result = await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
     expect(result.success).toBe(false);
   });
 });
@@ -604,20 +589,14 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
 
   test("toggles is_deleted from false to true", async () => {
     mockFindFirst.mockResolvedValue({ is_deleted: false });
-    const result = await toggleDeleteEngineeringBomItemAction(
-      CONF_ID,
-      ITEM_ID
-    );
+    const result = await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(result.success).toBe(true);
     expect(mockSet).toHaveBeenCalledWith({ is_deleted: true });
   });
 
   test("toggles is_deleted from true to false (restore)", async () => {
     mockFindFirst.mockResolvedValue({ is_deleted: true });
-    const result = await toggleDeleteEngineeringBomItemAction(
-      CONF_ID,
-      ITEM_ID
-    );
+    const result = await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(result.success).toBe(true);
     expect(mockSet).toHaveBeenCalledWith({ is_deleted: false });
   });
@@ -625,7 +604,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
   test("revalidates BOM path on success", async () => {
     await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`
+      `/configurations/bom/${CONF_ID}`,
     );
   });
 
@@ -633,7 +612,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
     mockFindFirst.mockResolvedValue(null);
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,
-      999
+      999,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.rowNotFound);
@@ -643,7 +622,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
     mockFindFirst.mockRejectedValue(new Error("DB error"));
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,
-      ITEM_ID
+      ITEM_ID,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
@@ -653,7 +632,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,
-      ITEM_ID
+      ITEM_ID,
     );
     expect(result.success).toBe(false);
     expect(result.error).toContain(MSG.bom.unauthorized);

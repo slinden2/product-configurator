@@ -7,7 +7,7 @@ import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
  * specific conditions.
  */
 export function makeGeneralBOMConfig(
-  overrides: Partial<GeneralBOMConfig> = {}
+  overrides: Partial<GeneralBOMConfig> = {},
 ): GeneralBOMConfig {
   return {
     id: 1,
@@ -73,7 +73,7 @@ export function makeGeneralBOMConfig(
  * Extends makeGeneralBOMConfig with water_tanks and wash_bays arrays.
  */
 export function makeConfigWithBaysAndTanks(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): ConfigurationWithWaterTanksAndWashBays {
   return {
     ...makeGeneralBOMConfig(),

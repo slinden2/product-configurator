@@ -39,16 +39,13 @@ const uses22kwPump = (config: GeneralBOMConfig): boolean => {
 
 const needsTwoPumps = (
   config: GeneralBOMConfig,
-  pumpType: Water1PumpType | Water2PumpType
+  pumpType: Water1PumpType | Water2PumpType,
 ): boolean => {
   if (config.water_2_pump === null) {
     return false;
   }
 
-  return (
-    config.water_1_pump === pumpType &&
-    config.water_2_pump === pumpType
-  );
+  return config.water_1_pump === pumpType && config.water_2_pump === pumpType;
 };
 
 export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [

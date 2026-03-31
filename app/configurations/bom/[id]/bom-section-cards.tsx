@@ -32,11 +32,20 @@ export function GeneralSection({
         <BOMCard title="Distinta generale">
           {Array.from(tagGroups.entries()).map(([tag, items]) => (
             <TagGroup key={tag} tag={tag}>
-              <EngineeringBomTable items={items} confId={confId} editable={editable} />
+              <EngineeringBomTable
+                items={items}
+                confId={confId}
+                editable={editable}
+              />
             </TagGroup>
           ))}
           {editable && (
-            <AddBomItemForm confId={confId} category="GENERAL" categoryIndex={0} availableTags={availableTags} />
+            <AddBomItemForm
+              confId={confId}
+              category="GENERAL"
+              categoryIndex={0}
+              availableTags={availableTags}
+            />
           )}
         </BOMCard>
       );
@@ -44,9 +53,17 @@ export function GeneralSection({
     // Legacy snapshot without tags — flat list
     return (
       <BOMCard title="Distinta generale">
-        <EngineeringBomTable items={engineeringItems} confId={confId} editable={editable} />
+        <EngineeringBomTable
+          items={engineeringItems}
+          confId={confId}
+          editable={editable}
+        />
         {editable && (
-          <AddBomItemForm confId={confId} category="GENERAL" categoryIndex={0} />
+          <AddBomItemForm
+            confId={confId}
+            category="GENERAL"
+            categoryIndex={0}
+          />
         )}
       </BOMCard>
     );
@@ -64,7 +81,13 @@ export function GeneralSection({
   );
 }
 
-function TagGroup({ tag, children }: { tag: BomTag; children: React.ReactNode }) {
+function TagGroup({
+  tag,
+  children,
+}: {
+  tag: BomTag;
+  children: React.ReactNode;
+}) {
   return (
     <div className="mb-6">
       <h3 className="text-base font-semibold mb-2 px-2 text-muted-foreground uppercase tracking-wide">
@@ -96,10 +119,8 @@ export function SubRecordSection({
   confId,
   editable,
 }: SubRecordSectionProps) {
-  const entries = engineeringMap
-    ? Array.from(engineeringMap.entries())
-    : null;
-  const count = entries ? entries.length : calculatedBOMs?.length ?? 0;
+  const entries = engineeringMap ? Array.from(engineeringMap.entries()) : null;
+  const count = entries ? entries.length : (calculatedBOMs?.length ?? 0);
 
   if (count === 0) return null;
 

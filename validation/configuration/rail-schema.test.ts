@@ -82,7 +82,7 @@ describe("railSchema", () => {
         rail_guide_qty: 1,
       };
       expect(() => railSchema.parse(invalidData)).toThrow(
-        genericRequiredMessage
+        genericRequiredMessage,
       );
     });
 

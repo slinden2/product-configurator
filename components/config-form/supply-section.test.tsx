@@ -36,7 +36,9 @@ describe("SupplySection", () => {
     test("hidden by default (no supply_type set)", () => {
       renderSupplySection();
 
-      expect(screen.queryByText("Con telaio e coperchio")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Con telaio e coperchio"),
+      ).not.toBeInTheDocument();
     });
 
     test("hidden when supply_type is ENERGY_CHAIN with POST fixing", () => {
@@ -45,7 +47,9 @@ describe("SupplySection", () => {
         supply_fixing_type: "POST",
       });
 
-      expect(screen.queryByText("Con telaio e coperchio")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Con telaio e coperchio"),
+      ).not.toBeInTheDocument();
     });
 
     test("hidden when supply_type is BOOM but fixing is WALL", () => {
@@ -54,7 +58,9 @@ describe("SupplySection", () => {
         supply_fixing_type: "WALL",
       });
 
-      expect(screen.queryByText("Con telaio e coperchio")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Con telaio e coperchio"),
+      ).not.toBeInTheDocument();
     });
 
     test("shown when supply_type is BOOM and fixing is POST", () => {

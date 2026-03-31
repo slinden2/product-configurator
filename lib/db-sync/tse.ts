@@ -13,7 +13,7 @@ const database = process.env.TSE_DB_NAME;
 
 if (!user || !password || !server || !database) {
   throw new Error(
-    "Missing required environment variables: TSE_USER, TSE_PW, TSE_SRV, TSE_DB_NAME"
+    "Missing required environment variables: TSE_USER, TSE_PW, TSE_SRV, TSE_DB_NAME",
   );
 }
 
@@ -42,7 +42,7 @@ function isDBDataArray(array: any[]): array is DBData[] {
       typeof item.description === "string" &&
       (item.pn_type === 1 || item.pn_type === 2) &&
       (item.is_phantom === 0 || item.is_phantom === 1) &&
-      (typeof item.cost === "number" || item.cost === null)
+      (typeof item.cost === "number" || item.cost === null),
   );
 }
 
@@ -55,7 +55,7 @@ export const fetchPartNumbersFromTSE = async (): Promise<DBData[]> => {
 
     const fetchPartNumbersQuery = fs.readFileSync(
       path.join(__dirname, "fetch-part-numbers-query.sql"),
-      "utf8"
+      "utf8",
     );
     const result = await sql.query(fetchPartNumbersQuery);
 

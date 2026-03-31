@@ -32,7 +32,9 @@ interface WashBayFormProps {
 
 const WashBayForm = (props: WashBayFormProps) => {
   const FieldsWithSupplyType = useMemo(() => {
-    function Fields() { return <WashBayFields supplyType={props.supplyType} />; }
+    function Fields() {
+      return <WashBayFields supplyType={props.supplyType} />;
+    }
     return Fields;
   }, [props.supplyType]);
 

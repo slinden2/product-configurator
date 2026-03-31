@@ -65,7 +65,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
   };
 
   const userConfigStatusOpts = configStatusOpts.filter((opt) =>
-    ALLOWED_STATUSES[userRole].includes(opt.value as ConfigurationStatusType)
+    ALLOWED_STATUSES[userRole].includes(opt.value as ConfigurationStatusType),
   );
 
   return (
@@ -81,7 +81,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
                 <Loader2
                   className={cn(
                     "ml-2 inline animate-spin h-6 w-6 text-primary absolute left-8",
-                    !isLoading && "hidden"
+                    !isLoading && "hidden",
                   )}
                 />
               </FormLabel>

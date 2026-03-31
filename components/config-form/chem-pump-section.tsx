@@ -15,14 +15,22 @@ const ChemPumpSection = () => {
   return (
     <Fieldset
       title="Pompe dosatrici"
-      description="Seleziona le pompe da includere nella configurazione">
+      description="Seleziona le pompe da includere nella configurazione"
+    >
       <div className="fs-content">
         <div className="grid grid-rows-2 grid-cols-2 md:grid-rows-1 md:grid-cols-4">
           <div className="order-1 my-1 md:my-0">
-            <CheckboxField<ConfigSchema> name="has_shampoo_pump" label="Pompa sapone" disabled={brushNumWatch === 0} />
+            <CheckboxField<ConfigSchema>
+              name="has_shampoo_pump"
+              label="Pompa sapone"
+              disabled={brushNumWatch === 0}
+            />
           </div>
           <div className="order-3 my-1 md:my-0 md:order-2">
-            <CheckboxField<ConfigSchema> name="has_wax_pump" label="Pompa cera" />
+            <CheckboxField<ConfigSchema>
+              name="has_wax_pump"
+              label="Pompa cera"
+            />
           </div>
           <div className="order-2 my-1 md:my-0 md:oder-3">
             <CheckboxField<ConfigSchema>
@@ -30,17 +38,12 @@ const ChemPumpSection = () => {
               label="Pompa prelavaggio"
               fieldsToResetOnUncheck={[
                 {
-                  fieldsToReset: [
-                    "chemical_qty",
-                    "chemical_pump_pos",
-                  ]
+                  fieldsToReset: ["chemical_qty", "chemical_pump_pos"],
                 },
                 {
-                  fieldsToReset: [
-                    "has_foam"
-                  ],
-                  resetToValue: false
-                }
+                  fieldsToReset: ["has_foam"],
+                  resetToValue: false,
+                },
               ]}
             />
           </div>
@@ -51,10 +54,8 @@ const ChemPumpSection = () => {
               description="Solo per OMZ"
               fieldsToResetOnUncheck={[
                 {
-                  fieldsToReset: [
-                    "acid_pump_pos"
-                  ]
-                }
+                  fieldsToReset: ["acid_pump_pos"],
+                },
               ]}
               disabled={brushNumWatch === 2}
             />
@@ -62,8 +63,10 @@ const ChemPumpSection = () => {
         </div>
       </div>
       <div
-        className={`${hasChemicalPumpWatch || hasAcidPumpWatch ? "space-y-6 pt-10" : "pt-3"
-          }`}>
+        className={`${
+          hasChemicalPumpWatch || hasAcidPumpWatch ? "space-y-6 pt-10" : "pt-3"
+        }`}
+      >
         {hasChemicalPumpWatch && (
           <div>
             <div className="fs-row">
@@ -85,7 +88,10 @@ const ChemPumpSection = () => {
                 />
               </div>
             </div>
-            <CheckboxField<ConfigSchema> name="has_foam" label="Nebulizzazione con schiuma" />
+            <CheckboxField<ConfigSchema>
+              name="has_foam"
+              label="Nebulizzazione con schiuma"
+            />
           </div>
         )}
         {hasAcidPumpWatch && (

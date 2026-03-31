@@ -39,7 +39,7 @@ describe("BrushSection", () => {
     const brushQtyLabel = screen.getByText(/numero di spazzole/i);
 
     // Add 'as HTMLElement' to satisfy TypeScript
-    const container = brushQtyLabel.closest('.space-y-2') as HTMLElement;
+    const container = brushQtyLabel.closest(".space-y-2") as HTMLElement;
 
     // Use 'within' to scope the search to that specific section
     expect(within(container).getByText(NOT_SELECTED_LABEL)).toBeInTheDocument();

@@ -6,7 +6,7 @@ export const invalidOption = "Opzione invalida";
 
 export function generateSelectOptionsFromZodEnum<T extends string>(
   enumObject: z.ZodEnum<[T, ...T[]]>,
-  labels: string[]
+  labels: string[],
 ): SelectOption[] {
   return enumObject._def.values.map((value: T, i) => ({
     value,

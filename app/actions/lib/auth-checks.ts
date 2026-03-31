@@ -10,7 +10,7 @@ import { ConfigurationStatusType, Role } from "@/types";
  */
 export function isEditable(
   status: ConfigurationStatusType,
-  role: Role
+  role: Role,
 ): boolean {
   // 1. Hard stop: Approved and Closed are read-only for all roles
   if (status === "APPROVED" || status === "CLOSED") {
@@ -23,7 +23,9 @@ export function isEditable(
   }
 
   if (role === "ENGINEER" || role === "ADMIN") {
-    return status === "DRAFT" || status === "SUBMITTED" || status === "IN_REVIEW";
+    return (
+      status === "DRAFT" || status === "SUBMITTED" || status === "IN_REVIEW"
+    );
   }
 
   return false;

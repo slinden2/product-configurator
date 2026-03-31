@@ -11,7 +11,7 @@ export const RailTypeEnum = z.enum(RailTypes, {
 });
 export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   RailTypeEnum,
-  ["Da tassellare", "Da saldare", "Da saldare incassato"]
+  ["Da tassellare", "Da saldare", "Da saldare incassato"],
 );
 
 export const DowelTypeEnum = z.enum(DowelTypes, {
@@ -19,7 +19,7 @@ export const DowelTypeEnum = z.enum(DowelTypes, {
 });
 export const dowelTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   DowelTypeEnum,
-  ["Zincato", "Inox", "Chimico"]
+  ["Zincato", "Inox", "Chimico"],
 );
 
 export const railLengths: SelectOption[] = [
@@ -50,10 +50,9 @@ export const railSchema = z
     rail_type: RailTypeEnum.optional(),
     rail_length: z.coerce
       .number({ message: genericRequiredMessage })
-      .refine(
-        (val) => railLengths.map((opt) => opt.value).includes(val),
-        { message: "Lunghezza rotaie non valida." }
-      )
+      .refine((val) => railLengths.map((opt) => opt.value).includes(val), {
+        message: "Lunghezza rotaie non valida.",
+      })
       .optional(),
     rail_guide_qty: z.coerce
       .number({ message: genericRequiredMessage })

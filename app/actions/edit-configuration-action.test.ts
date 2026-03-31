@@ -13,8 +13,7 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
-  updateConfiguration: (...args: unknown[]) =>
-    mockUpdateConfiguration(...args),
+  updateConfiguration: (...args: unknown[]) => mockUpdateConfiguration(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
@@ -34,7 +33,7 @@ const mockTx = {};
 vi.mock("@/db", () => ({
   db: {
     transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) =>
-      cb(mockTx)
+      cb(mockTx),
     ),
   },
 }));
@@ -143,10 +142,7 @@ describe("editConfigurationAction", () => {
   });
 
   test("returns success when owner edits DRAFT config", async () => {
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
     expect(mockUpdateConfiguration).toHaveBeenCalledTimes(1);
   });
@@ -162,19 +158,16 @@ describe("editConfigurationAction", () => {
 
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
-    expect(result).toEqual({ success: false, error: MSG.auth.userNotAuthenticated });
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.userNotAuthenticated,
+    });
   });
 
   test("returns error when configuration not found", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(null);
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({
       success: false,
       error: MSG.config.notFound,
@@ -187,10 +180,7 @@ describe("editConfigurationAction", () => {
       role: "SALES",
       initials: "OU",
     });
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
   });
 
@@ -200,10 +190,7 @@ describe("editConfigurationAction", () => {
       role: "ENGINEER",
       initials: "IU",
     });
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
   });
 
@@ -214,12 +201,9 @@ describe("editConfigurationAction", () => {
       initials: "AU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "SUBMITTED" })
+      mockConfig({ status: "SUBMITTED" }),
     );
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
   });
 
@@ -230,57 +214,42 @@ describe("editConfigurationAction", () => {
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "SUBMITTED" })
+      mockConfig({ status: "SUBMITTED" }),
     );
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
   test("nobody can edit APPROVED config", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "APPROVED" })
+      mockConfig({ status: "APPROVED" }),
     );
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
   test("nobody can edit CLOSED config", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "CLOSED" })
+      mockConfig({ status: "CLOSED" }),
     );
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
   test("returns error message on QueryError", async () => {
     mockUpdateConfiguration.mockRejectedValue(
-      new QueryError("Non trovata.", 404)
+      new QueryError("Non trovata.", 404),
     );
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: false, error: "Non trovata." });
   });
 
   test("returns generic error on unknown exceptions", async () => {
     mockUpdateConfiguration.mockRejectedValue(new TypeError("unexpected"));
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 
@@ -288,23 +257,17 @@ describe("editConfigurationAction", () => {
 
   test("deletes engineering BOM when it exists after successful update", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(true);
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
       CONF_ID,
-      mockTx
+      mockTx,
     );
   });
 
   test("does NOT delete engineering BOM when it does not exist", async () => {
     mockHasEngineeringBom.mockResolvedValue(false);
-    const result = await editConfigurationAction(
-      CONF_ID,
-      makeValidFormData()
-    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(true);
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
   });
@@ -314,10 +277,10 @@ describe("editConfigurationAction", () => {
     await editConfigurationAction(CONF_ID, makeValidFormData());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/edit/${CONF_ID}`
+      `/configurations/edit/${CONF_ID}`,
     );
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`
+      `/configurations/bom/${CONF_ID}`,
     );
   });
 
@@ -325,22 +288,22 @@ describe("editConfigurationAction", () => {
 
   test("resets wash bay energy chain fields when supply_type changes from ENERGY_CHAIN", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ supply_type: "ENERGY_CHAIN" })
+      mockConfig({ supply_type: "ENERGY_CHAIN" }),
     );
     const result = await editConfigurationAction(
       CONF_ID,
-      makeValidFormData({ supply_type: "STRAIGHT_SHELF" })
+      makeValidFormData({ supply_type: "STRAIGHT_SHELF" }),
     );
     expect(result.success).toBe(true);
     expect(mockResetWashBayEnergyChainFields).toHaveBeenCalledWith(
       CONF_ID,
-      mockTx
+      mockTx,
     );
   });
 
   test("resets wash bay energy chain fields when supply_type changes from ENERGY_CHAIN to BOOM", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ supply_type: "ENERGY_CHAIN" })
+      mockConfig({ supply_type: "ENERGY_CHAIN" }),
     );
     const result = await editConfigurationAction(
       CONF_ID,
@@ -348,18 +311,18 @@ describe("editConfigurationAction", () => {
         supply_type: "BOOM",
         has_post_frame: false,
         supply_fixing_type: "POST",
-      })
+      }),
     );
     expect(result.success).toBe(true);
     expect(mockResetWashBayEnergyChainFields).toHaveBeenCalledWith(
       CONF_ID,
-      mockTx
+      mockTx,
     );
   });
 
   test("does NOT reset energy chain fields when supply_type stays ENERGY_CHAIN", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ supply_type: "ENERGY_CHAIN" })
+      mockConfig({ supply_type: "ENERGY_CHAIN" }),
     );
     const result = await editConfigurationAction(
       CONF_ID,
@@ -367,7 +330,7 @@ describe("editConfigurationAction", () => {
         supply_type: "ENERGY_CHAIN",
         rail_length: 25,
         supply_fixing_type: "POST",
-      })
+      }),
     );
     expect(result.success).toBe(true);
     expect(mockResetWashBayEnergyChainFields).not.toHaveBeenCalled();
@@ -375,7 +338,7 @@ describe("editConfigurationAction", () => {
 
   test("does NOT reset energy chain fields when supply_type changes between non-EC values", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ supply_type: "STRAIGHT_SHELF" })
+      mockConfig({ supply_type: "STRAIGHT_SHELF" }),
     );
     const result = await editConfigurationAction(
       CONF_ID,
@@ -383,7 +346,7 @@ describe("editConfigurationAction", () => {
         supply_type: "BOOM",
         has_post_frame: false,
         supply_fixing_type: "POST",
-      })
+      }),
     );
     expect(result.success).toBe(true);
     expect(mockResetWashBayEnergyChainFields).not.toHaveBeenCalled();

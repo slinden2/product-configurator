@@ -1,7 +1,11 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { dosingPumpBOM } from "@/lib/BOM/max-bom/dosing-pump-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
@@ -14,7 +18,7 @@ const pns = (config: GeneralBOMConfig) =>
 
 const qty = (config: GeneralBOMConfig, pn: string) => {
   const item = dosingPumpBOM.find(
-    (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
+    (i) => i.pn === pn && i.conditions.every((fn) => fn(config)),
   );
   if (!item) return undefined;
   return typeof item.qty === "function" ? item.qty(config) : item.qty;
@@ -96,12 +100,18 @@ describe("dosingPumpBOM — chemical pump (ONBOARD position)", () => {
 
 describe("dosingPumpBOM — acid pump (ONBOARD position)", () => {
   test("has_acid_pump, acid_pump_pos=ONBOARD → acid pump with alarm", () => {
-    const config = makeConfig({ has_acid_pump: true, acid_pump_pos: "ONBOARD" });
+    const config = makeConfig({
+      has_acid_pump: true,
+      acid_pump_pos: "ONBOARD",
+    });
     expect(pns(config)).toContain(PNS.ACID_PUMP_WITH_ALARM);
   });
 
   test("has_acid_pump, acid_pump_pos=WASH_BAY → acid pump NOT included (is a dosatron)", () => {
-    const config = makeConfig({ has_acid_pump: true, acid_pump_pos: "WASH_BAY" });
+    const config = makeConfig({
+      has_acid_pump: true,
+      acid_pump_pos: "WASH_BAY",
+    });
     expect(pns(config)).not.toContain(PNS.ACID_PUMP_WITH_ALARM);
   });
 });

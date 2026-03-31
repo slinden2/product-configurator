@@ -112,7 +112,7 @@ describe("touchSchema", () => {
         touch_fixing_type: undefined,
       });
       expect(() => touchSchema.parse(invalidData)).toThrowError(
-        genericRequiredMessage
+        genericRequiredMessage,
       );
     });
 
@@ -124,7 +124,7 @@ describe("touchSchema", () => {
         card_qty: 75,
       });
       expect(() => touchSchema.parse(invalidData)).toThrowError(
-        "Solo multipli di 50"
+        "Solo multipli di 50",
       );
     });
 

@@ -78,13 +78,15 @@ const TouchSection = () => {
             <CheckboxField<ConfigSchema>
               name="has_itecoweb"
               label="Itecoweb"
-              description={<>
-                <span>Comprensivo di:</span>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Dispositivo Itecoweb nel Q.E.</li>
-                  <li>Lettore schede nel Q.E.</li>
-                  <li>Programmatore schede da scrivania</li>
-                </ul></>
+              description={
+                <>
+                  <span>Comprensivo di:</span>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Dispositivo Itecoweb nel Q.E.</li>
+                    <li>Lettore schede nel Q.E.</li>
+                    <li>Programmatore schede da scrivania</li>
+                  </ul>
+                </>
               }
             />
           </div>
@@ -99,14 +101,16 @@ const TouchSection = () => {
             <CheckboxField<ConfigSchema>
               name="is_fast"
               label="Portale fast"
-              description={<>
-                <span>Comprensivo di:</span>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Barre supplementari di risciacquo</li>
-                  <li>Semaforo posteriore</li>
-                  <li>Bracci lunghi per fotocellule</li>
-                  <li>Licenza piattaforma Itecoweb</li>
-                </ul></>
+              description={
+                <>
+                  <span>Comprensivo di:</span>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Barre supplementari di risciacquo</li>
+                    <li>Semaforo posteriore</li>
+                    <li>Bracci lunghi per fotocellule</li>
+                    <li>Licenza piattaforma Itecoweb</li>
+                  </ul>
+                </>
               }
             />
           </div>
