@@ -58,23 +58,23 @@ export const touchPosEnum = pgEnum("touch_pos", TouchPos);
 export const touchFixTypeEnum = pgEnum("touch_fix_type", TouchFixTypes);
 export const hpPump15kwOutletTypeEnum = pgEnum(
   "hp_pump_15kw_outlet_type",
-  HpPump15kwOutlets
+  HpPump15kwOutlets,
 );
 export const hpPump30kwOutletTypeEnum = pgEnum(
   "hp_pump_30kw_outlet_type",
-  HpPump30kwOutlets
+  HpPump30kwOutlets,
 );
 export const hpPumpOMZOutletTypeEnum = pgEnum(
   "hp_pump_omz_outlet_type",
-  HpPumpOMZkwOutlets
+  HpPumpOMZkwOutlets,
 );
 export const chassisWashSensorTypeEnum = pgEnum(
   "chassis_wash_sensor_type",
-  ChassisWashSensorTypes
+  ChassisWashSensorTypes,
 );
 export const configurationStatusEnum = pgEnum(
   "configuration_status",
-  ConfigurationStatus
+  ConfigurationStatus,
 );
 
 export const configurations = pgTable("configurations", {
@@ -121,7 +121,9 @@ export const configurations = pgTable("configurations", {
   has_30kw_pump: boolean().notNull(),
   pump_outlet_1_30kw: hpPump30kwOutletTypeEnum("pump_outlet_1_30kw"),
   pump_outlet_2_30kw: hpPump30kwOutletTypeEnum("pump_outlet_2_30kw"),
-  chassis_wash_sensor_type: chassisWashSensorTypeEnum("chassis_wash_sensor_type"),
+  chassis_wash_sensor_type: chassisWashSensorTypeEnum(
+    "chassis_wash_sensor_type",
+  ),
   has_omz_pump: boolean().notNull(),
   pump_outlet_omz: hpPumpOMZOutletTypeEnum("pump_outlet_omz"),
   has_chemical_roof_bar: boolean().notNull(),
@@ -152,5 +154,5 @@ export const configurationsRelations = relations(
     water_tanks: many(waterTanks),
     wash_bays: many(washBays),
     engineering_bom_items: many(engineeringBomItems),
-  })
+  }),
 );

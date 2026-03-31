@@ -47,7 +47,7 @@ describe("ForgotPasswordForm", () => {
 
       expect(screen.getByLabelText("Email")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       ).toBeInTheDocument();
     });
   });
@@ -59,7 +59,7 @@ describe("ForgotPasswordForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
@@ -67,7 +67,7 @@ describe("ForgotPasswordForm", () => {
           email: "test@example.com",
         });
         expect(mockToastSuccess).toHaveBeenCalledWith(
-          MSG.toast.passwordResetEmailSent
+          MSG.toast.passwordResetEmailSent,
         );
         expect(mockPush).toHaveBeenCalledWith("/login");
       });
@@ -84,12 +84,12 @@ describe("ForgotPasswordForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
-          "Errore durante l'autenticazione."
+          "Errore durante l'autenticazione.",
         );
         expect(mockToastSuccess).not.toHaveBeenCalled();
         expect(mockPush).not.toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("ForgotPasswordForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "not-an-email");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
@@ -115,7 +115,7 @@ describe("ForgotPasswordForm", () => {
       render(<ForgotPasswordForm />);
 
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" })
+        screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {

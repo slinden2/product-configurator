@@ -45,7 +45,7 @@ describe("StatusForm", () => {
   describe("Rendering", () => {
     test("renders label and initial status", () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
       expect(screen.getByText("Stato")).toBeInTheDocument();
@@ -55,52 +55,72 @@ describe("StatusForm", () => {
 
   describe("Role-based status filtering", () => {
     test("SALES sees only DRAFT and SUBMITTED", async () => {
-      render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="SALES" />
-      );
+      render(<StatusForm confId={1} initialStatus="DRAFT" userRole="SALES" />);
 
       await userEvent.click(screen.getByRole("combobox"));
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "In revisione" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "Approvato" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Inviato" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "In revisione" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Approvato" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Chiuso" }),
+      ).not.toBeInTheDocument();
     });
 
     test("ENGINEER sees DRAFT, SUBMITTED, IN_REVIEW, and APPROVED", async () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
       await userEvent.click(screen.getByRole("combobox"));
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "In revisione" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Approvato" })).toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "Chiuso" })).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Inviato" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "In revisione" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Approvato" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Chiuso" }),
+      ).not.toBeInTheDocument();
     });
 
     test("ADMIN sees all statuses", async () => {
-      render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ADMIN" />
-      );
+      render(<StatusForm confId={1} initialStatus="DRAFT" userRole="ADMIN" />);
 
       await userEvent.click(screen.getByRole("combobox"));
 
       expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Inviato" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "In revisione" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Approvato" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Chiuso" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Inviato" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "In revisione" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Approvato" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Chiuso" }),
+      ).toBeInTheDocument();
     });
   });
 
   describe("Status change — success", () => {
     test("calls action with correct confId and new status", async () => {
       render(
-        <StatusForm confId={42} initialStatus="DRAFT" userRole="ENGINEER" />
+        <StatusForm confId={42} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
       await selectStatus("Inviato");
@@ -114,7 +134,7 @@ describe("StatusForm", () => {
 
     test("shows success toast", async () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
       await selectStatus("Inviato");
@@ -133,7 +153,7 @@ describe("StatusForm", () => {
       });
 
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />
+        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
       await selectStatus("Inviato");
@@ -152,7 +172,7 @@ describe("StatusForm", () => {
       mockUpdateConfigStatus.mockRejectedValue(new Error("Network error"));
 
       render(
-        <StatusForm confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />
+        <StatusForm confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />,
       );
 
       await selectStatus("In revisione");

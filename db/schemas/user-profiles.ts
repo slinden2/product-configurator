@@ -57,7 +57,7 @@ export const userProfiles = pgTable(
       for: "delete",
       using: sql`(SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
     }),
-  ]
+  ],
 ).enableRLS();
 
 export const usersProfilesRelations = relations(userProfiles, ({ many }) => ({

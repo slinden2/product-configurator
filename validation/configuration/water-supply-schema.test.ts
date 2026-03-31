@@ -10,7 +10,7 @@ function createWaterSupplyObject(
   water2Type: TWaterType,
   water2Pump: Water2PumpType | null | undefined,
   hasAntifreeze: boolean,
-  outlets = { inv_pump_outlet_pw_qty: 0, inv_pump_outlet_dosatron_qty: 0 }
+  outlets = { inv_pump_outlet_pw_qty: 0, inv_pump_outlet_dosatron_qty: 0 },
 ) {
   return {
     water_1_type: water1Type,
@@ -30,7 +30,7 @@ describe("waterSupplySchema", () => {
         "BOOST_15KW",
         "RECYCLED",
         "BOOST_22KW",
-        true
+        true,
       );
       expect(() => waterSupplySchema.parse(validData)).not.toThrow();
     });
@@ -41,7 +41,7 @@ describe("waterSupplySchema", () => {
         undefined,
         undefined,
         undefined,
-        false
+        false,
       );
       expect(() => waterSupplySchema.parse(validData)).not.toThrow();
     });
@@ -52,7 +52,7 @@ describe("waterSupplySchema", () => {
         "BOOST_15KW",
         undefined,
         undefined,
-        false
+        false,
       );
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
     });
@@ -64,7 +64,7 @@ describe("waterSupplySchema", () => {
       undefined,
       undefined,
       undefined,
-      false
+      false,
     );
     expect(() => waterSupplySchema.parse(validData)).not.toThrow();
   });
@@ -77,7 +77,7 @@ describe("waterSupplySchema", () => {
         undefined,
         undefined,
         false,
-        { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 0 }
+        { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 0 },
       );
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
     });
@@ -89,7 +89,7 @@ describe("waterSupplySchema", () => {
         undefined,
         undefined,
         false,
-        { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 1 }
+        { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 1 },
       );
       expect(() => waterSupplySchema.parse(validData)).not.toThrow();
     });
@@ -101,7 +101,7 @@ describe("waterSupplySchema", () => {
         null,
         null,
         false,
-        { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 0 }
+        { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 0 },
       );
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
     });
@@ -113,7 +113,7 @@ describe("waterSupplySchema", () => {
         null,
         null,
         false,
-        { inv_pump_outlet_pw_qty: 3, inv_pump_outlet_dosatron_qty: 0 }
+        { inv_pump_outlet_pw_qty: 3, inv_pump_outlet_dosatron_qty: 0 },
       );
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
 
@@ -123,7 +123,7 @@ describe("waterSupplySchema", () => {
         null,
         null,
         false,
-        { inv_pump_outlet_pw_qty: 0, inv_pump_outlet_dosatron_qty: 3 }
+        { inv_pump_outlet_pw_qty: 0, inv_pump_outlet_dosatron_qty: 3 },
       );
       expect(() => waterSupplySchema.parse(invalidData2)).toThrow();
     });
@@ -136,7 +136,7 @@ describe("waterSupplySchema", () => {
         undefined,
         undefined,
         undefined,
-        false
+        false,
       );
       expect(() => waterSupplySchema.parse(validData)).not.toThrow();
     });
@@ -147,7 +147,7 @@ describe("waterSupplySchema", () => {
         "BOOST_15KW",
         undefined,
         "BOOST_15KW",
-        false
+        false,
       );
       expect(() => waterSupplySchema.parse(invalidData)).toThrow();
     });
@@ -160,20 +160,20 @@ describe("waterSupplySchema", () => {
         "BOOST_22KW",
         "RECYCLED",
         "BOOST_15KW",
-        true
+        true,
       );
       const validDataWithoutAntifreeze = createWaterSupplyObject(
         "DEMINERALIZED",
         "BOOST_22KW",
         "RECYCLED",
         "BOOST_15KW",
-        false
+        false,
       );
       expect(() =>
-        waterSupplySchema.parse(validDataWithAntifreeze)
+        waterSupplySchema.parse(validDataWithAntifreeze),
       ).not.toThrow();
       expect(() =>
-        waterSupplySchema.parse(validDataWithoutAntifreeze)
+        waterSupplySchema.parse(validDataWithoutAntifreeze),
       ).not.toThrow();
     });
   });

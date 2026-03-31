@@ -25,7 +25,8 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange>
+          disableTransitionOnChange
+        >
           <div className="flex min-h-screen flex-col">
             <header className="top-0 z-50 border-b bg-background/95">
               <div className="container py-3">

@@ -106,10 +106,10 @@ describe("ConfigForm", () => {
       render(<ConfigForm />);
 
       expect(
-        screen.getByRole("button", { name: /salva configurazione/i })
+        screen.getByRole("button", { name: /salva configurazione/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /annulla/i })
+        screen.getByRole("button", { name: /annulla/i }),
       ).toBeInTheDocument();
     });
   });
@@ -118,7 +118,12 @@ describe("ConfigForm", () => {
     test("disables the fieldset when status is SUBMITTED for SALES role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="SALES" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="SUBMITTED"
+          userRole="SALES"
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -128,7 +133,12 @@ describe("ConfigForm", () => {
     test("enables the fieldset when status is SUBMITTED for ENGINEER role", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="SUBMITTED" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="SUBMITTED"
+          userRole="ENGINEER"
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -138,7 +148,12 @@ describe("ConfigForm", () => {
     test("disables the fieldset when status is APPROVED", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="APPROVED" userRole="ADMIN" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="APPROVED"
+          userRole="ADMIN"
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -148,7 +163,12 @@ describe("ConfigForm", () => {
     test("enables the fieldset when status is DRAFT", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="SALES" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="SALES"
+        />,
       );
 
       const fieldset = document.querySelector("fieldset");
@@ -173,7 +193,7 @@ describe("ConfigForm", () => {
           status="DRAFT"
           userRole="ENGINEER"
           formKey="config-1"
-        />
+        />,
       );
 
       const submitButton = screen.getByRole("button", {
@@ -185,21 +205,27 @@ describe("ConfigForm", () => {
         expect(mockEditAction).toHaveBeenCalledWith(
           1,
           "test-user-123",
-          expect.objectContaining({ name: "Test Config" })
+          expect.objectContaining({ name: "Test Config" }),
         );
       });
 
-      expect(toast.success).toHaveBeenCalledWith(
-        "Configurazione aggiornata."
-      );
+      expect(toast.success).toHaveBeenCalledWith("Configurazione aggiornata.");
     });
 
     test("shows error toast when editConfigurationAction fails", async () => {
-      mockEditAction.mockResolvedValueOnce({ success: false, error: "Network error" });
+      mockEditAction.mockResolvedValueOnce({
+        success: false,
+        error: "Network error",
+      });
       const config = makeValidConfig();
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
       const submitButton = screen.getByRole("button", {
@@ -218,16 +244,21 @@ describe("ConfigForm", () => {
       delete (config as Record<string, unknown>).user_id;
 
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
       await userEvent.click(
-        screen.getByRole("button", { name: /salva configurazione/i })
+        screen.getByRole("button", { name: /salva configurazione/i }),
       );
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          "Dati incompleti per l'aggiornamento."
+          "Dati incompleti per l'aggiornamento.",
         );
       });
 
@@ -240,11 +271,13 @@ describe("ConfigForm", () => {
       render(<ConfigForm />);
 
       // Only fill name, leave other required fields at defaults (undefined)
-      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      const nameInput = screen.getByPlaceholderText(
+        "Inserire il nome del cliente",
+      );
       await userEvent.type(nameInput, "Nuovo Cliente");
 
       await userEvent.click(
-        screen.getByRole("button", { name: /salva configurazione/i })
+        screen.getByRole("button", { name: /salva configurazione/i }),
       );
 
       // Validation should prevent submission
@@ -258,83 +291,128 @@ describe("ConfigForm", () => {
     test("SALES sees sales notes but not engineering notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="SALES" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="SALES"
+        />,
       );
 
       expect(
-        screen.getByPlaceholderText("Inserire eventuali note commerciali")
+        screen.getByPlaceholderText("Inserire eventuali note commerciali"),
       ).toBeInTheDocument();
       expect(
-        screen.queryByPlaceholderText("Inserire eventuali note tecniche")
+        screen.queryByPlaceholderText("Inserire eventuali note tecniche"),
       ).not.toBeInTheDocument();
     });
 
     test("SALES can edit sales notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="SALES" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="SALES"
+        />,
       );
 
-      const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
+      const salesTextarea = screen.getByPlaceholderText(
+        "Inserire eventuali note commerciali",
+      );
       expect(salesTextarea).not.toBeDisabled();
     });
 
     test("ENGINEER sees both notes fields", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
       expect(
-        screen.getByPlaceholderText("Inserire eventuali note commerciali")
+        screen.getByPlaceholderText("Inserire eventuali note commerciali"),
       ).toBeInTheDocument();
       expect(
-        screen.getByPlaceholderText("Inserire eventuali note tecniche")
+        screen.getByPlaceholderText("Inserire eventuali note tecniche"),
       ).toBeInTheDocument();
     });
 
     test("ENGINEER cannot edit sales notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
+      const salesTextarea = screen.getByPlaceholderText(
+        "Inserire eventuali note commerciali",
+      );
       expect(salesTextarea).toBeDisabled();
     });
 
     test("ENGINEER can edit engineering notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ENGINEER" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ENGINEER"
+        />,
       );
 
-      const engTextarea = screen.getByPlaceholderText("Inserire eventuali note tecniche");
+      const engTextarea = screen.getByPlaceholderText(
+        "Inserire eventuali note tecniche",
+      );
       expect(engTextarea).not.toBeDisabled();
     });
 
     test("ADMIN sees both notes fields", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ADMIN" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ADMIN"
+        />,
       );
 
       expect(
-        screen.getByPlaceholderText("Inserire eventuali note commerciali")
+        screen.getByPlaceholderText("Inserire eventuali note commerciali"),
       ).toBeInTheDocument();
       expect(
-        screen.getByPlaceholderText("Inserire eventuali note tecniche")
+        screen.getByPlaceholderText("Inserire eventuali note tecniche"),
       ).toBeInTheDocument();
     });
 
     test("ADMIN can edit both sales and engineering notes", () => {
       const config = makeValidConfig();
       render(
-        <ConfigForm id={1} configuration={config} status="DRAFT" userRole="ADMIN" />
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          userRole="ADMIN"
+        />,
       );
 
-      const salesTextarea = screen.getByPlaceholderText("Inserire eventuali note commerciali");
-      const engTextarea = screen.getByPlaceholderText("Inserire eventuali note tecniche");
+      const salesTextarea = screen.getByPlaceholderText(
+        "Inserire eventuali note commerciali",
+      );
+      const engTextarea = screen.getByPlaceholderText(
+        "Inserire eventuali note tecniche",
+      );
       expect(salesTextarea).not.toBeDisabled();
       expect(engTextarea).not.toBeDisabled();
     });
@@ -353,10 +431,12 @@ describe("ConfigForm", () => {
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}
-        />
+        />,
       );
 
-      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      const nameInput = screen.getByPlaceholderText(
+        "Inserire il nome del cliente",
+      );
       await userEvent.type(nameInput, " modificato");
 
       await waitFor(() => {
@@ -377,11 +457,11 @@ describe("ConfigForm", () => {
           formKey="config-1"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
-        />
+        />,
       );
 
       await userEvent.click(
-        screen.getByRole("button", { name: /salva configurazione/i })
+        screen.getByRole("button", { name: /salva configurazione/i }),
       );
 
       await waitFor(() => {
@@ -402,10 +482,12 @@ describe("ConfigForm", () => {
           formKey="config-1"
           onDirtyChange={onDirtyChange}
           onSaved={vi.fn()}
-        />
+        />,
       );
 
-      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      const nameInput = screen.getByPlaceholderText(
+        "Inserire il nome del cliente",
+      );
       await userEvent.type(nameInput, " modificato");
 
       await waitFor(() => {
@@ -413,7 +495,7 @@ describe("ConfigForm", () => {
       });
 
       await userEvent.click(
-        screen.getByRole("button", { name: /salva configurazione/i })
+        screen.getByRole("button", { name: /salva configurazione/i }),
       );
 
       await waitFor(() => {
@@ -433,19 +515,19 @@ describe("ConfigForm", () => {
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}
-        />
+        />,
       );
 
-      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      const nameInput = screen.getByPlaceholderText(
+        "Inserire il nome del cliente",
+      );
       await userEvent.type(nameInput, " modificato");
 
       await waitFor(() => {
         expect(onDirtyChange).toHaveBeenCalledWith("config-1", true);
       });
 
-      await userEvent.click(
-        screen.getByRole("button", { name: /annulla/i })
-      );
+      await userEvent.click(screen.getByRole("button", { name: /annulla/i }));
 
       await waitFor(() => {
         expect(onDirtyChange).toHaveBeenCalledWith("config-1", false);
@@ -453,7 +535,10 @@ describe("ConfigForm", () => {
     });
 
     test("does not call onSaved when server action fails", async () => {
-      mockEditAction.mockResolvedValueOnce({ success: false, error: "Errore server" });
+      mockEditAction.mockResolvedValueOnce({
+        success: false,
+        error: "Errore server",
+      });
       const onSaved = vi.fn();
       const onDirtyChange = vi.fn();
       const config = makeValidConfig();
@@ -467,14 +552,16 @@ describe("ConfigForm", () => {
           formKey="config-1"
           onDirtyChange={onDirtyChange}
           onSaved={onSaved}
-        />
+        />,
       );
 
-      const nameInput = screen.getByPlaceholderText("Inserire il nome del cliente");
+      const nameInput = screen.getByPlaceholderText(
+        "Inserire il nome del cliente",
+      );
       await userEvent.type(nameInput, " modificato");
 
       await userEvent.click(
-        screen.getByRole("button", { name: /salva configurazione/i })
+        screen.getByRole("button", { name: /salva configurazione/i }),
       );
 
       await waitFor(() => {

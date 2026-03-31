@@ -1,12 +1,18 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { supplyBOM } from "@/lib/BOM/max-bom/supply-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
+function makeConfig(
+  overrides: Partial<GeneralBOMConfig> = {},
+): GeneralBOMConfig {
   return {
     id: 1,
     supply_type: "STRAIGHT_SHELF",
@@ -67,7 +73,9 @@ const PNS = {
 
 describe("supplyBOM — straight shelf", () => {
   test("supply_type=STRAIGHT_SHELF → straight shelf included", () => {
-    expect(pns(makeConfig({ supply_type: "STRAIGHT_SHELF" }))).toContain(PNS.STRAIGHT_SHELF);
+    expect(pns(makeConfig({ supply_type: "STRAIGHT_SHELF" }))).toContain(
+      PNS.STRAIGHT_SHELF,
+    );
   });
 
   test("supply_type=STRAIGHT_SHELF → no boom or energy chain items", () => {
@@ -78,7 +86,8 @@ describe("supplyBOM — straight shelf", () => {
 });
 
 describe("supplyBOM — boom + post", () => {
-  const boomPost = () => makeConfig({ supply_type: "BOOM", supply_fixing_type: "POST" });
+  const boomPost = () =>
+    makeConfig({ supply_type: "BOOM", supply_fixing_type: "POST" });
 
   test("BOOM + POST + no double water + no 15kw → supply pole 1 water + boom + anchor kit", () => {
     const result = pns(boomPost());
@@ -137,7 +146,10 @@ describe("supplyBOM — boom + post", () => {
 
 describe("supplyBOM — boom + wall", () => {
   test("BOOM + WALL + no double water + no 15kw → wall shelf 1 water", () => {
-    const config = makeConfig({ supply_type: "BOOM", supply_fixing_type: "WALL" });
+    const config = makeConfig({
+      supply_type: "BOOM",
+      supply_fixing_type: "WALL",
+    });
     expect(pns(config)).toContain(PNS.WALL_SHELF_1_WATER);
   });
 
@@ -162,7 +174,10 @@ describe("supplyBOM — boom + wall", () => {
   });
 
   test("BOOM + WALL → no post-specific items (no anchor kit, no frame)", () => {
-    const config = makeConfig({ supply_type: "BOOM", supply_fixing_type: "WALL" });
+    const config = makeConfig({
+      supply_type: "BOOM",
+      supply_fixing_type: "WALL",
+    });
     const result = pns(config);
     expect(result).not.toContain(PNS.ANCHOR_KIT);
     expect(result).not.toContain(PNS.FRAME_AND_COVER);
@@ -171,19 +186,28 @@ describe("supplyBOM — boom + wall", () => {
 
 describe("supplyBOM — energy chain", () => {
   test("ENERGY_CHAIN + LEFT → reinforced shelf L", () => {
-    const config = makeConfig({ supply_type: "ENERGY_CHAIN", supply_side: "LEFT" });
+    const config = makeConfig({
+      supply_type: "ENERGY_CHAIN",
+      supply_side: "LEFT",
+    });
     expect(pns(config)).toContain(PNS.REINFORCED_SHELF_ASSY_L);
     expect(pns(config)).not.toContain(PNS.REINFORCED_SHELF_ASSY_R);
   });
 
   test("ENERGY_CHAIN + RIGHT → reinforced shelf R", () => {
-    const config = makeConfig({ supply_type: "ENERGY_CHAIN", supply_side: "RIGHT" });
+    const config = makeConfig({
+      supply_type: "ENERGY_CHAIN",
+      supply_side: "RIGHT",
+    });
     expect(pns(config)).toContain(PNS.REINFORCED_SHELF_ASSY_R);
     expect(pns(config)).not.toContain(PNS.REINFORCED_SHELF_ASSY_L);
   });
 
   test("ENERGY_CHAIN → no boom or straight shelf items", () => {
-    const config = makeConfig({ supply_type: "ENERGY_CHAIN", supply_side: "LEFT" });
+    const config = makeConfig({
+      supply_type: "ENERGY_CHAIN",
+      supply_side: "LEFT",
+    });
     const result = pns(config);
     expect(result).not.toContain(PNS.STRAIGHT_SHELF);
     expect(result).not.toContain(PNS.BOOM);
@@ -192,17 +216,25 @@ describe("supplyBOM — energy chain", () => {
 
 const qty = (config: GeneralBOMConfig, pn: string): number => {
   const item = supplyBOM.find(
-    (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
+    (i) => i.pn === pn && i.conditions.every((fn) => fn(config)),
   );
   if (!item) return 0;
   return typeof item.qty === "function" ? item.qty(config) : item.qty;
 };
 
 const ecLeft = (overrides: Partial<GeneralBOMConfig> = {}) =>
-  makeConfig({ supply_type: "ENERGY_CHAIN", supply_side: "LEFT", ...overrides });
+  makeConfig({
+    supply_type: "ENERGY_CHAIN",
+    supply_side: "LEFT",
+    ...overrides,
+  });
 
 const ecRight = (overrides: Partial<GeneralBOMConfig> = {}) =>
-  makeConfig({ supply_type: "ENERGY_CHAIN", supply_side: "RIGHT", ...overrides });
+  makeConfig({
+    supply_type: "ENERGY_CHAIN",
+    supply_side: "RIGHT",
+    ...overrides,
+  });
 
 describe("supplyBOM — energy chain cables (450.73.xxx)", () => {
   test("ENERGY_CHAIN + LEFT → left power + signal cables included, right excluded", () => {
@@ -237,58 +269,79 @@ describe("supplyBOM — energy chain cables (450.73.xxx)", () => {
   });
 
   test("non-ENERGY_CHAIN → no EC cables", () => {
-    const boom = makeConfig({ supply_type: "BOOM", supply_fixing_type: "POST" });
+    const boom = makeConfig({
+      supply_type: "BOOM",
+      supply_fixing_type: "POST",
+    });
     const result = pns(boom);
     expect(result).not.toContain(PNS.EC_POWER_CABLE_LEFT);
     expect(result).not.toContain(PNS.EC_SIGNAL_CABLE_LEFT);
   });
 });
 
-describe("supplyBOM — energy chain 1\" water tubes (450.74.001 / 450.74.005)", () => {
-  test("ENERGY_CHAIN + LEFT → left 1\" tube included, right excluded", () => {
+describe('supplyBOM — energy chain 1" water tubes (450.74.001 / 450.74.005)', () => {
+  test('ENERGY_CHAIN + LEFT → left 1" tube included, right excluded', () => {
     const result = pns(ecLeft());
     expect(result).toContain(PNS.EC_GEN_WATER_TUBE_LEFT);
     expect(result).not.toContain(PNS.EC_GEN_WATER_TUBE_RIGHT);
   });
 
-  test("ENERGY_CHAIN + RIGHT → right 1\" tube included", () => {
+  test('ENERGY_CHAIN + RIGHT → right 1" tube included', () => {
     expect(pns(ecRight())).toContain(PNS.EC_GEN_WATER_TUBE_RIGHT);
   });
 
-  test("ENERGY_CHAIN + no water_2_type → 1\" tube qty=1", () => {
+  test('ENERGY_CHAIN + no water_2_type → 1" tube qty=1', () => {
     expect(qty(ecLeft(), PNS.EC_GEN_WATER_TUBE_LEFT)).toBe(1);
   });
 
-  test("ENERGY_CHAIN + water_2_type set → 1\" tube qty=2", () => {
+  test('ENERGY_CHAIN + water_2_type set → 1" tube qty=2', () => {
     const config = ecLeft({ water_2_type: "RECYCLED" });
     expect(qty(config, PNS.EC_GEN_WATER_TUBE_LEFT)).toBe(2);
   });
 });
 
-describe("supplyBOM — energy chain 3/4\" water tubes (450.74.002 / 450.74.006)", () => {
-  test("ENERGY_CHAIN + has_chemical_pump=false → 3/4\" tube not included", () => {
-    const config = ecLeft({ has_chemical_pump: false, chemical_pump_pos: "WASH_BAY" });
+describe('supplyBOM — energy chain 3/4" water tubes (450.74.002 / 450.74.006)', () => {
+  test('ENERGY_CHAIN + has_chemical_pump=false → 3/4" tube not included', () => {
+    const config = ecLeft({
+      has_chemical_pump: false,
+      chemical_pump_pos: "WASH_BAY",
+    });
     expect(pns(config)).not.toContain(PNS.EC_PREWASH_WATER_TUBE_LEFT);
   });
 
-  test("ENERGY_CHAIN + has_chemical_pump + chemical_pump_pos=ONBOARD → 3/4\" tube not included", () => {
-    const config = ecLeft({ has_chemical_pump: true, chemical_pump_pos: "ONBOARD" });
+  test('ENERGY_CHAIN + has_chemical_pump + chemical_pump_pos=ONBOARD → 3/4" tube not included', () => {
+    const config = ecLeft({
+      has_chemical_pump: true,
+      chemical_pump_pos: "ONBOARD",
+    });
     expect(pns(config)).not.toContain(PNS.EC_PREWASH_WATER_TUBE_LEFT);
   });
 
-  test("ENERGY_CHAIN + has_chemical_pump + chemical_pump_pos=WASH_BAY + LEFT → left 3/4\" tube included", () => {
-    const config = ecLeft({ has_chemical_pump: true, chemical_pump_pos: "WASH_BAY", chemical_qty: 1 });
+  test('ENERGY_CHAIN + has_chemical_pump + chemical_pump_pos=WASH_BAY + LEFT → left 3/4" tube included', () => {
+    const config = ecLeft({
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+    });
     expect(pns(config)).toContain(PNS.EC_PREWASH_WATER_TUBE_LEFT);
     expect(pns(config)).not.toContain(PNS.EC_PREWASH_WATER_TUBE_RIGHT);
   });
 
   test("ENERGY_CHAIN + has_chemical_pump + chemical_pump_pos=WASH_BAY + chemical_qty=1 → qty=1", () => {
-    const config = ecLeft({ has_chemical_pump: true, chemical_pump_pos: "WASH_BAY", chemical_qty: 1 });
+    const config = ecLeft({
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+    });
     expect(qty(config, PNS.EC_PREWASH_WATER_TUBE_LEFT)).toBe(1);
   });
 
   test("ENERGY_CHAIN + has_chemical_pump + chemical_qty=2 + WASH_BAY → qty=2", () => {
-    const config = ecLeft({ has_chemical_pump: true, chemical_pump_pos: "WASH_BAY", chemical_qty: 2 });
+    const config = ecLeft({
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 2,
+    });
     expect(qty(config, PNS.EC_PREWASH_WATER_TUBE_LEFT)).toBe(2);
   });
 
@@ -317,7 +370,10 @@ describe("supplyBOM — energy chain 3/4\" water tubes (450.74.002 / 450.74.006)
 
 describe("supplyBOM — energy chain air tubes to HP valve (450.74.003 / 450.74.007)", () => {
   test("ENERGY_CHAIN + LEFT + has_omz_pump + pump_outlet_omz=HP_ROOF_BAR_SPINNERS → left air HP tube", () => {
-    const config = ecLeft({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR_SPINNERS" });
+    const config = ecLeft({
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
+    });
     expect(pns(config)).toContain(PNS.EC_AIR_TUBE_HP_VALVE_LEFT);
     expect(pns(config)).not.toContain(PNS.EC_AIR_TUBE_HP_VALVE_RIGHT);
   });

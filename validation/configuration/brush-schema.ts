@@ -10,16 +10,16 @@ export const BrushTypeEnum = z.enum(["THREAD", "MIXED", "CARLITE"], {
 });
 export const brushTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   BrushTypeEnum,
-  ["Filo", "Misto", "Carlite"]
+  ["Filo", "Misto", "Carlite"],
 );
 
 export const BrushColorEnum = z.enum(
   ["BLUE_SILVER", "GREEN_SILVER", "RED", "GREEN_BLACK"],
-  { message: genericRequiredMessage }
+  { message: genericRequiredMessage },
 );
 export const brushColors: SelectOption[] = generateSelectOptionsFromZodEnum(
   BrushColorEnum,
-  ["Blu/Argento", "Verde/Argento", "Rosso", "Verde/Nero"]
+  ["Blu/Argento", "Verde/Argento", "Rosso", "Verde/Nero"],
 );
 
 // Number of brushes

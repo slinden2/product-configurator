@@ -19,7 +19,7 @@ function isPartNumberArray(array: any): array is NewPartNumber[] {
       typeof item.description === "string" &&
       pnTypeEnum.enumValues.includes(item.pn_type) &&
       (item.is_phantom === false || item.is_phantom === true) &&
-      typeof item.cost === "string"
+      typeof item.cost === "string",
   );
 }
 
@@ -65,7 +65,7 @@ async function batchUpsert() {
   }
   console.timeEnd("Update records in Supabase");
   console.log(
-    `Upsert completed: ${cleanPartNumbers.length} records in ${Math.ceil(cleanPartNumbers.length / BATCH_SIZE)} batch(es).`
+    `Upsert completed: ${cleanPartNumbers.length} records in ${Math.ceil(cleanPartNumbers.length / BATCH_SIZE)} batch(es).`,
   );
 }
 

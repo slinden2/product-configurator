@@ -1,8 +1,12 @@
 import { vi, describe, test, expect } from "vitest";
 
 // Mock @/db to prevent DATABASE_URL check on module load
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import {
   calculateLinePostAssyQty,
@@ -72,7 +76,10 @@ describe("calculateLinePostAssyQty", () => {
   });
 
   test("no festoons + energy chain + no central post (L150) → 9", () => {
-    const config = withEnergyChainNoCentralPost({ hp_lance_qty: 0, det_lance_qty: 0 });
+    const config = withEnergyChainNoCentralPost({
+      hp_lance_qty: 0,
+      det_lance_qty: 0,
+    });
     expect(calculateLinePostAssyQty(config)).toBe(9);
   });
 
@@ -167,7 +174,7 @@ describe("Energy chain hoses & cables BOM", () => {
     const config = withEnergyChain();
     const items = filterBOM(config);
     const powerCable = items.find((i) =>
-      i._description.includes("Power cable")
+      i._description.includes("Power cable"),
     );
     expect(powerCable).toBeDefined();
     expect(powerCable!.qty).toBe(1);
@@ -177,7 +184,7 @@ describe("Energy chain hoses & cables BOM", () => {
     const config = makeConfig({ has_gantry: true });
     const items = filterBOM(config);
     const ecItems = items.filter((i) =>
-      i._description.includes("energy chain")
+      i._description.includes("energy chain"),
     );
     expect(ecItems).toHaveLength(0);
   });
@@ -189,7 +196,7 @@ describe("Energy chain hoses & cables BOM", () => {
     });
     const items = filterBOM(config);
     const profinet = items.filter((i) =>
-      i._description.includes("Profinet cable")
+      i._description.includes("Profinet cable"),
     );
     expect(profinet).toHaveLength(1);
     expect(profinet[0]._description).toContain("left");
@@ -203,7 +210,7 @@ describe("Energy chain hoses & cables BOM", () => {
     });
     const items = filterBOM(config);
     const profinet = items.filter((i) =>
-      i._description.includes("Profinet cable")
+      i._description.includes("Profinet cable"),
     );
     expect(profinet).toHaveLength(1);
     expect(profinet[0]._description).toContain("right");
@@ -213,7 +220,7 @@ describe("Energy chain hoses & cables BOM", () => {
     const config = withEnergyChain({ ec_profinet_cable_qty: 0 });
     const items = filterBOM(config);
     const profinet = items.filter((i) =>
-      i._description.includes("Profinet cable")
+      i._description.includes("Profinet cable"),
     );
     expect(profinet).toHaveLength(0);
   });
@@ -237,12 +244,22 @@ describe("Energy chain hoses & cables BOM", () => {
     });
     const items = filterBOM(config);
 
-    expect(items.find((i) => i._description.includes('Water tube 1"'))!.qty).toBe(2);
-    expect(items.find((i) => i._description.includes('Water tube 3/4"'))!.qty).toBe(1);
+    expect(
+      items.find((i) => i._description.includes('Water tube 1"'))!.qty,
+    ).toBe(2);
+    expect(
+      items.find((i) => i._description.includes('Water tube 3/4"'))!.qty,
+    ).toBe(1);
     expect(items.find((i) => i._description.includes("Air tube"))!.qty).toBe(1);
-    expect(items.find((i) => i._description.includes('R1 tube 1"'))!.qty).toBe(2);
-    expect(items.find((i) => i._description.includes('R2 tube 1"'))!.qty).toBe(1);
-    expect(items.find((i) => i._description.includes("R2 tube 3/4"))!.qty).toBe(3);
+    expect(items.find((i) => i._description.includes('R1 tube 1"'))!.qty).toBe(
+      2,
+    );
+    expect(items.find((i) => i._description.includes('R2 tube 1"'))!.qty).toBe(
+      1,
+    );
+    expect(items.find((i) => i._description.includes("R2 tube 3/4"))!.qty).toBe(
+      3,
+    );
   });
 
   test("tubes with qty 0 or null are excluded", () => {
@@ -252,8 +269,14 @@ describe("Energy chain hoses & cables BOM", () => {
       ec_r1_1_tube_qty: null,
     });
     const items = filterBOM(config);
-    expect(items.find((i) => i._description.includes('Water tube 3/4"'))).toBeUndefined();
-    expect(items.find((i) => i._description.includes("Air tube"))).toBeUndefined();
-    expect(items.find((i) => i._description.includes('R1 tube 1"'))).toBeUndefined();
+    expect(
+      items.find((i) => i._description.includes('Water tube 3/4"')),
+    ).toBeUndefined();
+    expect(
+      items.find((i) => i._description.includes("Air tube")),
+    ).toBeUndefined();
+    expect(
+      items.find((i) => i._description.includes('R1 tube 1"')),
+    ).toBeUndefined();
   });
 });

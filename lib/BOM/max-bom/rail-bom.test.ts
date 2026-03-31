@@ -1,8 +1,12 @@
 import { vi, describe, test, expect } from "vitest";
 
 // Mock @/db to prevent DATABASE_URL check on module load
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import {
   calculate3mRailQty,
@@ -13,7 +17,7 @@ import {
 
 // Helper: build a minimal config with just rail_length set
 const cfg = (rail_length: number) =>
-  ({ rail_length } as Parameters<typeof calculate3mRailQty>[0]);
+  ({ rail_length }) as Parameters<typeof calculate3mRailQty>[0];
 
 describe("calculate3mRailQty", () => {
   test("rail_length = 7 → 0 (formula: floor((7-6)/3) = 0)", () => {
@@ -83,17 +87,17 @@ describe("BOM inclusion conditions for rail items", () => {
 const railCfg = (
   rail_type: "DOWELED" | "WELDED" | "WELDED_RECESSED",
   rail_length: number,
-  dowel_type?: "ZINCATO" | "INOX" | "CHIMICO"
+  dowel_type?: "ZINCATO" | "INOX" | "CHIMICO",
 ) =>
   ({
     rail_type,
     rail_length,
     dowel_type,
-  } as Parameters<typeof calculate3mRailQty>[0]);
+  }) as Parameters<typeof calculate3mRailQty>[0];
 
 function evalConditions(
   item: (typeof railBOM)[number],
-  config: Parameters<typeof calculate3mRailQty>[0]
+  config: Parameters<typeof calculate3mRailQty>[0],
 ): boolean {
   return item.conditions.every((fn) => fn(config));
 }

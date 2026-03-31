@@ -10,5 +10,5 @@ export const MachineTypeEnum = z.enum(["STD", "OMZ"], {
 
 export const machineTypeOpts = generateSelectOptionsFromZodEnum(
   MachineTypeEnum,
-  ["Standard", "OMZ"]
+  ["Standard", "OMZ"],
 );

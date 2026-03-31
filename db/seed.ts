@@ -1,5 +1,10 @@
 import { db } from "@/db";
-import { configurations, userProfiles, washBays, waterTanks } from "@/db/schemas";
+import {
+  configurations,
+  userProfiles,
+  washBays,
+  waterTanks,
+} from "@/db/schemas";
 import { ConfigSchema } from "@/validation/config-schema";
 import { eq, sql } from "drizzle-orm";
 import { transformConfigToDbInsert } from "./transformations";
@@ -107,7 +112,9 @@ const configurationComplicated: ConfigSchema = {
   touch_fixing_type: "POST",
 };
 
-const getWashBayComplicated = (id: number): WashBaySchema & { configuration_id: number } => ({
+const getWashBayComplicated = (
+  id: number,
+): WashBaySchema & { configuration_id: number } => ({
   configuration_id: id,
   hp_lance_qty: 2,
   det_lance_qty: 2,
@@ -125,7 +132,7 @@ const getWashBayComplicated = (id: number): WashBaySchema & { configuration_id: 
   ec_air_tube_qty: 1,
   is_first_bay: true,
   has_bay_dividers: false,
-})
+});
 
 const configurationFast: ConfigSchema = {
   name: "Cliente 3",
@@ -184,7 +191,7 @@ async function seedDb() {
   if (shouldReset) {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
 
-    await db.delete(waterTanks)
+    await db.delete(waterTanks);
     await db.delete(washBays);
     await db.delete(configurations);
 
@@ -231,7 +238,10 @@ async function seedDb() {
 
   for (const [index, conf] of confArr.entries()) {
     const dbData = transformConfigToDbInsert(conf, userArr[index].id);
-    const [inserted] = await db.insert(configurations).values(dbData).returning({ id: configurations.id });
+    const [inserted] = await db
+      .insert(configurations)
+      .values(dbData)
+      .returning({ id: configurations.id });
 
     if (conf === configurationComplicated && inserted) {
       await db.insert(washBays).values(getWashBayComplicated(inserted.id));

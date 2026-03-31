@@ -23,7 +23,7 @@ interface SortState {
 
 const BOMDataTable = ({ items }: BOMDataTableProps) => {
   const [dataArr, setDataArr] = useState<BOMItemWithDescription[]>(() =>
-    [...items].sort((a, b) => a.pn.localeCompare(b.pn))
+    [...items].sort((a, b) => a.pn.localeCompare(b.pn)),
   );
   const [sorting, setSorting] = useState<SortState>({
     key: "pn",
@@ -57,14 +57,16 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
           <TableHead className="w-16 hidden sm:table-cell">POS</TableHead>
           <TableHead
             className="w-32 py-2 cursor-pointer whitespace-nowrap"
-            onClick={() => sortTable("pn")}>
+            onClick={() => sortTable("pn")}
+          >
             <span className="flex items-center">
               Codice <ArrowDownUp size={16} className="ml-1" />
             </span>
           </TableHead>
           <TableHead
             className="w-full py-2 cursor-pointer"
-            onClick={() => sortTable("description")}>
+            onClick={() => sortTable("description")}
+          >
             <span className="flex items-center">
               Descrizione <ArrowDownUp size={16} className="ml-1" />
             </span>
@@ -78,13 +80,13 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
         {dataArr.map((item, key) => (
           <TableRow key={key}>
             <TableCell className="hidden sm:table-cell">{key + 1}</TableCell>
-            <TableCell className="w-32 py-2 whitespace-nowrap">{item.pn}</TableCell>
+            <TableCell className="w-32 py-2 whitespace-nowrap">
+              {item.pn}
+            </TableCell>
             <TableCell className="py-2 break-words min-w-0">
               {item.description}
             </TableCell>
-            <TableCell className="w-24 py-2 text-center">
-              {item.qty}
-            </TableCell>
+            <TableCell className="w-24 py-2 text-center">{item.qty}</TableCell>
           </TableRow>
         ))}
       </TableBody>

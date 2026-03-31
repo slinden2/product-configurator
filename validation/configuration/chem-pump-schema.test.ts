@@ -74,7 +74,7 @@ describe("chemPumpSchema", () => {
         has_acid_pump: false,
       });
       expect(() => chemPumpSchema.parse(invalidData)).toThrow(
-        "Numero di pompe di prelavaggio deve essere 1 o 2."
+        "Numero di pompe di prelavaggio deve essere 1 o 2.",
       );
     });
 
@@ -87,7 +87,7 @@ describe("chemPumpSchema", () => {
         acid_pump_pos: ChemicalPumpPosEnum.enum.ONBOARD,
       });
       expect(() => chemPumpSchema.parse(invalidData)).toThrow(
-        "A bordo impianto si possono montare solo due pompe di prelavaggio."
+        "A bordo impianto si possono montare solo due pompe di prelavaggio.",
       );
     });
   });

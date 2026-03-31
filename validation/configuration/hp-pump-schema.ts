@@ -7,7 +7,7 @@ import { z } from "zod";
 
 export const HPPumpOutlet15kwEnum = z.enum(
   ["CHASSIS_WASH", "LOW_SPINNERS", "LOW_BARS", "HIGH_BARS"],
-  { message: genericRequiredMessage }
+  { message: genericRequiredMessage },
 );
 
 export const hpPumpOutlet15kwTypes: SelectOption[] =
@@ -26,7 +26,7 @@ export const HPPumpOutlet30kwEnum = z.enum(
     "LOW_MEDIUM_SPINNERS",
     "HIGH_MEDIUM_SPINNERS",
   ],
-  { message: genericRequiredMessage }
+  { message: genericRequiredMessage },
 );
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
@@ -40,7 +40,7 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
 
 export const ChassisWashSensorTypeEnum = z.enum(
   ["SINGLE_POST", "DOUBLE_POST", "SINGLE_WALL", "DOUBLE_WALL"],
-  { message: genericRequiredMessage }
+  { message: genericRequiredMessage },
 );
 
 export const chassisWashSensorTypeOpts: SelectOption[] =
@@ -72,7 +72,7 @@ export function hasAnyChassiswashOutlet(data: {
 
 export const OMZPumpOutletEnum = z.enum(
   ["HP_ROOF_BAR", "SPINNERS", "HP_ROOF_BAR_SPINNERS"],
-  { message: genericRequiredMessage }
+  { message: genericRequiredMessage },
 );
 
 export const omzPumpOutletTypes: SelectOption[] =
@@ -89,7 +89,7 @@ function validatePumpOutlets<T>(
   pumpOutlet2: T | undefined,
   ctx: z.RefinementCtx,
   chassisWashOption: T | T[],
-  errorPaths: string[]
+  errorPaths: string[],
 ) {
   if (!hasPump) {
     return;
@@ -164,7 +164,7 @@ function validatePumpOutlets<T>(
 function transformPumpOutlets<
   TData extends Partial<Record<TKey1 | TKey2, unknown>>, // Ensure keys exist
   TKey1 extends keyof TData,
-  TKey2 extends keyof TData
+  TKey2 extends keyof TData,
 >(data: TData, pumpOutlet1Key: TKey1, pumpOutlet2Key: TKey2): TData {
   const pumpOutlet1 = data[pumpOutlet1Key];
   const pumpOutlet2 = data[pumpOutlet2Key];
@@ -205,12 +205,12 @@ const hpPump15kwDiscriminatedUnion = z
           data.pump_outlet_2_15kw,
           ctx,
           HPPumpOutlet15kwEnum.enum.CHASSIS_WASH,
-          ["pump_outlet_1_15kw", "pump_outlet_2_15kw"]
-        )
+          ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
+        ),
       )
       .transform((data) =>
-        transformPumpOutlets(data, "pump_outlet_1_15kw", "pump_outlet_2_15kw")
-      )
+        transformPumpOutlets(data, "pump_outlet_1_15kw", "pump_outlet_2_15kw"),
+      ),
   );
 
 const hpPump30kwDiscriminatedUnion = z
@@ -242,12 +242,12 @@ const hpPump30kwDiscriminatedUnion = z
             HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_HORIZONTAL,
             HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_LATERAL_HORIZONTAL,
           ],
-          ["pump_outlet_1_30kw", "pump_outlet_2_30kw"]
-        )
+          ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
+        ),
       )
       .transform((data) =>
-        transformPumpOutlets(data, "pump_outlet_1_30kw", "pump_outlet_2_30kw")
-      )
+        transformPumpOutlets(data, "pump_outlet_1_30kw", "pump_outlet_2_30kw"),
+      ),
   );
 
 const hpPumpOmzDiscriminatedUnion = z
@@ -296,7 +296,7 @@ const hpPumpOmzDiscriminatedUnion = z
             });
           }
         }
-      })
+      }),
   );
 
 // --- Final Combined Schema ---
@@ -306,7 +306,7 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
   .and(
     z.object({
       chassis_wash_sensor_type: ChassisWashSensorTypeEnum.optional(),
-    })
+    }),
   )
   .superRefine((data, ctx) => {
     // Final check: cannot have both 15kW and 30kW pumps

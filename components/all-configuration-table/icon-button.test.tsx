@@ -42,7 +42,7 @@ describe("IconButton", () => {
           title="Modifica"
           variant="ghost"
           disabled={false}
-        />
+        />,
       );
 
       const link = screen.getByRole("link", { name: "Modifica" });
@@ -58,10 +58,12 @@ describe("IconButton", () => {
           title="Modifica"
           variant="ghost"
           disabled={false}
-        />
+        />,
       );
 
-      expect(screen.getByRole("button", { name: "Modifica" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Modifica" }),
+      ).toBeInTheDocument();
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
   });
@@ -75,7 +77,7 @@ describe("IconButton", () => {
           title="Modifica"
           variant="ghost"
           disabled={true}
-        />
+        />,
       );
 
       const button = screen.getByRole("button", { name: "Modifica" });
@@ -95,7 +97,7 @@ describe("IconButton", () => {
           variant="ghost"
           disabled={false}
           onClick={handleClick}
-        />
+        />,
       );
 
       await userEvent.click(screen.getByRole("button", { name: "Elimina" }));
@@ -112,7 +114,7 @@ describe("IconButton", () => {
           variant="ghost"
           disabled={true}
           onClick={handleClick}
-        />
+        />,
       );
 
       await userEvent.click(screen.getByRole("button", { name: "Elimina" }));

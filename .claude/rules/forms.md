@@ -1,6 +1,7 @@
 # Form Architecture & Implementation Rules
 
 ## Architecture Overview
+
 - **ConfigForm** is the main form, composed of 8 section components (General, Brush, ChemPump, WaterSupply, Supply, Rail, Touch, HPPump)
 - **SubRecordForm** (`components/shared/sub-record-form.tsx`) — generic, schema-inferred form wrapper for water tanks and wash bays (create/update/delete)
 - **SelectField** handles string↔number/boolean type conversion; supports `fieldsToResetOnValue` for dependent field clearing

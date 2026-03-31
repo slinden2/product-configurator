@@ -1,6 +1,7 @@
 # BOM Domain
 
 The system has two BOM modes:
+
 - **Real-time calculated BOM:** Generated on-the-fly from rule files. `BOM` class (singleton via `BOM.init(config)`) calls `buildCompleteBOM()` → `{ generalBOM, waterTankBOMs, washBayBOMs }`.
 - **Engineering BOM snapshot:** Frozen copy stored in `engineering_bom_items` table for engineers to review and modify.
 

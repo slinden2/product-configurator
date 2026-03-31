@@ -5,37 +5,37 @@ describe("washBaySchema", () => {
   describe("Lance quantities (must be 0 or 2)", () => {
     test("should pass with both lances at 0", () => {
       expect(() =>
-        washBaySchema.parse({ hp_lance_qty: 0, det_lance_qty: 0 })
+        washBaySchema.parse({ hp_lance_qty: 0, det_lance_qty: 0 }),
       ).not.toThrow();
     });
 
     test("should pass with both lances at 2", () => {
       expect(() =>
-        washBaySchema.parse({ hp_lance_qty: 2, det_lance_qty: 2 })
+        washBaySchema.parse({ hp_lance_qty: 2, det_lance_qty: 2 }),
       ).not.toThrow();
     });
 
     test("should pass with mixed valid values (0 and 2)", () => {
       expect(() =>
-        washBaySchema.parse({ hp_lance_qty: 0, det_lance_qty: 2 })
+        washBaySchema.parse({ hp_lance_qty: 0, det_lance_qty: 2 }),
       ).not.toThrow();
     });
 
     test("should fail when hp_lance_qty is 1", () => {
       expect(() =>
-        washBaySchema.parse({ hp_lance_qty: 1, det_lance_qty: 0 })
+        washBaySchema.parse({ hp_lance_qty: 1, det_lance_qty: 0 }),
       ).toThrow("La quantità di lance deve essere 0 o 2.");
     });
 
     test("should fail when det_lance_qty is 1", () => {
       expect(() =>
-        washBaySchema.parse({ hp_lance_qty: 0, det_lance_qty: 1 })
+        washBaySchema.parse({ hp_lance_qty: 0, det_lance_qty: 1 }),
       ).toThrow("La quantità di lance deve essere 0 o 2.");
     });
 
     test("should fail when hp_lance_qty is 3", () => {
       expect(() =>
-        washBaySchema.parse({ hp_lance_qty: 3, det_lance_qty: 0 })
+        washBaySchema.parse({ hp_lance_qty: 3, det_lance_qty: 0 }),
       ).toThrow("La quantità di lance deve essere 0 o 2.");
     });
   });
@@ -48,7 +48,7 @@ describe("washBaySchema", () => {
           det_lance_qty: 0,
           pressure_washer_type: "L21_150BAR",
           pressure_washer_qty: 1,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -59,7 +59,7 @@ describe("washBaySchema", () => {
           det_lance_qty: 0,
           pressure_washer_type: undefined,
           pressure_washer_qty: undefined,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -122,7 +122,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           energy_chain_width: "L200",
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -132,7 +132,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           hose_reel_qty: 2,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -142,7 +142,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           hose_reel_qty: 3,
-        })
+        }),
       ).toThrow();
     });
   });
@@ -162,14 +162,14 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_profinet_cable_qty: 0,
-        }).success
+        }).success,
       ).toBe(true);
       expect(
         washBaySchema.safeParse({
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_profinet_cable_qty: 1,
-        }).success
+        }).success,
       ).toBe(true);
     });
 
@@ -179,7 +179,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_profinet_cable_qty: 2,
-        }).success
+        }).success,
       ).toBe(false);
     });
 
@@ -189,7 +189,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_r2_34_inox_tube_qty: 3,
-        }).success
+        }).success,
       ).toBe(true);
     });
 
@@ -199,7 +199,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_r2_34_inox_tube_qty: 4,
-        }).success
+        }).success,
       ).toBe(false);
     });
 
@@ -209,7 +209,7 @@ describe("washBaySchema", () => {
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_air_tube_qty: 2,
-        }).success
+        }).success,
       ).toBe(false);
     });
 

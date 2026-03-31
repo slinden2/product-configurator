@@ -11,7 +11,7 @@ import {
 
 export const energyChainWidthEnum = pgEnum(
   "energy_chain_width",
-  EnergyChainWidths
+  EnergyChainWidths,
 );
 
 export type WashBay = typeof washBays.$inferSelect;
@@ -19,7 +19,7 @@ export type NewWashBay = typeof washBays.$inferInsert;
 
 export const pressureWasherTypeEnum = pgEnum(
   "pressure_washer_type",
-  PressureWashers
+  PressureWashers,
 );
 
 export const washBays = pgTable("wash_bays", {

@@ -3,6 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Persona
+
 You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator. UI labels are in Italian; maintain this convention in all new code.
 
 ## Build & Development Commands
@@ -24,6 +25,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 **Next.js 15 App Router** product configurator for gantry-type rollover wash systems (ITECO SRL) for truck and buses. UI is in Italian. The app is made for internal use only for engineers, technical sales, area managers and sales agents.
 
 ### Core Stack
+
 - **React 19** with **React Hook Form + Zod** for form state/validation
 - **Radix UI / shadcn/ui** components with **Tailwind CSS** (dark mode via class)
 - **Drizzle ORM + PostgreSQL** with Row Level Security (RLS)
@@ -31,6 +33,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - **Vitest + @testing-library/react** for testing
 
 ### Key Directories
+
 - `app/actions/` — Server Actions for all mutations (config CRUD, auth, status changes)
 - `components/config-form/` — Configuration form sections (brush, pump, water, rail, touch, etc.)
 - `components/shared/` — SubRecordForm: generic form wrapper for water tanks & wash bays
@@ -44,6 +47,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - `lib/BOM/` — BOM generation (see `lib/BOM/CLAUDE.md` for domain details)
 
 ### Routing & Pages
+
 - **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`
 - **Domain routes:** `configurations/` (list), `configurations/new`, `configurations/edit/[id]`, `configurations/bom/[id]`
 - **Admin:** `users/` for user management
@@ -51,6 +55,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - **Data fetching:** Server-side in the page component; pass data as props to client components.
 
 ### Domain-Specific Guidance
+
 - **BOM rules & lifecycle:** `lib/BOM/CLAUDE.md`
 - **Database conventions:** `db/CLAUDE.md`
 - **Server action standards:** `app/actions/CLAUDE.md`
@@ -59,6 +64,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - **Testing patterns:** `.claude/rules/testing.md`
 
 ## Operational Constraints
+
 - Server Actions: Always use revalidatePath after any mutation in app/actions/. Never bypass Server Actions for direct DB calls.
 - Form State: When modifying components/config-form/, never introduce useState for form fields. Use only react-hook-form methods (setValue, watch, control) to ensure Zod validation remains in sync.
 - Type Safety: Always use the types defined in types/index.ts. If a new entity is added, define the Zod schema in validation/ before touching the DB schema.
@@ -67,7 +73,9 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - Component Readability: Keep React components focused and readable. If a component grows too large or handles multiple concerns, split it into smaller, well-named sub-components. Avoid deeply nested conditionals and long render functions — extract sections into dedicated components or custom hooks.
 
 ## Development Checklist
+
 Before finalizing any change, verify:
+
 1. **Status Check:** Does the Server Action call `isEditable(status, role)` (`app/actions/lib/auth-checks.ts`) to verify the configuration is editable?
 2. **Dependent Fields:** If adding or modifying a `SelectField` or `CheckboxField`, are `fieldsToReset` correctly mapped to the Zod schema keys?
 3. **Type Safety:** Does the change respect the existing types in `types/index.ts` without using `any` or loose type casting? Always run `npm run type-check` to ensure no regressions were introduced.
@@ -75,7 +83,9 @@ Before finalizing any change, verify:
 5. **Localization:** Are all new UI labels in Italian?
 
 ## Post-Change Verification
+
 After every code change, run all three checks before considering the task complete:
+
 1. `npm run lint`
 2. `npm run type-check:incremental`
 3. `npm run test:run`

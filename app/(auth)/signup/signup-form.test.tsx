@@ -33,7 +33,10 @@ describe("SignupForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSignUp.mockResolvedValue({ success: true, data: { user: { id: "u1" } } });
+    mockSignUp.mockResolvedValue({
+      success: true,
+      data: { user: { id: "u1" } },
+    });
   });
 
   describe("Rendering", () => {
@@ -44,7 +47,7 @@ describe("SignupForm", () => {
       expect(screen.getByLabelText("Password")).toBeInTheDocument();
       expect(screen.getByLabelText("Conferma password")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Registra" })
+        screen.getByRole("button", { name: "Registra" }),
       ).toBeInTheDocument();
     });
   });
@@ -56,7 +59,10 @@ describe("SignupForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
       await user.type(screen.getByLabelText("Password"), "password123");
-      await user.type(screen.getByLabelText("Conferma password"), "password123");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "password123",
+      );
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {
@@ -70,18 +76,26 @@ describe("SignupForm", () => {
     });
 
     test("shows toast error on error response and does not redirect", async () => {
-      mockSignUp.mockResolvedValue({ success: false, error: "Errore durante l'autenticazione." });
+      mockSignUp.mockResolvedValue({
+        success: false,
+        error: "Errore durante l'autenticazione.",
+      });
 
       const user = userEvent.setup();
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
       await user.type(screen.getByLabelText("Password"), "password123");
-      await user.type(screen.getByLabelText("Conferma password"), "password123");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "password123",
+      );
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Errore durante l'autenticazione.");
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Errore durante l'autenticazione.",
+        );
         expect(mockPush).not.toHaveBeenCalled();
       });
     });
@@ -103,7 +117,10 @@ describe("SignupForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "test@example.com");
       await user.type(screen.getByLabelText("Password"), "password123");
-      await user.type(screen.getByLabelText("Conferma password"), "different456");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "different456",
+      );
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {

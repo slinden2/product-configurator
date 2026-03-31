@@ -12,9 +12,7 @@ const ConfigurationStatusBadge = ({
 }: ConfigurationStatusBadgeProps) => {
   const { label, color } = STATUS_CONFIG[status];
   return (
-    <Badge
-      className="text-background"
-      style={{ backgroundColor: color }}>
+    <Badge className="text-background" style={{ backgroundColor: color }}>
       {label}
     </Badge>
   );

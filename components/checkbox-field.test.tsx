@@ -93,9 +93,7 @@ describe("CheckboxField", () => {
     test("resets fields when unchecked", async () => {
       const { getValues } = renderCheckboxField({
         props: {
-          fieldsToResetOnUncheck: [
-            { fieldsToReset: ["related"] },
-          ],
+          fieldsToResetOnUncheck: [{ fieldsToReset: ["related"] }],
         },
         defaults: { enabled: true, related: "initial" },
       });
@@ -109,9 +107,7 @@ describe("CheckboxField", () => {
     test("does NOT reset fields when checked", async () => {
       const { getValues } = renderCheckboxField({
         props: {
-          fieldsToResetOnUncheck: [
-            { fieldsToReset: ["related"] },
-          ],
+          fieldsToResetOnUncheck: [{ fieldsToReset: ["related"] }],
         },
         defaults: { enabled: false, related: "initial" },
       });

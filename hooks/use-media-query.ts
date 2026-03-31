@@ -14,9 +14,7 @@ function useMediaQuery(query: string): boolean {
       return () => mediaQueryList.removeEventListener("change", callback);
     },
     () =>
-      typeof window !== "undefined"
-        ? window.matchMedia(query).matches
-        : false,
+      typeof window !== "undefined" ? window.matchMedia(query).matches : false,
     () => false,
   );
 }

@@ -47,12 +47,12 @@ const detergentPumpDiscriminatedUnion = z.discriminatedUnion(
           (value) => chemicalNum.map((item) => item.value).includes(value),
           {
             message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
-          }
+          },
         ),
       chemical_pump_pos: ChemicalPumpPosEnum,
       has_foam: z.boolean().default(false),
     }),
-  ]
+  ],
 );
 
 const detergentPumpSchema = z

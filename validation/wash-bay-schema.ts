@@ -103,7 +103,7 @@ export const washBaySchema = z
 export type WashBaySchema = z.infer<typeof washBaySchema>;
 
 export const updateWashBaySchema = washBaySchema.and(
-  z.object({ id: z.number(), configuration_id: z.number() })
+  z.object({ id: z.number(), configuration_id: z.number() }),
 );
 export type UpdateWashBaySchema = z.infer<typeof updateWashBaySchema>;
 

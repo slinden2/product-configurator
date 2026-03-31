@@ -60,10 +60,7 @@ const BOMView = async (props: BOMViewProps) => {
         </div>
       </div>
 
-      <MetaDataTable
-        clientName={clientName}
-        description={description || ""}
-      />
+      <MetaDataTable clientName={clientName} description={description || ""} />
 
       {hasEbom && ebomCreatedAt && (
         <p className="text-sm text-muted-foreground">

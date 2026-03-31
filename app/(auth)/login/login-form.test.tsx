@@ -33,7 +33,10 @@ describe("LoginForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSignIn.mockResolvedValue({ success: true, data: { user: { id: "u1" } } });
+    mockSignIn.mockResolvedValue({
+      success: true,
+      data: { user: { id: "u1" } },
+    });
   });
 
   describe("Rendering", () => {
@@ -48,7 +51,7 @@ describe("LoginForm", () => {
       render(<LoginForm />);
 
       expect(
-        screen.getByRole("button", { name: "Accedi" })
+        screen.getByRole("button", { name: "Accedi" }),
       ).toBeInTheDocument();
     });
 
@@ -56,10 +59,10 @@ describe("LoginForm", () => {
       render(<LoginForm />);
 
       expect(
-        screen.getByPlaceholderText("Inserire la email")
+        screen.getByPlaceholderText("Inserire la email"),
       ).toBeInTheDocument();
       expect(
-        screen.getByPlaceholderText("Inserire la password")
+        screen.getByPlaceholderText("Inserire la password"),
       ).toBeInTheDocument();
     });
   });
@@ -83,7 +86,10 @@ describe("LoginForm", () => {
     });
 
     test("shows toast error on error response and does not redirect", async () => {
-      mockSignIn.mockResolvedValue({ success: false, error: "Errore durante l'autenticazione." });
+      mockSignIn.mockResolvedValue({
+        success: false,
+        error: "Errore durante l'autenticazione.",
+      });
 
       const user = userEvent.setup();
       render(<LoginForm />);
@@ -93,7 +99,9 @@ describe("LoginForm", () => {
       await user.click(screen.getByRole("button", { name: "Accedi" }));
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Errore durante l'autenticazione.");
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Errore durante l'autenticazione.",
+        );
         expect(mockPush).not.toHaveBeenCalled();
       });
     });

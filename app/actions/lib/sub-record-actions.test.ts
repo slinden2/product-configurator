@@ -107,7 +107,7 @@ describe("handleSubRecordAction", () => {
 
   test("insert: returns error on invalid form data", async () => {
     const result = await handleSubRecordAction(
-      insertOptions({ formData: { value: "" } })
+      insertOptions({ formData: { value: "" } }),
     );
     expect(result.success).toBe(false);
   });
@@ -347,7 +347,7 @@ describe("handleSubRecordAction", () => {
     await handleSubRecordAction(insertOptions());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${PARENT_ID}`
+      `/configurations/bom/${PARENT_ID}`,
     );
   });
 });

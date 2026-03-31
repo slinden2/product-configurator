@@ -35,7 +35,7 @@ interface InsertSubRecordOptions<TFormSchema extends z.ZodTypeAny>
   schema: TFormSchema;
   queryFn: (
     parentId: number,
-    data: z.infer<TFormSchema>
+    data: z.infer<TFormSchema>,
   ) => Promise<QueryResult>;
 }
 
@@ -48,17 +48,14 @@ interface EditSubRecordOptions<TFormSchema extends z.ZodTypeAny>
   queryFn: (
     parentId: number,
     recordId: number,
-    data: z.infer<TFormSchema>
+    data: z.infer<TFormSchema>,
   ) => Promise<QueryResult>;
 }
 
 interface DeleteSubRecordOptions extends SubRecordOptionsBase {
   actionType: "delete";
   recordId: number;
-  queryFn: (
-    parentId: number,
-    recordId: number
-  ) => Promise<QueryResult>;
+  queryFn: (parentId: number, recordId: number) => Promise<QueryResult>;
 }
 
 type SubRecordOptions<TFormSchema extends z.ZodTypeAny> =
@@ -81,10 +78,7 @@ export async function handleSubRecordAction<
   if (actionType === "insert" || actionType === "edit") {
     const validation = options.schema.safeParse(options.formData);
     if (!validation.success) {
-      console.error(
-        `Invalid ${entityName} data:`,
-        validation.error.flatten()
-      );
+      console.error(`Invalid ${entityName} data:`, validation.error.flatten());
       return {
         success: false as const,
         error: validation.error?.message || MSG.entity.invalidData(entityName),
@@ -137,7 +131,11 @@ export async function handleSubRecordAction<
         result = await options.queryFn(parentId, validatedData!);
         break;
       case "edit":
-        result = await options.queryFn(parentId, options.recordId, validatedData!);
+        result = await options.queryFn(
+          parentId,
+          options.recordId,
+          validatedData!,
+        );
         break;
       case "delete":
         result = await options.queryFn(parentId, options.recordId);

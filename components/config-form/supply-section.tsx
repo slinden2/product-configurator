@@ -23,7 +23,8 @@ const SupplySection = () => {
   return (
     <Fieldset
       title="Alimentazione portale"
-      description="Configura le impostazioni per la tipologia di alimentazione del portale e il lato">
+      description="Configura le impostazioni per la tipologia di alimentazione del portale e il lato"
+    >
       <div className="fs-content">
         <div className="fs-row">
           <div className="fs-item">

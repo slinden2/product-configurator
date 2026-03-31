@@ -92,10 +92,10 @@ const FormContainer = ({
   hasEngineeringBom,
 }: ConfigurationFormProps) => {
   const [waterTanks, setWaterTanks] = useState<UpdateWaterTankSchema[]>(
-    initialWaterTanks || []
+    initialWaterTanks || [],
   );
   const [washBays, setWashBays] = useState<UpdateWashBaySchema[]>(
-    initialWashBays || []
+    initialWashBays || [],
   );
   const [showAddWaterTankForm, setShowAddWaterTankForm] =
     useState<boolean>(false);
@@ -105,7 +105,8 @@ const FormContainer = ({
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 640px)");
-  const showAddEntityButton = !!confStatus && !!userRole && isEditable(confStatus, userRole);
+  const showAddEntityButton =
+    !!confStatus && !!userRole && isEditable(confStatus, userRole);
 
   useEffect(() => {
     setWaterTanks(initialWaterTanks || []);
@@ -151,7 +152,9 @@ const FormContainer = ({
   const handleSaveAndSwitch = () => {
     setIsUnsavedModalOpen(false);
     dirtyFormKeys.forEach((key) => {
-      (document.getElementById(`form-${key}`) as HTMLFormElement | null)?.requestSubmit();
+      (
+        document.getElementById(`form-${key}`) as HTMLFormElement | null
+      )?.requestSubmit();
     });
   };
 
@@ -173,7 +176,10 @@ const FormContainer = ({
   };
 
   const handleSaveSuccess = (entityName: "Serbatoio" | "Pista") => {
-    const setter = entityName === "Serbatoio" ? setShowAddWaterTankForm : setShowAddWashBayForm;
+    const setter =
+      entityName === "Serbatoio"
+        ? setShowAddWaterTankForm
+        : setShowAddWashBayForm;
     setter(false);
   };
 
@@ -187,7 +193,8 @@ const FormContainer = ({
         value={activeTab}
         onValueChange={handleTabChange}
         defaultValue="config"
-        className="w-full space-y-4">
+        className="w-full space-y-4"
+      >
         {isDesktop ? (
           <TabsList className="w-full grid grid-cols-3">
             {TABS_CONFIG.map((tab) => (
@@ -278,7 +285,8 @@ const FormContainer = ({
               configuration?.supply_type === "ENERGY_CHAIN" &&
               !washBays.some((wb) => wb.has_gantry && wb.energy_chain_width) ? (
                 <p className="text-sm text-destructive border border-destructive/40 rounded-md px-3 py-2">
-                  Con la catena portacavi è obbligatoria almeno una pista con portale e larghezza catena configurata.
+                  Con la catena portacavi è obbligatoria almeno una pista con
+                  portale e larghezza catena configurata.
                 </p>
               ) : undefined
             }
@@ -329,12 +337,17 @@ const FormContainer = ({
           <ResponsiveModalHeader className="mb-4">
             <ResponsiveModalTitle>Modifiche non salvate</ResponsiveModalTitle>
             <ResponsiveModalDescription>
-              Hai modifiche non salvate. Cosa vuoi fare prima di cambiare sezione?
+              Hai modifiche non salvate. Cosa vuoi fare prima di cambiare
+              sezione?
             </ResponsiveModalDescription>
           </ResponsiveModalHeader>
           <ResponsiveModalFooter className="gap-2">
             <ResponsiveModalClose asChild>
-              <Button type="button" variant="outline" className="sm:min-w-[100px]">
+              <Button
+                type="button"
+                variant="outline"
+                className="sm:min-w-[100px]"
+              >
                 Continua a modificare
               </Button>
             </ResponsiveModalClose>

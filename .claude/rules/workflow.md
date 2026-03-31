@@ -26,9 +26,10 @@ The app manages a 3-stage hand-off between sales, engineering, and production.
 ## Editable Logic (Immutable States)
 
 A configuration is ONLY editable if:
+
 - `status` is `DRAFT`, `SUBMITTED`, or `IN_REVIEW` AND
 - `(user.role === 'ENGINEER' || user.role === 'ADMIN')`
-- *Exception:* `SALES` can ONLY edit if `status` is `DRAFT` and they are the owner of the configuration.
+- _Exception:_ `SALES` can ONLY edit if `status` is `DRAFT` and they are the owner of the configuration.
 
 **Frozen States:** Any configuration in `APPROVED` or `CLOSED` is **Read-Only** for all users. To edit, an ENGINEER/ADMIN must transition the status back to `IN_REVIEW`.
 

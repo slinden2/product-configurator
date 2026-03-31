@@ -3,12 +3,15 @@
 All actions in this directory MUST follow this rigid execution flow and return shape to ensure frontend compatibility and security.
 
 ## Return Type Shape
+
 Actions must always return an object with this structure:
 `{ success: boolean, error?: string, data?: any, id?: number | string }`
+
 - Use `as const` for the `success` boolean.
 - Error messages must be in **Italian**.
 
 ## Implementation Template (Strict Order)
+
 1. **Validation:** `safeParse` the input immediately using the relevant Zod schema. This is valid for any action that needs to parse form data.
 2. **Authentication:** Fetch `getUserData()`. Return `{ success: false, error: "Utente non trovato." }` if null.
 3. **Existence & State:** Fetch the current record from the DB. Verify it exists.
@@ -22,10 +25,13 @@ Actions must always return an object with this structure:
    - Default → return `"Errore sconosciuto."`
 
 ## Error Message Registry
+
 All Italian error messages are centralized in `lib/messages.ts` as the `MSG` constant. Import `MSG` from `@/lib/messages` and reference keys like `MSG.auth.unauthorized`, `MSG.config.notFound`, `MSG.db.error`, etc. Never hardcode message strings — always use `MSG`.
 
 ## BOM Cascade Invalidation
+
 When a configuration is edited, the engineering BOM snapshot becomes stale. Any action that mutates configuration data must:
+
 1. Check `hasEngineeringBom(confId)` after the mutation succeeds.
 2. If true, call `deleteAllEngineeringBomItems(confId)` to invalidate the snapshot.
 3. Revalidate the BOM page path: `revalidatePath(/configurations/bom/${confId})`.
@@ -33,21 +39,27 @@ When a configuration is edited, the engineering BOM snapshot becomes stale. Any 
 This applies to `editConfigurationAction` and any new action that changes configuration fields used by BOM rules.
 
 ## Sub-Record Actions
+
 `handleSubRecordAction` in `lib/sub-record-actions.ts` is a generic handler for insert/edit/delete on sub-records (water tanks, wash bays). It uses a discriminated union on `actionType` to enforce type-safe options per variant (each variant requires only its relevant fields: `schema`/`formData` for insert/edit, `recordId` for edit/delete). It follows the standard return-based error pattern — returns `{ success: false, error }` on failure, never throws.
 
 ## Transactions
+
 Use `db.transaction(async (tx) => { ... })` when a mutation involves multiple dependent DB operations that must succeed or fail atomically. Example: BOM regenerate (delete all items + insert new items). Use `tx` (not `db`) for all operations inside the callback.
 
 ## Standard revalidatePath Targets
+
 After mutations, invalidate all affected routes:
+
 - `/configurations` — list page (status/name may have changed)
 - `/configurations/edit/${confId}` — detail/edit page
 - `/configurations/bom/${confId}` — BOM page (if config data or BOM changed)
 
 ## Shared Authorization Helpers
+
 When multiple actions in one file share the same auth logic, extract it into a local helper (e.g., `authorizeEngineeringBomAction()` in `engineering-bom-actions.ts`). This avoids duplicating the validate → auth → permissions chain across every export.
 
 ## Data Flow & Frontend Sync
+
 Server Actions are the only mutation path. The full loop is: **Input → Mutation (Server Action) → Database → Sync**.
 
 - **Form Sync:** The UI must rely on the returned `data` from the Server Action to reset React Hook Form state. Do not manually patch form state after a mutation — always `form.reset(returnedData)`.

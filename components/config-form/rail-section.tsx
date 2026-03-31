@@ -10,7 +10,8 @@ const RailSection = () => {
   return (
     <Fieldset
       title="Rotaie"
-      description="Configurare la tipologia e la lunghezza delle rotaie">
+      description="Configurare la tipologia e la lunghezza delle rotaie"
+    >
       <div className="fs-content">
         <div className="grid gap-3 md:grid-cols-3 md:gap-4">
           <div className="space-y-3 md:col-start-1 md:row-start-1">

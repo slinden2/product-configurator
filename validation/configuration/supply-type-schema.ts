@@ -9,12 +9,12 @@ export const SupplyTypeEnum = z.enum(
   ["STRAIGHT_SHELF", "BOOM", "ENERGY_CHAIN"],
   {
     message: genericRequiredMessage,
-  }
+  },
 );
 
 export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplyTypeEnum,
-  ["Mensola dritta", "Braccio mobile", "Catena portacavi"]
+  ["Mensola dritta", "Braccio mobile", "Catena portacavi"],
 );
 
 export const CableChainWidthEnum = z.enum(["L150", "L200", "L250", "L300"], {
@@ -48,7 +48,7 @@ export const SupplySideEnum = z.enum(["TBD", "LEFT", "RIGHT"], {
 });
 export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplySideEnum,
-  ["Da definire", "Sinistra", "Destra"]
+  ["Da definire", "Sinistra", "Destra"],
 );
 
 export const supplyTypeSchema = z

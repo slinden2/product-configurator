@@ -19,7 +19,7 @@ import { isEditable } from "@/app/actions/lib/auth-checks";
 export const editConfigurationAction = async (
   confId: number,
   ownerId: string,
-  formData: unknown
+  formData: unknown,
 ) => {
   const validation = configSchema.safeParse(formData);
 
@@ -62,7 +62,11 @@ export const editConfigurationAction = async (
       validation.data.supply_type !== "ENERGY_CHAIN";
 
     await db.transaction(async (tx) => {
-      await updateConfiguration(confId, { ...validation.data, user_id: ownerId }, tx);
+      await updateConfiguration(
+        confId,
+        { ...validation.data, user_id: ownerId },
+        tx,
+      );
 
       if (supplyTypeChangedFromEC) {
         await resetWashBayEnergyChainFields(confId, tx);

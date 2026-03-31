@@ -44,7 +44,9 @@ describe("WaterSupplySection", () => {
       renderWaterSupplySection({ water_1_pump: "BOOST_15KW" });
 
       expect(screen.queryByText("Uscite Dosatron")).not.toBeInTheDocument();
-      expect(screen.queryByText("Uscite idropulitrice")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Uscite idropulitrice"),
+      ).not.toBeInTheDocument();
     });
 
     test("outlet fields are shown when INV_3KW_200L is selected", () => {

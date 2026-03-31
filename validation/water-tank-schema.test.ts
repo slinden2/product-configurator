@@ -12,24 +12,26 @@ describe("waterTankSchema", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const typeError = result.error.issues.find(
-          (issue) => issue.path[0] === "type"
+          (issue) => issue.path[0] === "type",
         );
         expect(typeError).toBeDefined();
       }
     });
 
-    test.each(["L2000", "L2000_JOLLY", "L2500", "L4500"])(
-      "should pass with valid type '%s'",
-      (type) => {
-        expect(() =>
-          waterTankSchema.parse({
-            type,
-            outlet_w_valve_qty: 1,
-            outlet_no_valve_qty: 0,
-          })
-        ).not.toThrow();
-      }
-    );
+    test.each([
+      "L2000",
+      "L2000_JOLLY",
+      "L2500",
+      "L4500",
+    ])("should pass with valid type '%s'", (type) => {
+      expect(() =>
+        waterTankSchema.parse({
+          type,
+          outlet_w_valve_qty: 1,
+          outlet_no_valve_qty: 0,
+        }),
+      ).not.toThrow();
+    });
   });
 
   describe("Outlet minimum requirement (at least 1 total)", () => {
@@ -42,7 +44,7 @@ describe("waterTankSchema", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const outletErrors = result.error.issues.filter((issue) =>
-          String(issue.path[0]).startsWith("outlet")
+          String(issue.path[0]).startsWith("outlet"),
         );
         expect(outletErrors.length).toBeGreaterThan(0);
         expect(outletErrors[0].message).toBe("Inserisci almeno una uscita.");
@@ -55,7 +57,7 @@ describe("waterTankSchema", () => {
           type: "L2500",
           outlet_w_valve_qty: 1,
           outlet_no_valve_qty: 0,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -65,7 +67,7 @@ describe("waterTankSchema", () => {
           type: "L4500",
           outlet_w_valve_qty: 0,
           outlet_no_valve_qty: 1,
-        })
+        }),
       ).not.toThrow();
     });
 
@@ -75,7 +77,7 @@ describe("waterTankSchema", () => {
           type: "L2000_JOLLY",
           outlet_w_valve_qty: 2,
           outlet_no_valve_qty: 2,
-        })
+        }),
       ).not.toThrow();
     });
   });
@@ -87,7 +89,7 @@ describe("waterTankSchema", () => {
           type: "L2000",
           outlet_w_valve_qty: 3,
           outlet_no_valve_qty: 0,
-        })
+        }),
       ).toThrow();
     });
 
@@ -97,7 +99,7 @@ describe("waterTankSchema", () => {
           type: "L2000",
           inlet_w_float_qty: 3,
           outlet_w_valve_qty: 1,
-        })
+        }),
       ).toThrow();
     });
 
@@ -107,7 +109,7 @@ describe("waterTankSchema", () => {
           type: "L2000",
           inlet_no_float_qty: -1,
           outlet_w_valve_qty: 1,
-        })
+        }),
       ).toThrow();
     });
   });
@@ -119,7 +121,7 @@ describe("waterTankSchema", () => {
           type: "L2000",
           outlet_w_valve_qty: 1,
           has_blower: true,
-        })
+        }),
       ).not.toThrow();
     });
 

@@ -18,8 +18,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
   });
   const hasGantryWatch = useWatch({ control, name: "has_gantry" });
 
-  const showEnergyChainFields =
-    hasGantryWatch && supplyType === "ENERGY_CHAIN";
+  const showEnergyChainFields = hasGantryWatch && supplyType === "ENERGY_CHAIN";
 
   return (
     <div className="fs-content">

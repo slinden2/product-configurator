@@ -15,13 +15,15 @@ import { isEditable } from "@/app/actions/lib/auth-checks";
 
 interface ConfigurationRowProps {
   configuration: NonNullable<AllConfigurations> extends Array<infer T>
-  ? T
-  : never;
+    ? T
+    : never;
   user: NonNullable<UserData>;
 }
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
-  const canEdit = ["ADMIN", "ENGINEER"].includes(user.role) || configuration.user.id === user.id;
+  const canEdit =
+    ["ADMIN", "ENGINEER"].includes(user.role) ||
+    configuration.user.id === user.id;
   const canDelete = canEdit && isEditable(configuration.status, user.role);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -33,7 +35,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
     try {
       const response = await deleteConfigurationAction(
         configuration.id,
-        user.id
+        user.id,
       );
       if (!response.success) {
         toast.error(MSG.toast.deleteError);
@@ -66,12 +68,8 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         </TableCell>
         <TableCell>{configuration.name}</TableCell>
         <TableCell>{configuration.description}</TableCell>
-        <TableCell>
-          {formatDateDDMMYYHHMM(configuration.created_at)}
-        </TableCell>
-        <TableCell>
-          {formatDateDDMMYYHHMM(configuration.updated_at)}
-        </TableCell>
+        <TableCell>{formatDateDDMMYYHHMM(configuration.created_at)}</TableCell>
+        <TableCell>{formatDateDDMMYYHHMM(configuration.updated_at)}</TableCell>
         <TableCell className="flex gap-3">
           <IconButton
             className="w-8 h-8"

@@ -135,7 +135,7 @@ export async function forgotPassword(formData: AuthSchema) {
     parsed.data.email,
     {
       redirectTo: `${origin}/resetta-password`,
-    }
+    },
   );
 
   if (error) {
@@ -147,7 +147,7 @@ export async function forgotPassword(formData: AuthSchema) {
 
 export async function resetPassword(
   formData: NewPasswordSchema,
-  code: string | null
+  code: string | null,
 ) {
   if (!code) {
     return { success: false as const, error: MSG.auth.missingResetCode };
@@ -159,8 +159,7 @@ export async function resetPassword(
   }
 
   const supabase = await createClient();
-  const { error: codeError } =
-    await supabase.auth.exchangeCodeForSession(code);
+  const { error: codeError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (codeError) {
     return { success: false as const, error: MSG.auth.genericError };

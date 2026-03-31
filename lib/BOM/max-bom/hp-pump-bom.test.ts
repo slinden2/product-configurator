@@ -1,12 +1,18 @@
 import { vi, describe, test, expect } from "vitest";
 
-vi.mock("@/db", () => ({ db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } } }));
-vi.mock("@/db/queries", () => ({ getPartNumbersByArray: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db", () => ({
+  db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
+}));
+vi.mock("@/db/queries", () => ({
+  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+}));
 
 import { hpPumpBOM } from "@/lib/BOM/max-bom/hp-pump-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
-function makeConfig(overrides: Partial<GeneralBOMConfig> = {}): GeneralBOMConfig {
+function makeConfig(
+  overrides: Partial<GeneralBOMConfig> = {},
+): GeneralBOMConfig {
   return {
     id: 1,
     has_15kw_pump: false,
@@ -36,7 +42,7 @@ const pns = (config: GeneralBOMConfig) =>
 
 const qty = (config: GeneralBOMConfig, pn: string) => {
   const item = hpPumpBOM.find(
-    (i) => i.pn === pn && i.conditions.every((fn) => fn(config))
+    (i) => i.pn === pn && i.conditions.every((fn) => fn(config)),
   );
   if (!item) return undefined;
   return typeof item.qty === "function" ? item.qty(config) : item.qty;
@@ -112,13 +118,23 @@ describe("hpPumpBOM — pump selection", () => {
 
 describe("hpPumpBOM — 15kW pneumatic valves", () => {
   test("15kW + one outlet + has_antifreeze → single valve with antifreeze", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "LOW_SPINNERS", has_antifreeze: true });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "LOW_SPINNERS",
+      has_antifreeze: true,
+    });
     expect(pns(config)).toContain(PNS.PNEUMATIC_VALVE_15KW_WITH_ANTIFREEZE);
-    expect(pns(config)).not.toContain(PNS.TWO_PNEUMATIC_VALVES_15KW_WITH_ANTIFREEZE);
+    expect(pns(config)).not.toContain(
+      PNS.TWO_PNEUMATIC_VALVES_15KW_WITH_ANTIFREEZE,
+    );
   });
 
   test("15kW + one outlet + !has_antifreeze → single valve no antifreeze", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "LOW_SPINNERS", has_antifreeze: false });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "LOW_SPINNERS",
+      has_antifreeze: false,
+    });
     expect(pns(config)).toContain(PNS.PNEUMATIC_VALVE_15KW_NO_ANTIFREEZE);
     expect(pns(config)).not.toContain(PNS.PNEUMATIC_VALVE_15KW_WITH_ANTIFREEZE);
   });
@@ -130,7 +146,9 @@ describe("hpPumpBOM — 15kW pneumatic valves", () => {
       pump_outlet_2_15kw: "CHASSIS_WASH",
       has_antifreeze: true,
     });
-    expect(pns(config)).toContain(PNS.TWO_PNEUMATIC_VALVES_15KW_WITH_ANTIFREEZE);
+    expect(pns(config)).toContain(
+      PNS.TWO_PNEUMATIC_VALVES_15KW_WITH_ANTIFREEZE,
+    );
     expect(pns(config)).not.toContain(PNS.PNEUMATIC_VALVE_15KW_WITH_ANTIFREEZE);
   });
 
@@ -147,7 +165,11 @@ describe("hpPumpBOM — 15kW pneumatic valves", () => {
 
 describe("hpPumpBOM — 30kW pneumatic valves", () => {
   test("30kW + one outlet + !has_antifreeze → single valve no antifreeze", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS", has_antifreeze: false });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      has_antifreeze: false,
+    });
     expect(pns(config)).toContain(PNS.PNEUMATIC_VALVE_30KW_NO_ANTIFREEZE);
   });
 
@@ -158,30 +180,45 @@ describe("hpPumpBOM — 30kW pneumatic valves", () => {
       pump_outlet_2_30kw: "LOW_MEDIUM_SPINNERS",
       has_antifreeze: true,
     });
-    expect(pns(config)).toContain(PNS.TWO_PNEUMATIC_VALVES_30KW_WITH_ANTIFREEZE);
+    expect(pns(config)).toContain(
+      PNS.TWO_PNEUMATIC_VALVES_30KW_WITH_ANTIFREEZE,
+    );
   });
 });
 
 describe("hpPumpBOM — chassis wash", () => {
   test("15kW + outlet=CHASSIS_WASH → chassis wash 15kW", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH" });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "CHASSIS_WASH",
+    });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_15KW);
   });
 
   test("30kW + outlet=CHASSIS_WASH_HORIZONTAL → chassis wash 30kW horizontal", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL",
+    });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_30KW_HORIZONTAL);
   });
 
   test("30kW + outlet=CHASSIS_WASH_LATERAL_HORIZONTAL → chassis wash 30kW with lateral bars", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_LATERAL_HORIZONTAL" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "CHASSIS_WASH_LATERAL_HORIZONTAL",
+    });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_30KW_WITH_LATERAL_BARS);
   });
 });
 
 describe("hpPumpBOM — chassis wash sensor types", () => {
   test("SINGLE_POST → single ultrasonic sensor on post", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH", chassis_wash_sensor_type: "SINGLE_POST" });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "CHASSIS_WASH",
+      chassis_wash_sensor_type: "SINGLE_POST",
+    });
     expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_POST);
     expect(pns(config)).not.toContain(PNS.DUAL_ULTRASONIC_SENSORS_POST);
     expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_WALL);
@@ -189,25 +226,41 @@ describe("hpPumpBOM — chassis wash sensor types", () => {
   });
 
   test("DOUBLE_POST → dual ultrasonic sensors on post", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH", chassis_wash_sensor_type: "DOUBLE_POST" });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "CHASSIS_WASH",
+      chassis_wash_sensor_type: "DOUBLE_POST",
+    });
     expect(pns(config)).toContain(PNS.DUAL_ULTRASONIC_SENSORS_POST);
     expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_POST);
   });
 
   test("SINGLE_WALL → single ultrasonic sensor on wall", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL", chassis_wash_sensor_type: "SINGLE_WALL" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL",
+      chassis_wash_sensor_type: "SINGLE_WALL",
+    });
     expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_WALL);
     expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_POST);
   });
 
   test("DOUBLE_WALL → dual ultrasonic sensors on wall", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL", chassis_wash_sensor_type: "DOUBLE_WALL" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL",
+      chassis_wash_sensor_type: "DOUBLE_WALL",
+    });
     expect(pns(config)).toContain(PNS.DUAL_ULTRASONIC_SENSORS_WALL);
     expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_WALL);
   });
 
   test("no sensor type selected → no sensor in BOM", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "CHASSIS_WASH", chassis_wash_sensor_type: null });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "CHASSIS_WASH",
+      chassis_wash_sensor_type: null,
+    });
     expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_POST);
     expect(pns(config)).not.toContain(PNS.DUAL_ULTRASONIC_SENSORS_POST);
     expect(pns(config)).not.toContain(PNS.ULTRASONIC_SENSOR_WALL);
@@ -217,41 +270,62 @@ describe("hpPumpBOM — chassis wash sensor types", () => {
 
 describe("hpPumpBOM — HP bars and spinners (15kW)", () => {
   test("15kW + LOW_BARS → mid-height HP bars", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "LOW_BARS" });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "LOW_BARS",
+    });
     expect(pns(config)).toContain(PNS.MID_HEIGHT_HP_BARS);
   });
 
   test("15kW + HIGH_BARS → full-height HP bars", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "HIGH_BARS" });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "HIGH_BARS",
+    });
     expect(pns(config)).toContain(PNS.FULL_HEIGHT_HP_BARS);
   });
 
   test("15kW + LOW_SPINNERS → low spinners 2x150L", () => {
-    const config = makeConfig({ has_15kw_pump: true, pump_outlet_1_15kw: "LOW_SPINNERS" });
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "LOW_SPINNERS",
+    });
     expect(pns(config)).toContain(PNS.LOW_SPINNERS_2X150L);
   });
 });
 
 describe("hpPumpBOM — spinners (30kW)", () => {
   test("30kW + LOW_SPINNERS_HIGH_BARS → high bars + low spinners", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "LOW_SPINNERS_HIGH_BARS" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "LOW_SPINNERS_HIGH_BARS",
+    });
     expect(pns(config)).toContain(PNS.HIGH_BARS_2X150L_LOW_SPINNERS_2X150);
   });
 
   test("30kW + LOW_MEDIUM_SPINNERS → low and medium spinners 4x150L", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "LOW_MEDIUM_SPINNERS" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "LOW_MEDIUM_SPINNERS",
+    });
     expect(pns(config)).toContain(PNS.LOW_MEDIUM_SPINNERS_4X150L);
   });
 
   test("30kW + HIGH_MEDIUM_SPINNERS → high and medium spinners 4x150L", () => {
-    const config = makeConfig({ has_30kw_pump: true, pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS" });
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+    });
     expect(pns(config)).toContain(PNS.HIGH_MEDIUM_SPINNERS_4X150L);
   });
 });
 
 describe("hpPumpBOM — OMZ pump / HP roof bar", () => {
   test("omz + HP_ROOF_BAR → HP roof bar included", () => {
-    const config = makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR" });
+    const config = makeConfig({
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+    });
     expect(pns(config)).toContain(PNS.HP_ROOF_BAR);
   });
 
@@ -265,19 +339,29 @@ describe("hpPumpBOM — OMZ pump / HP roof bar", () => {
   });
 
   test("omz + HP_ROOF_BAR + !has_chemical_roof_bar → chemical roof bar NOT included", () => {
-    const config = makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR", has_chemical_roof_bar: false });
+    const config = makeConfig({
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+      has_chemical_roof_bar: false,
+    });
     expect(pns(config)).not.toContain(PNS.CHEMICAL_ROOF_BAR);
   });
 
   test("omz + HP_ROOF_BAR_SPINNERS → HP valve assembly + high spinners + HP roof bar", () => {
-    const config = makeConfig({ has_omz_pump: true, pump_outlet_omz: "HP_ROOF_BAR_SPINNERS" });
+    const config = makeConfig({
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
+    });
     expect(pns(config)).toContain(PNS.HP_VALVE_ASSY);
     expect(pns(config)).toContain(PNS.HIGH_SPINNERS_4X43L);
     expect(pns(config)).toContain(PNS.HP_ROOF_BAR);
   });
 
   test("omz + SPINNERS (no HP_ROOF_BAR) → high spinners but no HP roof bar", () => {
-    const config = makeConfig({ has_omz_pump: true, pump_outlet_omz: "SPINNERS" });
+    const config = makeConfig({
+      has_omz_pump: true,
+      pump_outlet_omz: "SPINNERS",
+    });
     expect(pns(config)).toContain(PNS.HIGH_SPINNERS_4X43L);
     expect(pns(config)).not.toContain(PNS.HP_ROOF_BAR);
     expect(pns(config)).not.toContain(PNS.HP_VALVE_ASSY);
@@ -293,8 +377,12 @@ describe("hpPumpBOM — hoses for spinners (no shelf extension)", () => {
       supply_side: "LEFT",
     });
     expect(pns(config)).toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS);
-    expect(pns(config)).not.toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS);
-    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT);
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT,
+    );
   });
 
   test("omz HP_ROOF_BAR_SPINNERS + !has_shelf_extension + RIGHT → right hose to valve", () => {
@@ -304,8 +392,12 @@ describe("hpPumpBOM — hoses for spinners (no shelf extension)", () => {
       has_shelf_extension: false,
       supply_side: "RIGHT",
     });
-    expect(pns(config)).toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS);
-    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS);
+    expect(pns(config)).toContain(
+      PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
+    );
   });
 
   test("15kW + LOW_SPINNERS + !has_shelf_extension → T-fitting hose (qty=1)", () => {
@@ -337,8 +429,12 @@ describe("hpPumpBOM — hoses for spinners (with shelf extension)", () => {
       has_shelf_extension: true,
       supply_side: "LEFT",
     });
-    expect(pns(config)).toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT);
-    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS);
+    expect(pns(config)).toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_W_EXT,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS,
+    );
   });
 
   test("15kW + LOW_SPINNERS + has_shelf_extension → extended T-fitting hose", () => {
@@ -368,42 +464,94 @@ describe("hpPumpBOM — OMZ machine type components", () => {
   });
 
   test("OMZ + !has_shelf_extension → T-fitting hose without extension", () => {
-    const config = makeConfig({ machine_type: "OMZ", has_shelf_extension: false });
+    const config = makeConfig({
+      machine_type: "OMZ",
+      has_shelf_extension: false,
+    });
     expect(pns(config)).toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ);
-    expect(pns(config)).not.toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT);
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT,
+    );
   });
 
   test("OMZ + has_shelf_extension → T-fitting hose with extension", () => {
-    const config = makeConfig({ machine_type: "OMZ", has_shelf_extension: true });
-    expect(pns(config)).toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT);
-    expect(pns(config)).not.toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ);
+    const config = makeConfig({
+      machine_type: "OMZ",
+      has_shelf_extension: true,
+    });
+    expect(pns(config)).toContain(
+      PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ,
+    );
   });
 
   test("OMZ + LEFT + !has_shelf_extension → left hose (qty=2)", () => {
-    const config = makeConfig({ machine_type: "OMZ", supply_side: "LEFT", has_shelf_extension: false });
-    expect(pns(config)).toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
-    expect(pns(config)).not.toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
-    expect(qty(config, PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ)).toBe(2);
+    const config = makeConfig({
+      machine_type: "OMZ",
+      supply_side: "LEFT",
+      has_shelf_extension: false,
+    });
+    expect(pns(config)).toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    );
+    expect(qty(config, PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ)).toBe(
+      2,
+    );
   });
 
   test("OMZ + LEFT + has_shelf_extension → left hose with extension (qty=2)", () => {
-    const config = makeConfig({ machine_type: "OMZ", supply_side: "LEFT", has_shelf_extension: true });
-    expect(pns(config)).toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT);
-    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
-    expect(qty(config, PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT)).toBe(2);
+    const config = makeConfig({
+      machine_type: "OMZ",
+      supply_side: "LEFT",
+      has_shelf_extension: true,
+    });
+    expect(pns(config)).toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    );
+    expect(
+      qty(config, PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT),
+    ).toBe(2);
   });
 
   test("OMZ + RIGHT + !has_shelf_extension → right hose (qty=2)", () => {
-    const config = makeConfig({ machine_type: "OMZ", supply_side: "RIGHT", has_shelf_extension: false });
-    expect(pns(config)).toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
-    expect(pns(config)).not.toContain(PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
-    expect(qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ)).toBe(2);
+    const config = makeConfig({
+      machine_type: "OMZ",
+      supply_side: "RIGHT",
+      has_shelf_extension: false,
+    });
+    expect(pns(config)).toContain(
+      PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_LEFT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    );
+    expect(qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ)).toBe(
+      2,
+    );
   });
 
   test("OMZ + RIGHT + has_shelf_extension → right hose with extension (qty=2)", () => {
-    const config = makeConfig({ machine_type: "OMZ", supply_side: "RIGHT", has_shelf_extension: true });
-    expect(pns(config)).toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT);
-    expect(pns(config)).not.toContain(PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ);
-    expect(qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT)).toBe(2);
+    const config = makeConfig({
+      machine_type: "OMZ",
+      supply_side: "RIGHT",
+      has_shelf_extension: true,
+    });
+    expect(pns(config)).toContain(
+      PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT,
+    );
+    expect(pns(config)).not.toContain(
+      PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ,
+    );
+    expect(
+      qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT),
+    ).toBe(2);
   });
 });

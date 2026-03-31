@@ -75,7 +75,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
 
 export function transformConfigToDbInsert(
   values: ConfigSchema,
-  userId: string
+  userId: string,
 ): DbConfigInsert {
   const commonData = mapConfigSchemaToDbCompatible(values);
   return {

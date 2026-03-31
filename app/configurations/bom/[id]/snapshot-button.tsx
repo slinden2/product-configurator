@@ -22,7 +22,7 @@ const SnapshotButton = ({ confId }: SnapshotButtonProps) => {
         toast.success(MSG.toast.bomGenerated);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : MSG.toast.generateError
+          err instanceof Error ? err.message : MSG.toast.generateError,
         );
       }
     });
@@ -35,7 +35,11 @@ const SnapshotButton = ({ confId }: SnapshotButtonProps) => {
       disabled={isPending}
       onClick={handleSnapshot}
     >
-      {isPending ? <Spinner className="h-4 w-4" /> : <Workflow className="h-4 w-4" />}
+      {isPending ? (
+        <Spinner className="h-4 w-4" />
+      ) : (
+        <Workflow className="h-4 w-4" />
+      )}
       <span>Genera distinta di commessa</span>
     </Button>
   );

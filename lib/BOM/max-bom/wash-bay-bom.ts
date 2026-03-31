@@ -9,13 +9,15 @@ const PART_NUMBERS = {
   LINE_POST_ASSY_H3000_PANEL_READY: "1100.300.012",
   CENTRAL_POST_ASSY_H3000_PANEL_READY: "1100.300.014",
   FESTOON_LINE_WITH_SHORT_SHELVES: "1100.300.041",
-  FESTOON_LINE_WITH_SHORT_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST: "1100.300.042",
+  FESTOON_LINE_WITH_SHORT_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST:
+    "1100.300.042",
   FESTOON_LINE_WITH_LONG_SHELVES: "1100.300.051",
-  FESTOON_LINE_WITH_LONG_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST: "1100.300.052",
+  FESTOON_LINE_WITH_LONG_SHELVES_FOR_POST_LINE_WITH_CENTRAL_POST:
+    "1100.300.052",
   HP_LANCE_ASSY: "1100.300.081",
   DETERGENT_LANCE_ASSY: "1100.300.082",
   HP_LANCE_ASSY_WEEPING: "1100.300.083", // TODO Add selections in the form
-  DETERGENT_LANCE_ASSY_WEEPING: "1100.300.084", // TODO Add selections in the form 
+  DETERGENT_LANCE_ASSY_WEEPING: "1100.300.084", // TODO Add selections in the form
   HOSE_REEL_ASSY: "1100.300.071",
   HOSE_REEL_ASSY_FOR_POST_PANEL_READY: "1100.300.072",
   SIDE_PANEL_ASSY: "1100.300.021",
@@ -49,12 +51,10 @@ const PART_NUMBERS = {
   PW_ELECTRIC_PANEL_1PW_W_P_RELEASE: "890.03.021", // TODO Add rules for this
   PW_ELECTRIC_PANEL_2PW_W_P_RELEASE: "890.03.022", // TODO Add rules for this
   PW_MUSHROOM_BUTTON_ASSY: "1100.055.011", // TODO Add rules for this
-
 } as const satisfies Record<string, string>;
 
 const hasEnergyChain = (config: WashBay & WithSupplyData) =>
-  config.supply_type === "ENERGY_CHAIN" &&
-  config.has_gantry;
+  config.supply_type === "ENERGY_CHAIN" && config.has_gantry;
 
 const hasNoFestoons = (config: WashBay) =>
   config.hp_lance_qty + config.det_lance_qty === 0;
@@ -63,8 +63,9 @@ const usesCentralPost = (config: WashBay & WithSupplyData) =>
   hasEnergyChain(config) && config.energy_chain_width !== "L150";
 
 const uses2500posts = (config: WashBay & WithSupplyData) =>
-((config.hp_lance_qty + config.det_lance_qty === 2 || hasEnergyChain(config)) &&
-  !config.uses_3000_posts)
+  (config.hp_lance_qty + config.det_lance_qty === 2 ||
+    hasEnergyChain(config)) &&
+  !config.uses_3000_posts;
 
 const usesShortShelves = (config: WashBay) =>
   config.hp_lance_qty + config.det_lance_qty === 2;
@@ -72,32 +73,47 @@ const usesShortShelves = (config: WashBay) =>
 const usesShortAndLongShelves = (config: WashBay) =>
   config.hp_lance_qty + config.det_lance_qty > 2;
 
-const usesPanels = (config: WashBay) =>
-  config.has_bay_dividers;
+const usesPanels = (config: WashBay) => config.has_bay_dividers;
 
 const usesSlidingBrackets = (config: WashBay & WithSupplyData) =>
   config.supply_type === "BOOM" && config.has_gantry;
 
 export const calculateLinePostAssyQty = (config: WashBay & WithSupplyData) => {
-  if (hasNoFestoons(config) && hasEnergyChain(config) && usesCentralPost(config))
+  if (
+    hasNoFestoons(config) &&
+    hasEnergyChain(config) &&
+    usesCentralPost(config)
+  )
     return 8;
-  if (hasNoFestoons(config) && hasEnergyChain(config) && !usesCentralPost(config))
+  if (
+    hasNoFestoons(config) &&
+    hasEnergyChain(config) &&
+    !usesCentralPost(config)
+  )
     return 9;
   if (config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
     return 17;
   if (config.is_first_bay && hasEnergyChain(config) && !usesCentralPost(config))
     return 18;
-  if (config.is_first_bay && !hasEnergyChain(config) && !usesCentralPost(config))
+  if (
+    config.is_first_bay &&
+    !hasEnergyChain(config) &&
+    !usesCentralPost(config)
+  )
     return 16;
   if (!config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
     return 9;
-  if (!config.is_first_bay && hasEnergyChain(config) && !usesCentralPost(config))
+  if (
+    !config.is_first_bay &&
+    hasEnergyChain(config) &&
+    !usesCentralPost(config)
+  )
     return 10;
   return 8;
 };
 
 export const calculateLinePostAssyQtyWithPanels = (
-  config: WashBay & WithSupplyData
+  config: WashBay & WithSupplyData,
 ) => {
   if (config.is_first_bay && hasEnergyChain(config) && usesCentralPost(config))
     return 19;
@@ -162,7 +178,9 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
   },
   {
     pn: PART_NUMBERS.FESTOON_LINE_WITH_SHORT_SHELVES,
-    conditions: [(config) => usesShortShelves(config) || usesShortAndLongShelves(config)],
+    conditions: [
+      (config) => usesShortShelves(config) || usesShortAndLongShelves(config),
+    ],
     qty: (config) => (usesCentralPost(config) ? 1 : 2),
     _description: "Festoon line with short shelves",
   },
@@ -245,25 +263,37 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
   },
   {
     pn: PART_NUMBERS.CHAIN_150,
-    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L150"],
+    conditions: [
+      hasEnergyChain,
+      (config) => config.energy_chain_width === "L150",
+    ],
     qty: 1,
     _description: "Cable chain (150mm)",
   },
   {
     pn: PART_NUMBERS.CHAIN_200,
-    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L200"],
+    conditions: [
+      hasEnergyChain,
+      (config) => config.energy_chain_width === "L200",
+    ],
     qty: 1,
     _description: "Cable chain (200mm)",
   },
   {
     pn: PART_NUMBERS.CHAIN_250,
-    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L250"],
+    conditions: [
+      hasEnergyChain,
+      (config) => config.energy_chain_width === "L250",
+    ],
     qty: 1,
     _description: "Cable chain (250mm)",
   },
   {
     pn: PART_NUMBERS.CHAIN_300,
-    conditions: [hasEnergyChain, (config) => config.energy_chain_width === "L300"],
+    conditions: [
+      hasEnergyChain,
+      (config) => config.energy_chain_width === "L300",
+    ],
     qty: 1,
     _description: "Cable chain (300mm)",
   },
@@ -323,10 +353,7 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
   },
   {
     pn: PART_NUMBERS.EC_AIR_TUBE,
-    conditions: [
-      hasEnergyChain,
-      (config) => (config.ec_air_tube_qty ?? 0) > 0,
-    ],
+    conditions: [hasEnergyChain, (config) => (config.ec_air_tube_qty ?? 0) > 0],
     qty: (config) => config.ec_air_tube_qty ?? 0,
     _description: "Air tube 8x17 for energy chain",
   },

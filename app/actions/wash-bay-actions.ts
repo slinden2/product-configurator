@@ -5,7 +5,7 @@ import { handleSubRecordAction } from "./lib/sub-record-actions";
 
 export const insertWashBayAction = async (
   confId: number,
-  formData: unknown
+  formData: unknown,
 ) => {
   return handleSubRecordAction({
     actionType: "insert",
@@ -21,7 +21,7 @@ export const insertWashBayAction = async (
 export const editWashBayAction = async (
   confId: number,
   washBayId: number,
-  formData: unknown
+  formData: unknown,
 ) => {
   return handleSubRecordAction({
     actionType: "edit",
@@ -37,7 +37,7 @@ export const editWashBayAction = async (
 
 export const deleteWashBayAction = async (
   confId: number,
-  washBayId: number
+  washBayId: number,
 ) => {
   return handleSubRecordAction({
     actionType: "delete",

@@ -20,7 +20,12 @@ const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => {
   const handleExportBOM = async () => {
     console.log(exportData);
 
-    createExcelFile(exportData.generalBOM, exportData.waterTankBOMs, exportData.washBayBOMs, user);
+    createExcelFile(
+      exportData.generalBOM,
+      exportData.waterTankBOMs,
+      exportData.washBayBOMs,
+      user,
+    );
   };
 
   return (

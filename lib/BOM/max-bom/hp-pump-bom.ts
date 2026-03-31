@@ -55,8 +55,10 @@ const PART_NUMBERS = {
   HOSE_SHELF_TO_T_FITTING_2_SPINNERS_OMZ_W_EXT: "9000.525.020",
 } as const satisfies Record<string, string>;
 
-const uses15kwPump = (config: GeneralBOMConfig): boolean => config.has_15kw_pump;
-const uses30kwPump = (config: GeneralBOMConfig): boolean => config.has_30kw_pump;
+const uses15kwPump = (config: GeneralBOMConfig): boolean =>
+  config.has_15kw_pump;
+const uses30kwPump = (config: GeneralBOMConfig): boolean =>
+  config.has_30kw_pump;
 const uses15kwOr30kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_15kw_pump || config.has_30kw_pump;
 const usesOMZPump = (config: GeneralBOMConfig): boolean => config.has_omz_pump;
@@ -80,27 +82,27 @@ const usesHoseFromShelfToTFitting = (config: GeneralBOMConfig): boolean => {
   return (
     isOneOfOutlets(
       [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-      "LOW_SPINNERS"
+      "LOW_SPINNERS",
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-      "HIGH_BARS"
+      "HIGH_BARS",
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-      "LOW_BARS"
+      "LOW_BARS",
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-      "HIGH_MEDIUM_SPINNERS"
+      "HIGH_MEDIUM_SPINNERS",
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-      "LOW_MEDIUM_SPINNERS"
+      "LOW_MEDIUM_SPINNERS",
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-      "LOW_SPINNERS_HIGH_BARS"
+      "LOW_SPINNERS_HIGH_BARS",
     )
   );
 };
@@ -234,7 +236,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "CHASSIS_WASH"
+          "CHASSIS_WASH",
         ),
     ],
     qty: 1,
@@ -247,7 +249,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "CHASSIS_WASH_HORIZONTAL"
+          "CHASSIS_WASH_HORIZONTAL",
         ),
     ],
     qty: 1,
@@ -260,7 +262,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "CHASSIS_WASH_LATERAL_HORIZONTAL"
+          "CHASSIS_WASH_LATERAL_HORIZONTAL",
         ),
     ],
     qty: 1,
@@ -309,7 +311,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "LOW_BARS"
+          "LOW_BARS",
         ),
     ],
     qty: 1,
@@ -322,7 +324,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "HIGH_BARS"
+          "HIGH_BARS",
         ),
     ],
     qty: 1,
@@ -335,7 +337,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
-          "LOW_SPINNERS"
+          "LOW_SPINNERS",
         ),
     ],
     qty: 1,
@@ -348,7 +350,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "LOW_SPINNERS_HIGH_BARS"
+          "LOW_SPINNERS_HIGH_BARS",
         ),
     ],
     qty: 1,
@@ -361,7 +363,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "LOW_MEDIUM_SPINNERS"
+          "LOW_MEDIUM_SPINNERS",
         ),
     ],
     qty: 1,
@@ -374,7 +376,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "HIGH_MEDIUM_SPINNERS"
+          "HIGH_MEDIUM_SPINNERS",
         ),
     ],
     qty: 1,

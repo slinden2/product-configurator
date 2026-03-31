@@ -12,7 +12,7 @@ function createHpPumpObject(
   kw: Number = 15,
   hasPump: Boolean = false,
   outlet1: OutletType = undefined,
-  outlet2: OutletType = undefined
+  outlet2: OutletType = undefined,
 ) {
   return {
     [`has_${kw}kw_pump`]: hasPump,
@@ -24,7 +24,7 @@ function createHpPumpObject(
 function createOMZPumpObject(
   hasPump: Boolean = false,
   outlet1: HpPumpOMZkwOutletType | undefined = undefined,
-  hasChemicalRoofBar?: Boolean | undefined
+  hasChemicalRoofBar?: Boolean | undefined,
 ) {
   return {
     has_omz_pump: hasPump,
@@ -40,23 +40,17 @@ describe("hpPumpSchema", () => {
       [createHpPumpObject(15, true, undefined, undefined)],
       [createHpPumpObject(30, true, undefined, undefined)],
       [createHpPumpObject(30, true, undefined, undefined)],
-    ])(
-      `should throw when the pump is selected and the neither of the outlets are not, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).toThrow();
-      }
-    );
+    ])(`should throw when the pump is selected and the neither of the outlets are not, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
     test.each([
       [createHpPumpObject(15, false, "CHASSIS_WASH", undefined)],
       [createHpPumpObject(30, false, "CHASSIS_WASH_HORIZONTAL", undefined)],
       [createHpPumpObject(15, false, undefined, "CHASSIS_WASH")],
       [createHpPumpObject(30, false, undefined, "CHASSIS_WASH_HORIZONTAL")],
-    ])(
-      `should throw if the pump is selected, but one of the outlets is, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).toThrow();
-      }
-    );
+    ])(`should throw if the pump is selected, but one of the outlets is, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
     test.each([
       [createHpPumpObject(15, true, "CHASSIS_WASH", "CHASSIS_WASH")],
       [
@@ -64,7 +58,7 @@ describe("hpPumpSchema", () => {
           30,
           true,
           "CHASSIS_WASH_HORIZONTAL",
-          "CHASSIS_WASH_HORIZONTAL"
+          "CHASSIS_WASH_HORIZONTAL",
         ),
       ],
     ])(`should throw if the outlets are the same, %o`, (testObject) => {
@@ -77,20 +71,32 @@ describe("hpPumpSchema", () => {
           30,
           true,
           "LOW_MEDIUM_SPINNERS",
-          "LOW_SPINNERS_HIGH_BARS"
+          "LOW_SPINNERS_HIGH_BARS",
         ),
       ],
-    ])(
-      `should throw if neither of the outlets is ${"CHASSIS_WASH"}, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).toThrow();
-      }
-    );
+    ])(`should throw if neither of the outlets is ${"CHASSIS_WASH"}, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
     test.each([
-      [{ ...createHpPumpObject(15, true, "CHASSIS_WASH", undefined), chassis_wash_sensor_type: "SINGLE_POST" }],
+      [
+        {
+          ...createHpPumpObject(15, true, "CHASSIS_WASH", undefined),
+          chassis_wash_sensor_type: "SINGLE_POST",
+        },
+      ],
       [createHpPumpObject(15, true, "LOW_SPINNERS", undefined)],
-      [{ ...createHpPumpObject(15, true, "CHASSIS_WASH", "LOW_SPINNERS"), chassis_wash_sensor_type: "SINGLE_POST" }],
-      [{ ...createHpPumpObject(30, true, "CHASSIS_WASH_HORIZONTAL", undefined), chassis_wash_sensor_type: "DOUBLE_POST" }],
+      [
+        {
+          ...createHpPumpObject(15, true, "CHASSIS_WASH", "LOW_SPINNERS"),
+          chassis_wash_sensor_type: "SINGLE_POST",
+        },
+      ],
+      [
+        {
+          ...createHpPumpObject(30, true, "CHASSIS_WASH_HORIZONTAL", undefined),
+          chassis_wash_sensor_type: "DOUBLE_POST",
+        },
+      ],
       [createHpPumpObject(30, true, "HIGH_MEDIUM_SPINNERS", undefined)],
       [
         {
@@ -98,49 +104,39 @@ describe("hpPumpSchema", () => {
             30,
             true,
             "CHASSIS_WASH_LATERAL_HORIZONTAL",
-            "LOW_MEDIUM_SPINNERS"
+            "LOW_MEDIUM_SPINNERS",
           ),
           chassis_wash_sensor_type: "SINGLE_WALL",
         },
       ],
-    ])(
-      `should not throw if the outlets are configured correctly, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).not.toThrow();
-      }
-    );
+    ])(`should not throw if the outlets are configured correctly, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).not.toThrow();
+    });
   });
   describe("OMZ pump tests", () => {
     test.each([
       createOMZPumpObject(true, undefined),
       createOMZPumpObject(true, undefined),
-    ])(
-      `should throw when the pump is selected and the outlet is not, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).toThrow();
-      }
-    );
+    ])(`should throw when the pump is selected and the outlet is not, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
     test.each([
       createOMZPumpObject(false, "HP_ROOF_BAR"),
       createOMZPumpObject(false, undefined, true),
-    ])(
-      `should throw when the pump is not selected and the outlet or chem roof bar is, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).toThrow();
-      }
-    );
-    test.each([createOMZPumpObject(false, "HP_ROOF_BAR")])(
-      `should throw when the pump is not selected and the outlet is, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).toThrow();
-      }
-    );
+    ])(`should throw when the pump is not selected and the outlet or chem roof bar is, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
+    test.each([
+      createOMZPumpObject(false, "HP_ROOF_BAR"),
+    ])(`should throw when the pump is not selected and the outlet is, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
     test("should throw if chemical roof bar is selected with anything other than roof bar outlet", () => {
       expect(() =>
-        hpPumpSchema.parse(createOMZPumpObject(false, undefined, true))
+        hpPumpSchema.parse(createOMZPumpObject(false, undefined, true)),
       ).toThrow();
       expect(() =>
-        hpPumpSchema.parse(createOMZPumpObject(false, "SPINNERS", true))
+        hpPumpSchema.parse(createOMZPumpObject(false, "SPINNERS", true)),
       ).toThrow();
     });
     test.each([
@@ -148,11 +144,8 @@ describe("hpPumpSchema", () => {
       createOMZPumpObject(true, "HP_ROOF_BAR", true),
       createOMZPumpObject(true, "HP_ROOF_BAR_SPINNERS", false),
       createOMZPumpObject(true, "HP_ROOF_BAR_SPINNERS", true),
-    ])(
-      `should not throw on chemical roof bar true nor false if the outlet has roof bar, %o`,
-      (testObject) => {
-        expect(() => hpPumpSchema.parse(testObject)).not.toThrow();
-      }
-    );
+    ])(`should not throw on chemical roof bar true nor false if the outlet has roof bar, %o`, (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).not.toThrow();
+    });
   });
 });

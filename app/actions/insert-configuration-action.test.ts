@@ -124,7 +124,7 @@ describe("insertConfigurationAction", () => {
 
   test("returns error message on QueryError", async () => {
     mockInsertConfiguration.mockRejectedValue(
-      new QueryError("Impossibile creare la configurazione.", 500)
+      new QueryError("Impossibile creare la configurazione.", 500),
     );
     const result = await insertConfigurationAction(makeValidFormData());
     expect(result.success).toBe(false);

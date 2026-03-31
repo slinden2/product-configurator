@@ -50,17 +50,14 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   // Server Actions
   insertAction: (
     parentId: number,
-    values: z.infer<TFormSchema>
+    values: z.infer<TFormSchema>,
   ) => Promise<ActionResult>;
   editAction: (
     parentId: number,
     id: number,
-    values: z.infer<TFormSchema>
+    values: z.infer<TFormSchema>,
   ) => Promise<ActionResult>;
-  deleteAction: (
-    parentId: number,
-    id: number
-  ) => Promise<ActionResult>;
+  deleteAction: (parentId: number, id: number) => Promise<ActionResult>;
   hasEngineeringBom?: boolean;
   // Component to render the specific fields
   FieldsComponent: React.ComponentType;
@@ -92,14 +89,15 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
 
   // --- State & Form Hook ---
   const [isLoading, setIsLoading] = useState<"submit" | "delete" | false>(
-    false
+    false,
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBomWarning, setShowBomWarning] = useState(false);
   const pendingValuesRef = useRef<FormData | null>(null);
   const pendingActionRef = useRef<"save" | "delete" | null>(null);
 
-  const formIsDisabled = !!isLoading || !userRole || !isEditable(parentStatus, userRole);
+  const formIsDisabled =
+    !!isLoading || !userRole || !isEditable(parentStatus, userRole);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -133,11 +131,11 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         if (isEditing) {
           const result = await editAction(parentId, entityData.id, values);
           if (!result.success) {
-            throw new Error(result.error || MSG.toast.entityUpdateFallback(entityName));
+            throw new Error(
+              result.error || MSG.toast.entityUpdateFallback(entityName),
+            );
           }
-          toast.success(
-            MSG.toast.entityUpdated(entityName, entityIndex)
-          );
+          toast.success(MSG.toast.entityUpdated(entityName, entityIndex));
           reset(values);
           if (formKey) {
             onSaved?.(formKey);
@@ -146,11 +144,11 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
         } else {
           const result = await insertAction(parentId, values);
           if (!result.success) {
-            throw new Error(result.error || MSG.toast.entityCreateFallback(entityName));
+            throw new Error(
+              result.error || MSG.toast.entityCreateFallback(entityName),
+            );
           }
-          toast.success(
-            MSG.toast.entityCreated(entityName)
-          );
+          toast.success(MSG.toast.entityCreated(entityName));
           reset(entityDefaults);
           if (formKey) onSaved?.(formKey);
           onSaveSuccess(entityName);
@@ -180,7 +178,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       formKey,
       onSaved,
       onDirtyChange,
-    ]
+    ],
   );
 
   const handleSaveSubmit = useCallback(
@@ -193,7 +191,7 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
       }
       await executeSave(values);
     },
-    [hasEngineeringBom, executeSave]
+    [hasEngineeringBom, executeSave],
   );
 
   const executeDelete = useCallback(async () => {
@@ -203,12 +201,12 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     try {
       const result = await deleteAction(parentId, entityData.id);
       if (result.success) {
-        toast.success(
-          MSG.toast.entityDeleted(entityName, entityIndex)
-        );
+        toast.success(MSG.toast.entityDeleted(entityName, entityIndex));
         onDelete(entityData.id);
       } else {
-        throw new Error(result.error || MSG.toast.entityDeleteFailed(entityName));
+        throw new Error(
+          result.error || MSG.toast.entityDeleteFailed(entityName),
+        );
       }
     } catch (err) {
       console.error(`Delete ${entityName} Error:`, err);
@@ -264,14 +262,26 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
     if (!isEditing) {
       onSaveSuccess(entityName);
     }
-  }, [reset, entityData, entityDefaults, isEditing, onSaveSuccess, entityName, formKey, onDirtyChange]);
+  }, [
+    reset,
+    entityData,
+    entityDefaults,
+    isEditing,
+    onSaveSuccess,
+    entityName,
+    formKey,
+    onDirtyChange,
+  ]);
 
   return (
     <div>
       <Form {...form}>
         <FormDisabledContext.Provider value={formIsDisabled}>
           <fieldset disabled={formIsDisabled} className="group">
-            <form id={formKey ? `form-${formKey}` : undefined} onSubmit={handleSubmit(handleSaveSubmit)}>
+            <form
+              id={formKey ? `form-${formKey}` : undefined}
+              onSubmit={handleSubmit(handleSaveSubmit)}
+            >
               <Fieldset
                 title={
                   isEditing

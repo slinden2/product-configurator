@@ -8,20 +8,18 @@ import { describe, test, expect } from "vitest";
 
 describe("authSchema", () => {
   test("should pass with a valid email", () => {
-    expect(() =>
-      authSchema.parse({ email: "user@example.com" })
-    ).not.toThrow();
+    expect(() => authSchema.parse({ email: "user@example.com" })).not.toThrow();
   });
 
   test("should pass with a subdomain email", () => {
     expect(() =>
-      authSchema.parse({ email: "user@mail.example.co.uk" })
+      authSchema.parse({ email: "user@mail.example.co.uk" }),
     ).not.toThrow();
   });
 
   test("should fail with an invalid email format", () => {
     expect(() => authSchema.parse({ email: "not-an-email" })).toThrow(
-      "Email non valida."
+      "Email non valida.",
     );
   });
 
@@ -31,7 +29,7 @@ describe("authSchema", () => {
 
   test("should fail when email is missing the domain", () => {
     expect(() => authSchema.parse({ email: "user@" })).toThrow(
-      "Email non valida."
+      "Email non valida.",
     );
   });
 });
@@ -39,7 +37,10 @@ describe("authSchema", () => {
 describe("newPassWordSchema", () => {
   test("should pass when passwords match and meet minimum length", () => {
     expect(() =>
-      newPassWordSchema.parse({ password: "secret", confirmPassword: "secret" })
+      newPassWordSchema.parse({
+        password: "secret",
+        confirmPassword: "secret",
+      }),
     ).not.toThrow();
   });
 
@@ -48,13 +49,13 @@ describe("newPassWordSchema", () => {
       newPassWordSchema.parse({
         password: "a-very-long-password-123!",
         confirmPassword: "a-very-long-password-123!",
-      })
+      }),
     ).not.toThrow();
   });
 
   test("should fail when password is shorter than 6 characters", () => {
     expect(() =>
-      newPassWordSchema.parse({ password: "abc", confirmPassword: "abc" })
+      newPassWordSchema.parse({ password: "abc", confirmPassword: "abc" }),
     ).toThrow("Password deve contenere almeno 6 caratteri.");
   });
 
@@ -63,7 +64,7 @@ describe("newPassWordSchema", () => {
       newPassWordSchema.parse({
         password: "password1",
         confirmPassword: "password2",
-      })
+      }),
     ).toThrow("Le password non corrispondono.");
   });
 
@@ -75,7 +76,7 @@ describe("newPassWordSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const confirmError = result.error.issues.find(
-        (issue) => issue.path[0] === "confirmPassword"
+        (issue) => issue.path[0] === "confirmPassword",
       );
       expect(confirmError?.message).toBe("Le password non corrispondono.");
     }
@@ -85,19 +86,19 @@ describe("newPassWordSchema", () => {
 describe("loginSchema", () => {
   test("should pass with valid email and any password", () => {
     expect(() =>
-      loginSchema.parse({ email: "user@example.com", password: "any" })
+      loginSchema.parse({ email: "user@example.com", password: "any" }),
     ).not.toThrow();
   });
 
   test("should fail with invalid email", () => {
     expect(() =>
-      loginSchema.parse({ email: "bad-email", password: "password" })
+      loginSchema.parse({ email: "bad-email", password: "password" }),
     ).toThrow("Email non valida.");
   });
 
   test("should fail when email is missing", () => {
     expect(() =>
-      loginSchema.parse({ email: undefined, password: "password" })
+      loginSchema.parse({ email: undefined, password: "password" }),
     ).toThrow();
   });
 });
@@ -109,7 +110,7 @@ describe("signupSchema", () => {
         email: "user@example.com",
         password: "mypassword",
         confirmPassword: "mypassword",
-      })
+      }),
     ).not.toThrow();
   });
 
@@ -119,7 +120,7 @@ describe("signupSchema", () => {
         email: "user@example.com",
         password: "mypassword",
         confirmPassword: "wrongpassword",
-      })
+      }),
     ).toThrow("Le password non corrispondono.");
   });
 

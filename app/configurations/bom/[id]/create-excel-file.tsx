@@ -21,7 +21,7 @@ export function buildCostWorkbook(
   generalBOM: BOM,
   waterTankBOMs: BOM[],
   washBayBOMs: BOM[],
-  user: NonNullable<UserData>
+  user: NonNullable<UserData>,
 ): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = user.initials || user.id;
@@ -39,10 +39,10 @@ export function buildCostWorkbook(
   sheet.getColumn("description").alignment = { wrapText: true };
 
   const unitCostColumn = sheet.getColumn("unit_cost");
-  unitCostColumn.numFmt = '€ #,##0.00';
+  unitCostColumn.numFmt = "€ #,##0.00";
 
   const totalCostColumn = sheet.getColumn("total_cost");
-  totalCostColumn.numFmt = '€ #,##0.00';
+  totalCostColumn.numFmt = "€ #,##0.00";
 
   const headers = ["Codice", "Descrizione", "Qta", "Costo Unit.", "Costo Tot."];
   const headerRowNums: number[] = [];
@@ -54,14 +54,18 @@ export function buildCostWorkbook(
 
   // Helpers
   const applyBorder = (row: ExcelJS.Row, bgColor: string) => {
-    row.eachCell({ includeEmpty: true }, cell => {
+    row.eachCell({ includeEmpty: true }, (cell) => {
       cell.border = {
         top: { style: "thin" },
         left: { style: "thin" },
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: bgColor },
+      };
     });
   };
 
@@ -84,15 +88,23 @@ export function buildCostWorkbook(
     const titleRow = sheet.addRow([title]);
 
     // Apply styling to cells A through E
-    [1, 2, 3, 4, 5].forEach(col => {
+    [1, 2, 3, 4, 5].forEach((col) => {
       const cell = titleRow.getCell(col);
       cell.fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: COLORS.sectionTitleBg },
       };
-      cell.font = { bold: true, size: 14, color: { argb: COLORS.sectionTitleFont } };
-      cell.alignment = { vertical: "middle", horizontal: "left", shrinkToFit: false };
+      cell.font = {
+        bold: true,
+        size: 14,
+        color: { argb: COLORS.sectionTitleFont },
+      };
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: "left",
+        shrinkToFit: false,
+      };
     });
 
     // Set the text in the first cell only, but style all five
@@ -104,17 +116,25 @@ export function buildCostWorkbook(
     sheet.addRow([]);
     const headerRow = sheet.addRow(headers);
     headerRowNums.push(headerRow.number);
-    sheet.getCell(`${unitCostColumn.letter}${headerRow.number}`).alignment = { horizontal: "center" };
-    sheet.getCell(`${totalCostColumn.letter}${headerRow.number}`).alignment = { horizontal: "center" };
+    sheet.getCell(`${unitCostColumn.letter}${headerRow.number}`).alignment = {
+      horizontal: "center",
+    };
+    sheet.getCell(`${totalCostColumn.letter}${headerRow.number}`).alignment = {
+      horizontal: "center",
+    };
   };
 
-  const addTagGroupSubtotal = (label: string, startRow: number, endRow: number) => {
+  const addTagGroupSubtotal = (
+    label: string,
+    startRow: number,
+    endRow: number,
+  ) => {
     const subtotalRow = sheet.addRow([]);
     subtotalRow.getCell(1).value = label;
     subtotalRow.getCell(5).value = {
       formula: `SUM(${totalCostColumn.letter}${startRow}:${totalCostColumn.letter}${endRow})`,
     };
-    subtotalRow.eachCell({ includeEmpty: true }, cell => {
+    subtotalRow.eachCell({ includeEmpty: true }, (cell) => {
       cell.font = { bold: true };
       cell.border = {
         top: { style: "thin" },
@@ -122,17 +142,25 @@ export function buildCostWorkbook(
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.subtotalBg } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: COLORS.subtotalBg },
+      };
     });
-    subtotalRow.getCell(5).numFmt = '€ #,##0.00';
+    subtotalRow.getCell(5).numFmt = "€ #,##0.00";
     subtotalRow.getCell(5).alignment = { horizontal: "right" };
   };
 
-  const addBOMSection = (boms: BOM[], title: string, itemPrefix?: string): { startRow: number, endRow: number }[] => {
+  const addBOMSection = (
+    boms: BOM[],
+    title: string,
+    itemPrefix?: string,
+  ): { startRow: number; endRow: number }[] => {
     if (boms.length === 0) return [];
 
     addSectionTitle(title);
-    const ranges: { startRow: number, endRow: number }[] = [];
+    const ranges: { startRow: number; endRow: number }[] = [];
 
     boms.forEach((bom, index) => {
       if (itemPrefix) {
@@ -156,7 +184,11 @@ export function buildCostWorkbook(
       const endRow = sheet.rowCount;
       ranges.push({ startRow, endRow });
       if (itemPrefix) {
-        addTagGroupSubtotal(`Subtotale ${itemPrefix} ${index + 1}`, startRow, endRow);
+        addTagGroupSubtotal(
+          `Subtotale ${itemPrefix} ${index + 1}`,
+          startRow,
+          endRow,
+        );
       }
     });
 
@@ -171,7 +203,7 @@ export function buildCostWorkbook(
   }
 
   // Track row ranges for each section
-  const generalRanges: { startRow: number, endRow: number }[] = [];
+  const generalRanges: { startRow: number; endRow: number }[] = [];
 
   // General BOM section
   addSectionTitle("Distinta generale");
@@ -237,7 +269,11 @@ export function buildCostWorkbook(
   headerRow.eachCell((cell) => {
     cell.font = { bold: true };
     cell.alignment = { horizontal: "center", vertical: "middle" };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBgColors.dark } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: rowBgColors.dark },
+    };
     cell.border = {
       top: { style: "thin" },
       left: { style: "thin" },
@@ -247,9 +283,12 @@ export function buildCostWorkbook(
   });
 
   // Helper to create SUM formula
-  const createSumFormula = (ranges: { startRow: number, endRow: number }[]) => {
+  const createSumFormula = (ranges: { startRow: number; endRow: number }[]) => {
     if (ranges.length === 0) return "0";
-    const sumParts = ranges.map(r => `${totalCostColumn.letter}${r.startRow}:${totalCostColumn.letter}${r.endRow}`);
+    const sumParts = ranges.map(
+      (r) =>
+        `${totalCostColumn.letter}${r.startRow}:${totalCostColumn.letter}${r.endRow}`,
+    );
     return `SUM(${sumParts.join(",")})`;
   };
 
@@ -273,9 +312,13 @@ export function buildCostWorkbook(
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: bgColor },
+      };
     });
-    row.getCell(2).numFmt = '€ #,##0.00';
+    row.getCell(2).numFmt = "€ #,##0.00";
     row.getCell(2).alignment = { horizontal: "right" };
   });
 
@@ -292,24 +335,32 @@ export function buildCostWorkbook(
       bottom: { style: "thin" },
       right: { style: "thin" },
     };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.grandTotalBg } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.grandTotalBg },
+    };
   });
-  totalRowObj.getCell(2).numFmt = '€ #,##0.00';
+  totalRowObj.getCell(2).numFmt = "€ #,##0.00";
   totalRowObj.getCell(2).alignment = { horizontal: "right" };
 
   // Header styling
-  headerRowNums.forEach(rowNum => {
+  headerRowNums.forEach((rowNum) => {
     const row = sheet.getRow(rowNum);
-    row.eachCell({ includeEmpty: true }, cell => {
+    row.eachCell({ includeEmpty: true }, (cell) => {
       cell.font = { bold: true };
       cell.alignment = { horizontal: "center" };
       cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' },
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
       };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBgColors.dark } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: rowBgColors.dark },
+      };
     });
   });
 
@@ -320,10 +371,17 @@ export async function createExcelFile(
   generalBOM: BOM,
   waterTankBOMs: BOM[],
   washBayBOMs: BOM[],
-  user: NonNullable<UserData>
+  user: NonNullable<UserData>,
 ) {
-  const workbook = buildCostWorkbook(generalBOM, waterTankBOMs, washBayBOMs, user);
+  const workbook = buildCostWorkbook(
+    generalBOM,
+    waterTankBOMs,
+    washBayBOMs,
+    user,
+  );
   const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
   saveAs(blob, "costi.xlsx");
 }

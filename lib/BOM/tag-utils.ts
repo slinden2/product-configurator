@@ -1,7 +1,7 @@
 import { BomTag, BomTags } from "@/types";
 
 export function groupByTag<T extends { tag?: BomTag | null }>(
-  items: T[]
+  items: T[],
 ): Map<BomTag, T[]> {
   const map = new Map<BomTag, T[]>();
   for (const tag of BomTags) {

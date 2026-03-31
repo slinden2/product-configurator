@@ -9,7 +9,7 @@ import { handleSubRecordAction } from "./lib/sub-record-actions";
 
 export const insertWaterTankAction = async (
   confId: number,
-  formData: unknown
+  formData: unknown,
 ) => {
   return handleSubRecordAction({
     actionType: "insert",
@@ -25,7 +25,7 @@ export const insertWaterTankAction = async (
 export const editWaterTankAction = async (
   confId: number,
   waterTankId: number,
-  formData: unknown
+  formData: unknown,
 ) => {
   return handleSubRecordAction({
     actionType: "edit",

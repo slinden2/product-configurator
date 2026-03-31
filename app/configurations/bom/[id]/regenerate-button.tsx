@@ -33,9 +33,7 @@ const RegenerateButton = ({ confId }: RegenerateButtonProps) => {
         toast.success(MSG.toast.bomRegenerated);
       } catch (err) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : MSG.toast.regenerateError
+          err instanceof Error ? err.message : MSG.toast.regenerateError,
         );
       }
     });
@@ -45,7 +43,11 @@ const RegenerateButton = ({ confId }: RegenerateButtonProps) => {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={isPending}>
-          {isPending ? <Spinner className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+          {isPending ? (
+            <Spinner className="h-4 w-4" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
           <span>Rigenera distinta</span>
         </Button>
       </AlertDialogTrigger>

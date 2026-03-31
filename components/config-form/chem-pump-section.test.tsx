@@ -75,29 +75,45 @@ describe("ChemPumpSection", () => {
     test("chemical pump fields are hidden by default", () => {
       renderChemPumpSection();
 
-      expect(screen.queryByText("Numero di pompe di prelavaggio")).not.toBeInTheDocument();
-      expect(screen.queryByText("Posizione delle pompe di prelavaggio")).not.toBeInTheDocument();
-      expect(screen.queryByText("Nebulizzazione con schiuma")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Numero di pompe di prelavaggio"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Posizione delle pompe di prelavaggio"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Nebulizzazione con schiuma"),
+      ).not.toBeInTheDocument();
     });
 
     test("chemical pump fields are shown when has_chemical_pump is true", () => {
       renderChemPumpSection({ has_chemical_pump: true });
 
-      expect(screen.getByText("Numero di pompe di prelavaggio")).toBeInTheDocument();
-      expect(screen.getByText("Posizione delle pompe di prelavaggio")).toBeInTheDocument();
-      expect(screen.getByText("Nebulizzazione con schiuma")).toBeInTheDocument();
+      expect(
+        screen.getByText("Numero di pompe di prelavaggio"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Posizione delle pompe di prelavaggio"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Nebulizzazione con schiuma"),
+      ).toBeInTheDocument();
     });
 
     test("acid pump position is hidden by default", () => {
       renderChemPumpSection();
 
-      expect(screen.queryByText("Posizione della pompa acido")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Posizione della pompa acido"),
+      ).not.toBeInTheDocument();
     });
 
     test("acid pump position is shown when has_acid_pump is true", () => {
       renderChemPumpSection({ has_acid_pump: true });
 
-      expect(screen.getByText("Posizione della pompa acido")).toBeInTheDocument();
+      expect(
+        screen.getByText("Posizione della pompa acido"),
+      ).toBeInTheDocument();
     });
   });
 
@@ -105,13 +121,17 @@ describe("ChemPumpSection", () => {
     test("checking chemical pump reveals its fields", async () => {
       renderChemPumpSection();
 
-      expect(screen.queryByText("Numero di pompe di prelavaggio")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Numero di pompe di prelavaggio"),
+      ).not.toBeInTheDocument();
 
       // The chemical pump checkbox is the 3rd one
       const checkboxes = screen.getAllByRole("checkbox");
       await userEvent.click(checkboxes[2]);
 
-      expect(screen.getByText("Numero di pompe di prelavaggio")).toBeInTheDocument();
+      expect(
+        screen.getByText("Numero di pompe di prelavaggio"),
+      ).toBeInTheDocument();
     });
 
     test("unchecking chemical pump resets chemical_qty, chemical_pump_pos, and has_foam", async () => {

@@ -1,13 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
-import {
-  vi,
-  describe,
-  test,
-  expect,
-  beforeEach,
-  afterEach,
-} from "vitest";
+import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -85,7 +78,7 @@ function makeConfiguration(
     created_at: Date;
     updated_at: Date;
     user: { id: string; email: string; initials: string | null };
-  }>
+  }>,
 ) {
   return {
     id: 1,
@@ -99,7 +92,9 @@ function makeConfiguration(
   };
 }
 
-function makeUser(overrides?: Partial<{ id: string; role: Role; initials: string }>) {
+function makeUser(
+  overrides?: Partial<{ id: string; role: Role; initials: string }>,
+) {
   return {
     id: "user-1",
     role: "ENGINEER" as Role,
@@ -110,7 +105,7 @@ function makeUser(overrides?: Partial<{ id: string; role: Role; initials: string
 
 function renderRow(
   configOverrides?: Parameters<typeof makeConfiguration>[0],
-  userOverrides?: Parameters<typeof makeUser>[0]
+  userOverrides?: Parameters<typeof makeUser>[0],
 ) {
   const configuration = makeConfiguration(configOverrides);
   const user = makeUser(userOverrides);
@@ -119,7 +114,7 @@ function renderRow(
       <tbody>
         <ConfigurationRow configuration={configuration} user={user} />
       </tbody>
-    </table>
+    </table>,
   );
 }
 
@@ -159,10 +154,10 @@ describe("ConfigurationRow", () => {
       renderRow({ created_at: createdAt, updated_at: updatedAt });
 
       expect(
-        screen.getByText(formatDateDDMMYYHHMM(createdAt))
+        screen.getByText(formatDateDDMMYYHHMM(createdAt)),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(formatDateDDMMYYHHMM(updatedAt))
+        screen.getByText(formatDateDDMMYYHHMM(updatedAt)),
       ).toBeInTheDocument();
     });
 
@@ -177,124 +172,132 @@ describe("ConfigurationRow", () => {
     test("ENGINEER user can open any configuration", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "ENGINEER" }
+        { id: "user-1", role: "ENGINEER" },
       );
 
       expect(
-        screen.getByLabelText("Modifica configurazione")
+        screen.getByLabelText("Modifica configurazione"),
       ).not.toBeDisabled();
     });
 
     test("ADMIN user can open any configuration", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "ADMIN" }
+        { id: "user-1", role: "ADMIN" },
       );
 
       expect(
-        screen.getByLabelText("Modifica configurazione")
+        screen.getByLabelText("Modifica configurazione"),
       ).not.toBeDisabled();
     });
 
     test("SALES owner can open own configuration", () => {
       renderRow(
         { user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
-        { id: "user-1", role: "SALES" }
+        { id: "user-1", role: "SALES" },
       );
 
       expect(
-        screen.getByLabelText("Modifica configurazione")
+        screen.getByLabelText("Modifica configurazione"),
       ).not.toBeDisabled();
     });
 
     test("SALES non-owner cannot open configuration", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "SALES" }
+        { id: "user-1", role: "SALES" },
       );
 
-      expect(
-        screen.getByLabelText("Modifica configurazione")
-      ).toBeDisabled();
+      expect(screen.getByLabelText("Modifica configurazione")).toBeDisabled();
     });
   });
 
   describe("canDelete — Delete button (requires editable status)", () => {
     test("ENGINEER user can delete DRAFT configuration", () => {
       renderRow(
-        { status: "DRAFT", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "ENGINEER" }
+        {
+          status: "DRAFT",
+          user: { id: "other-user", email: "other@test.com", initials: "OT" },
+        },
+        { id: "user-1", role: "ENGINEER" },
       );
 
       expect(
-        screen.getByLabelText("Elimina configurazione")
+        screen.getByLabelText("Elimina configurazione"),
       ).not.toBeDisabled();
     });
 
     test("ENGINEER user can delete SUBMITTED configuration", () => {
       renderRow(
-        { status: "SUBMITTED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "ENGINEER" }
+        {
+          status: "SUBMITTED",
+          user: { id: "other-user", email: "other@test.com", initials: "OT" },
+        },
+        { id: "user-1", role: "ENGINEER" },
       );
 
       expect(
-        screen.getByLabelText("Elimina configurazione")
+        screen.getByLabelText("Elimina configurazione"),
       ).not.toBeDisabled();
     });
 
     test("ENGINEER user cannot delete APPROVED configuration", () => {
       renderRow(
-        { status: "APPROVED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "ENGINEER" }
+        {
+          status: "APPROVED",
+          user: { id: "other-user", email: "other@test.com", initials: "OT" },
+        },
+        { id: "user-1", role: "ENGINEER" },
       );
 
-      expect(
-        screen.getByLabelText("Elimina configurazione")
-      ).toBeDisabled();
+      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
     });
 
     test("ADMIN user cannot delete CLOSED configuration", () => {
       renderRow(
-        { status: "CLOSED", user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "ADMIN" }
+        {
+          status: "CLOSED",
+          user: { id: "other-user", email: "other@test.com", initials: "OT" },
+        },
+        { id: "user-1", role: "ADMIN" },
       );
 
-      expect(
-        screen.getByLabelText("Elimina configurazione")
-      ).toBeDisabled();
+      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
     });
 
     test("SALES owner can delete own DRAFT configuration", () => {
       renderRow(
-        { status: "DRAFT", user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
-        { id: "user-1", role: "SALES" }
+        {
+          status: "DRAFT",
+          user: { id: "user-1", email: "ext@test.com", initials: "EX" },
+        },
+        { id: "user-1", role: "SALES" },
       );
 
       expect(
-        screen.getByLabelText("Elimina configurazione")
+        screen.getByLabelText("Elimina configurazione"),
       ).not.toBeDisabled();
     });
 
     test("SALES owner cannot delete own SUBMITTED configuration", () => {
       renderRow(
-        { status: "SUBMITTED", user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
-        { id: "user-1", role: "SALES" }
+        {
+          status: "SUBMITTED",
+          user: { id: "user-1", email: "ext@test.com", initials: "EX" },
+        },
+        { id: "user-1", role: "SALES" },
       );
 
-      expect(
-        screen.getByLabelText("Elimina configurazione")
-      ).toBeDisabled();
+      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
     });
 
     test("SALES non-owner cannot delete", () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
-        { id: "user-1", role: "SALES" }
+        { id: "user-1", role: "SALES" },
       );
 
-      expect(
-        screen.getByLabelText("Elimina configurazione")
-      ).toBeDisabled();
+      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
     });
   });
 
@@ -305,20 +308,23 @@ describe("ConfigurationRow", () => {
       const editLink = screen.getByLabelText("Modifica configurazione");
       expect(editLink.closest("a")).toHaveAttribute(
         "href",
-        "/configurations/edit/42"
+        "/configurations/edit/42",
       );
     });
 
     test("BOM button links to /configurations/bom/{id} and is always enabled", () => {
       renderRow(
-        { id: 42, user: { id: "other-user", email: "o@t.com", initials: "OT" } },
-        { role: "SALES" }
+        {
+          id: 42,
+          user: { id: "other-user", email: "o@t.com", initials: "OT" },
+        },
+        { role: "SALES" },
       );
 
       const bomLink = screen.getByLabelText("Visualizza distinta");
       expect(bomLink.closest("a")).toHaveAttribute(
         "href",
-        "/configurations/bom/42"
+        "/configurations/bom/42",
       );
     });
   });

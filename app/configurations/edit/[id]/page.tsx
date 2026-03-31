@@ -35,13 +35,13 @@ const EditConfiguration = async (props: EditConfigProps) => {
     transformDbNullToUndefined(configuration);
 
   const validatedConfiguration = updateConfigSchema.parse(
-    transformedConfigurationData
+    transformedConfigurationData,
   );
   const validatedWaterTanks = water_tanks.map((wt) =>
-    updateWaterTankSchema.parse(transformDbNullToUndefined(wt))
+    updateWaterTankSchema.parse(transformDbNullToUndefined(wt)),
   );
   const validatedWashBays = wash_bays.map((wb) =>
-    updateWashBaySchema.parse(transformDbNullToUndefined(wb))
+    updateWashBaySchema.parse(transformDbNullToUndefined(wb)),
   );
 
   const ebomExists = await hasEngineeringBom(id);
@@ -57,7 +57,11 @@ const EditConfiguration = async (props: EditConfigProps) => {
           </p>
         </div>
         <div className="sm:ml-auto sm:flex sm:justify-center sm:items-center">
-          <StatusForm confId={id} initialStatus={configuration.status} userRole={user.role} />
+          <StatusForm
+            confId={id}
+            initialStatus={configuration.status}
+            userRole={user.role}
+          />
         </div>
       </div>
       <FormContainer
