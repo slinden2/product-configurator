@@ -1,23 +1,26 @@
-import { SelectOption } from "@/types";
+import {
+  EnergyChainWidths,
+  SelectOption,
+  SupplyFixTypes,
+  SupplySides,
+  SupplyTypes,
+} from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const SupplyTypeEnum = z.enum(
-  ["STRAIGHT_SHELF", "BOOM", "ENERGY_CHAIN"],
-  {
-    message: genericRequiredMessage,
-  },
-);
+export const SupplyTypeEnum = z.enum(SupplyTypes, {
+  message: genericRequiredMessage,
+});
 
 export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplyTypeEnum,
   ["Mensola dritta", "Braccio mobile", "Catena portacavi"],
 );
 
-export const CableChainWidthEnum = z.enum(["L150", "L200", "L250", "L300"], {
+export const CableChainWidthEnum = z.enum(EnergyChainWidths, {
   message: genericRequiredMessage,
 });
 
@@ -29,12 +32,8 @@ export const cableChainWidths: SelectOption[] =
     "ST072S.300.R300",
   ]);
 
-export const SupplyFixingTypeEnum = z.enum(["POST", "WALL"], {
-  errorMap: () => {
-    return {
-      message: genericRequiredMessage,
-    };
-  },
+export const SupplyFixingTypeEnum = z.enum(SupplyFixTypes, {
+  errorMap: () => ({ message: genericRequiredMessage }),
 });
 
 export const supplyFixingTypes: SelectOption[] =
@@ -43,7 +42,7 @@ export const supplyFixingTypes: SelectOption[] =
     "Staffa a muro",
   ]);
 
-export const SupplySideEnum = z.enum(["TBD", "LEFT", "RIGHT"], {
+export const SupplySideEnum = z.enum(SupplySides, {
   message: genericRequiredMessage,
 });
 export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
@@ -111,24 +110,8 @@ export const supplyTypeSchema = z
       });
     }
 
-    if (data.supply_type === SupplyTypeEnum.enum.BOOM) {
-      if (data.supply_fixing_type === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: genericRequiredMessage,
-          path: ["supply_fixing_type"],
-        });
-      }
-    } else if (data.supply_type === SupplyTypeEnum.enum.ENERGY_CHAIN) {
-      if (data.supply_fixing_type === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: genericRequiredMessage,
-          path: ["supply_fixing_type"],
-        });
-      }
-    } // For STRAIGHT_SHELF, fixing type is optional/nullable, only check post frame dependency
-    else if (data.supply_type === SupplyTypeEnum.enum.STRAIGHT_SHELF) {
+    // For STRAIGHT_SHELF, fixing type is optional; only check post frame dependency
+    if (data.supply_type === SupplyTypeEnum.enum.STRAIGHT_SHELF) {
       if (
         data.supply_fixing_type !== undefined &&
         data.supply_fixing_type !== SupplyFixingTypeEnum.enum.POST &&

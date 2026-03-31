@@ -9,87 +9,10 @@ vi.mock("@/db/queries", () => ({
 }));
 
 import { BOM, BOMItemWithDescription, GeneralBOMConfig } from "@/lib/BOM";
-import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
-
-// --- Fixture helpers ---
-
-function makeWashBay(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 1,
-    hp_lance_qty: 0,
-    det_lance_qty: 0,
-    hose_reel_qty: 0,
-    pressure_washer_type: null,
-    pressure_washer_qty: null,
-    has_gantry: false,
-    energy_chain_width: null,
-    has_shelf_extension: false,
-    is_first_bay: false,
-    has_bay_dividers: false,
-    created_at: new Date(),
-    updated_at: new Date(),
-    configuration_id: 1,
-    ...overrides,
-  };
-}
-
-function makeConfig(
-  overrides: Record<string, unknown> = {},
-): ConfigurationWithWaterTanksAndWashBays {
-  return {
-    id: 1,
-    name: "Test Machine",
-    description: "A test machine",
-    water_tanks: [],
-    wash_bays: [],
-    supply_type: "STRAIGHT_SHELF",
-    supply_side: "LEFT",
-    supply_fixing_type: null,
-    brush_qty: 0,
-    brush_type: null,
-    brush_color: null,
-    has_shampoo_pump: false,
-    has_wax_pump: false,
-    has_chemical_pump: false,
-    chemical_qty: null,
-    chemical_pump_pos: null,
-    has_foam: false,
-    has_acid_pump: false,
-    acid_pump_pos: null,
-    water_1_type: "NETWORK",
-    water_1_pump: null,
-    inv_pump_outlet_dosatron_qty: null,
-    inv_pump_outlet_pw_qty: null,
-    water_2_type: null,
-    water_2_pump: null,
-    has_antifreeze: false,
-    has_post_frame: false,
-    rail_type: "DOWELED",
-    rail_length: 21,
-    rail_guide_qty: 0,
-    touch_qty: 1,
-    touch_pos: null,
-    touch_fixing_type: null,
-    has_itecoweb: false,
-    has_card_reader: false,
-    is_fast: false,
-    card_qty: 0,
-    has_15kw_pump: false,
-    pump_outlet_1_15kw: null,
-    pump_outlet_2_15kw: null,
-    has_30kw_pump: false,
-    pump_outlet_1_30kw: null,
-    pump_outlet_2_30kw: null,
-    has_omz_pump: false,
-    pump_outlet_omz: null,
-    has_chemical_roof_bar: false,
-    status: "DRAFT",
-    user_id: "test-user-id",
-    created_at: new Date(),
-    updated_at: new Date(),
-    ...overrides,
-  } as unknown as ConfigurationWithWaterTanksAndWashBays;
-}
+import {
+  makeConfigWithBaysAndTanks as makeConfig,
+  makeWashBay,
+} from "@/test/bom-test-utils";
 
 // Spy item: captures the config passed to it (always excludes itself from results)
 function makeSpyItem(captured: { value: unknown }) {

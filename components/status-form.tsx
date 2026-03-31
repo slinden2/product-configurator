@@ -5,7 +5,7 @@ import {
   configStatusOpts,
   configStatusSchema,
   ConfigStatusSchema,
-} from "@/validation/config-status.schema";
+} from "@/validation/config-status-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

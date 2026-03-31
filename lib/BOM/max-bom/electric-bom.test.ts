@@ -9,62 +9,7 @@ vi.mock("@/db/queries", () => ({
 
 import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
-
-function makeConfig(
-  overrides: Partial<GeneralBOMConfig> = {},
-): GeneralBOMConfig {
-  return {
-    id: 1,
-    name: "Test",
-    description: null,
-    has_card_reader: false,
-    has_itecoweb: false,
-    card_qty: 0,
-    has_omz_pump: false,
-    pump_outlet_omz: null,
-    has_antifreeze: false,
-    touch_qty: 1,
-    touch_pos: "INTERNAL",
-    touch_fixing_type: null,
-    has_chemical_roof_bar: false,
-    supply_type: "STRAIGHT_SHELF",
-    supply_side: "LEFT",
-    supply_fixing_type: null,
-    brush_qty: 0,
-    brush_type: null,
-    brush_color: null,
-    has_shampoo_pump: false,
-    has_wax_pump: false,
-    has_chemical_pump: false,
-    chemical_qty: null,
-    chemical_pump_pos: null,
-    has_foam: false,
-    has_acid_pump: false,
-    acid_pump_pos: null,
-    water_1_type: "NETWORK",
-    water_1_pump: null,
-    inv_pump_outlet_dosatron_qty: null,
-    inv_pump_outlet_pw_qty: null,
-    water_2_type: null,
-    water_2_pump: null,
-    has_post_frame: false,
-    rail_type: "DOWELED",
-    rail_length: 21,
-    rail_guide_qty: 0,
-    is_fast: false,
-    has_15kw_pump: false,
-    pump_outlet_1_15kw: null,
-    pump_outlet_2_15kw: null,
-    has_30kw_pump: false,
-    pump_outlet_1_30kw: null,
-    pump_outlet_2_30kw: null,
-    status: "DRAFT",
-    user_id: "test-user",
-    created_at: new Date(),
-    updated_at: new Date(),
-    ...overrides,
-  } as GeneralBOMConfig;
-}
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
   electricBOM

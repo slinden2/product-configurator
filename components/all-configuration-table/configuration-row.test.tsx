@@ -63,7 +63,7 @@ vi.mock("next/link", () => ({
 import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
-import { formatDateDDMMYYHHMM } from "@/lib/utils";
+import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { ConfigurationStatusType } from "@/types";
 import { Role } from "@/types";
 
@@ -154,10 +154,10 @@ describe("ConfigurationRow", () => {
       renderRow({ created_at: createdAt, updated_at: updatedAt });
 
       expect(
-        screen.getByText(formatDateDDMMYYHHMM(createdAt)),
+        screen.getByText(formatDateDDMMYYYYHHMM(createdAt)),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(formatDateDDMMYYHHMM(updatedAt)),
+        screen.getByText(formatDateDDMMYYYYHHMM(updatedAt)),
       ).toBeInTheDocument();
     });
 

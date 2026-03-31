@@ -118,7 +118,10 @@ describe("insertConfigurationAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await insertConfigurationAction(makeValidFormData());
-    expect(result).toEqual({ success: false, error: MSG.auth.userNotFound });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.userNotAuthenticated,
+    });
     expect(mockInsertConfiguration).not.toHaveBeenCalled();
   });
 

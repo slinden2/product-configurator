@@ -58,7 +58,7 @@ async function authorizeEngineeringBomAction(confId: number) {
     };
   }
 
-  const configuration = await getConfigurationWithTanksAndBays(confId);
+  const configuration = await getConfigurationWithTanksAndBays(confId, user);
   if (!configuration) {
     return {
       success: false as const,

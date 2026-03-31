@@ -9,31 +9,7 @@ vi.mock("@/db/queries", () => ({
 
 import { hpPumpBOM } from "@/lib/BOM/max-bom/hp-pump-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
-
-function makeConfig(
-  overrides: Partial<GeneralBOMConfig> = {},
-): GeneralBOMConfig {
-  return {
-    id: 1,
-    has_15kw_pump: false,
-    pump_outlet_1_15kw: null,
-    pump_outlet_2_15kw: null,
-    has_30kw_pump: false,
-    pump_outlet_1_30kw: null,
-    pump_outlet_2_30kw: null,
-    has_omz_pump: false,
-    pump_outlet_omz: null,
-    has_antifreeze: false,
-    machine_type: "STD",
-    has_chemical_roof_bar: false,
-    chassis_wash_sensor_type: null,
-    supply_side: "LEFT",
-    supply_type: "STRAIGHT_SHELF",
-    supply_fixing_type: null,
-    has_shelf_extension: false,
-    ...overrides,
-  } as GeneralBOMConfig;
-}
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
   hpPumpBOM

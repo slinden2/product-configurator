@@ -9,32 +9,7 @@ vi.mock("@/db/queries", () => ({
 
 import { supplyBOM } from "@/lib/BOM/max-bom/supply-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
-
-function makeConfig(
-  overrides: Partial<GeneralBOMConfig> = {},
-): GeneralBOMConfig {
-  return {
-    id: 1,
-    supply_type: "STRAIGHT_SHELF",
-    supply_side: "LEFT",
-    supply_fixing_type: null,
-    water_2_type: null,
-    has_15kw_pump: false,
-    pump_outlet_1_15kw: null,
-    pump_outlet_2_15kw: null,
-    has_post_frame: false,
-    touch_pos: "INTERNAL",
-    touch_qty: 1,
-    has_omz_pump: false,
-    pump_outlet_omz: null,
-    has_foam: false,
-    chemical_pump_pos: null,
-    chemical_qty: null,
-    has_acid_pump: false,
-    acid_pump_pos: null,
-    ...overrides,
-  } as GeneralBOMConfig;
-}
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
   supplyBOM

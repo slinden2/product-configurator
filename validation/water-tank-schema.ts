@@ -1,16 +1,13 @@
-import { SelectOption } from "@/types";
+import { WaterTankTypes, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const WaterTankTypeEnum = z.enum(
-  ["L2000", "L2000_JOLLY", "L2500", "L4500"],
-  {
-    message: genericRequiredMessage,
-  },
-);
+export const WaterTankTypeEnum = z.enum(WaterTankTypes, {
+  message: genericRequiredMessage,
+});
 
 export const waterTankOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterTankTypeEnum,

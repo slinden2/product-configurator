@@ -1,4 +1,4 @@
-import { configStatusSchema } from "@/validation/config-status.schema";
+import { configStatusSchema } from "@/validation/config-status-schema";
 import { describe, test, expect } from "vitest";
 
 describe("configStatusSchema", () => {

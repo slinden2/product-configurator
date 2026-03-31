@@ -9,30 +9,7 @@ vi.mock("@/db/queries", () => ({
 
 import { nozzleBarBOM } from "@/lib/BOM/max-bom/nozzle-bar-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
-
-function makeConfig(
-  overrides: Partial<GeneralBOMConfig> = {},
-): GeneralBOMConfig {
-  return {
-    id: 1,
-    brush_qty: 0,
-    has_chemical_pump: false,
-    chemical_qty: null,
-    chemical_pump_pos: null,
-    has_acid_pump: false,
-    acid_pump_pos: null,
-    has_wax_pump: false,
-    has_itecoweb: false,
-    machine_type: "STD",
-    has_chemical_roof_bar: false,
-    pump_outlet_omz: null,
-    has_omz_pump: false,
-    water_2_type: null,
-    supply_type: "STRAIGHT_SHELF",
-    is_fast: false,
-    ...overrides,
-  } as GeneralBOMConfig;
-}
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
   nozzleBarBOM

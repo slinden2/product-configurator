@@ -1,11 +1,11 @@
-import { SelectOption } from "@/types";
+import { Water1Pumps, Water2Pumps, WaterTypes, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { z } from "zod";
 
-export const WaterTypeEnum = z.enum(["NETWORK", "RECYCLED", "DEMINERALIZED"], {
+export const WaterTypeEnum = z.enum(WaterTypes, {
   message: genericRequiredMessage,
 });
 
@@ -14,12 +14,7 @@ export const waterTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Acqua di rete", "Acqua riciclata", "Acqua demineralizzata"],
 );
 
-export const WaterPump1Enum = z.enum([
-  "BOOST_15KW",
-  "BOOST_22KW",
-  "INV_3KW_200L",
-  "INV_3KW_250L",
-]);
+export const WaterPump1Enum = z.enum(Water1Pumps);
 
 export const waterPump1Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterPump1Enum,
@@ -31,7 +26,7 @@ export const waterPump1Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   ],
 );
 
-export const WaterPump2Enum = z.enum(["BOOST_15KW", "BOOST_22KW"]);
+export const WaterPump2Enum = z.enum(Water2Pumps);
 
 export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterPump2Enum,

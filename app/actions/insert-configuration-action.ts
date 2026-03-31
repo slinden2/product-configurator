@@ -16,7 +16,7 @@ export const insertConfigurationAction = async (formData: unknown) => {
   const user = await getUserData();
 
   if (!user) {
-    return { success: false as const, error: MSG.auth.userNotFound };
+    return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
   try {

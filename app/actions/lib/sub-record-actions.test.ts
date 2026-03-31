@@ -27,6 +27,15 @@ vi.mock("@/db/queries", () => ({
   },
 }));
 
+const mockTx = {};
+vi.mock("@/db", () => ({
+  db: {
+    transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) =>
+      cb(mockTx),
+    ),
+  },
+}));
+
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
@@ -102,7 +111,7 @@ describe("handleSubRecordAction", () => {
       success: true,
       data: { success: true, id: { id: 99 } },
     });
-    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, { value: "test" });
+    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, { value: "test" }, mockTx);
   });
 
   test("insert: returns error on invalid form data", async () => {
@@ -132,9 +141,14 @@ describe("handleSubRecordAction", () => {
       success: true,
       data: { success: true, id: { id: RECORD_ID } },
     });
-    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID, {
-      value: "test",
-    });
+    expect(queryFn).toHaveBeenCalledWith(
+      PARENT_ID,
+      RECORD_ID,
+      {
+        value: "test",
+      },
+      mockTx,
+    );
   });
 
   // --- Delete ---
@@ -155,7 +169,7 @@ describe("handleSubRecordAction", () => {
       success: true,
       data: { success: true, id: { id: RECORD_ID } },
     });
-    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID);
+    expect(queryFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID, mockTx);
   });
 
   // --- Auth ---
@@ -243,7 +257,10 @@ describe("handleSubRecordAction", () => {
   test("deletes engineering BOM when it exists after successful insert", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
     await handleSubRecordAction(insertOptions());
-    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
+      PARENT_ID,
+      mockTx,
+    );
   });
 
   test("does NOT delete engineering BOM when it does not exist", async () => {
@@ -267,7 +284,10 @@ describe("handleSubRecordAction", () => {
       revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
       entityName: "TestEntity",
     });
-    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
+      PARENT_ID,
+      mockTx,
+    );
   });
 
   test("deletes engineering BOM after successful delete", async () => {
@@ -283,14 +303,20 @@ describe("handleSubRecordAction", () => {
       revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
       entityName: "TestEntity",
     });
-    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(PARENT_ID);
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
+      PARENT_ID,
+      mockTx,
+    );
   });
 
   // --- Parent updated_at propagation ---
 
   test("touches parent configuration updated_at after successful insert", async () => {
     await handleSubRecordAction(insertOptions());
-    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(PARENT_ID);
+    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
+      PARENT_ID,
+      mockTx,
+    );
   });
 
   test("touches parent configuration updated_at after successful edit", async () => {
@@ -307,7 +333,10 @@ describe("handleSubRecordAction", () => {
       revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
       entityName: "TestEntity",
     });
-    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(PARENT_ID);
+    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
+      PARENT_ID,
+      mockTx,
+    );
   });
 
   test("touches parent configuration updated_at after successful delete", async () => {
@@ -322,7 +351,10 @@ describe("handleSubRecordAction", () => {
       revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
       entityName: "TestEntity",
     });
-    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(PARENT_ID);
+    expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
+      PARENT_ID,
+      mockTx,
+    );
   });
 
   test("does NOT touch parent updated_at when validation fails", async () => {

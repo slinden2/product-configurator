@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import SubRecordForm from "@/components/shared/sub-record-form";
 import {
   UpdateWashBaySchema,
@@ -31,9 +31,12 @@ interface WashBayFormProps {
 }
 
 const WashBayForm = (props: WashBayFormProps) => {
-  const FieldsWithSupplyType = () => (
-    <WashBayFields supplyType={props.supplyType} />
-  );
+  const FieldsWithSupplyType = useMemo(() => {
+    function Fields() {
+      return <WashBayFields supplyType={props.supplyType} />;
+    }
+    return Fields;
+  }, [props.supplyType]);
 
   return (
     <SubRecordForm

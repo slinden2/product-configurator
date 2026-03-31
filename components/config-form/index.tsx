@@ -93,11 +93,7 @@ const ConfigForm = ({
           setIsSubmitting(false);
           return;
         }
-        const result = await editConfigurationAction(
-          id,
-          configuration.user_id,
-          values,
-        );
+        const result = await editConfigurationAction(id, values);
         if (result.success) {
           toast.success(MSG.toast.configUpdated);
 

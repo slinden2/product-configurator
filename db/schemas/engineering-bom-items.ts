@@ -18,16 +18,16 @@ export const ebomCategoryEnum = pgEnum("ebom_category", [
 export const ebomTagEnum = pgEnum("ebom_tag", [
   "FRAME",
   "BRUSHES",
-  "DOSING_PUMPS",
-  "WATER_SUPPLY",
   "RINSE_BARS",
   "PREWASH_BARS",
   "ACID_BARS",
-  "SUPPLY",
-  "RAILS",
-  "ELECTRICAL",
+  "DOSING_PUMPS",
   "FAST",
+  "ELECTRICAL",
   "HP_PUMPS",
+  "RAILS",
+  "SUPPLY",
+  "WATER_SUPPLY",
   "MISC",
 ]);
 

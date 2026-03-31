@@ -1,4 +1,4 @@
-import { ConfigSchema } from "@/validation/config-schema";
+import { ConfigSchema, UpdateConfigSchema } from "@/validation/config-schema";
 import { configurations } from "@/db/schemas"; // Import Drizzle schema
 import { WaterTankSchema } from "@/validation/water-tank-schema";
 import { WashBaySchema } from "@/validation/wash-bay-schema";
@@ -85,7 +85,9 @@ export function transformConfigToDbInsert(
 }
 
 // Public function for UPDATE transformation
-export function transformConfigToDbUpdate(values: ConfigSchema): DbConfigSet {
+export function transformConfigToDbUpdate(
+  values: UpdateConfigSchema,
+): DbConfigSet {
   const commonData = mapConfigSchemaToDbCompatible(values);
   return commonData;
 }

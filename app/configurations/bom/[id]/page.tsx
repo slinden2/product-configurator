@@ -26,7 +26,7 @@ const BOMView = async (props: BOMViewProps) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-  const bom = await getBOM(confId);
+  const bom = await getBOM(confId, user);
   if (!bom) notFound();
 
   const configuration = await getConfiguration(confId);

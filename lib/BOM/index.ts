@@ -263,18 +263,21 @@ export class BOM {
 
     // Reconstruct the original structure from the flat enriched array
     let offset = 0;
-    const generalBOMWithCost = enriched.slice(
-      offset,
-      (offset += generalBOM.length),
-    );
+    const generalEnd = offset + generalBOM.length;
+    const generalBOMWithCost = enriched.slice(offset, generalEnd);
+    offset = generalEnd;
 
     const waterTankBOMsWithCost = waterTankBOMs.map((innerArray) => {
-      const slice = enriched.slice(offset, (offset += innerArray.length));
+      const end = offset + innerArray.length;
+      const slice = enriched.slice(offset, end);
+      offset = end;
       return slice;
     });
 
     const washBayBOMsWithCost = washBayBOMs.map((innerArray) => {
-      const slice = enriched.slice(offset, (offset += innerArray.length));
+      const end = offset + innerArray.length;
+      const slice = enriched.slice(offset, end);
+      offset = end;
       return slice;
     });
 

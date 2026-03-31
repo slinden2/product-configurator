@@ -1,4 +1,4 @@
-import { SelectOption } from "@/types";
+import { TouchFixTypes, TouchPos, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
@@ -9,14 +9,14 @@ import { z } from "zod";
 
 export const touchQtyOpts: SelectOption[] = getNumericSelectOptions([1, 2]);
 
-export const TouchPosEnum = z.enum(["INTERNAL", "EXTERNAL"], {
+export const TouchPosEnum = z.enum(TouchPos, {
   message: genericRequiredMessage,
 });
 
 export const touchPositionOpts: SelectOption[] =
   generateSelectOptionsFromZodEnum(TouchPosEnum, ["A bordo", "In piazzola"]);
 
-export const TouchFixingType = z.enum(["WALL", "POST"], {
+export const TouchFixingType = z.enum(TouchFixTypes, {
   message: genericRequiredMessage,
 });
 
