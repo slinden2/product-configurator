@@ -1,11 +1,11 @@
-import { TouchFixTypes, TouchPos, SelectOption } from "@/types";
+import { z } from "zod";
+import { SelectOption, TouchFixTypes, TouchPos } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
   getNumericSelectOptions,
   invalidOption,
 } from "@/validation/common";
-import { z } from "zod";
 
 export const touchQtyOpts: SelectOption[] = getNumericSelectOptions([1, 2]);
 
@@ -14,7 +14,11 @@ export const TouchPosEnum = z.enum(TouchPos, {
 });
 
 export const touchPositionOpts: SelectOption[] =
-  generateSelectOptionsFromZodEnum(TouchPosEnum, ["A bordo", "In piazzola"]);
+  generateSelectOptionsFromZodEnum(TouchPosEnum, [
+    "Su Q.E.",
+    "Su vano detergenti",
+    "Esterna",
+  ]);
 
 export const TouchFixingType = z.enum(TouchFixTypes, {
   message: genericRequiredMessage,
@@ -59,9 +63,10 @@ const baseTouchSchema = z
         });
       } else {
         // Only check fixing type if position is known
-        // If pos is INTERNAL, fixing type must NOT be selected
+        // If pos is INTERNAL or ONBOARD_RIGHT, fixing type must NOT be selected
         if (
-          data.touch_pos === "INTERNAL" &&
+          (data.touch_pos === "ON_PANEL" ||
+            data.touch_pos === "ON_DET_CAB") &&
           data.touch_fixing_type !== undefined
         ) {
           ctx.addIssue({

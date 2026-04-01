@@ -11,7 +11,7 @@ const PART_NUMBERS = {
   WASH_BAY_MANAGEMENT_EXTENSION: "890.10.021",
   SUNSHADE: "450.02.053",
   CLOSING_PLATE: "1100.050.004",
-  BOX_FOR_TOUCH_ON_DET_CAB: "1100.057.000", // TODO Add option for this in the config form
+  BOX_FOR_TOUCH_ON_DET_CAB: "1100.057.000",
   EXTERNAL_CONSOLE_WALL_ONE_TOUCH: "1100.050.000",
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
@@ -27,7 +27,9 @@ const usesDualTouch = (config: GeneralBOMConfig): boolean =>
   config.touch_qty === 2;
 
 const usesOnboardTouch = (config: GeneralBOMConfig): boolean =>
-  (config.touch_qty === 1 && config.touch_pos === "INTERNAL") ||
+  (config.touch_qty === 1 &&
+    (config.touch_pos === "ON_PANEL" ||
+      config.touch_pos === "ON_DET_CAB")) ||
   config.touch_qty === 2;
 
 export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
@@ -77,6 +79,15 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [usesDualTouch],
     qty: 1,
     _description: "Wash bay management extension",
+  },
+  {
+    pn: PART_NUMBERS.BOX_FOR_TOUCH_ON_DET_CAB,
+    conditions: [
+      (config) =>
+        config.touch_qty === 1 && config.touch_pos === "ON_DET_CAB",
+    ],
+    qty: 1,
+    _description: "Box for touch on detergent cabinet",
   },
   {
     pn: PART_NUMBERS.SUNSHADE,

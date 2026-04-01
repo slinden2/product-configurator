@@ -57,7 +57,11 @@ const TouchSection = () => {
               items={selectFieldOptions.touchPositionOpts}
               fieldsToResetOnValue={[
                 {
-                  triggerValue: zodEnums.TouchPosEnum.enum.INTERNAL,
+                  triggerValue: zodEnums.TouchPosEnum.enum.ON_PANEL,
+                  fieldsToReset: ["touch_fixing_type"],
+                },
+                {
+                  triggerValue: zodEnums.TouchPosEnum.enum.ON_DET_CAB,
                   fieldsToReset: ["touch_fixing_type"],
                 },
               ]}

@@ -56,10 +56,20 @@ describe("touchSchema", () => {
       expect(() => touchSchema.parse(validData)).not.toThrow();
     });
 
+    test("should validate successfully with 1 touch and ON_DET_CAB position", () => {
+      const validData = createTouchData({
+        touch_qty: 1,
+        touch_pos: TouchPosEnum.enum.ON_DET_CAB,
+        touch_fixing_type: undefined,
+        card_qty: 0,
+      });
+      expect(() => touchSchema.parse(validData)).not.toThrow();
+    });
+
     test("should validate successfully with 0 card_qty and card reader disabled", () => {
       const validData = createTouchData({
         touch_qty: 1,
-        touch_pos: TouchPosEnum.enum.INTERNAL,
+        touch_pos: TouchPosEnum.enum.ON_PANEL,
         touch_fixing_type: undefined,
         card_qty: 0,
         has_card_reader: false,
@@ -78,10 +88,19 @@ describe("touchSchema", () => {
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
 
-    test("should throw error if touch_qty is 1, touch_pos is INTERNAL and touch_fixing_type is set", () => {
+    test("should throw error if touch_qty is 1, touch_pos is ON_PANEL and touch_fixing_type is set", () => {
       const invalidData = createTouchData({
         touch_qty: 1,
-        touch_pos: TouchPosEnum.enum.INTERNAL,
+        touch_pos: TouchPosEnum.enum.ON_PANEL,
+        touch_fixing_type: TouchFixingType.enum.WALL,
+      });
+      expect(() => touchSchema.parse(invalidData)).toThrow();
+    });
+
+    test("should throw error if touch_qty is 1, touch_pos is ON_DET_CAB and touch_fixing_type is set", () => {
+      const invalidData = createTouchData({
+        touch_qty: 1,
+        touch_pos: TouchPosEnum.enum.ON_DET_CAB,
         touch_fixing_type: TouchFixingType.enum.WALL,
       });
       expect(() => touchSchema.parse(invalidData)).toThrow();
@@ -96,10 +115,10 @@ describe("touchSchema", () => {
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
 
-    test("should throw error if touch_pos is INTERNAL and touch_fixing_type is set", () => {
+    test("should throw error if touch_pos is ON_PANEL and touch_fixing_type is set", () => {
       const invalidData = createTouchData({
         touch_qty: 1,
-        touch_pos: TouchPosEnum.enum.INTERNAL,
+        touch_pos: TouchPosEnum.enum.ON_PANEL,
         touch_fixing_type: TouchFixingType.enum.POST,
       });
       expect(() => touchSchema.parse(invalidData)).toThrowError(invalidOption);

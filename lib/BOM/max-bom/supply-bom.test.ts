@@ -228,8 +228,8 @@ describe("supplyBOM — energy chain cables (450.73.xxx)", () => {
     expect(result).not.toContain(PNS.EC_SIGNAL_CABLE_LEFT);
   });
 
-  test("ENERGY_CHAIN + touch_pos=INTERNAL + touch_qty=1 → signal cable qty=1", () => {
-    const config = ecLeft({ touch_pos: "INTERNAL", touch_qty: 1 });
+  test("ENERGY_CHAIN + touch_pos=ON_PANEL + touch_qty=1 → signal cable qty=1", () => {
+    const config = ecLeft({ touch_pos: "ON_PANEL", touch_qty: 1 });
     expect(qty(config, PNS.EC_SIGNAL_CABLE_LEFT)).toBe(1);
   });
 

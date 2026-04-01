@@ -47,7 +47,7 @@ export type RailTypeType = (typeof RailTypes)[number];
 export const AnchorTypes = ["ZINC", "CHEMICAL"] as const;
 export type AnchorType = (typeof AnchorTypes)[number];
 
-export const TouchPos = ["INTERNAL", "EXTERNAL"] as const;
+export const TouchPos = ["ON_PANEL", "ON_DET_CAB", "EXTERNAL"] as const;
 export type TouchPosType = (typeof TouchPos)[number];
 
 export const TouchFixTypes = ["POST", "WALL"] as const;

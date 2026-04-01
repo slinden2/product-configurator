@@ -126,8 +126,8 @@ describe("electricBOM — itecoweb", () => {
 });
 
 describe("electricBOM — touch configuration", () => {
-  test("touch_qty=1, touch_pos=INTERNAL → sunshade included, no wash bay ext", () => {
-    const result = pns(makeConfig({ touch_qty: 1, touch_pos: "INTERNAL" }));
+  test("touch_qty=1, touch_pos=ON_PANEL → sunshade included, no wash bay ext", () => {
+    const result = pns(makeConfig({ touch_qty: 1, touch_pos: "ON_PANEL" }));
     expect(result).toContain(PNS.SUNSHADE);
     expect(result).not.toContain(PNS.WASH_BAY_MANAGEMENT_EXTENSION);
     expect(result).not.toContain(PNS.CLOSING_PLATE);

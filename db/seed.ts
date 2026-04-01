@@ -57,7 +57,7 @@ const configurationSimple: ConfigSchema = {
   card_qty: 100,
   is_fast: false,
   touch_qty: 1,
-  touch_pos: "INTERNAL",
+  touch_pos: "ON_PANEL",
   touch_fixing_type: undefined,
 };
 
@@ -181,7 +181,7 @@ const configurationFast: ConfigSchema = {
   card_qty: 0,
   is_fast: true,
   touch_qty: 1,
-  touch_pos: "INTERNAL",
+  touch_pos: "ON_PANEL",
   touch_fixing_type: undefined,
 };
 

@@ -95,3 +95,7 @@ After every code change, run all three checks before considering the task comple
 ## Path Aliases
 
 `@/*` maps to project root (configured in `tsconfig.json`).
+
+## Screenshots
+
+If I ask you to take a look at a screenshot you can find it here: C:\Users\Utente-006\Pictures\Screenshots

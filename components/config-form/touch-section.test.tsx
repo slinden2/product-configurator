@@ -56,8 +56,8 @@ describe("TouchSection", () => {
       expect(screen.getByLabelText("Posizione touch")).not.toBeDisabled();
     });
 
-    test("touch_fixing_type is disabled when touch_qty is 1 and touch_pos is INTERNAL", () => {
-      renderTouchSection({ touch_qty: 1, touch_pos: "INTERNAL" });
+    test("touch_fixing_type is disabled when touch_qty is 1 and touch_pos is ON_PANEL", () => {
+      renderTouchSection({ touch_qty: 1, touch_pos: "ON_PANEL" });
 
       expect(screen.getByLabelText("Fissaggio touch esterno")).toBeDisabled();
     });

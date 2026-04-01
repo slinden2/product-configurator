@@ -41,7 +41,7 @@ export function makeGeneralBOMConfig(
     rail_guide_qty: 0,
     anchor_type: null,
     touch_qty: 1,
-    touch_pos: "INTERNAL",
+    touch_pos: "ON_PANEL",
     touch_fixing_type: null,
     has_itecoweb: false,
     has_card_reader: false,
