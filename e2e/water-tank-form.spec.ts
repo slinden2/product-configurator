@@ -82,13 +82,17 @@ test.describe("Water tank form", () => {
     await selectRadixOption(page, "Uscite c/ rubinetto", "1");
     await page.getByRole("button", { name: "Aggiungi" }).click();
     await expect(page.getByText("Serbatoio creato.")).toBeVisible();
+    await page.waitForLoadState("networkidle");
 
-    // Second tank
+    // Second tank — Tank 1's edit form is still visible, so its selects occupy index 0.
+    // Use triggerIndex 1 to target the new add form's fields.
     await page.getByRole("button", { name: "Aggiungi serbatoio" }).click();
-    await selectRadixOption(page, "Tipo di serbatoio", "2500L");
-    await selectRadixOption(page, "Uscite no rubinetto", "1");
+    await selectRadixOption(page, "Tipo di serbatoio", "2500L", 1);
+    await selectRadixOption(page, "Uscite no rubinetto", "1", 1);
     await page.getByRole("button", { name: "Aggiungi" }).click();
     await expect(page.getByText("Serbatoio creato.")).toBeVisible();
+
+    await page.waitForLoadState("networkidle");
 
     // Both tanks are shown
     await expect(page.getByText("Serbatoio 1")).toBeVisible();
@@ -104,6 +108,8 @@ test.describe("Water tank form", () => {
     await selectRadixOption(page, "Uscite c/ rubinetto", "1");
     await page.getByRole("button", { name: "Aggiungi" }).click();
     await expect(page.getByText("Serbatoio creato.")).toBeVisible();
+    // Wait for revalidatePath refetch to complete before interacting with the edit form
+    await page.waitForLoadState("networkidle");
 
     // Edit: change the type
     await selectRadixOption(page, "Tipo di serbatoio", "4500L");
@@ -121,19 +127,21 @@ test.describe("Water tank form", () => {
     await selectRadixOption(page, "Uscite c/ rubinetto", "1");
     await page.getByRole("button", { name: "Aggiungi" }).click();
     await expect(page.getByText("Serbatoio creato.")).toBeVisible();
+    await page.waitForLoadState("networkidle");
 
     // Delete: button has aria-label "Elimina Serbatoio 1"
     await page.getByRole("button", { name: "Elimina Serbatoio 1" }).click();
 
-    // Confirm in the alert dialog
-    await page
-      .getByRole("alertdialog")
-      .getByRole("button", { name: "Elimina" })
-      .click();
+    // Wait for the dialog animation to complete before confirming
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Elimina" }).click();
 
     await expect(page.getByText("Serbatoio 1 eliminato.")).toBeVisible();
-    // The tank form is gone from the page
-    await expect(page.getByText("Serbatoio 1")).not.toBeVisible({
+    // The tank form is gone from the page (exact: true avoids matching the toast text)
+    await expect(
+      page.getByText("Serbatoio 1", { exact: true }),
+    ).not.toBeVisible({
       timeout: 2000,
     });
   });
@@ -145,18 +153,25 @@ test.describe("Water tank form", () => {
     await selectRadixOption(page, "Uscite c/ rubinetto", "1");
     await page.getByRole("button", { name: "Aggiungi" }).click();
     await expect(page.getByText("Serbatoio creato.")).toBeVisible();
+    await page.waitForLoadState("networkidle");
 
     await page.getByRole("button", { name: "Elimina Serbatoio 1" }).click();
 
+    // Wait for the dialog animation to complete before interacting
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toBeVisible();
+
     // Cancel in the dialog
-    await page
-      .getByRole("alertdialog")
-      .getByRole("button", { name: "Annulla" })
-      .click();
+    await dialog.getByRole("button", { name: "Annulla" }).click();
+
+    // Dialog should be gone before we check the rest
+    await expect(dialog).not.toBeVisible();
 
     // Tank form is still present
-    await expect(page.getByText("Serbatoio 1")).toBeVisible();
-    await expect(page.getByText("Serbatoio 1 eliminato.")).not.toBeVisible({
+    await expect(page.getByText("Serbatoio 1", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Serbatoio 1 eliminato.", { exact: true }),
+    ).not.toBeVisible({
       timeout: 2000,
     });
   });

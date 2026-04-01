@@ -90,6 +90,8 @@ After every code change, run all three checks before considering the task comple
 2. `npm run type-check:incremental`
 3. `npm run test:run`
 
+** DO NOT COMMIT CODE WITHOUT A DIRECT COMMAND TO DO SO **
+
 ## Path Aliases
 
 `@/*` maps to project root (configured in `tsconfig.json`).
