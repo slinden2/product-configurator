@@ -1,3 +1,4 @@
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   configurations,
@@ -10,12 +11,14 @@ import {
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
-import { and, asc, desc, eq, inArray, or, ilike, sql } from "drizzle-orm";
+import { ConfigurationStatusType, Role } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import {
-  UpdateConfigSchema,
   type ConfigSchema,
+  UpdateConfigSchema,
 } from "@/validation/config-schema";
+import { ConfigStatusSchema } from "@/validation/config-status-schema";
+import { WashBaySchema } from "@/validation/wash-bay-schema";
 import { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
   transformConfigToDbInsert,
@@ -23,9 +26,6 @@ import {
   transformWashBaySchemaToDbData,
   transformWaterTankSchemaToDbData,
 } from "./transformations";
-import { WashBaySchema } from "@/validation/wash-bay-schema";
-import { ConfigStatusSchema } from "@/validation/config-status-schema";
-import { ConfigurationStatusType, Role } from "@/types";
 
 export type DatabaseType = typeof db;
 export type TransactionType = Parameters<
