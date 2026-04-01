@@ -14,7 +14,7 @@ export async function selectRadixOption(
   triggerIndex = 0,
 ) {
   await page.getByLabel(labelText).nth(triggerIndex).click();
-  await page.getByRole("option", { name: optionText }).click();
+  await page.getByRole("option", { name: optionText, exact: true }).click();
 }
 
 /**
