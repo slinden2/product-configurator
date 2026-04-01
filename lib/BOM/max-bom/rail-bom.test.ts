@@ -139,38 +139,38 @@ describe("railBOM part number routing by rail_type", () => {
 });
 
 describe("calculateAnchorQty", () => {
-  test("rail_length = 7 → 44 + 1×6 + 0×10 = 50", () => {
-    expect(calculateAnchorQty(cfg(7))).toBe(50);
+  test("rail_length = 7 → 2 + 44 + 1×12 + 0×20 = 58", () => {
+    expect(calculateAnchorQty(cfg(7))).toBe(58);
   });
 
-  test("rail_length = 21 → 44 + 0×6 + 5×10 = 94", () => {
-    expect(calculateAnchorQty(cfg(21))).toBe(94);
+  test("rail_length = 21 → 2 + 44 + 0×12 + 5×20 = 146", () => {
+    expect(calculateAnchorQty(cfg(21))).toBe(146);
   });
 
-  test("rail_length = 25 → 44 + 1×6 + 6×10 = 110", () => {
-    expect(calculateAnchorQty(cfg(25))).toBe(110);
+  test("rail_length = 25 → 2 + 44 + 1×12 + 6×20 = 178", () => {
+    expect(calculateAnchorQty(cfg(25))).toBe(178);
   });
 
-  test("rail_length = 26 → 44 + 2×6 + 6×10 = 116", () => {
-    expect(calculateAnchorQty(cfg(26))).toBe(116);
+  test("rail_length = 26 → 2 + 44 + 2×12 + 6×20 = 190", () => {
+    expect(calculateAnchorQty(cfg(26))).toBe(190);
   });
 });
 
 describe("calculateResinQty", () => {
-  test("rail_length = 7 → 50 anchors × 9ml = 450ml → ceil(450/500) = 1", () => {
-    expect(calculateResinQty(cfg(7))).toBe(1);
+  test("rail_length = 7 → 58 anchors × 9ml = 522ml → ceil(522/500) = 2", () => {
+    expect(calculateResinQty(cfg(7))).toBe(2);
   });
 
-  test("rail_length = 21 → 94 anchors × 9ml = 846ml → ceil(846/500) = 2", () => {
-    expect(calculateResinQty(cfg(21))).toBe(2);
+  test("rail_length = 21 → 146 anchors × 9ml = 1314ml → ceil(1314/500) = 3", () => {
+    expect(calculateResinQty(cfg(21))).toBe(3);
   });
 
-  test("rail_length = 25 → 110 anchors × 9ml = 990ml → ceil(990/500) = 2", () => {
-    expect(calculateResinQty(cfg(25))).toBe(2);
+  test("rail_length = 25 → 178 anchors × 9ml = 1602ml → ceil(1602/500) = 4", () => {
+    expect(calculateResinQty(cfg(25))).toBe(4);
   });
 
-  test("rail_length = 26 → 116 anchors × 9ml = 1044ml → ceil(1044/500) = 3", () => {
-    expect(calculateResinQty(cfg(26))).toBe(3);
+  test("rail_length = 26 → 190 anchors × 9ml = 1710ml → ceil(1710/500) = 4", () => {
+    expect(calculateResinQty(cfg(26))).toBe(4);
   });
 });
 

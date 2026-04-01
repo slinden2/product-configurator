@@ -28,6 +28,7 @@ const PART_NUMBERS = {
 const ANCHORS_FOR_TERMINAL_RAILS = 44 as const;
 const ANCHORS_PER_1M_RAIL = 12 as const;
 const ANCHORS_PER_3M_RAIL = 20 as const;
+const ANCHORS_FOR_STORM_BRACKET = 2 as const;
 const RESIN_CARTRIDGE_SIZE = 500 as const; // ml
 const RESIN_PER_ANCHOR = 9 as const;
 
@@ -38,6 +39,7 @@ export const calculate1mRailQty = (config: GeneralBOMConfig): number =>
   (config.rail_length - 6) % 3;
 
 export const calculateAnchorQty = (config: GeneralBOMConfig): number =>
+  ANCHORS_FOR_STORM_BRACKET +
   ANCHORS_FOR_TERMINAL_RAILS +
   calculate1mRailQty(config) * ANCHORS_PER_1M_RAIL +
   calculate3mRailQty(config) * ANCHORS_PER_3M_RAIL;
