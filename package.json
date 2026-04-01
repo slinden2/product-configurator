@@ -17,7 +17,9 @@
     "BOM": "npx tsx ./lib/BOM/BOM.ts",
     "job": "npx tsx ./lib//db-sync/job.ts",
     "seed": "npx tsx ./db/seed.ts",
-    "seed:reset": "npx tsx ./db/seed.ts --reset"
+    "seed:reset": "npx tsx ./db/seed.ts --reset",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.0.0",
@@ -56,6 +58,7 @@
     "@biomejs/biome": "2.4.10",
     "@hookform/devtools": "^4.3.3",
     "@next/env": "^16.2.1",
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

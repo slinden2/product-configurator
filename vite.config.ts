@@ -8,5 +8,6 @@ export default defineConfig({
   },
   test: {
     setupFiles: ["./test/setup-dom.ts"],
+    exclude: ["node_modules", "e2e/**"],
   },
 });
