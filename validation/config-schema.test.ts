@@ -34,10 +34,10 @@ const validBase = {
   supply_fixing_type: undefined,
   has_post_frame: false,
   // Rail
-  rail_type: "DOWELED",
+  rail_type: "ANCHORED",
   rail_length: 21,
   rail_guide_qty: 0,
-  dowel_type: "ZINCATO",
+  anchor_type: "ZINC",
   // HP pump (all off)
   has_15kw_pump: false,
   pump_outlet_1_15kw: undefined,

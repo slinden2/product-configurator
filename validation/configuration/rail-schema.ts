@@ -1,5 +1,5 @@
 import { NOT_SELECTED_LABEL } from "@/lib/utils";
-import { DowelTypes, RailTypes, SelectOption } from "@/types";
+import { AnchorTypes, RailTypes, SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
@@ -14,12 +14,12 @@ export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   ["Da tassellare", "Da saldare", "Da saldare incassato"],
 );
 
-export const DowelTypeEnum = z.enum(DowelTypes, {
+export const AnchorTypeEnum = z.enum(AnchorTypes, {
   message: genericRequiredMessage,
 });
-export const dowelTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
-  DowelTypeEnum,
-  ["Zincato", "Inox", "Chimico"],
+export const anchorTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
+  AnchorTypeEnum,
+  ["Zincato", "Chimico"],
 );
 
 export const railLengths: SelectOption[] = [
@@ -59,7 +59,7 @@ export const railSchema = z
       .min(0)
       .max(2)
       .default(0),
-    dowel_type: DowelTypeEnum.optional(),
+    anchor_type: AnchorTypeEnum.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.rail_type === undefined) {
@@ -76,11 +76,11 @@ export const railSchema = z
         path: ["rail_length"],
       });
     }
-    if (data.rail_type === "DOWELED" && data.dowel_type === undefined) {
+    if (data.rail_type === "ANCHORED" && data.anchor_type === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: genericRequiredMessage,
-        path: ["dowel_type"],
+        path: ["anchor_type"],
       });
     }
   });

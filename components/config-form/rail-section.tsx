@@ -22,21 +22,21 @@ const RailSection = () => {
               items={selectFieldOptions.railTypes}
               fieldsToResetOnValue={[
                 {
-                  triggerValue: zodEnums.RailTypeEnum.enum.DOWELED,
-                  fieldsToReset: ["dowel_type"],
+                  triggerValue: zodEnums.RailTypeEnum.enum.ANCHORED,
+                  fieldsToReset: ["anchor_type"],
                   invertTrigger: true,
                   resetToValue: undefined,
                 },
               ]}
             />
           </div>
-          {railType === zodEnums.RailTypeEnum.enum.DOWELED && (
+          {railType === zodEnums.RailTypeEnum.enum.ANCHORED && (
             <div className="space-y-3 md:col-start-1 md:row-start-2">
               <SelectField<ConfigSchema>
-                name="dowel_type"
+                name="anchor_type"
                 dataType="string"
                 label="Tipo di tassello"
-                items={selectFieldOptions.dowelTypes}
+                items={selectFieldOptions.anchorTypes}
               />
             </div>
           )}

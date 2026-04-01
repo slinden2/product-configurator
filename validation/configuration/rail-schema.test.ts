@@ -1,6 +1,6 @@
 import { genericRequiredMessage } from "@/validation/common";
 import {
-  DowelTypeEnum,
+  AnchorTypeEnum,
   RailTypeEnum,
   railSchema,
 } from "@/validation/configuration/rail-schema";
@@ -11,18 +11,18 @@ function createRailObject({
   rail_type,
   rail_length,
   rail_guide_qty,
-  dowel_type,
+  anchor_type,
 }: {
   rail_type: keyof typeof RailTypeEnum.enum;
   rail_length: number | string;
   rail_guide_qty: number | string;
-  dowel_type?: keyof typeof DowelTypeEnum.enum;
+  anchor_type?: keyof typeof AnchorTypeEnum.enum;
 }) {
   return {
     rail_type,
     rail_length,
     rail_guide_qty,
-    dowel_type,
+    anchor_type,
   };
 }
 
@@ -30,10 +30,10 @@ describe("railSchema", () => {
   describe("Validation of railSchema with correct data", () => {
     test("should validate successfully with a rail type, length within range, and guide quantity", () => {
       const validData = createRailObject({
-        rail_type: RailTypeEnum.enum.DOWELED,
+        rail_type: RailTypeEnum.enum.ANCHORED,
         rail_length: 21,
         rail_guide_qty: 1,
-        dowel_type: DowelTypeEnum.enum.ZINCATO,
+        anchor_type: AnchorTypeEnum.enum.ZINC,
       });
       expect(() => railSchema.parse(validData)).not.toThrow();
     });
@@ -56,7 +56,7 @@ describe("railSchema", () => {
       expect(() => railSchema.parse(validData)).not.toThrow();
     });
 
-    test("should validate successfully with WELDED_RECESSED type without dowel_type", () => {
+    test("should validate successfully with WELDED_RECESSED type without anchor_type", () => {
       const validData = createRailObject({
         rail_type: RailTypeEnum.enum.WELDED_RECESSED,
         rail_length: 25,
@@ -88,10 +88,10 @@ describe("railSchema", () => {
 
     test("should throw error if rail_length is below minimum value", () => {
       const invalidData = createRailObject({
-        rail_type: RailTypeEnum.enum.DOWELED,
+        rail_type: RailTypeEnum.enum.ANCHORED,
         rail_length: 6,
         rail_guide_qty: 1,
-        dowel_type: DowelTypeEnum.enum.ZINCATO,
+        anchor_type: AnchorTypeEnum.enum.ZINC,
       });
       expect(() => railSchema.parse(invalidData)).toThrow();
     });
@@ -107,10 +107,10 @@ describe("railSchema", () => {
 
     test("should throw error if rail_guide_qty is below 0", () => {
       const invalidData = createRailObject({
-        rail_type: RailTypeEnum.enum.DOWELED,
+        rail_type: RailTypeEnum.enum.ANCHORED,
         rail_length: 21,
         rail_guide_qty: -1,
-        dowel_type: DowelTypeEnum.enum.ZINCATO,
+        anchor_type: AnchorTypeEnum.enum.ZINC,
       });
       expect(() => railSchema.parse(invalidData)).toThrow();
     });
@@ -128,10 +128,10 @@ describe("railSchema", () => {
   describe("Coercion cases for railSchema", () => {
     test("should coerce rail_length from string to number", () => {
       const validData = createRailObject({
-        rail_type: RailTypeEnum.enum.DOWELED,
+        rail_type: RailTypeEnum.enum.ANCHORED,
         rail_length: "21",
         rail_guide_qty: 1,
-        dowel_type: DowelTypeEnum.enum.ZINCATO,
+        anchor_type: AnchorTypeEnum.enum.ZINC,
       });
       const parsedData = railSchema.parse(validData);
       expect(parsedData.rail_length).toBe(21);

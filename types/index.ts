@@ -41,11 +41,11 @@ export type SupplyFixType = (typeof SupplyFixTypes)[number];
 export const EnergyChainWidths = ["L150", "L200", "L250", "L300"] as const;
 export type EnergyChainWidthType = (typeof EnergyChainWidths)[number];
 
-export const RailTypes = ["DOWELED", "WELDED", "WELDED_RECESSED"] as const;
+export const RailTypes = ["ANCHORED", "WELDED", "WELDED_RECESSED"] as const;
 export type RailTypeType = (typeof RailTypes)[number];
 
-export const DowelTypes = ["ZINCATO", "INOX", "CHIMICO"] as const;
-export type DowelType = (typeof DowelTypes)[number];
+export const AnchorTypes = ["ZINC", "CHEMICAL"] as const;
+export type AnchorType = (typeof AnchorTypes)[number];
 
 export const TouchPos = ["INTERNAL", "EXTERNAL"] as const;
 export type TouchPosType = (typeof TouchPos)[number];

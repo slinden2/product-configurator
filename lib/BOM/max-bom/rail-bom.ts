@@ -1,10 +1,11 @@
 import { GeneralBOMConfig } from "@/lib/BOM";
 import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { isOMZ, isSTD } from "@/lib/BOM/max-bom/conditions";
 
 const PART_NUMBERS = {
-  DOWELED_RAIL_TERMINALS: "450.45.031",
-  DOWELED_RAILS_1M: "450.45.030",
-  DOWELED_RAILS_3M: "450.45.035",
+  ANCHORED_RAIL_TERMINALS: "450.45.031",
+  ANCHORED_RAILS_1M: "450.45.030",
+  ANCHORED_RAILS_3M: "450.45.035",
   WELDED_RECESSED_RAIL_TERMINALS: "450.46.032",
   WELDED_RECESSED_RAILS_1M: "450.46.030",
   WELDED_RECESSED_RAILS_3M: "450.46.031",
@@ -14,15 +15,21 @@ const PART_NUMBERS = {
   WELDED_RAILS_3M: "450.49.035",
   RAIL_GUIDES: "1100.035.000",
   PROXIMITY_PLATES: "450.35.010",
-  ZINC_DOWEL: "934.04.010",
-  STAINLESS_DOWEL: "934.04.015",
-  RESIN_DOWEL: "934.10.003",
+  ZINC_ANCHOR: "934.04.010",
+  STAINLESS_ANCHOR: "934.04.015",
+  RESIN_ANCHOR: "934.10.003",
   RESIN: "934.10.002",
   COUNTERSUNK_ANCHOR: "934.05.004",
   COUNTERSUNK_ANCHOR_INOX: "934.05.005",
-  ZINC_ANCORS_RAIL_GUIDES: "934.04.012",
-  STAINLESS_ANCORS_RAIL_GUIDES: "934.04.014",
+  ZINC_ANCHORS_RAIL_GUIDES: "934.04.012",
+  STAINLESS_ANCHORS_RAIL_GUIDES: "934.04.014",
 } as const satisfies Record<string, string>;
+
+const ANCHORS_FOR_TERMINAL_RAILS = 44 as const;
+const ANCHORS_PER_1M_RAIL = 12 as const;
+const ANCHORS_PER_3M_RAIL = 20 as const;
+const RESIN_CARTRIDGE_SIZE = 500 as const; // ml
+const RESIN_PER_ANCHOR = 9 as const;
 
 export const calculate3mRailQty = (config: GeneralBOMConfig): number =>
   Math.floor((config.rail_length - 6) / 3);
@@ -30,34 +37,40 @@ export const calculate3mRailQty = (config: GeneralBOMConfig): number =>
 export const calculate1mRailQty = (config: GeneralBOMConfig): number =>
   (config.rail_length - 6) % 3;
 
-export const calculateDowelQty = (config: GeneralBOMConfig): number =>
-  /* Fixed 44pz for terminals */
-  44 + calculate1mRailQty(config) * 6 + calculate3mRailQty(config) * 10;
+export const calculateAnchorQty = (config: GeneralBOMConfig): number =>
+  ANCHORS_FOR_TERMINAL_RAILS +
+  calculate1mRailQty(config) * ANCHORS_PER_1M_RAIL +
+  calculate3mRailQty(config) * ANCHORS_PER_3M_RAIL;
+
+export const calculateResinQty = (config: GeneralBOMConfig): number =>
+  Math.ceil(
+    (calculateAnchorQty(config) * RESIN_PER_ANCHOR) / RESIN_CARTRIDGE_SIZE,
+  );
 
 export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
-    pn: PART_NUMBERS.DOWELED_RAIL_TERMINALS,
-    conditions: [(config) => config.rail_type === "DOWELED"],
+    pn: PART_NUMBERS.ANCHORED_RAIL_TERMINALS,
+    conditions: [(config) => config.rail_type === "ANCHORED"],
     qty: 1,
-    _description: "Dowelled rail terminals",
+    _description: "Anchored rail terminals",
   },
   {
-    pn: PART_NUMBERS.DOWELED_RAILS_3M,
+    pn: PART_NUMBERS.ANCHORED_RAILS_3M,
     conditions: [
-      (config) => config.rail_type === "DOWELED",
+      (config) => config.rail_type === "ANCHORED",
       (config) => config.rail_length > 7,
     ],
     qty: calculate3mRailQty,
-    _description: "Dowelled rail 3m",
+    _description: "Anchored rail 3m",
   },
   {
-    pn: PART_NUMBERS.DOWELED_RAILS_1M,
+    pn: PART_NUMBERS.ANCHORED_RAILS_1M,
     conditions: [
-      (config) => config.rail_type === "DOWELED",
+      (config) => config.rail_type === "ANCHORED",
       (config) => !!(config.rail_length % 3),
     ],
     qty: calculate1mRailQty,
-    _description: "Dowelled rail 1m",
+    _description: "Anchored rail 1m",
   },
   {
     pn: PART_NUMBERS.WELDED_RECESSED_RAIL_TERMINALS,
@@ -115,13 +128,13 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.COUNTERSUNK_ANCHOR,
-    conditions: [(config) => config.machine_type === "STD"],
+    conditions: [isSTD],
     qty: 4,
     _description: "Countersunk anchors for proximity plates",
   },
   {
     pn: PART_NUMBERS.COUNTERSUNK_ANCHOR_INOX,
-    conditions: [(config) => config.machine_type === "OMZ"],
+    conditions: [isOMZ],
     qty: 4,
     _description: "Stainless steel countersunk anchors for proximity plates",
   },
@@ -132,20 +145,14 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Rail guides",
   },
   {
-    pn: PART_NUMBERS.ZINC_ANCORS_RAIL_GUIDES,
-    conditions: [
-      (config) => config.rail_guide_qty > 0,
-      (config) => config.machine_type === "STD",
-    ],
+    pn: PART_NUMBERS.ZINC_ANCHORS_RAIL_GUIDES,
+    conditions: [(config) => config.rail_guide_qty > 0, isSTD],
     qty: (config) => config.rail_guide_qty * 8,
     _description: "Zinc anchors for rail guides",
   },
   {
-    pn: PART_NUMBERS.STAINLESS_ANCORS_RAIL_GUIDES,
-    conditions: [
-      (config) => config.rail_guide_qty > 0,
-      (config) => config.machine_type === "OMZ",
-    ],
+    pn: PART_NUMBERS.STAINLESS_ANCHORS_RAIL_GUIDES,
+    conditions: [(config) => config.rail_guide_qty > 0, isOMZ],
     qty: (config) => config.rail_guide_qty * 8,
     _description: "Stainless anchors for rail guides",
   },
@@ -155,41 +162,44 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     qty: 1,
     _description: "Shim kit for recessed rails",
   },
+  // Rail anchors: ZINC type — zinc for STD, stainless for OMZ (automatic upgrade)
   {
-    pn: PART_NUMBERS.ZINC_DOWEL,
+    pn: PART_NUMBERS.ZINC_ANCHOR,
     conditions: [
-      (config) => config.rail_type === "DOWELED",
-      (config) => config.dowel_type === "ZINCATO",
+      (config) => config.rail_type === "ANCHORED",
+      (config) => config.anchor_type === "ZINC",
+      isSTD,
     ],
-    qty: calculateDowelQty,
-    _description: "Zinc dowels",
+    qty: calculateAnchorQty,
+    _description: "Zinc anchors for rails",
   },
   {
-    pn: PART_NUMBERS.STAINLESS_DOWEL,
+    pn: PART_NUMBERS.STAINLESS_ANCHOR,
     conditions: [
-      (config) => config.rail_type === "DOWELED",
-      (config) => config.dowel_type === "INOX",
+      (config) => config.rail_type === "ANCHORED",
+      (config) => config.anchor_type === "ZINC",
+      isOMZ,
     ],
-    qty: calculateDowelQty,
-    _description: "Stainless steel dowels",
+    qty: calculateAnchorQty,
+    _description: "Stainless steel anchors for rails (OMZ automatic upgrade)",
+  },
+  // Rail anchors: CHEMICAL type — resin anchors regardless of machine type
+  {
+    pn: PART_NUMBERS.RESIN_ANCHOR,
+    conditions: [
+      (config) => config.rail_type === "ANCHORED",
+      (config) => config.anchor_type === "CHEMICAL",
+    ],
+    qty: calculateAnchorQty,
+    _description: "Chemical resin anchors for rails",
   },
   {
-    pn: PART_NUMBERS.RESIN_DOWEL,
-    conditions: [
-      (config) => config.rail_type === "DOWELED",
-      (config) => config.dowel_type === "CHIMICO",
-    ],
-    qty: calculateDowelQty,
-    _description: "Resin dowels",
-  },
-  {
-    // TODO: Adjust resin quantity rules
     pn: PART_NUMBERS.RESIN,
     conditions: [
-      (config) => config.rail_type === "DOWELED",
-      (config) => config.dowel_type === "CHIMICO",
+      (config) => config.rail_type === "ANCHORED",
+      (config) => config.anchor_type === "CHEMICAL",
     ],
-    qty: 1,
-    _description: "Resin for chemical dowels",
+    qty: calculateResinQty,
+    _description: "Resin for chemical anchors",
   },
 ];

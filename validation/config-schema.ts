@@ -122,7 +122,7 @@ export const configDefaults: ConfigSchema = {
   rail_type: undefined,
   rail_length: undefined,
   rail_guide_qty: 0,
-  dowel_type: undefined,
+  anchor_type: undefined,
   // --- HP Pump Section ---
   has_15kw_pump: false,
   pump_outlet_1_15kw: undefined,

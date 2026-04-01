@@ -44,7 +44,7 @@ export async function fillMinimalForm(
 
   // Rail
   await selectRadixOption(page, "Tipo di rotaie", "Da tassellare");
-  await selectRadixOption(page, "Tipo di tassello", "Zincato"); // shown when DOWELED
+  await selectRadixOption(page, "Tipo di tassello", "Zincato"); // shown when ANCHORED
   await selectRadixOption(page, "Lunghezza rotaie", "25 metri");
 
   // Touch panel
