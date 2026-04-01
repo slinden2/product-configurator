@@ -20,8 +20,15 @@ export async function selectRadixOption(
 /**
  * Fill all form fields required for a valid minimal configuration.
  * Does not include water supply fields — add those per-test as needed.
+ *
+ * @param supplyType - "Mensola dritta" (default) or "Catena portacavi".
+ *                     Energy chain requires a fixing type (not optional).
  */
-export async function fillMinimalForm(page: Page, name: string) {
+export async function fillMinimalForm(
+  page: Page,
+  name: string,
+  supplyType: "Mensola dritta" | "Catena portacavi" = "Mensola dritta",
+) {
   // General
   await page.getByLabel("Nome del cliente").fill(name);
 
@@ -29,13 +36,16 @@ export async function fillMinimalForm(page: Page, name: string) {
   await selectRadixOption(page, "Numero di spazzole", "No spazzole");
 
   // Supply
-  await selectRadixOption(page, "Tipo di alimentazione", "Mensola dritta");
+  await selectRadixOption(page, "Tipo di alimentazione", supplyType);
+  if (supplyType === "Catena portacavi") {
+    await selectRadixOption(page, "Tipo di fissaggio", "Staffa a muro");
+  }
   await selectRadixOption(page, "Lato di alimentazione", "Sinistra");
 
   // Rail
   await selectRadixOption(page, "Tipo di rotaie", "Da tassellare");
   await selectRadixOption(page, "Tipo di tassello", "Zincato"); // shown when DOWELED
-  await selectRadixOption(page, "Lunghezza rotaie", "21 metri");
+  await selectRadixOption(page, "Lunghezza rotaie", "25 metri");
 
   // Touch panel
   await selectRadixOption(page, "Numero di pannelli", "1");
