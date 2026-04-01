@@ -6,10 +6,27 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
 
-const Configurations = async () => {
+const PAGE_SIZE = 20;
+
+const Configurations = async (props: {
+  searchParams: Promise<{ page?: string }>;
+}) => {
   const user = await getUserData();
   if (!user) redirect("/login");
-  const configurations = await getUserConfigurations(user);
+
+  const { page: pageParam } = await props.searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+
+  const { data: configurations, totalCount } = await getUserConfigurations(
+    user,
+    page,
+    PAGE_SIZE,
+  );
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  if (page > totalPages) {
+    redirect(`/configurations?page=${totalPages}`);
+  }
 
   return (
     <div className="space-y-6">
@@ -24,7 +41,12 @@ const Configurations = async () => {
           </Link>
         </div>
       </div>
-      <AllConfigurationsTable configurations={configurations} />
+      <AllConfigurationsTable
+        configurations={configurations}
+        page={page}
+        totalCount={totalCount}
+        pageSize={PAGE_SIZE}
+      />
     </div>
   );
 };

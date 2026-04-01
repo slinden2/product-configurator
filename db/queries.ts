@@ -34,7 +34,7 @@ export type TransactionType = Parameters<
 
 export type AllConfigurations = Awaited<
   ReturnType<typeof getUserConfigurations>
->;
+>["data"];
 
 export type UserData = Awaited<ReturnType<typeof getUserData>>;
 
@@ -80,31 +80,45 @@ export async function getUserData() {
 
 // Gets all configurations for the user if the role is SALES.
 // For ENGINEER and ADMIN, gets all configurations
-export async function getUserConfigurations(user: NonNullable<UserData>) {
-  const response = await db.query.configurations.findMany({
-    where:
-      user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined,
-    columns: {
-      id: true,
-      status: true,
-      name: true,
-      description: true,
-      created_at: true,
-      updated_at: true,
-    },
-    with: {
-      user: {
-        columns: {
-          id: true,
-          email: true,
-          initials: true,
+export async function getUserConfigurations(
+  user: NonNullable<UserData>,
+  page: number = 1,
+  pageSize: number = 20,
+) {
+  const whereClause =
+    user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined;
+
+  const [data, countResult] = await Promise.all([
+    db.query.configurations.findMany({
+      where: whereClause,
+      columns: {
+        id: true,
+        status: true,
+        name: true,
+        description: true,
+        created_at: true,
+        updated_at: true,
+      },
+      with: {
+        user: {
+          columns: {
+            id: true,
+            email: true,
+            initials: true,
+          },
         },
       },
-    },
-    orderBy: [desc(configurations.updated_at)],
-  });
+      orderBy: [desc(configurations.updated_at)],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(configurations)
+      .where(whereClause),
+  ]);
 
-  return response;
+  return { data, totalCount: Number(countResult[0].count) };
 }
 
 export async function getConfigurationWithTanksAndBays(
