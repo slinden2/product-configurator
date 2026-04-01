@@ -8,15 +8,20 @@ const PART_NUMBERS = {
   WELDED_RECESSED_RAIL_TERMINALS: "450.46.032",
   WELDED_RECESSED_RAILS_1M: "450.46.030",
   WELDED_RECESSED_RAILS_3M: "450.46.031",
+  SHIM_KIT_FOR_RECESSED_RAILS: "450.35.011",
   WELDED_RAIL_TERMINALS: "450.49.031",
   WELDED_RAILS_1M: "450.49.030",
   WELDED_RAILS_3M: "450.49.035",
-  SHIM_KIT_FOR_RECESSED_RAILS: "450.35.011",
+  RAIL_GUIDES: "1100.035.000",
   PROXIMITY_PLATES: "450.35.010",
-  ZINC_DOWEL: "XXX", // TODO Add part number
-  STAINLESS_DOWEL: "XXX", // TODO Add part number
-  RESIN_DOWEL: "XXX", // TODO Add part number
-  RESIN: "XXX", // TODO Add part number
+  ZINC_DOWEL: "934.04.010",
+  STAINLESS_DOWEL: "934.04.015",
+  RESIN_DOWEL: "934.10.003",
+  RESIN: "934.10.002",
+  COUNTERSUNK_ANCHOR: "934.05.004",
+  COUNTERSUNK_ANCHOR_INOX: "934.05.005",
+  ZINC_ANCORS_RAIL_GUIDES: "934.04.012",
+  STAINLESS_ANCORS_RAIL_GUIDES: "934.04.014",
 } as const satisfies Record<string, string>;
 
 export const calculate3mRailQty = (config: GeneralBOMConfig): number =>
@@ -26,6 +31,7 @@ export const calculate1mRailQty = (config: GeneralBOMConfig): number =>
   (config.rail_length - 6) % 3;
 
 export const calculateDowelQty = (config: GeneralBOMConfig): number =>
+  /* Fixed 44pz for terminals */
   44 + calculate1mRailQty(config) * 6 + calculate3mRailQty(config) * 10;
 
 export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
@@ -106,6 +112,42 @@ export const railBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [() => true], // These are always in BOM.
     qty: 1,
     _description: "Proximity plates",
+  },
+  {
+    pn: PART_NUMBERS.COUNTERSUNK_ANCHOR,
+    conditions: [(config) => config.machine_type === "STD"],
+    qty: 4,
+    _description: "Countersunk anchors for proximity plates",
+  },
+  {
+    pn: PART_NUMBERS.COUNTERSUNK_ANCHOR_INOX,
+    conditions: [(config) => config.machine_type === "OMZ"],
+    qty: 4,
+    _description: "Stainless steel countersunk anchors for proximity plates",
+  },
+  {
+    pn: PART_NUMBERS.RAIL_GUIDES,
+    conditions: [(config) => config.rail_guide_qty > 0],
+    qty: (config) => config.rail_guide_qty,
+    _description: "Rail guides",
+  },
+  {
+    pn: PART_NUMBERS.ZINC_ANCORS_RAIL_GUIDES,
+    conditions: [
+      (config) => config.rail_guide_qty > 0,
+      (config) => config.machine_type === "STD",
+    ],
+    qty: (config) => config.rail_guide_qty * 8,
+    _description: "Zinc anchors for rail guides",
+  },
+  {
+    pn: PART_NUMBERS.STAINLESS_ANCORS_RAIL_GUIDES,
+    conditions: [
+      (config) => config.rail_guide_qty > 0,
+      (config) => config.machine_type === "OMZ",
+    ],
+    qty: (config) => config.rail_guide_qty * 8,
+    _description: "Stainless anchors for rail guides",
   },
   {
     pn: PART_NUMBERS.SHIM_KIT_FOR_RECESSED_RAILS,
