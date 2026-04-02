@@ -42,6 +42,12 @@ export const MSG = {
     invalidQty: "Quantità non valida.",
     rowNotFound: "Riga non trovata.",
   },
+  users: {
+    notFound: "Utente non trovato.",
+    cannotChangeOwnRole: "Non puoi modificare il tuo ruolo.",
+    cannotPromoteToAdmin: "Non è possibile promuovere un utente ad ADMIN.",
+    adminOnly: "Accesso riservato agli amministratori.",
+  },
   db: {
     error: "Errore del database.",
     unknown: "Errore sconosciuto.",
@@ -92,6 +98,10 @@ export const MSG = {
     passwordResetEmailSent: "Email per resettare la password inviata.",
     passwordResetSuccess: "Password aggiornata con successo.",
     validationErrors: "Errori di validazione: correggere i campi evidenziati.",
+    roleUpdated: "Ruolo utente aggiornato.",
+    roleUpdateFailed: "Impossibile aggiornare il ruolo.",
+    passwordResetSent: "Email di reset password inviata.",
+    passwordResetFailed: "Impossibile inviare l'email di reset.",
   },
   bomWarning: {
     title: "Distinta di commessa presente",

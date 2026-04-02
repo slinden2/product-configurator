@@ -1,26 +1,25 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
-import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
-import {
-  authSchema,
-  loginSchema,
-  newPassWordSchema,
-  signupSchema,
-} from "@/validation/auth-schema";
+import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { userProfiles } from "@/db/schemas";
+import { MSG } from "@/lib/messages";
+import { createClient } from "@/utils/supabase/server";
 import type {
   AuthSchema,
   LoginSchema,
   NewPasswordSchema,
   SignupSchema,
 } from "@/validation/auth-schema";
-import { db } from "@/db";
-import { eq } from "drizzle-orm";
-import { userProfiles } from "@/db/schemas";
-import { MSG } from "@/lib/messages";
+import {
+  authSchema,
+  loginSchema,
+  newPassWordSchema,
+  signupSchema,
+} from "@/validation/auth-schema";
 
 export async function getUserSession() {
   const supabase = await createClient();
@@ -97,7 +96,13 @@ export async function signIn(formData: LoginSchema) {
         id: data.user.id,
         email: credentials.email,
         role: "SALES",
+        last_login_at: new Date(),
       });
+    } else {
+      await db
+        .update(userProfiles)
+        .set({ last_login_at: new Date() })
+        .where(eq(userProfiles.id, data.user.id));
     }
   } catch (err) {
     console.error(err);

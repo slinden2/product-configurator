@@ -1,10 +1,16 @@
 "use server";
 
-import { getUserData, QueryError, updateConfigStatus } from "@/db/queries";
-import { MSG } from "@/lib/messages";
-import { configStatusSchema } from "@/validation/config-status-schema";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
+import { logActivity } from "@/db/queries";
+import {
+  getConfiguration,
+  getUserData,
+  QueryError,
+  updateConfigStatus,
+} from "@/db/queries";
+import { MSG } from "@/lib/messages";
+import { configStatusSchema } from "@/validation/config-status-schema";
 
 export const updateConfigStatusAction = async (
   confId: number,
@@ -26,7 +32,16 @@ export const updateConfigStatusAction = async (
   }
 
   try {
+    const currentConf = await getConfiguration(confId);
+    const fromStatus = currentConf?.status;
     const updatedConf = await updateConfigStatus(confId, user, validation.data);
+    await logActivity({
+      userId: user.id,
+      action: "CONFIG_STATUS_CHANGE",
+      targetEntity: "configuration",
+      targetId: confId.toString(),
+      metadata: { from: fromStatus, to: validation.data.status },
+    });
     revalidatePath(`/configurations/edit/${updatedConf.id}`);
     return { success: true as const, id: updatedConf.id };
   } catch (err) {

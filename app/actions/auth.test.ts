@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // --- Mock functions ---
 
@@ -13,6 +13,9 @@ const mockUpdateUser = vi.fn();
 const mockFindFirst = vi.fn();
 const mockValues = vi.fn();
 const mockInsert = vi.fn(() => ({ values: mockValues }));
+const mockWhere = vi.fn();
+const mockSet = vi.fn(() => ({ where: mockWhere }));
+const mockUpdate = vi.fn(() => ({ set: mockSet }));
 
 // --- vi.mock() ---
 
@@ -57,6 +60,7 @@ vi.mock("@/db", () => ({
       },
     },
     insert: () => mockInsert(),
+    update: () => mockUpdate(),
   },
 }));
 
@@ -70,16 +74,16 @@ vi.mock("drizzle-orm", () => ({
 
 // --- Imports (after mocks) ---
 
-import {
-  getUserSession,
-  signUp,
-  signIn,
-  signOut,
-  forgotPassword,
-  resetPassword,
-} from "@/app/actions/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  forgotPassword,
+  getUserSession,
+  resetPassword,
+  signIn,
+  signOut,
+  signUp,
+} from "@/app/actions/auth";
 import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
@@ -211,11 +215,14 @@ describe("signIn", () => {
       data: { user: mockUser },
     });
     expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith({
-      id: mockUser.id,
-      email: "test@example.com",
-      role: "SALES",
-    });
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: mockUser.id,
+        email: "test@example.com",
+        role: "SALES",
+        last_login_at: expect.any(Date),
+      }),
+    );
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
 
@@ -225,6 +232,7 @@ describe("signIn", () => {
       error: null,
     });
     mockFindFirst.mockResolvedValue({ id: mockUser.id, email: mockUser.email });
+    mockWhere.mockResolvedValue(undefined);
 
     const result = await signIn({
       email: "test@example.com",
@@ -236,6 +244,7 @@ describe("signIn", () => {
       data: { user: mockUser },
     });
     expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
 

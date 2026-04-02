@@ -1,10 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { DatabaseError } from "pg";
+import { logActivity } from "@/db/queries";
 import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
-import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 
 export const insertConfigurationAction = async (formData: unknown) => {
   const validation = configSchema.safeParse(formData);
@@ -21,6 +22,12 @@ export const insertConfigurationAction = async (formData: unknown) => {
 
   try {
     const newConfig = await insertConfiguration(validation.data, user.id);
+    await logActivity({
+      userId: user.id,
+      action: "CONFIG_CREATE",
+      targetEntity: "configuration",
+      targetId: newConfig.id.toString(),
+    });
     revalidatePath("/configurations");
     return { success: true as const, id: newConfig.id };
   } catch (err) {

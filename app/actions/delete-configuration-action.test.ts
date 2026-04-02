@@ -10,6 +10,7 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
   deleteConfiguration: (...args: unknown[]) => mockDeleteConfiguration(...args),
+  logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {

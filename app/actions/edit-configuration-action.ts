@@ -1,6 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { DatabaseError } from "pg";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
+import { logActivity } from "@/db/queries";
 import {
   deleteAllEngineeringBomItems,
   getConfigurationWithTanksAndBays,
@@ -12,9 +16,6 @@ import {
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
-import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 
 export const editConfigurationAction = async (
   confId: number,
@@ -78,6 +79,12 @@ export const editConfigurationAction = async (
       }
     });
 
+    await logActivity({
+      userId: user.id,
+      action: "CONFIG_EDIT",
+      targetEntity: "configuration",
+      targetId: confId.toString(),
+    });
     revalidatePath(`/configurations/edit/${confId}`);
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };

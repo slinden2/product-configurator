@@ -1,5 +1,12 @@
 "use client";
 
+import { User } from "@supabase/supabase-js";
+import { Menu, Moon, Sun } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import Logout from "@/components/logout";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,19 +19,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { User } from "@supabase/supabase-js";
-import { Menu, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Role } from "@/types";
 
 interface MainNavProps {
   user: User | null;
+  role: Role | null;
 }
 
-const MainNav = ({ user }: MainNavProps) => {
+const MainNav = ({ user, role }: MainNavProps) => {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -43,6 +45,15 @@ const MainNav = ({ user }: MainNavProps) => {
       href: "/configurations",
       active: pathname.startsWith("/configurations"),
     },
+    ...(role === "ADMIN"
+      ? [
+          {
+            label: "Utenti",
+            href: "/utenti",
+            active: pathname.startsWith("/utenti"),
+          },
+        ]
+      : []),
   ];
 
   return (

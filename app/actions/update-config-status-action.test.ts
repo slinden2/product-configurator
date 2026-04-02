@@ -1,13 +1,16 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // --- Mocks ---
 
 const mockGetUserData = vi.fn();
 const mockUpdateConfigStatus = vi.fn();
+const mockGetConfiguration = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   updateConfigStatus: (...args: unknown[]) => mockUpdateConfigStatus(...args),
+  getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
+  logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -49,6 +52,7 @@ describe("updateConfigStatusAction", () => {
       role: "ENGINEER",
       initials: "TU",
     });
+    mockGetConfiguration.mockResolvedValue({ id: CONF_ID, status: "DRAFT" });
     mockUpdateConfigStatus.mockResolvedValue({ id: CONF_ID });
   });
 

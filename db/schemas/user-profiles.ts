@@ -1,5 +1,3 @@
-import { configurations } from "@/db/schemas/configurations";
-import { Roles } from "@/types";
 import { relations, sql } from "drizzle-orm";
 import {
   pgEnum,
@@ -10,6 +8,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { authenticatedRole, authUsers } from "drizzle-orm/supabase";
+import { configurations } from "@/db/schemas/configurations";
+import { Roles } from "@/types";
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type NewUserProfile = typeof userProfiles.$inferInsert;
@@ -30,6 +30,7 @@ export const userProfiles = pgTable(
     email: varchar().notNull().unique(),
     role: roleEnum().notNull(),
     initials: varchar({ length: 3 }),
+    last_login_at: timestamp("last_login_at", { mode: "date", precision: 3 }),
   },
   () => [
     pgPolicy("Allow authenticated users to select all profiles", {

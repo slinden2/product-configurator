@@ -1,6 +1,18 @@
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  max,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db } from "@/db";
 import {
+  activityLogs,
   configurations,
   engineeringBomItems,
   NewEngineeringBomItem,
@@ -11,7 +23,7 @@ import {
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
-import { ConfigurationStatusType, Role } from "@/types";
+import { ActivityAction, ConfigurationStatusType, Role } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import {
   type ConfigSchema,
@@ -510,6 +522,95 @@ export async function getConfigurationStatusCounts() {
     .groupBy(configurations.status);
 
   return result;
+}
+
+export type UserWithStats = {
+  id: string;
+  email: string;
+  role: "ADMIN" | "ENGINEER" | "SALES";
+  initials: string | null;
+  last_login_at: Date | null;
+  configCount: number;
+  lastActivity: Date | null;
+};
+
+export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
+  const result = await db
+    .select({
+      id: userProfiles.id,
+      email: userProfiles.email,
+      role: userProfiles.role,
+      initials: userProfiles.initials,
+      last_login_at: userProfiles.last_login_at,
+      configCount: count(configurations.id),
+      lastActivity: max(activityLogs.created_at),
+    })
+    .from(userProfiles)
+    .leftJoin(configurations, eq(configurations.user_id, userProfiles.id))
+    .leftJoin(activityLogs, eq(activityLogs.user_id, userProfiles.id))
+    .groupBy(
+      userProfiles.id,
+      userProfiles.email,
+      userProfiles.role,
+      userProfiles.initials,
+      userProfiles.last_login_at,
+    )
+    .orderBy(asc(userProfiles.email));
+
+  return result.map((r) => ({
+    ...r,
+    configCount: Number(r.configCount),
+    lastActivity: r.lastActivity ?? null,
+  }));
+}
+
+export async function getUserProfileById(userId: string) {
+  return db.query.userProfiles.findFirst({
+    where: eq(userProfiles.id, userId),
+  });
+}
+
+export type ActivityLogEntry = typeof activityLogs.$inferSelect;
+
+export async function getUserActivityLog(
+  userId: string,
+  page: number = 1,
+  pageSize: number = 20,
+) {
+  const [data, countResult] = await Promise.all([
+    db.query.activityLogs.findMany({
+      where: eq(activityLogs.user_id, userId),
+      orderBy: [desc(activityLogs.created_at)],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(activityLogs)
+      .where(eq(activityLogs.user_id, userId)),
+  ]);
+
+  return { data, totalCount: Number(countResult[0].count) };
+}
+
+export async function logActivity(params: {
+  userId: string;
+  action: ActivityAction;
+  targetEntity: string;
+  targetId: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    await db.insert(activityLogs).values({
+      user_id: params.userId,
+      action: params.action,
+      target_entity: params.targetEntity,
+      target_id: params.targetId,
+      metadata: params.metadata ?? null,
+    });
+  } catch (err) {
+    console.error("[logActivity] Failed to log activity:", err);
+  }
 }
 
 export async function searchPartNumbers(query: string, limit = 20) {

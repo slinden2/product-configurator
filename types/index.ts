@@ -108,6 +108,29 @@ export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 export const Roles = ["ADMIN", "ENGINEER", "SALES"] as const;
 export type Role = (typeof Roles)[number];
 
+export const ActivityActions = [
+  "CONFIG_CREATE",
+  "CONFIG_EDIT",
+  "CONFIG_DELETE",
+  "CONFIG_STATUS_CHANGE",
+  "ROLE_CHANGE",
+  "PASSWORD_RESET",
+  "BOM_GENERATE",
+  "BOM_REGENERATE",
+] as const;
+export type ActivityAction = (typeof ActivityActions)[number];
+
+export const ActivityActionLabels: Record<ActivityAction, string> = {
+  CONFIG_CREATE: "Creazione configurazione",
+  CONFIG_EDIT: "Modifica configurazione",
+  CONFIG_DELETE: "Eliminazione configurazione",
+  CONFIG_STATUS_CHANGE: "Cambio stato",
+  ROLE_CHANGE: "Cambio ruolo",
+  PASSWORD_RESET: "Reset password",
+  BOM_GENERATE: "Generazione distinta",
+  BOM_REGENERATE: "Rigenerazione distinta",
+};
+
 export const BomTags = [
   "FRAME",
   "BRUSHES",

@@ -19,6 +19,7 @@ vi.mock("@/db/queries", () => ({
   insertEngineeringBomItems: (...args: unknown[]) =>
     mockInsertEngineeringBomItems(...args),
   searchPartNumbers: (...args: unknown[]) => mockSearchPartNumbers(...args),
+  logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {

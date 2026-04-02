@@ -8,6 +8,7 @@ const mockInsertConfiguration = vi.fn();
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   insertConfiguration: (...args: unknown[]) => mockInsertConfiguration(...args),
+  logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {

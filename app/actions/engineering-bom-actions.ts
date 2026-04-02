@@ -1,26 +1,26 @@
 "use server";
 
+import { and, desc, eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
+import { logActivity } from "@/db/queries";
 import {
   getConfiguration,
   getConfigurationWithTanksAndBays,
+  getPartNumbersByArray,
   getUserData,
   hasEngineeringBom,
-  getPartNumbersByArray,
   insertEngineeringBomItems,
   QueryError,
   searchPartNumbers,
 } from "@/db/queries";
 import { engineeringBomItems, NewEngineeringBomItem } from "@/db/schemas";
-import { MSG } from "@/lib/messages";
-import { DatabaseError } from "pg";
-import { BOM } from "@/lib/BOM";
-import { BOMItemWithDescription } from "@/lib/BOM";
+import { BOM, BOMItemWithDescription } from "@/lib/BOM";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
+import { MSG } from "@/lib/messages";
 import { engineeringBomItemSchema } from "@/validation/engineering-bom-item-schema";
-import { and, desc, eq, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 
 async function prepareBomItems(
   configuration: NonNullable<
@@ -157,6 +157,12 @@ export async function snapshotEngineeringBomAction(confId: number) {
   try {
     const items = await prepareBomItems(auth.configuration);
     await insertEngineeringBomItems(items);
+    await logActivity({
+      userId: auth.user.id,
+      action: "BOM_GENERATE",
+      targetEntity: "configuration",
+      targetId: confId.toString(),
+    });
 
     revalidatePath(`/configurations/bom/${confId}`);
     return { success: true as const };
@@ -187,6 +193,12 @@ export async function regenerateEngineeringBomAction(confId: number) {
       if (items.length > 0) {
         await tx.insert(engineeringBomItems).values(items);
       }
+    });
+    await logActivity({
+      userId: auth.user.id,
+      action: "BOM_REGENERATE",
+      targetEntity: "configuration",
+      targetId: confId.toString(),
     });
 
     revalidatePath(`/configurations/bom/${confId}`);
@@ -239,8 +251,8 @@ export async function addEngineeringBomItemAction(
       is_custom: is_custom ?? false,
       tag: tag ?? null,
       sort_order: sql`(
-        SELECT COALESCE(MAX(${engineeringBomItems.sort_order}), -1) + 1 
-        FROM ${engineeringBomItems} 
+        SELECT COALESCE(MAX(${engineeringBomItems.sort_order}), -1) + 1
+        FROM ${engineeringBomItems}
         WHERE ${engineeringBomItems.configuration_id} = ${confId}
         AND ${engineeringBomItems.category} = ${category}
         AND ${engineeringBomItems.category_index} = ${category_index}

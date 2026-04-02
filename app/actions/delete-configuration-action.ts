@@ -1,15 +1,16 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { DatabaseError } from "pg";
+import { isEditable } from "@/app/actions/lib/auth-checks";
+import { logActivity } from "@/db/queries";
 import {
   deleteConfiguration,
   getConfiguration,
   getUserData,
   QueryError,
 } from "@/db/queries";
-import { DatabaseError } from "pg";
 import { MSG } from "@/lib/messages";
-import { revalidatePath } from "next/cache";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 
 export const deleteConfigurationAction = async (id: number, userId: string) => {
   const user = await getUserData();
@@ -38,6 +39,12 @@ export const deleteConfigurationAction = async (id: number, userId: string) => {
 
   try {
     await deleteConfiguration(id);
+    await logActivity({
+      userId: user.id,
+      action: "CONFIG_DELETE",
+      targetEntity: "configuration",
+      targetId: id.toString(),
+    });
     revalidatePath("/configurations");
     revalidatePath("/");
     return { success: true as const };
