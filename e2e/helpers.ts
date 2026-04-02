@@ -49,6 +49,5 @@ export async function fillMinimalForm(
 
   // Touch panel
   await selectRadixOption(page, "Numero di pannelli", "1");
-  await selectRadixOption(page, "Posizione touch", "In piazzola");
-  await selectRadixOption(page, "Fissaggio touch esterno", "A muro");
+  await selectRadixOption(page, "Posizione touch", "Su Q.E.");
 }
