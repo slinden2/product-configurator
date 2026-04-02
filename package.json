@@ -13,7 +13,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "zod": "npx tsx ./validation/zod-test-file.ts",
-    "type-check": "npx tsc --noEmit",
+    "type-check": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
     "type-check:incremental": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --incremental",
     "job": "npx tsx ./lib//db-sync/job.ts",
     "seed": "npx tsx ./db/seed.ts",
