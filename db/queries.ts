@@ -1,7 +1,7 @@
 import {
   and,
   asc,
-  count,
+  countDistinct,
   desc,
   eq,
   ilike,
@@ -542,7 +542,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       role: userProfiles.role,
       initials: userProfiles.initials,
       last_login_at: userProfiles.last_login_at,
-      configCount: count(configurations.id),
+      configCount: countDistinct(configurations.id),
       lastActivity: max(activityLogs.created_at),
     })
     .from(userProfiles)
