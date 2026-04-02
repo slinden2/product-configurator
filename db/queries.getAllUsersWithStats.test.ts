@@ -14,7 +14,7 @@ const mockFrom = vi.fn(() => ({ leftJoin: mockLeftJoin1 }));
 const mockSelect = vi.fn(() => ({ from: mockFrom }));
 
 vi.mock("@/db", () => ({
-  db: { select: vi.fn((...args) => mockSelect(...args)) },
+  db: { select: vi.fn((...args: Parameters<typeof mockSelect>) => mockSelect(...args)) },
 }));
 
 vi.mock("@/db/schemas", () => ({
