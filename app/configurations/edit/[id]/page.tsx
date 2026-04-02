@@ -1,4 +1,4 @@
-import React from "react";
+
 import { updateConfigSchema } from "@/validation/config-schema";
 import {
   getConfigurationWithTanksAndBays,
@@ -20,7 +20,7 @@ interface EditConfigProps {
 
 const EditConfiguration = async (props: EditConfigProps) => {
   const params = await props.params;
-  const id = parseInt(params.id);
+  const id = parseInt(params.id, 10);
   if (Number.isNaN(id)) notFound();
 
   const user = await getUserData();

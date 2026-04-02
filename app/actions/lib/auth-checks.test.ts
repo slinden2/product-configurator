@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { Role } from "@/types";
 
 describe("isEditable", () => {
   describe("APPROVED and CLOSED are never editable", () => {

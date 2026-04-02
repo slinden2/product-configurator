@@ -1,4 +1,4 @@
-import { GeneralBOMConfig } from "@/lib/BOM";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
 export const isOMZ = (config: GeneralBOMConfig): boolean =>
   config.machine_type === "OMZ";

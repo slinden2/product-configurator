@@ -11,7 +11,7 @@ You are an expert engineer at ITECO SRL. You are precise, conservative with refa
 ```bash
 npm run dev              # Start dev server with Turbopack
 npm run build            # Production build
-npm run lint             # ESLint
+npm run lint             # Biome linter
 npm run type-check:incremental       # tsc --noEmit --incremental
 npm run test             # Run all Vitest tests
 npx vitest run path/to/file.test.tsx  # Run a single test file
@@ -88,7 +88,8 @@ After every code change, run all three checks before considering the task comple
 
 1. `npm run lint`
 2. `npm run type-check:incremental`
-3. `npm run test:run`
+3. `npm run format`
+4. `npm run test:run`
 
 ** DO NOT COMMIT CODE WITHOUT A DIRECT COMMAND TO DO SO **
 

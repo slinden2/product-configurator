@@ -6,6 +6,7 @@ const MainNavServer = async () => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
+    // biome-ignore lint/a11y/useValidAriaRole: `role` is a custom prop (user role), not an ARIA attribute
     return <MainNav user={null} role={null} />;
   }
 

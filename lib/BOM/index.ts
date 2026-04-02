@@ -1,16 +1,16 @@
 import { getPartNumbersByArray } from "@/db/queries";
-import {
+import type {
   Configuration,
   ConfigurationWithWaterTanksAndWashBays,
   WashBay,
 } from "@/db/schemas";
 import {
   GeneralMaxBOM,
-  MaxBOMItem,
+  type MaxBOMItem,
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/max-bom";
-import { BomTag } from "@/types";
+import type { BomTag } from "@/types";
 
 export interface BOMItem {
   pn: string;

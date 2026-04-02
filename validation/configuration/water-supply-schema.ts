@@ -1,4 +1,4 @@
-import { Water1Pumps, Water2Pumps, WaterTypes, SelectOption } from "@/types";
+import { Water1Pumps, Water2Pumps, WaterTypes, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

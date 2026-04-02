@@ -1,4 +1,4 @@
-import { ConfigurationStatusType } from "@/types";
+import type { ConfigurationStatusType } from "@/types";
 
 export const STATUS_CONFIG: Record<
   ConfigurationStatusType,

@@ -177,7 +177,7 @@ describe("Energy chain hoses & cables BOM", () => {
       i._description.includes("Power cable"),
     );
     expect(powerCable).toBeDefined();
-    expect(powerCable!.qty).toBe(1);
+    expect(powerCable?.qty).toBe(1);
   });
 
   test("no energy chain items when supply_type is not ENERGY_CHAIN", () => {
@@ -230,7 +230,7 @@ describe("Energy chain hoses & cables BOM", () => {
     const items = filterBOM(config);
     const signal = items.find((i) => i._description.includes("Signal cable"));
     expect(signal).toBeDefined();
-    expect(signal!.qty).toBe(2);
+    expect(signal?.qty).toBe(2);
   });
 
   test("tube quantities match field values", () => {
@@ -245,19 +245,19 @@ describe("Energy chain hoses & cables BOM", () => {
     const items = filterBOM(config);
 
     expect(
-      items.find((i) => i._description.includes('Water tube 1"'))!.qty,
+      items.find((i) => i._description.includes('Water tube 1"'))?.qty,
     ).toBe(2);
     expect(
-      items.find((i) => i._description.includes('Water tube 3/4"'))!.qty,
+      items.find((i) => i._description.includes('Water tube 3/4"'))?.qty,
     ).toBe(1);
-    expect(items.find((i) => i._description.includes("Air tube"))!.qty).toBe(1);
-    expect(items.find((i) => i._description.includes('R1 tube 1"'))!.qty).toBe(
+    expect(items.find((i) => i._description.includes("Air tube"))?.qty).toBe(1);
+    expect(items.find((i) => i._description.includes('R1 tube 1"'))?.qty).toBe(
       2,
     );
-    expect(items.find((i) => i._description.includes('R2 tube 1"'))!.qty).toBe(
+    expect(items.find((i) => i._description.includes('R2 tube 1"'))?.qty).toBe(
       1,
     );
-    expect(items.find((i) => i._description.includes("R2 tube 3/4"))!.qty).toBe(
+    expect(items.find((i) => i._description.includes("R2 tube 3/4"))?.qty).toBe(
       3,
     );
   });

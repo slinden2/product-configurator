@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React from "react";
+import type React from "react";
 import { describe, test, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

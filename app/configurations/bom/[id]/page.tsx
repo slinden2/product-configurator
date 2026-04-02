@@ -20,7 +20,7 @@ interface BOMViewProps {
 
 const BOMView = async (props: BOMViewProps) => {
   const params = await props.params;
-  const confId = parseInt(params.id);
+  const confId = parseInt(params.id, 10);
   if (Number.isNaN(confId)) notFound();
 
   const user = await getUserData();

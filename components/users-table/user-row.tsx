@@ -16,10 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { UserWithStats } from "@/db/queries";
+import type { UserWithStats } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import { Role } from "@/types";
+import type { Role } from "@/types";
 
 interface UserRowProps {
   user: UserWithStats;

@@ -2,8 +2,7 @@ import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
 import { getNumericSelectOptions } from "@/validation/common";
 import { selectFieldOptions } from "@/validation/configuration";
-import { WaterTankSchema } from "@/validation/water-tank-schema";
-import React from "react";
+import type { WaterTankSchema } from "@/validation/water-tank-schema";
 
 const WaterTankFields = () => {
   return (

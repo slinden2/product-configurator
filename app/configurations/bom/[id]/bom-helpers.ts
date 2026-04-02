@@ -1,13 +1,13 @@
-import { Configuration, EngineeringBomItem } from "@/db/schemas";
+import type { Configuration, EngineeringBomItem } from "@/db/schemas";
 import { getEngineeringBomItems, hasEngineeringBom } from "@/db/queries";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import {
   BOM,
-  BOMItemWithCost,
-  BOMItemWithDescription,
+  type BOMItemWithCost,
+  type BOMItemWithDescription,
   enrichWithCosts,
 } from "@/lib/BOM";
-import { Role } from "@/types";
+import type { Role } from "@/types";
 
 // ── Grouping ────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BrushColors, BrushTypes, SelectOption } from "@/types";
+import { BrushColors, BrushTypes, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

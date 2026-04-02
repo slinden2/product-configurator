@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EngineeringBomItem } from "@/db/schemas";
+import type { EngineeringBomItem } from "@/db/schemas";
 import { cn } from "@/lib/utils";
 import { ArrowDownUp, Check, Pencil, Trash2, Undo2, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
@@ -33,13 +33,15 @@ interface SortState {
   direction: "asc" | "desc";
 }
 
+function sortByPn(arr: EngineeringBomItem[]) {
+  return [...arr].sort((a, b) => a.pn.localeCompare(b.pn));
+}
+
 const EngineeringBomTable = ({
   items,
   confId,
   editable,
 }: EngineeringBomTableProps) => {
-  const sortByPn = (arr: EngineeringBomItem[]) =>
-    [...arr].sort((a, b) => a.pn.localeCompare(b.pn));
   const [dataArr, setDataArr] = useState(() => sortByPn(items));
   const [sorting, setSorting] = useState<SortState>({
     key: "pn",

@@ -1,4 +1,4 @@
-import {
+import type {
   HpPump15kwOutletType,
   HpPump30kwOutletType,
   HpPumpOMZkwOutletType,
@@ -9,8 +9,8 @@ import { describe, test, expect } from "vitest";
 type OutletType = HpPump15kwOutletType | HpPump30kwOutletType | undefined;
 
 function createHpPumpObject(
-  kw: Number = 15,
-  hasPump: Boolean = false,
+  kw: number = 15,
+  hasPump: boolean = false,
   outlet1: OutletType = undefined,
   outlet2: OutletType = undefined,
 ) {
@@ -22,9 +22,9 @@ function createHpPumpObject(
 }
 
 function createOMZPumpObject(
-  hasPump: Boolean = false,
+  hasPump: boolean = false,
   outlet1: HpPumpOMZkwOutletType | undefined = undefined,
-  hasChemicalRoofBar?: Boolean | undefined,
+  hasChemicalRoofBar?: boolean | undefined,
 ) {
   return {
     has_omz_pump: hasPump,

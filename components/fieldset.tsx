@@ -5,7 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import React, { HTMLAttributes } from "react";
+import type React from "react";
+import type { HTMLAttributes } from "react";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;

@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from "vitest";
 
 vi.mock("file-saver", () => ({ saveAs: vi.fn() }));
 
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
 import {
   buildCostWorkbook,
   type BOM,
@@ -27,7 +27,9 @@ function makeUser(): NonNullable<UserData> {
 }
 
 function getSheet(wb: ExcelJS.Workbook) {
-  return wb.getWorksheet("Costi")!;
+  const sheet = wb.getWorksheet("Costi");
+  if (!sheet) throw new Error('Worksheet "Costi" not found');
+  return sheet;
 }
 
 function cellValue(sheet: ExcelJS.Worksheet, row: number, col: number) {
@@ -86,7 +88,7 @@ describe("summary table", () => {
     const sheet = getSheet(wb);
     const formula = cellFormula(sheet, 7, 2);
     expect(formula).not.toBeNull();
-    const ranges = formula!.match(/E\d+:E\d+/g);
+    const ranges = formula?.match(/E\d+:E\d+/g);
     expect(ranges).toHaveLength(3);
   });
 });

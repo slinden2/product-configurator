@@ -1,4 +1,4 @@
-import { SelectOptionGroup } from "@/types";
+import type { SelectOptionGroup } from "@/types";
 import {
   MachineTypeEnum,
   machineTypeOpts,

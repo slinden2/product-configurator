@@ -1,13 +1,12 @@
 "use server";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import { logActivity } from "@/db/queries";
 import {
-  getConfiguration,
   getConfigurationWithTanksAndBays,
   getPartNumbersByArray,
   getUserData,
@@ -16,8 +15,8 @@ import {
   QueryError,
   searchPartNumbers,
 } from "@/db/queries";
-import { engineeringBomItems, NewEngineeringBomItem } from "@/db/schemas";
-import { BOM, BOMItemWithDescription } from "@/lib/BOM";
+import { engineeringBomItems, type NewEngineeringBomItem } from "@/db/schemas";
+import { BOM, type BOMItemWithDescription } from "@/lib/BOM";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { MSG } from "@/lib/messages";
 import { engineeringBomItemSchema } from "@/validation/engineering-bom-item-schema";

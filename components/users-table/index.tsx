@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserWithStats } from "@/db/queries";
+import type { UserWithStats } from "@/db/queries";
 import UserRow from "./user-row";
 
 interface UsersTableProps {

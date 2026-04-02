@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ActivityLogEntry } from "@/db/queries";
+import type { ActivityLogEntry } from "@/db/queries";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { ActivityActionLabels } from "@/types";
 

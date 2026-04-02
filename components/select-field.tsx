@@ -1,9 +1,9 @@
-import * as React from "react";
+import type * as React from "react";
 import {
   useFormContext,
-  FieldValues,
-  FieldPath,
-  PathValue,
+  type FieldValues,
+  type FieldPath,
+  type PathValue,
   useWatch,
 } from "react-hook-form";
 import {
@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectOption } from "@/types";
+import type { SelectOption } from "@/types";
 import { NOT_SELECTED_LABEL, NOT_SELECTED_VALUE } from "@/lib/utils";
 
 // Interface for the reset configuration, now using generics
@@ -30,7 +30,7 @@ interface ResetConfig<TFieldValues extends FieldValues> {
   triggerValue: string | string[] | number | number[]; // Value(s) that trigger the reset
   fieldsToReset: Array<FieldPath<TFieldValues>>; // Fields to reset (type-safe)
   invertTrigger?: boolean; // Reset when value is NOT triggerValue
-  resetToValue?: any; // Value to reset the fields to (defaults to undefined)
+  resetToValue?: unknown; // Value to reset the fields to (defaults to undefined)
 }
 
 // --- SelectField Props Interface with Generics ---
@@ -104,18 +104,18 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
     }
 
     switch (dataType) {
-      case "number":
+      case "number": {
         const num = parseFloat(val);
-        return isNaN(num)
+        return Number.isNaN(num)
           ? undefined
           : (num as PathValue<TFieldValues, FieldPath<TFieldValues>>);
+      }
       case "boolean":
         if (val.toLowerCase() === "true")
           return true as PathValue<TFieldValues, FieldPath<TFieldValues>>;
         if (val.toLowerCase() === "false")
           return false as PathValue<TFieldValues, FieldPath<TFieldValues>>;
         return undefined;
-      case "string":
       default:
         return val as PathValue<TFieldValues, FieldPath<TFieldValues>>;
     }
@@ -152,10 +152,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
 
                   if (shouldReset) {
                     item.fieldsToReset.forEach((fieldToReset) => {
-                      const valueToSet =
-                        item.resetToValue !== undefined
-                          ? item.resetToValue
-                          : undefined;
+                      const valueToSet = (item.resetToValue ?? undefined) as PathValue<TFieldValues, FieldPath<TFieldValues>>;
 
                       setValue(fieldToReset, valueToSet, {
                         shouldValidate: false,

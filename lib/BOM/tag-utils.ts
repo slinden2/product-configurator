@@ -1,4 +1,4 @@
-import { BomTag, BomTags } from "@/types";
+import { type BomTag, BomTags } from "@/types";
 
 export function groupByTag<T extends { tag?: BomTag | null }>(
   items: T[],

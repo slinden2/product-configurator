@@ -478,7 +478,9 @@ describe("nozzleBarBOM — tags", () => {
     for (const pn of rinsePns) {
       const items = itemsByPn(pn);
       expect(items.length).toBeGreaterThan(0);
-      items.forEach((item) => expect(item.tag).toBe("RINSE_BARS"));
+      for (const item of items) {
+        expect(item.tag).toBe("RINSE_BARS");
+      }
     }
   });
 
@@ -494,7 +496,9 @@ describe("nozzleBarBOM — tags", () => {
     for (const pn of prewashPns) {
       const items = itemsByPn(pn);
       expect(items.length).toBeGreaterThan(0);
-      items.forEach((item) => expect(item.tag).toBe("PREWASH_BARS"));
+      for (const item of items) {
+        expect(item.tag).toBe("PREWASH_BARS");
+      }
     }
   });
 
@@ -503,7 +507,9 @@ describe("nozzleBarBOM — tags", () => {
     for (const pn of acidPns) {
       const items = itemsByPn(pn);
       expect(items.length).toBeGreaterThan(0);
-      items.forEach((item) => expect(item.tag).toBe("ACID_BARS"));
+      for (const item of items) {
+        expect(item.tag).toBe("ACID_BARS");
+      }
     }
   });
 
@@ -517,7 +523,9 @@ describe("nozzleBarBOM — tags", () => {
     for (const pn of otherPns) {
       const items = itemsByPn(pn);
       expect(items.length).toBeGreaterThan(0);
-      items.forEach((item) => expect(item.tag).toBe("RINSE_BARS"));
+      for (const item of items) {
+        expect(item.tag).toBe("RINSE_BARS");
+      }
     }
   });
 

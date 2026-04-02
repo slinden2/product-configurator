@@ -2,9 +2,8 @@ import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import { withNoSelection } from "@/lib/utils";
-import { ConfigSchema } from "@/validation/config-schema";
+import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const SupplySection = () => {

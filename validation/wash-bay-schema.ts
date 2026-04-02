@@ -1,4 +1,4 @@
-import { PressureWashers, SelectOption } from "@/types";
+import { PressureWashers, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

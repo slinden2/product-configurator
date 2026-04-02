@@ -1,4 +1,4 @@
-import * as React from "react";
+import type * as React from "react";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -8,7 +8,7 @@ import {
   ResponsiveModalDescription,
   ResponsiveModalClose,
 } from "@/components/ui/responsive-modal";
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
 interface ConfirmModalProps {

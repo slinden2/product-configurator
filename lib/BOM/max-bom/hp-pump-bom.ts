@@ -1,11 +1,11 @@
-import { GeneralBOMConfig } from "@/lib/BOM";
-import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import type { GeneralBOMConfig } from "@/lib/BOM";
+import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 import {
   isOMZ,
   usesOMZPump,
   usesHPRoofBar,
 } from "@/lib/BOM/max-bom/conditions";
-import { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
+import type { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 
 const PART_NUMBERS = {
   PUMP_75KW: "1100.024.033", // TODO Add this in the form

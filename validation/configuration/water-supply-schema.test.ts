@@ -1,4 +1,4 @@
-import { Water1PumpType, Water2PumpType, WaterType } from "@/types";
+import type { Water1PumpType, Water2PumpType, WaterType } from "@/types";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
 import { describe, test, expect } from "vitest";
 

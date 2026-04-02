@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React from "react";
+import type React from "react";
 import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -34,8 +34,8 @@ vi.mock("@/components/confirm-modal", () => ({
     isOpen ? (
       <tr data-testid="confirm-modal">
         <td>
-          <button onClick={onConfirm}>{confirmText ?? "Conferma"}</button>
-          <button onClick={() => onOpenChange(false)}>
+          <button type="button" onClick={onConfirm}>{confirmText ?? "Conferma"}</button>
+          <button type="button" onClick={() => onOpenChange(false)}>
             {cancelText ?? "Annulla"}
           </button>
         </td>
@@ -64,8 +64,8 @@ import ConfigurationRow from "@/components/all-configuration-table/configuration
 import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import { ConfigurationStatusType } from "@/types";
-import { Role } from "@/types";
+import type { ConfigurationStatusType } from "@/types";
+import type { Role } from "@/types";
 
 // --- Helpers ---
 

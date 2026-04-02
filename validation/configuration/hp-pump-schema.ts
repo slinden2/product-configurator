@@ -3,7 +3,7 @@ import {
   HpPump15kwOutlets,
   HpPump30kwOutlets,
   HpPumpOMZkwOutlets,
-  SelectOption,
+  type SelectOption,
 } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,

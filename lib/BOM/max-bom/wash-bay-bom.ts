@@ -1,6 +1,6 @@
-import { WashBay } from "@/db/schemas";
-import { WithSupplyData } from "@/lib/BOM";
-import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import type { WashBay } from "@/db/schemas";
+import type { WithSupplyData } from "@/lib/BOM";
+import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
   LINE_POST_ASSY_H2500: "1100.300.001",

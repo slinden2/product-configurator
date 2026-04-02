@@ -1,5 +1,5 @@
 import { NOT_SELECTED_LABEL } from "@/lib/utils";
-import { AnchorTypes, RailTypes, SelectOption } from "@/types";
+import { AnchorTypes, RailTypes, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

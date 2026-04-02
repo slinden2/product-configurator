@@ -15,7 +15,7 @@ import {
   activityLogs,
   configurations,
   engineeringBomItems,
-  NewEngineeringBomItem,
+  type NewEngineeringBomItem,
   partNumbers,
   userProfiles,
   washBays,
@@ -23,15 +23,15 @@ import {
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
-import { ActivityAction, ConfigurationStatusType, Role } from "@/types";
+import type { ActivityAction, ConfigurationStatusType, Role } from "@/types";
 import { createClient } from "@/utils/supabase/server";
-import {
-  type ConfigSchema,
+import type {
+  ConfigSchema,
   UpdateConfigSchema,
 } from "@/validation/config-schema";
-import { ConfigStatusSchema } from "@/validation/config-status-schema";
-import { WashBaySchema } from "@/validation/wash-bay-schema";
-import { WaterTankSchema } from "@/validation/water-tank-schema";
+import type { ConfigStatusSchema } from "@/validation/config-status-schema";
+import type { WashBaySchema } from "@/validation/wash-bay-schema";
+import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
   transformConfigToDbInsert,
   transformConfigToDbUpdate,

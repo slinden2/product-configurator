@@ -1,8 +1,7 @@
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
-import { ConfigSchema } from "@/validation/config-schema";
+import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
-import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const BrushSection = () => {

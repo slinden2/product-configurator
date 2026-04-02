@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
 import SubRecordForm from "@/components/shared/sub-record-form";
 import WaterTankFields from "@/components/water-tank-form/water-tank-fields";
 import {
-  UpdateWaterTankSchema,
+  type UpdateWaterTankSchema,
   waterTankDefaults,
   waterTankSchema,
 } from "@/validation/water-tank-schema";
@@ -13,7 +12,7 @@ import {
   editWaterTankAction,
   insertWaterTankAction,
 } from "@/app/actions/water-tank-actions";
-import { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 
 interface WaterTankFormProps {
   confId: number;

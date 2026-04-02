@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import SubRecordForm from "@/components/shared/sub-record-form";
 import {
-  UpdateWashBaySchema,
+  type UpdateWashBaySchema,
   washBayDefaults,
   washBaySchema,
 } from "@/validation/wash-bay-schema";
@@ -13,7 +13,7 @@ import {
   insertWashBayAction,
 } from "@/app/actions/wash-bay-actions";
 import WashBayFields from "./wash-bay-fields";
-import { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 
 interface WashBayFormProps {
   confId: number;

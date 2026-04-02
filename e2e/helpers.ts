@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 /**
  * Opens a Radix Select by its label text and clicks an option.

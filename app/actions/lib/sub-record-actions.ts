@@ -1,6 +1,6 @@
 "use server";
 
-import { z } from "zod";
+import type { z } from "zod";
 import {
   getUserData,
   getConfiguration,
@@ -139,13 +139,13 @@ export async function handleSubRecordAction<
     await db.transaction(async (tx) => {
       switch (options.actionType) {
         case "insert":
-          operationResult = await options.queryFn(parentId, validatedData!, tx);
+          operationResult = await options.queryFn(parentId, validatedData as z.infer<TFormSchema>, tx);
           break;
         case "edit":
           operationResult = await options.queryFn(
             parentId,
             options.recordId,
-            validatedData!,
+            validatedData as z.infer<TFormSchema>,
             tx,
           );
           break;

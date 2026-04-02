@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SelectOption, TouchFixTypes, TouchPos } from "@/types";
+import { type SelectOption, TouchFixTypes, TouchPos } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
@@ -71,7 +71,7 @@ const baseTouchSchema = z
         ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: invalidOption + " (pos. interna non ha fissaggio)",
+            message: `${invalidOption} (pos. interna non ha fissaggio)`,
             path: ["touch_fixing_type"],
           });
         }
@@ -100,7 +100,7 @@ const baseTouchSchema = z
       if (data.touch_pos !== undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: invalidOption + " (pos. non applicabile con 2 pannelli)",
+          message: `${invalidOption} (pos. non applicabile con 2 pannelli)`,
           path: ["touch_pos"],
         });
       }

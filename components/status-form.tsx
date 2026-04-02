@@ -1,10 +1,10 @@
 "use client";
 
-import { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 import {
   configStatusOpts,
   configStatusSchema,
-  ConfigStatusSchema,
+  type ConfigStatusSchema,
 } from "@/validation/config-status-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";

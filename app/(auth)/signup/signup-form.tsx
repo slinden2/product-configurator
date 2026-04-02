@@ -3,11 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/input-field";
-import { SignupSchema, signupSchema } from "@/validation/auth-schema";
+import { type SignupSchema, signupSchema } from "@/validation/auth-schema";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/app/actions/auth";
 import { toast } from "sonner";

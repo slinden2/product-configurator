@@ -1,4 +1,4 @@
-import { ChemPumpPos, SelectOption } from "@/types";
+import { ChemPumpPos, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

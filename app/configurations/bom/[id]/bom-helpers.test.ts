@@ -16,7 +16,7 @@ import {
   groupByTag,
   hasTagData,
 } from "@/app/configurations/bom/[id]/bom-helpers";
-import { EngineeringBomItem } from "@/db/schemas";
+import type { EngineeringBomItem } from "@/db/schemas";
 
 // --- Helpers ---
 

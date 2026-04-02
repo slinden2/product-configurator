@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { Menu, Moon, Sun } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +19,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Role } from "@/types";
+import type { Role } from "@/types";
 
 interface MainNavProps {
   user: User | null;

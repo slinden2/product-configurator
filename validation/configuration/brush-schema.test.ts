@@ -1,4 +1,4 @@
-import { BrushColorType, BrushType } from "@/types";
+import type { BrushColorType, BrushType } from "@/types";
 import { brushSchema } from "@/validation/configuration/brush-schema";
 import { describe, test, expect } from "vitest";
 

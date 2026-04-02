@@ -8,7 +8,7 @@ vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
 }));
 
-import { BOM, BOMItemWithDescription, GeneralBOMConfig } from "@/lib/BOM";
+import { BOM, type BOMItemWithDescription, type GeneralBOMConfig } from "@/lib/BOM";
 import {
   makeConfigWithBaysAndTanks as makeConfig,
   makeWashBay,

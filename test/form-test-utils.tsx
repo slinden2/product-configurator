@@ -1,14 +1,14 @@
-import React from "react";
+import type React from "react";
 import { render } from "@testing-library/react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ConfigSchema,
+  type ConfigSchema,
   configDefaults,
   configSchema,
-  UpdateConfigSchema,
+  type UpdateConfigSchema,
 } from "@/validation/config-schema";
 
 // --- Reusable Radix Select interaction ---

@@ -1,7 +1,7 @@
-import { ConfigSchema, UpdateConfigSchema } from "@/validation/config-schema";
-import { configurations } from "@/db/schemas"; // Import Drizzle schema
-import { WaterTankSchema } from "@/validation/water-tank-schema";
-import { WashBaySchema } from "@/validation/wash-bay-schema";
+import type { ConfigSchema, UpdateConfigSchema } from "@/validation/config-schema";
+import type { configurations } from "@/db/schemas"; // Import Drizzle schema
+import type { WaterTankSchema } from "@/validation/water-tank-schema";
+import type { WashBaySchema } from "@/validation/wash-bay-schema";
 
 // Type for Drizzle insert
 type DbConfigInsert = typeof configurations.$inferInsert;

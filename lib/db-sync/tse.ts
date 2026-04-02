@@ -1,8 +1,8 @@
 import "dotenv/config";
-import sql, { ConnectionPool } from "mssql";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import sql, { type ConnectionPool } from "mssql";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +35,7 @@ export interface DBData {
   cost: number | null;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
 function isDBDataArray(array: any[]): array is DBData[] {
   return array.every(
     (item) =>

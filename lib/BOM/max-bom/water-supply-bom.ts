@@ -1,6 +1,6 @@
-import { GeneralBOMConfig } from "@/lib/BOM";
-import { MaxBOMItem } from "@/lib/BOM/max-bom";
-import { Water1PumpType, Water2PumpType } from "@/types";
+import type { GeneralBOMConfig } from "@/lib/BOM";
+import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import type { Water1PumpType, Water2PumpType } from "@/types";
 
 const PART_NUMBERS = {
   WASH_BAY_SOLENOID_WITH_ANTIFREEZE: "1100.060.001",

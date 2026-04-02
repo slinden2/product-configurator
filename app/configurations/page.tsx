@@ -4,7 +4,6 @@ import { getUserConfigurations, getUserData } from "@/db/queries";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import React from "react";
 
 const PAGE_SIZE = 20;
 

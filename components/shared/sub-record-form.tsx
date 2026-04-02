@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import type React from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,8 +23,8 @@ import { MSG } from "@/lib/messages";
 import { FormDisabledContext } from "@/components/ui/form";
 import Fieldset from "@/components/fieldset";
 import BomWarningDialog from "@/components/shared/bom-warning-dialog";
-import { z } from "zod";
-import { ConfigurationStatusType, Role } from "@/types";
+import type { z } from "zod";
+import type { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 
 // Shared result type for server actions

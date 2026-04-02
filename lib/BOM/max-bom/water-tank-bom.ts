@@ -1,5 +1,5 @@
-import { WaterTank } from "@/db/schemas";
-import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import type { WaterTank } from "@/db/schemas";
+import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
   WATER_TANK_2000L: "921.00.201",

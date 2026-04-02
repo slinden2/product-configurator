@@ -1,9 +1,9 @@
-import * as React from "react";
+import type * as React from "react";
 import {
   useFormContext,
-  FieldValues,
-  FieldPath,
-  // PathValue, // Less critical here, but can keep for consistency
+  type FieldValues,
+  type FieldPath,
+  type PathValue,
 } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,7 +20,7 @@ import type { CheckedState } from "@radix-ui/react-checkbox"; // Import type for
 // Interface for the reset configuration, using generics
 interface ResetCheckboxConfig<TFieldValues extends FieldValues> {
   fieldsToReset: Array<FieldPath<TFieldValues>>; // Fields to reset (type-safe)
-  resetToValue?: any; // Value to reset the fields to (defaults to undefined)
+  resetToValue?: unknown; // Value to reset the fields to (defaults to undefined)
 }
 
 // --- CheckboxField Props Interface with Generics ---
@@ -78,10 +78,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                     fieldsToResetOnUncheck?.forEach((item) => {
                       item.fieldsToReset.forEach((fieldToReset) => {
                         // Use resetToValue from config if provided, otherwise default to undefined
-                        const valueToSet =
-                          item.resetToValue !== undefined
-                            ? item.resetToValue
-                            : undefined;
+                        const valueToSet = (item.resetToValue ?? undefined) as PathValue<TFieldValues, FieldPath<TFieldValues>>;
                         setValue(fieldToReset, valueToSet, {
                           shouldValidate: false, // Avoid immediate validation on reset
                           shouldDirty: true, // Mark form as dirty

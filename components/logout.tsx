@@ -24,10 +24,8 @@ const Logout = () => {
   return (
     <form onSubmit={handleLogout}>
       <Button type="submit" variant="destructive" size="sm" className="gap-2">
-        <>
-          {loading ? <Spinner /> : <LogOut className="h-4 w-4" />}
-          <span>Esci</span>
-        </>
+        {loading ? <Spinner /> : <LogOut className="h-4 w-4" />}
+        <span>Esci</span>
       </Button>
     </form>
   );

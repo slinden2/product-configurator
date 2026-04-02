@@ -1,4 +1,4 @@
-import { ConfigurationStatus, SelectOption } from "@/types";
+import { ConfigurationStatus, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

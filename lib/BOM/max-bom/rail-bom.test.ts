@@ -58,7 +58,8 @@ describe("calculate1mRailQty", () => {
 
 describe("BOM inclusion conditions for rail items", () => {
   test("3m rails are NOT included when rail_length = 7 (condition: rail_length > 7)", () => {
-    expect(7 > 7).toBe(false);
+    const rail_length = 7;
+    expect(rail_length > 7).toBe(false);
   });
 
   test("3m rails ARE included when rail_length = 21 (condition: 21 > 7)", () => {
@@ -109,29 +110,35 @@ describe("railBOM part number routing by rail_type", () => {
   const WELDED_TERMINALS = "450.49.031";
   const SHIM_KIT = "450.35.011";
 
+  function findItem(pn: string) {
+    const item = railBOM.find((i) => i.pn === pn);
+    if (!item) throw new Error(`Item ${pn} not found in railBOM`);
+    return item;
+  }
+
   test("ANCHORED config uses anchored terminals (450.45.031)", () => {
-    const item = railBOM.find((i) => i.pn === ANCHORED_TERMINALS)!;
+    const item = findItem(ANCHORED_TERMINALS);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC"))).toBe(true);
     expect(evalConditions(item, railCfg("WELDED", 25))).toBe(false);
     expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(false);
   });
 
   test("WELDED_RECESSED config uses recessed terminals (450.46.032)", () => {
-    const item = railBOM.find((i) => i.pn === WELDED_RECESSED_TERMINALS)!;
+    const item = findItem(WELDED_RECESSED_TERMINALS);
     expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(true);
     expect(evalConditions(item, railCfg("WELDED", 25))).toBe(false);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC"))).toBe(false);
   });
 
   test("WELDED config uses welded terminals (450.49.031)", () => {
-    const item = railBOM.find((i) => i.pn === WELDED_TERMINALS)!;
+    const item = findItem(WELDED_TERMINALS);
     expect(evalConditions(item, railCfg("WELDED", 25))).toBe(true);
     expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(false);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC"))).toBe(false);
   });
 
   test("shim kit (450.35.011) only included for WELDED_RECESSED", () => {
-    const item = railBOM.find((i) => i.pn === SHIM_KIT)!;
+    const item = findItem(SHIM_KIT);
     expect(evalConditions(item, railCfg("WELDED_RECESSED", 25))).toBe(true);
     expect(evalConditions(item, railCfg("WELDED", 25))).toBe(false);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC"))).toBe(false);
@@ -180,37 +187,43 @@ describe("anchor type BOM routing", () => {
   const RESIN_ANCHOR = "934.10.003";
   const RESIN = "934.10.002";
 
+  function findItem(pn: string) {
+    const item = railBOM.find((i) => i.pn === pn);
+    if (!item) throw new Error(`Item ${pn} not found in railBOM`);
+    return item;
+  }
+
   test("ANCHORED + ZINC + STD → zinc anchors included", () => {
-    const item = railBOM.find((i) => i.pn === ZINC_ANCHOR)!;
+    const item = findItem(ZINC_ANCHOR);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC", "STD"))).toBe(true);
   });
 
   test("ANCHORED + ZINC + OMZ → zinc anchors NOT included, stainless used instead", () => {
-    const zinc = railBOM.find((i) => i.pn === ZINC_ANCHOR)!;
-    const stainless = railBOM.find((i) => i.pn === STAINLESS_ANCHOR)!;
+    const zinc = findItem(ZINC_ANCHOR);
+    const stainless = findItem(STAINLESS_ANCHOR);
     expect(evalConditions(zinc, railCfg("ANCHORED", 25, "ZINC", "OMZ"))).toBe(false);
     expect(evalConditions(stainless, railCfg("ANCHORED", 25, "ZINC", "OMZ"))).toBe(true);
   });
 
   test("ANCHORED + CHEMICAL → resin anchors included regardless of machine type", () => {
-    const item = railBOM.find((i) => i.pn === RESIN_ANCHOR)!;
+    const item = findItem(RESIN_ANCHOR);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL", "STD"))).toBe(true);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL", "OMZ"))).toBe(true);
   });
 
   test("ANCHORED + CHEMICAL → resin cartridges included", () => {
-    const item = railBOM.find((i) => i.pn === RESIN)!;
+    const item = findItem(RESIN);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL"))).toBe(true);
   });
 
   test("ANCHORED + ZINC → resin NOT included", () => {
-    const item = railBOM.find((i) => i.pn === RESIN)!;
+    const item = findItem(RESIN);
     expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC"))).toBe(false);
   });
 
   test("WELDED + no anchor_type → no anchor parts included", () => {
-    const zinc = railBOM.find((i) => i.pn === ZINC_ANCHOR)!;
-    const resin = railBOM.find((i) => i.pn === RESIN_ANCHOR)!;
+    const zinc = findItem(ZINC_ANCHOR);
+    const resin = findItem(RESIN_ANCHOR);
     expect(evalConditions(zinc, railCfg("WELDED", 25))).toBe(false);
     expect(evalConditions(resin, railCfg("WELDED", 25))).toBe(false);
   });

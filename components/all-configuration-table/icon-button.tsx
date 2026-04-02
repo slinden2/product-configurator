@@ -1,7 +1,7 @@
-import { Button, ButtonProps } from "@/components/ui/button";
-import { LucideProps } from "lucide-react";
+import { Button, type ButtonProps } from "@/components/ui/button";
+import type { LucideProps } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import type React from "react";
 
 interface IconButtonProps {
   className?: string;

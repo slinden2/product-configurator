@@ -1,6 +1,6 @@
-import { WashBay, WaterTank } from "@/db/schemas";
-import { GeneralBOMConfig, WithSupplyData } from "@/lib/BOM";
-import { BomTag } from "@/types";
+import type { WashBay, WaterTank } from "@/db/schemas";
+import type { GeneralBOMConfig, WithSupplyData } from "@/lib/BOM";
+import type { BomTag } from "@/types";
 import { brushBOM } from "@/lib/BOM/max-bom/brush-bom";
 import { dosingPumpBOM } from "@/lib/BOM/max-bom/dosing-pump-bom";
 import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
@@ -20,9 +20,7 @@ import { waterTankBOM } from "@/lib/BOM/max-bom/water-tank-bom";
  */
 export const BOM_RULES_VERSION = "260401";
 
-export interface ValidationFn<T> {
-  (config: T): boolean;
-}
+export type ValidationFn<T> = (config: T) => boolean
 
 export interface MaxBOMItem<T> {
   pn: string;

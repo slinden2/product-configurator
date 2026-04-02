@@ -1,9 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BOMItemWithDescription } from "@/lib/BOM";
+import type { BOMItemWithDescription } from "@/lib/BOM";
 import { Share } from "lucide-react";
-import React from "react";
 import * as XLSX from "xlsx";
 
 interface ExportButtonProps {

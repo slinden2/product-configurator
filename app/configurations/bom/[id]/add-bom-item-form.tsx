@@ -19,7 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PartNumber } from "@/db/schemas";
+import type { PartNumber } from "@/db/schemas";
 import {
   Select,
   SelectContent,
@@ -30,7 +30,7 @@ import {
 import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MSG } from "@/lib/messages";
-import { BomTag, BomTagLabels } from "@/types";
+import { type BomTag, BomTagLabels } from "@/types";
 import { toast } from "sonner";
 
 interface AddBomItemFormProps {

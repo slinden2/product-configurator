@@ -1,6 +1,6 @@
 import {
   EnergyChainWidths,
-  SelectOption,
+  type SelectOption,
   SupplyFixTypes,
   SupplySides,
   SupplyTypes,

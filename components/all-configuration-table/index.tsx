@@ -7,8 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import React from "react";
-import { AllConfigurations, getUserData } from "@/db/queries";
+import { type AllConfigurations, getUserData } from "@/db/queries";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ConfigurationRow from "@/components/all-configuration-table/configuration-row";

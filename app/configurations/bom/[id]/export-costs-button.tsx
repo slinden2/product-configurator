@@ -1,10 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BOMItemWithCost } from "@/lib/BOM";
+import type { BOMItemWithCost } from "@/lib/BOM";
 import { Share } from "lucide-react";
-import React from "react";
-import { UserData } from "@/db/queries";
+import type { UserData } from "@/db/queries";
 import { createExcelFile } from "./create-excel-file";
 
 interface ExportCostsButtonProps {

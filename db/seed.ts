@@ -5,10 +5,10 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
-import { ConfigSchema } from "@/validation/config-schema";
+import type { ConfigSchema } from "@/validation/config-schema";
 import { eq, sql } from "drizzle-orm";
 import { transformConfigToDbInsert } from "./transformations";
-import { WashBaySchema } from "@/validation/wash-bay-schema";
+import type { WashBaySchema } from "@/validation/wash-bay-schema";
 
 const configurationSimple: ConfigSchema = {
   name: "Cliente 1",

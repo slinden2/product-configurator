@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import {
   configDefaults,
-  ConfigSchema,
+  type ConfigSchema,
   configSchema,
-  UpdateConfigSchema,
+  type UpdateConfigSchema,
 } from "@/validation/config-schema";
-import { FieldErrors, useForm } from "react-hook-form";
+import { type FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import GeneralSection from "@/components/config-form/general-section";
 import BrushSection from "@/components/config-form/brush-section";
@@ -27,7 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
-import { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
 import Fieldset from "@/components/fieldset";

@@ -1,7 +1,7 @@
 import { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
-import { UserData } from "@/db/queries";
-import { BOMItemWithCost } from "@/lib/BOM";
-import { BomTag, BomTagLabels } from "@/types";
+import type { UserData } from "@/db/queries";
+import type { BOMItemWithCost } from "@/lib/BOM";
+import { type BomTag, BomTagLabels } from "@/types";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 

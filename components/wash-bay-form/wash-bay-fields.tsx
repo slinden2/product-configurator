@@ -3,7 +3,7 @@ import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
 import { selectFieldOptions } from "@/validation/configuration";
-import { WashBaySchema } from "@/validation/wash-bay-schema";
+import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import { useFormContext, useWatch } from "react-hook-form";
 
 interface WashBayFieldsProps {
@@ -111,8 +111,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
         </div>
       </div>
       {showEnergyChainFields && (
-        <>
-          <div className="border-t border-border pt-4 mt-2">
+        <div className="border-t border-border pt-4 mt-2">
             <div className="fs-row md:items-end">
               <div className="fs-item">
                 <SelectField<WashBaySchema>
@@ -203,7 +202,6 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               </div>
             </div>
           </div>
-        </>
       )}
     </div>
   );

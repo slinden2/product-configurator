@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { NewPartNumber, partNumbers, pnTypeEnum } from "@/db/schemas";
+import { type NewPartNumber, partNumbers, pnTypeEnum } from "@/db/schemas";
 import { fetchPartNumbersFromTSE } from "@/lib/db-sync/tse";
 import { sql } from "drizzle-orm";
 
@@ -12,8 +12,10 @@ function mapPnType(value: number): "PART" | "ASSY" {
   throw new Error(`Invalid pn_type value: ${value}`);
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
 function isPartNumberArray(array: any): array is NewPartNumber[] {
   return array.every(
+    // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
     (item: any) =>
       typeof item.pn === "string" &&
       typeof item.description === "string" &&

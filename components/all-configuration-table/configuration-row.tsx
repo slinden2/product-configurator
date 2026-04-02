@@ -5,10 +5,10 @@ import ConfigurationStatusBadge from "@/components/all-configuration-table/confi
 import IconButton from "@/components/all-configuration-table/icon-button";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { AllConfigurations, UserData } from "@/db/queries";
+import type { AllConfigurations, UserData } from "@/db/queries";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { Edit, ScrollText, Trash2 } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { MSG } from "@/lib/messages";
 import { toast } from "sonner";
 import { isEditable } from "@/app/actions/lib/auth-checks";

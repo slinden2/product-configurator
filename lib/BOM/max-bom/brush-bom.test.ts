@@ -22,7 +22,7 @@ const pns = (config: GeneralBOMConfig) =>
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
-const qtys = (config: GeneralBOMConfig) =>
+const _qtys = (config: GeneralBOMConfig) =>
   brushBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) =>

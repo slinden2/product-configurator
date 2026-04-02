@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import React from "react";
+import type React from "react";
 import { describe, test, expect, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, FormProvider } from "react-hook-form";
-import { ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 import BrushSection from "@/components/config-form/brush-section";
 import WaterSupplySection from "@/components/config-form/water-supply-section";
 import SupplySection from "@/components/config-form/supply-section";
@@ -265,7 +265,8 @@ describe("Multi-step field dependency chains", () => {
           el.getAttribute("aria-disabled") !== "true",
       );
       expect(omzTrigger).toBeDefined();
-      await userEvent.click(omzTrigger!);
+      if (!omzTrigger) return;
+      await userEvent.click(omzTrigger);
       const options = screen.getAllByRole("option", { name: "4 robottine" });
       await userEvent.click(options[0]);
 

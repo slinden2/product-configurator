@@ -2,9 +2,8 @@ import Fieldset from "@/components/fieldset";
 import InputField from "@/components/input-field";
 import SelectField from "@/components/select-field";
 import TextareaField from "@/components/textarea-field";
-import { ConfigSchema } from "@/validation/config-schema";
+import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
-import React from "react";
 
 const GeneralSection = () => {
   return (

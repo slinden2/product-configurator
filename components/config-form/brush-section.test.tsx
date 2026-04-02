@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import React from "react";
+
 import { describe, test, expect, afterEach } from "vitest";
 import { render, screen, cleanup, within } from "@testing-library/react";
 import { useForm, FormProvider } from "react-hook-form";
-import { ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 import BrushSection from "@/components/config-form/brush-section";
 import { NOT_SELECTED_LABEL } from "@/lib/utils";
 

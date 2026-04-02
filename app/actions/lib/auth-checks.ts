@@ -1,4 +1,4 @@
-import { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 
 /**
  * Determines whether a configuration is currently in an editable state

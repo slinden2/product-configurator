@@ -2,9 +2,8 @@ import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
-import { ConfigSchema } from "@/validation/config-schema";
+import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const WaterSupplySection = () => {
@@ -63,8 +62,8 @@ const WaterSupplySection = () => {
                   {
                     triggerValue: [
                       NOT_SELECTED_VALUE,
-                      zodEnums.WaterPump1Enum.enum["BOOST_15KW"],
-                      zodEnums.WaterPump1Enum.enum["BOOST_22KW"],
+                      zodEnums.WaterPump1Enum.enum.BOOST_15KW,
+                      zodEnums.WaterPump1Enum.enum.BOOST_22KW,
                     ],
                     fieldsToReset: [
                       "inv_pump_outlet_dosatron_qty",
@@ -78,7 +77,7 @@ const WaterSupplySection = () => {
           </div>
           {isInvPump1Selected && (
             <div className="fs-item">
-              <>
+              
                 <SelectField<ConfigSchema>
                   name="inv_pump_outlet_dosatron_qty"
                   dataType="number"
@@ -91,7 +90,7 @@ const WaterSupplySection = () => {
                   label="Uscite idropulitrice"
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
-              </>
+              
             </div>
           )}
           <div className="fs-item">

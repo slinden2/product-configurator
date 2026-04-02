@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import React from "react";
+
 import { describe, test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
-import { ConfigurationStatus, ConfigurationStatusType } from "@/types";
+import { ConfigurationStatus, type ConfigurationStatusType } from "@/types";
 import { STATUS_CONFIG } from "@/lib/status-config";
 
 const testCases: [ConfigurationStatusType, string, string][] =

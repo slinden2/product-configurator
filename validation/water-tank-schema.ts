@@ -1,4 +1,4 @@
-import { WaterTankTypes, SelectOption } from "@/types";
+import { WaterTankTypes, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

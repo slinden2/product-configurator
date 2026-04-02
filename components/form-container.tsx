@@ -1,14 +1,15 @@
 "use client";
 
 import ConfigForm from "@/components/config-form";
-import { UpdateConfigSchema } from "@/validation/config-schema";
-import { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
-import React, { useCallback, useEffect, useState } from "react";
+import type { UpdateConfigSchema } from "@/validation/config-schema";
+import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import WaterTankForm from "./water-tank-form";
 import { Button } from "./ui/button";
 import { PlusCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
+import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
 import WashBayForm from "./wash-bay-form";
 import useMediaQuery from "@/hooks/use-media-query";
 import {
@@ -18,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import {
   ResponsiveModal,

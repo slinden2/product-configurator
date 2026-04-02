@@ -1,6 +1,6 @@
-import React from "react";
+
 import { Badge } from "@/components/ui/badge";
-import { ConfigurationStatusType } from "@/types";
+import type { ConfigurationStatusType } from "@/types";
 import { STATUS_CONFIG } from "@/lib/status-config";
 
 interface ConfigurationStatusBadgeProps {

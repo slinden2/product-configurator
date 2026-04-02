@@ -1,4 +1,4 @@
-import { SelectOption } from "@/types";
+import type { SelectOption } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

@@ -1,6 +1,6 @@
-import { GeneralBOMConfig } from "@/lib/BOM";
-import { MaxBOMItem } from "@/lib/BOM/max-bom";
-import { BrushColorType, BrushType } from "@/types";
+import type { GeneralBOMConfig } from "@/lib/BOM";
+import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import type { BrushColorType, BrushType } from "@/types";
 
 // TODO Add part numbers where missing
 const PART_NUMBERS: Record<

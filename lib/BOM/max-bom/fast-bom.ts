@@ -1,5 +1,5 @@
-import { GeneralBOMConfig } from "@/lib/BOM";
-import { MaxBOMItem } from "@/lib/BOM/max-bom";
+import type { GeneralBOMConfig } from "@/lib/BOM";
+import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
   ADDITIONAL_LATERAL_RINSE_BARS: "450.65.000",

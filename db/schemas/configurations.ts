@@ -1,7 +1,7 @@
 import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
 import { userProfiles } from "@/db/schemas/user-profiles";
-import { WashBay, washBays } from "@/db/schemas/wash-bays";
-import { WaterTank, waterTanks } from "@/db/schemas/water-tanks";
+import { type WashBay, washBays } from "@/db/schemas/wash-bays";
+import { type WaterTank, waterTanks } from "@/db/schemas/water-tanks";
 import {
   BrushColors,
   BrushTypes,

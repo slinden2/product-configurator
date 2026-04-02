@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BOMItemWithDescription } from "@/lib/BOM";
+import type { BOMItemWithDescription } from "@/lib/BOM";
 import { ArrowDownUp } from "lucide-react";
 import { useState } from "react";
 
@@ -78,7 +78,7 @@ const BOMDataTable = ({ items }: BOMDataTableProps) => {
       </TableHeader>
       <TableBody className="text-sm">
         {dataArr.map((item, key) => (
-          <TableRow key={key}>
+          <TableRow key={item.pn}>
             <TableCell className="hidden sm:table-cell">{key + 1}</TableCell>
             <TableCell className="w-32 py-2 whitespace-nowrap">
               {item.pn}

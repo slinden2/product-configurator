@@ -4,9 +4,9 @@ import BOMDataTable from "@/app/configurations/bom/[id]/bom-data-table";
 import EngineeringBomTable from "@/app/configurations/bom/[id]/engineering-bom-table";
 import BOMCard from "@/components/bom-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EngineeringBomItem } from "@/db/schemas";
-import { BOMItemWithDescription } from "@/lib/BOM";
-import { BomTag, BomTagLabels, BomTags } from "@/types";
+import type { EngineeringBomItem } from "@/db/schemas";
+import type { BOMItemWithDescription } from "@/lib/BOM";
+import { type BomTag, BomTagLabels, BomTags } from "@/types";
 
 // ── General section ─────────────────────────────────────────────────────
 
@@ -69,7 +69,7 @@ export function GeneralSection({
     );
   }
 
-  const tagGroups = groupByTag(calculatedItems!);
+  const tagGroups = groupByTag(calculatedItems ?? []);
   return (
     <BOMCard title="Distinta generale">
       {Array.from(tagGroups.entries()).map(([tag, items]) => (
@@ -149,7 +149,8 @@ export function SubRecordSection({
                 )}
               </BOMCard>
             ))
-          : calculatedBOMs!.map((bom, i) => (
+          : calculatedBOMs?.map((bom, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: index is the stable identity for wash bays / water tanks
               <BOMCard key={i} title={`${itemLabel} ${i + 1}`}>
                 <BOMDataTable items={bom} />
               </BOMCard>

@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { SelectOption } from "@/types";
+import type { z } from "zod";
+import type { SelectOption } from "@/types";
 
 export const genericRequiredMessage = "Scelta obbligatoria";
 export const invalidOption = "Opzione invalida";
