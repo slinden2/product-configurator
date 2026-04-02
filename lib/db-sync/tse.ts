@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "@/env-config";
 import sql, { type ConnectionPool } from "mssql";
 import fs from "node:fs";
 import path from "node:path";

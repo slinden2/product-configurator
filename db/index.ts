@@ -1,5 +1,5 @@
 import * as schema from "@/db/schemas/";
-import "dotenv/config";
+import "@/env-config";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 if (!process.env.DATABASE_URL) {

@@ -1,3 +1,8 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { loadEnvConfig } = require("@next/env");
+loadEnvConfig(process.cwd());
+
 import { defineConfig } from "drizzle-kit";
 
 if (!process.env.DATABASE_URL) {

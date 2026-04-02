@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:prod": "next dev --turbopack --env-file .env.prod.local",
     "build": "next build",
     "start": "next start",
     "format": "biome format --write .",
@@ -14,7 +15,6 @@
     "zod": "npx tsx ./validation/zod-test-file.ts",
     "type-check": "npx tsc --noEmit",
     "type-check:incremental": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --incremental",
-    "BOM": "npx tsx ./lib/BOM/BOM.ts",
     "job": "npx tsx ./lib//db-sync/job.ts",
     "seed": "npx tsx ./db/seed.ts",
     "seed:reset": "npx tsx ./db/seed.ts --reset",
@@ -69,7 +69,6 @@
     "@types/pg": "^8.11.11",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "dotenv": "^16.4.7",
     "drizzle-kit": "^0.31.0",
     "jsdom": "^28.1.0",
     "mssql": "^11.0.1",
