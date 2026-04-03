@@ -21,7 +21,7 @@ npm run seed:reset       # Reset and reseed database
 
 ## Architecture
 
-**Next.js 15 App Router** product configurator for gantry-type rollover wash systems (ITECO SRL) for truck and buses. UI is in Italian. The app is made for internal use only for engineers, technical sales, area managers and sales agents.
+**Next.js 16 App Router** product configurator for gantry-type rollover wash systems (ITECO SRL) for truck and buses. UI is in Italian. The app is made for internal use only for engineers, technical sales, area managers and sales agents.
 
 ### Core Stack
 
