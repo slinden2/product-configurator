@@ -1,12 +1,12 @@
-import { prepareBOMPageData } from "@/app/configurations/bom/[id]/bom-helpers";
+import { prepareBOMPageData } from "@/app/configurazioni/bom/[id]/bom-helpers";
 import {
   GeneralSection,
   SubRecordSection,
-} from "@/app/configurations/bom/[id]/bom-section-cards";
-import ExportButton from "@/app/configurations/bom/[id]/export-button";
-import MetaDataTable from "@/app/configurations/bom/[id]/meta-data-table";
-import RegenerateButton from "@/app/configurations/bom/[id]/regenerate-button";
-import SnapshotButton from "@/app/configurations/bom/[id]/snapshot-button";
+} from "@/app/configurazioni/bom/[id]/bom-section-cards";
+import ExportButton from "@/app/configurazioni/bom/[id]/export-button";
+import MetaDataTable from "@/app/configurazioni/bom/[id]/meta-data-table";
+import RegenerateButton from "@/app/configurazioni/bom/[id]/regenerate-button";
+import SnapshotButton from "@/app/configurazioni/bom/[id]/snapshot-button";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import { getBOM, getConfiguration, getUserData } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";

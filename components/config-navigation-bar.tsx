@@ -10,12 +10,12 @@ const NAV_ITEMS = [
   {
     key: "edit" as const,
     label: "Configurazione",
-    path: (id: number) => `/configurations/edit/${id}`,
+    path: (id: number) => `/configurazioni/modifica/${id}`,
   },
   {
     key: "bom" as const,
     label: "Distinta",
-    path: (id: number) => `/configurations/bom/${id}`,
+    path: (id: number) => `/configurazioni/bom/${id}`,
   },
 ];
 
@@ -26,7 +26,7 @@ export default function ConfigNavigationBar({
   return (
     <nav className="flex items-center justify-between mb-6">
       <Link
-        href="/configurations"
+        href="/configurazioni"
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />

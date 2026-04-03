@@ -15,7 +15,7 @@ import {
   buildEbomCostExportData,
   groupByTag,
   hasTagData,
-} from "@/app/configurations/bom/[id]/bom-helpers";
+} from "@/app/configurazioni/bom/[id]/bom-helpers";
 import type { EngineeringBomItem } from "@/db/schemas";
 
 // --- Helpers ---

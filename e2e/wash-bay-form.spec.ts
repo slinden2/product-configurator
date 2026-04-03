@@ -8,10 +8,10 @@ import { fillMinimalForm, selectRadixOption } from "./helpers";
  * Uses straight-shelf supply (default) so energy-chain fields are absent.
  */
 async function openBaysTab(page: Parameters<typeof fillMinimalForm>[0]) {
-  await page.goto("/configurations/new");
+  await page.goto("/configurazioni/nuova");
   await fillMinimalForm(page, "Test E2E - Pista");
   await page.getByRole("button", { name: "Salva configurazione" }).click();
-  await page.waitForURL(/\/configurations\/edit\/\d+/);
+  await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
   await page.getByRole("tab", { name: "Piste lavaggio" }).click();
 }
 
@@ -22,10 +22,10 @@ async function openBaysTab(page: Parameters<typeof fillMinimalForm>[0]) {
 async function openBaysTabEnergyChain(
   page: Parameters<typeof fillMinimalForm>[0],
 ) {
-  await page.goto("/configurations/new");
+  await page.goto("/configurazioni/nuova");
   await fillMinimalForm(page, "Test E2E - Pista EC", "Catena portacavi");
   await page.getByRole("button", { name: "Salva configurazione" }).click();
-  await page.waitForURL(/\/configurations\/edit\/\d+/);
+  await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
   await page.getByRole("tab", { name: "Piste lavaggio" }).click();
 }
 

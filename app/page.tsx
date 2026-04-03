@@ -21,7 +21,7 @@ const Dashboard = async () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <Link href="/configurations/new">
+        <Link href="/configurazioni/nuova">
           <Button className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
             <span>Nuova configurazione</span>

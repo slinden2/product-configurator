@@ -78,7 +78,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
           <IconButton
             className="w-8 h-8"
             Icon={Edit}
-            linkTo={`/configurations/edit/${configuration.id}`}
+            linkTo={`/configurazioni/modifica/${configuration.id}`}
             title="Modifica configurazione"
             variant="ghost"
             disabled={!canEdit}
@@ -86,7 +86,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
           <IconButton
             className="w-8 h-8"
             Icon={ScrollText}
-            linkTo={`/configurations/bom/${configuration.id}`}
+            linkTo={`/configurazioni/bom/${configuration.id}`}
             title="Visualizza distinta"
             variant="ghost"
             disabled={false}

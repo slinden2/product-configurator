@@ -176,7 +176,7 @@ export async function handleSubRecordAction<
 
     // --- 5. Cache Revalidation ---
     revalidatePath(revalidatePathStr);
-    revalidatePath(`/configurations/bom/${parentId}`);
+    revalidatePath(`/configurazioni/bom/${parentId}`);
 
     // --- 6. Return Success ---
     return { success: true as const, data: operationResult };

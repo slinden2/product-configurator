@@ -86,7 +86,7 @@ const AllConfigurationsTable = async ({
           <div className="flex gap-2">
             {hasPrev ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/configurations?page=${page - 1}`}>
+                <Link href={`/configurazioni?page=${page - 1}`}>
                   Precedente
                 </Link>
               </Button>
@@ -97,7 +97,7 @@ const AllConfigurationsTable = async ({
             )}
             {hasNext ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/configurations?page=${page + 1}`}>Successiva</Link>
+                <Link href={`/configurazioni?page=${page + 1}`}>Successiva</Link>
               </Button>
             ) : (
               <Button variant="outline" size="sm" disabled>

@@ -42,8 +42,8 @@ const MainNav = ({ user, role }: MainNavProps) => {
     },
     {
       label: "Configurazioni",
-      href: "/configurations",
-      active: pathname.startsWith("/configurations"),
+      href: "/configurazioni",
+      active: pathname.startsWith("/configurazioni"),
     },
     ...(role === "ADMIN"
       ? [

@@ -5,7 +5,7 @@ import { getAllUsersWithStats, getUserData } from "@/db/queries";
 const UtentiPage = async () => {
   const user = await getUserData();
   if (!user) redirect("/login");
-  if (user.role !== "ADMIN") redirect("/configurations");
+  if (user.role !== "ADMIN") redirect("/configurazioni");
 
   const users = await getAllUsersWithStats();
 

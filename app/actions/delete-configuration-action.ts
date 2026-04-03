@@ -45,7 +45,7 @@ export const deleteConfigurationAction = async (id: number, userId: string) => {
       targetEntity: "configuration",
       targetId: id.toString(),
     });
-    revalidatePath("/configurations");
+    revalidatePath("/configurazioni");
     revalidatePath("/");
     return { success: true as const };
   } catch (err) {

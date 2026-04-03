@@ -138,10 +138,10 @@ describe("deleteConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
-  test("revalidates both /configurations and / after deletion", async () => {
+  test("revalidates both /configurazioni and / after deletion", async () => {
     await deleteConfigurationAction(CONF_ID, OWNER_ID);
     const { revalidatePath } = await import("next/cache");
-    expect(revalidatePath).toHaveBeenCalledWith("/configurations");
+    expect(revalidatePath).toHaveBeenCalledWith("/configurazioni");
     expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 

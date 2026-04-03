@@ -20,7 +20,7 @@ const LoginForm = () => {
   const onSubmit = async (formData: LoginSchema) => {
     const response = await signIn(formData);
     if (response.success) {
-      router.push("/configurations");
+      router.push("/configurazioni");
     } else {
       toast.error(response.error);
     }

@@ -302,17 +302,17 @@ describe("ConfigurationRow", () => {
   });
 
   describe("Action links", () => {
-    test("Edit button links to /configurations/edit/{id}", () => {
+    test("Edit button links to /configurazioni/modifica/{id}", () => {
       renderRow({ id: 42 });
 
       const editLink = screen.getByLabelText("Modifica configurazione");
       expect(editLink.closest("a")).toHaveAttribute(
         "href",
-        "/configurations/edit/42",
+        "/configurazioni/modifica/42",
       );
     });
 
-    test("BOM button links to /configurations/bom/{id} and is always enabled", () => {
+    test("BOM button links to /configurazioni/bom/{id} and is always enabled", () => {
       renderRow(
         {
           id: 42,
@@ -324,7 +324,7 @@ describe("ConfigurationRow", () => {
       const bomLink = screen.getByLabelText("Visualizza distinta");
       expect(bomLink.closest("a")).toHaveAttribute(
         "href",
-        "/configurations/bom/42",
+        "/configurazioni/bom/42",
       );
     });
   });

@@ -17,7 +17,7 @@ export const insertWaterTankAction = async (
     formData: formData,
     schema: waterTankSchema,
     queryFn: insertWaterTank,
-    revalidatePathStr: `/configurations/edit/${confId}`,
+    revalidatePathStr: `/configurazioni/modifica/${confId}`,
     entityName: "Serbatoio",
   });
 };
@@ -34,7 +34,7 @@ export const editWaterTankAction = async (
     formData: formData,
     schema: waterTankSchema,
     queryFn: updateWaterTank,
-    revalidatePathStr: `/configurations/edit/${confId}`,
+    revalidatePathStr: `/configurazioni/modifica/${confId}`,
     entityName: "Serbatoio",
   });
 };
@@ -45,7 +45,7 @@ export const deleteWaterTankAction = async (confId: number, tankId: number) => {
     parentId: confId,
     recordId: tankId,
     queryFn: deleteWaterTank,
-    revalidatePathStr: `/configurations/edit/${confId}`,
+    revalidatePathStr: `/configurazioni/modifica/${confId}`,
     entityName: "Serbatoio",
   });
 };

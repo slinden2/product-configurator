@@ -85,8 +85,8 @@ export const editConfigurationAction = async (
       targetEntity: "configuration",
       targetId: confId.toString(),
     });
-    revalidatePath(`/configurations/edit/${confId}`);
-    revalidatePath(`/configurations/bom/${confId}`);
+    revalidatePath(`/configurazioni/modifica/${confId}`);
+    revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to edit configuration:", err);

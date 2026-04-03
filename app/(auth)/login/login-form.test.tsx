@@ -68,7 +68,7 @@ describe("LoginForm", () => {
   });
 
   describe("Form submission", () => {
-    test("calls signIn and redirects to /configurations on success", async () => {
+    test("calls signIn and redirects to /configurazioni on success", async () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 
@@ -81,7 +81,7 @@ describe("LoginForm", () => {
           email: "test@example.com",
           password: "password123",
         });
-        expect(mockPush).toHaveBeenCalledWith("/configurations");
+        expect(mockPush).toHaveBeenCalledWith("/configurazioni");
       });
     });
 

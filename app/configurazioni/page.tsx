@@ -24,7 +24,7 @@ const Configurations = async (props: {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   if (page > totalPages) {
-    redirect(`/configurations?page=${totalPages}`);
+    redirect(`/configurazioni?page=${totalPages}`);
   }
 
   return (
@@ -32,7 +32,7 @@ const Configurations = async (props: {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Configurazioni</h1>
         <div>
-          <Link href="/configurations/new">
+          <Link href="/configurazioni/nuova">
             <Button className="flex items-center gap-2">
               <PlusCircle className="h-4 w-4" />
               <span>Nuova configurazione</span>

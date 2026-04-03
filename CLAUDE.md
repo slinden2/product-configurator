@@ -49,7 +49,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 ### Routing & Pages
 
 - **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`
-- **Domain routes:** `configurations/` (list), `configurations/new`, `configurations/edit/[id]`, `configurations/bom/[id]`
+- **Domain routes:** `configurazioni/` (list), `configurazioni/nuova`, `configurazioni/modifica/[id]`, `configurazioni/bom/[id]`
 - **Admin:** `users/` for user management
 - **Page pattern:** All pages are async server components. Dynamic route params are `Promise<{ id: string }>` in Next.js 15 — must `await props.params`.
 - **Data fetching:** Server-side in the page component; pass data as props to client components.

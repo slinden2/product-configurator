@@ -115,7 +115,7 @@ const ConfigForm = ({
           return;
         }
         toast.success(MSG.toast.configCreated);
-        router.push(`/configurations/edit/${result.id}`);
+        router.push(`/configurazioni/modifica/${result.id}`);
       }
       setIsSubmitting(false);
     } catch (err) {
@@ -197,7 +197,7 @@ const ConfigForm = ({
               </Fieldset>
               <div className="flex gap-4">
                 {!isNewConfiguration && (
-                  <BackButton fallbackPath={"/configurations"} />
+                  <BackButton fallbackPath={"/configurazioni"} />
                 )}
                 <Button
                   type="button"

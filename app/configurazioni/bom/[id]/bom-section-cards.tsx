@@ -1,7 +1,7 @@
-import AddBomItemForm from "@/app/configurations/bom/[id]/add-bom-item-form";
+import AddBomItemForm from "@/app/configurazioni/bom/[id]/add-bom-item-form";
 import { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
-import BOMDataTable from "@/app/configurations/bom/[id]/bom-data-table";
-import EngineeringBomTable from "@/app/configurations/bom/[id]/engineering-bom-table";
+import BOMDataTable from "@/app/configurazioni/bom/[id]/bom-data-table";
+import EngineeringBomTable from "@/app/configurazioni/bom/[id]/engineering-bom-table";
 import BOMCard from "@/components/bom-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { EngineeringBomItem } from "@/db/schemas";

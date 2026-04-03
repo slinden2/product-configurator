@@ -26,7 +26,7 @@ setup("authenticate", async ({ page }) => {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Accedi" }).click();
-  await page.waitForURL("**/configurations");
+  await page.waitForURL("**/configurazioni");
 
   await page.context().storageState({ path: authFile });
 });

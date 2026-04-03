@@ -6,7 +6,7 @@ import type ExcelJS from "exceljs";
 import {
   buildCostWorkbook,
   type BOM,
-} from "@/app/configurations/bom/[id]/create-excel-file";
+} from "@/app/configurazioni/bom/[id]/create-excel-file";
 import type { UserData } from "@/db/queries";
 
 // --- Helpers ---

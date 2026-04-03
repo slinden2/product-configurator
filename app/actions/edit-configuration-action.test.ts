@@ -278,10 +278,10 @@ describe("editConfigurationAction", () => {
     await editConfigurationAction(CONF_ID, makeValidFormData());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/edit/${CONF_ID}`,
+      `/configurazioni/modifica/${CONF_ID}`,
     );
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`,
+      `/configurazioni/bom/${CONF_ID}`,
     );
   });
 

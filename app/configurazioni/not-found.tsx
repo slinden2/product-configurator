@@ -7,7 +7,7 @@ export default function NotFound() {
       <p className="text-muted-foreground">
         La configurazione richiesta non esiste o è stata rimossa.
       </p>
-      <BackButton fallbackPath="/configurations" />
+      <BackButton fallbackPath="/configurazioni" />
     </div>
   );
 }

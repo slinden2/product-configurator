@@ -311,7 +311,7 @@ describe("snapshotEngineeringBomAction", () => {
   test("revalidates BOM path on success", async () => {
     await snapshotEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`,
+      `/configurazioni/bom/${CONF_ID}`,
     );
   });
 
@@ -352,7 +352,7 @@ describe("regenerateEngineeringBomAction", () => {
   test("revalidates BOM path on success", async () => {
     await regenerateEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`,
+      `/configurazioni/bom/${CONF_ID}`,
     );
   });
 
@@ -419,7 +419,7 @@ describe("addEngineeringBomItemAction", () => {
   test("revalidates BOM path on success", async () => {
     await addEngineeringBomItemAction(CONF_ID, validFormData);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`,
+      `/configurazioni/bom/${CONF_ID}`,
     );
   });
 
@@ -503,7 +503,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
   test("revalidates BOM path on success", async () => {
     await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`,
+      `/configurazioni/bom/${CONF_ID}`,
     );
   });
 
@@ -605,7 +605,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
   test("revalidates BOM path on success", async () => {
     await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${CONF_ID}`,
+      `/configurazioni/bom/${CONF_ID}`,
     );
   });
 

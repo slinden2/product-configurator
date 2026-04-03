@@ -78,7 +78,7 @@ function insertOptions(overrides: Record<string, unknown> = {}) {
     formData: { value: "test" },
     schema: testSchema,
     queryFn: vi.fn().mockResolvedValue({ success: true, id: { id: 99 } }),
-    revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+    revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
     entityName: "TestEntity",
     ...overrides,
   };
@@ -134,7 +134,7 @@ describe("handleSubRecordAction", () => {
       formData: { value: "test" },
       schema: testSchema,
       queryFn,
-      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
       entityName: "TestEntity",
     });
     expect(result).toEqual({
@@ -162,7 +162,7 @@ describe("handleSubRecordAction", () => {
       parentId: PARENT_ID,
       recordId: RECORD_ID,
       queryFn,
-      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
       entityName: "TestEntity",
     });
     expect(result).toEqual({
@@ -281,7 +281,7 @@ describe("handleSubRecordAction", () => {
       formData: { value: "test" },
       schema: testSchema,
       queryFn,
-      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
       entityName: "TestEntity",
     });
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
@@ -300,7 +300,7 @@ describe("handleSubRecordAction", () => {
       parentId: PARENT_ID,
       recordId: RECORD_ID,
       queryFn,
-      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
       entityName: "TestEntity",
     });
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
@@ -330,7 +330,7 @@ describe("handleSubRecordAction", () => {
       formData: { value: "test" },
       schema: testSchema,
       queryFn,
-      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
       entityName: "TestEntity",
     });
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
@@ -348,7 +348,7 @@ describe("handleSubRecordAction", () => {
       parentId: PARENT_ID,
       recordId: RECORD_ID,
       queryFn,
-      revalidatePathStr: `/configurations/edit/${PARENT_ID}`,
+      revalidatePathStr: `/configurazioni/modifica/${PARENT_ID}`,
       entityName: "TestEntity",
     });
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
@@ -379,7 +379,7 @@ describe("handleSubRecordAction", () => {
     await handleSubRecordAction(insertOptions());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurations/bom/${PARENT_ID}`,
+      `/configurazioni/bom/${PARENT_ID}`,
     );
   });
 });

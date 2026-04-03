@@ -3,7 +3,7 @@ import { fillMinimalForm, selectRadixOption } from "./helpers";
 
 test.describe("Configuration form — E2E", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/configurations/new");
+    await page.goto("/configurazioni/nuova");
   });
 
   // ─── Regression tests for inv_pump_outlet reset bug ───────────────────────
@@ -28,8 +28,8 @@ test.describe("Configuration form — E2E", () => {
     await page.getByRole("button", { name: "Salva configurazione" }).click();
 
     // Successful insert redirects to the edit page
-    await page.waitForURL(/\/configurations\/edit\/\d+/);
-    await expect(page).toHaveURL(/\/configurations\/edit\/\d+/);
+    await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
+    await expect(page).toHaveURL(/\/configurazioni\/modifica\/\d+/);
   });
 
   test("regression: creates config after switching from inverter to non-inverter pump", async ({
@@ -67,8 +67,8 @@ test.describe("Configuration form — E2E", () => {
 
     // 3. Submit — must succeed (outlets are 0, not undefined)
     await page.getByRole("button", { name: "Salva configurazione" }).click();
-    await page.waitForURL(/\/configurations\/edit\/\d+/);
-    await expect(page).toHaveURL(/\/configurations\/edit\/\d+/);
+    await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
+    await expect(page).toHaveURL(/\/configurazioni\/modifica\/\d+/);
   });
 
   // ─── Happy path ────────────────────────────────────────────────────────────
@@ -91,8 +91,8 @@ test.describe("Configuration form — E2E", () => {
     await selectRadixOption(page, "Uscite idropulitrice", "1");
 
     await page.getByRole("button", { name: "Salva configurazione" }).click();
-    await page.waitForURL(/\/configurations\/edit\/\d+/);
-    await expect(page).toHaveURL(/\/configurations\/edit\/\d+/);
+    await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
+    await expect(page).toHaveURL(/\/configurazioni\/modifica\/\d+/);
   });
 
   test("happy path: creates config and edits it successfully", async ({
@@ -101,7 +101,7 @@ test.describe("Configuration form — E2E", () => {
     // Create a new config
     await fillMinimalForm(page, "Test E2E - Edit");
     await page.getByRole("button", { name: "Salva configurazione" }).click();
-    await page.waitForURL(/\/configurations\/edit\/\d+/);
+    await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
 
     // Now on the edit page — change a field and save
     await selectRadixOption(page, "Lunghezza rotaie", "25 metri");

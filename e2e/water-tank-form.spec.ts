@@ -4,10 +4,10 @@ import { fillMinimalForm, selectRadixOption } from "./helpers";
 test.describe("Water tank form", () => {
   // Each test creates a fresh config and lands on the Serbatoi tab.
   test.beforeEach(async ({ page }) => {
-    await page.goto("/configurations/new");
+    await page.goto("/configurazioni/nuova");
     await fillMinimalForm(page, "Test E2E - Serbatoio");
     await page.getByRole("button", { name: "Salva configurazione" }).click();
-    await page.waitForURL(/\/configurations\/edit\/\d+/);
+    await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
 
     await page.getByRole("tab", { name: "Serbatoi" }).click();
   });

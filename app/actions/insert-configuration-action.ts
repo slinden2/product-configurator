@@ -28,7 +28,7 @@ export const insertConfigurationAction = async (formData: unknown) => {
       targetEntity: "configuration",
       targetId: newConfig.id.toString(),
     });
-    revalidatePath("/configurations");
+    revalidatePath("/configurazioni");
     return { success: true as const, id: newConfig.id };
   } catch (err) {
     console.error("Failed to insert configuration:", err);

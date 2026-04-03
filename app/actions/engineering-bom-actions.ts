@@ -163,7 +163,7 @@ export async function snapshotEngineeringBomAction(confId: number) {
       targetId: confId.toString(),
     });
 
-    revalidatePath(`/configurations/bom/${confId}`);
+    revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to snapshot engineering BOM:", err);
@@ -200,7 +200,7 @@ export async function regenerateEngineeringBomAction(confId: number) {
       targetId: confId.toString(),
     });
 
-    revalidatePath(`/configurations/bom/${confId}`);
+    revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to regenerate engineering BOM:", err);
@@ -259,7 +259,7 @@ export async function addEngineeringBomItemAction(
     });
 
     // 4. Cache Invalidation
-    revalidatePath(`/configurations/bom/${confId}`);
+    revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to add BOM item:", err);
@@ -309,7 +309,7 @@ export async function updateEngineeringBomItemQtyAction(
       };
     }
 
-    revalidatePath(`/configurations/bom/${confId}`);
+    revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to update BOM item qty:", err);
@@ -353,7 +353,7 @@ export async function toggleDeleteEngineeringBomItemAction(
       .set({ is_deleted: !item.is_deleted })
       .where(eq(engineeringBomItems.id, itemId));
 
-    revalidatePath(`/configurations/bom/${confId}`);
+    revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to toggle delete BOM item:", err);

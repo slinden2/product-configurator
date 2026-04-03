@@ -16,7 +16,7 @@ const UserDetailPage = async (props: {
 }) => {
   const user = await getUserData();
   if (!user) redirect("/login");
-  if (user.role !== "ADMIN") redirect("/configurations");
+  if (user.role !== "ADMIN") redirect("/configurazioni");
 
   const { id } = await props.params;
   const { page: pageParam } = await props.searchParams;

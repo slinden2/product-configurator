@@ -42,7 +42,7 @@ export const updateConfigStatusAction = async (
       targetId: confId.toString(),
       metadata: { from: fromStatus, to: validation.data.status },
     });
-    revalidatePath(`/configurations/edit/${updatedConf.id}`);
+    revalidatePath(`/configurazioni/modifica/${updatedConf.id}`);
     return { success: true as const, id: updatedConf.id };
   } catch (err) {
     console.error("Failed to update configuration status:", err);
