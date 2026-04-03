@@ -34,7 +34,7 @@ When a configuration is edited, the engineering BOM snapshot becomes stale. Any 
 
 1. Check `hasEngineeringBom(confId)` after the mutation succeeds.
 2. If true, call `deleteAllEngineeringBomItems(confId)` to invalidate the snapshot.
-3. Revalidate the BOM page path: `revalidatePath(/configurations/bom/${confId})`.
+3. Revalidate the BOM page path: `revalidatePath(/configurazioni/bom/${confId})`.
 
 This applies to `editConfigurationAction` and any new action that changes configuration fields used by BOM rules.
 
@@ -50,9 +50,9 @@ Use `db.transaction(async (tx) => { ... })` when a mutation involves multiple de
 
 After mutations, invalidate all affected routes:
 
-- `/configurations` — list page (status/name may have changed)
-- `/configurations/edit/${confId}` — detail/edit page
-- `/configurations/bom/${confId}` — BOM page (if config data or BOM changed)
+- `/configurazioni` — list page (status/name may have changed)
+- `/configurazioni/modifica/${confId}` — detail/edit page
+- `/configurazioni/bom/${confId}` — BOM page (if config data or BOM changed)
 
 ## Shared Authorization Helpers
 

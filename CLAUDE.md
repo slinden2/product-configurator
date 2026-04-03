@@ -17,7 +17,6 @@ npm run test             # Run all Vitest tests
 npx vitest run path/to/file.test.tsx  # Run a single test file
 npm run seed             # Seed database
 npm run seed:reset       # Reset and reseed database
-npm run BOM              # Generate Bill of Materials (Excel export)
 ```
 
 ## Architecture
@@ -48,9 +47,9 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 
 ### Routing & Pages
 
-- **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`
+- **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`, `resetta-password`
 - **Domain routes:** `configurazioni/` (list), `configurazioni/nuova`, `configurazioni/modifica/[id]`, `configurazioni/bom/[id]`
-- **Admin:** `users/` for user management
+- **Admin:** `utenti/` for user management
 - **Page pattern:** All pages are async server components. Dynamic route params are `Promise<{ id: string }>` in Next.js 15 — must `await props.params`.
 - **Data fetching:** Server-side in the page component; pass data as props to client components.
 
@@ -68,7 +67,7 @@ npm run BOM              # Generate Bill of Materials (Excel export)
 - Server Actions: Always use revalidatePath after any mutation in app/actions/. Never bypass Server Actions for direct DB calls.
 - Form State: When modifying components/config-form/, never introduce useState for form fields. Use only react-hook-form methods (setValue, watch, control) to ensure Zod validation remains in sync.
 - Type Safety: Always use the types defined in types/index.ts. If a new entity is added, define the Zod schema in validation/ before touching the DB schema.
-- Status Protection: Before performing any mutation on a Configuration, verify the ConfigurationStatus. Mutations must fail if status is LOCKED or CLOSED.
+- Status Protection: Before performing any mutation on a Configuration, verify the ConfigurationStatus. Mutations must fail if status is APPROVED or CLOSED.
 - DRY: Do not duplicate logic. Extract repeated patterns into shared utilities (`lib/`), helper functions, or reusable components (`components/shared/`). Before writing new code, check if an existing function or component already handles the same concern.
 - Component Readability: Keep React components focused and readable. If a component grows too large or handles multiple concerns, split it into smaller, well-named sub-components. Avoid deeply nested conditionals and long render functions — extract sections into dedicated components or custom hooks.
 
