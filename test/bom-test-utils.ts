@@ -1,5 +1,5 @@
-import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
+import type { GeneralBOMConfig } from "@/lib/BOM";
 
 /**
  * Full-field factory for GeneralBOMConfig (Configuration & { has_shelf_extension }).
@@ -54,6 +54,7 @@ export function makeGeneralBOMConfig(
     pump_outlet_1_30kw: null,
     pump_outlet_2_30kw: null,
     chassis_wash_sensor_type: null,
+    has_chassis_wash_plates: false,
     has_omz_pump: false,
     pump_outlet_omz: null,
     has_chemical_roof_bar: false,

@@ -1,9 +1,8 @@
-import type React from "react";
-import { render } from "@testing-library/react";
-import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type React from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import {
   type ConfigSchema,
   configDefaults,
@@ -67,6 +66,7 @@ export function makeValidConfig(
     has_30kw_pump: false,
     pump_outlet_1_30kw: undefined,
     pump_outlet_2_30kw: undefined,
+    has_chassis_wash_plates: false,
     has_omz_pump: false,
     pump_outlet_omz: undefined,
     has_chemical_roof_bar: false,

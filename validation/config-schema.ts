@@ -1,11 +1,11 @@
+import { z } from "zod";
 import { brushSchema } from "@/validation/configuration/brush-schema";
 import { chemPumpSchema } from "@/validation/configuration/chem-pump-schema";
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
-import { touchSchema } from "@/validation/configuration/touch-schema";
 import { railSchema } from "@/validation/configuration/rail-schema";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
+import { touchSchema } from "@/validation/configuration/touch-schema";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
-import { z } from "zod";
 import { MachineTypeEnum } from "./configuration/general-schema";
 
 export const baseSchema = z.object({
@@ -134,6 +134,7 @@ export const configDefaults: ConfigSchema = {
   pump_outlet_omz: undefined,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
+  has_chassis_wash_plates: false,
   // --- Touch Section
   has_itecoweb: false,
   has_card_reader: false,

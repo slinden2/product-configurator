@@ -1,3 +1,4 @@
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   configurations,
@@ -6,9 +7,8 @@ import {
   waterTanks,
 } from "@/db/schemas";
 import type { ConfigSchema } from "@/validation/config-schema";
-import { eq, sql } from "drizzle-orm";
-import { transformConfigToDbInsert } from "./transformations";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
+import { transformConfigToDbInsert } from "./transformations";
 
 const configurationSimple: ConfigSchema = {
   name: "Cliente 1",
@@ -52,6 +52,7 @@ const configurationSimple: ConfigSchema = {
   pump_outlet_omz: undefined,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
+  has_chassis_wash_plates: false,
   has_itecoweb: true,
   has_card_reader: false,
   card_qty: 100,
@@ -103,6 +104,7 @@ const configurationComplicated: ConfigSchema = {
   pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
   has_chemical_roof_bar: true,
   chassis_wash_sensor_type: "SINGLE_POST",
+  has_chassis_wash_plates: false,
   has_itecoweb: true,
   has_card_reader: false,
   card_qty: 100,
@@ -176,6 +178,7 @@ const configurationFast: ConfigSchema = {
   pump_outlet_omz: undefined,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
+  has_chassis_wash_plates: false,
   has_itecoweb: false,
   has_card_reader: false,
   card_qty: 0,

@@ -1,11 +1,11 @@
+import { useEffect } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
-import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import { useEffect } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 import { withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
+import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 import { hasAnyChassiswashOutlet } from "@/validation/configuration/hp-pump-schema";
 
 const HPPumpSection = () => {
@@ -33,6 +33,7 @@ const HPPumpSection = () => {
   useEffect(() => {
     if (!showChassiswashSensor) {
       setValue("chassis_wash_sensor_type", undefined, { shouldDirty: true });
+      setValue("has_chassis_wash_plates", false, { shouldDirty: true });
     }
   }, [showChassiswashSensor, setValue]);
 
@@ -54,6 +55,10 @@ const HPPumpSection = () => {
                     "pump_outlet_2_15kw",
                     "chassis_wash_sensor_type",
                   ],
+                },
+                {
+                  fieldsToReset: ["has_chassis_wash_plates"],
+                  resetToValue: false,
                 },
               ]}
             />
@@ -90,6 +95,10 @@ const HPPumpSection = () => {
                     "chassis_wash_sensor_type",
                   ],
                 },
+                {
+                  fieldsToReset: ["has_chassis_wash_plates"],
+                  resetToValue: false,
+                },
               ]}
             />
           </div>
@@ -125,7 +134,14 @@ const HPPumpSection = () => {
                 )}
               />
             </div>
-            <div className="fs-item" />
+            <div className="fs-item">
+              <div className="md:pt-8">
+                <CheckboxField<ConfigSchema>
+                  name="has_chassis_wash_plates"
+                  label="Piastre lavachassis"
+                />
+              </div>
+            </div>
           </div>
         )}
         <div className="fs-row">

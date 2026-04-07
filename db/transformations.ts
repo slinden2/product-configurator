@@ -47,6 +47,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_30kw_pump: values.has_30kw_pump,
     has_omz_pump: values.has_omz_pump,
     has_chemical_roof_bar: values.has_chemical_roof_bar,
+    has_chassis_wash_plates: values.has_chassis_wash_plates,
 
     // --- NULLABLE in DB (Map undefined -> null) ---
     water_1_type: values.water_1_type ?? null,

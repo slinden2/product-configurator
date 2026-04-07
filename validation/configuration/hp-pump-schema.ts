@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   ChassisWashSensorTypes,
   HpPump15kwOutlets,
@@ -9,7 +10,6 @@ import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
-import { z } from "zod";
 
 export const HPPumpOutlet15kwEnum = z.enum(HpPump15kwOutlets, {
   message: genericRequiredMessage,
@@ -302,6 +302,7 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
   .and(
     z.object({
       chassis_wash_sensor_type: ChassisWashSensorTypeEnum.optional(),
+      has_chassis_wash_plates: z.boolean().default(false),
     }),
   )
   .superRefine((data, ctx) => {

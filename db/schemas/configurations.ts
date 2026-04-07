@@ -124,6 +124,7 @@ export const configurations = pgTable("configurations", {
   chassis_wash_sensor_type: chassisWashSensorTypeEnum(
     "chassis_wash_sensor_type",
   ),
+  has_chassis_wash_plates: boolean().notNull().default(false),
   has_omz_pump: boolean().notNull(),
   pump_outlet_omz: hpPumpOMZOutletTypeEnum("pump_outlet_omz"),
   has_chemical_roof_bar: boolean().notNull(),

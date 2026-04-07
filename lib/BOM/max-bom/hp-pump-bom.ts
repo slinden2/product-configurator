@@ -2,8 +2,8 @@ import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 import {
   isOMZ,
-  usesOMZPump,
   usesHPRoofBar,
+  usesOMZPump,
 } from "@/lib/BOM/max-bom/conditions";
 import type { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 
@@ -25,9 +25,9 @@ const PART_NUMBERS = {
   CHASSIS_WASH_15KW: "1100.024.004",
   CHASSIS_WASH_30KW_HORIZONTAL: "1100.024.100",
   CHASSIS_WASH_30KW_WITH_LATERAL_BARS: "1100.024.003",
-  CHASSIS_WASH_PLATES_75KW: "1100.024.021", // TODO Add option for this in the form
-  CHASSIS_WASH_PLATES_15KW: "1100.024.008", // TODO Add option for this in the form
-  CHASSIS_WASH_PLATES_30KW: "1100.024.009", // TODO Add option for this in the form
+  CHASSIS_WASH_PLATES_75KW: "1100.024.021", // TODO Add this in the BOM
+  CHASSIS_WASH_PLATES_15KW: "1100.024.008",
+  CHASSIS_WASH_PLATES_30KW: "1100.024.009",
   ULTRASONIC_SENSOR_POST: "1100.021.000",
   ULTRASONIC_SENSOR_WALL: "1100.052.000",
   DUAL_ULTRASONIC_SENSORS_POST: "1100.021.001",
@@ -262,6 +262,38 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "Chassis wash (30kW), lateral + horizontal",
+  },
+  {
+    pn: PART_NUMBERS.CHASSIS_WASH_PLATES_15KW,
+    conditions: [
+      uses15kwPump,
+      (config) =>
+        isOneOfOutlets(
+          [config.pump_outlet_1_15kw, config.pump_outlet_2_15kw],
+          "CHASSIS_WASH",
+        ),
+      (config) => config.has_chassis_wash_plates,
+    ],
+    qty: 1,
+    _description: "Chassis wash plates (15kW)",
+  },
+  {
+    pn: PART_NUMBERS.CHASSIS_WASH_PLATES_30KW,
+    conditions: [
+      uses30kwPump,
+      (config) =>
+        isOneOfOutlets(
+          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
+          "CHASSIS_WASH_HORIZONTAL",
+        ) ||
+        isOneOfOutlets(
+          [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
+          "CHASSIS_WASH_LATERAL_HORIZONTAL",
+        ),
+      (config) => config.has_chassis_wash_plates,
+    ],
+    qty: 1,
+    _description: "Chassis wash plates (30kW)",
   },
   {
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_POST,
