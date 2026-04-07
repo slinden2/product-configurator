@@ -117,6 +117,7 @@ export const configurations = pgTable("configurations", {
   has_emergency_stop: boolean().notNull().default(false),
   card_qty: integer().notNull(),
   has_15kw_pump: boolean().notNull(),
+  has_15kw_pump_softstart: boolean().notNull().default(false),
   pump_outlet_1_15kw: hpPump15kwOutletTypeEnum("pump_outlet_1_15kw"),
   pump_outlet_2_15kw: hpPump15kwOutletTypeEnum("pump_outlet_2_15kw"),
   has_30kw_pump: boolean().notNull(),

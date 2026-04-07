@@ -44,20 +44,16 @@ const HPPumpSection = () => {
     >
       <div className="space-y-6 md:space-y-3">
         <div className="fs-row">
-          <div className="fs-item md:self-end md:pb-3">
+          <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_15kw_pump"
               label="Pompa 15kW"
               fieldsToResetOnUncheck={[
                 {
-                  fieldsToReset: [
-                    "pump_outlet_1_15kw",
-                    "pump_outlet_2_15kw",
-                    "chassis_wash_sensor_type",
-                  ],
+                  fieldsToReset: ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
                 },
                 {
-                  fieldsToReset: ["has_chassis_wash_plates"],
+                  fieldsToReset: ["has_15kw_pump_softstart"],
                   resetToValue: false,
                 },
               ]}
@@ -71,6 +67,14 @@ const HPPumpSection = () => {
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
+            {has15kwPumpWatch && (
+              <div className="md:mt-2">
+                <CheckboxField<ConfigSchema>
+                  name="has_15kw_pump_softstart"
+                  label="Con softstart"
+                />
+              </div>
+            )}
           </div>
           <div className="fs-item">
             <SelectField<ConfigSchema>
@@ -82,22 +86,15 @@ const HPPumpSection = () => {
             />
           </div>
         </div>
+        <hr className="border-border" />
         <div className="fs-row">
-          <div className="fs-item md:self-end md:pb-3">
+          <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_30kw_pump"
               label="Pompa 30kW"
               fieldsToResetOnUncheck={[
                 {
-                  fieldsToReset: [
-                    "pump_outlet_1_30kw",
-                    "pump_outlet_2_30kw",
-                    "chassis_wash_sensor_type",
-                  ],
-                },
-                {
-                  fieldsToReset: ["has_chassis_wash_plates"],
-                  resetToValue: false,
+                  fieldsToReset: ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
                 },
               ]}
             />
@@ -121,31 +118,9 @@ const HPPumpSection = () => {
             />
           </div>
         </div>
-        {showChassiswashSensor && (
-          <div className="fs-row">
-            <div className="fs-item" />
-            <div className="fs-item">
-              <SelectField<ConfigSchema>
-                name="chassis_wash_sensor_type"
-                dataType="string"
-                label="Sensore ultrasuoni lavachassis"
-                items={withNoSelection(
-                  selectFieldOptions.chassisWashSensorTypeOpts,
-                )}
-              />
-            </div>
-            <div className="fs-item">
-              <div className="md:pt-8">
-                <CheckboxField<ConfigSchema>
-                  name="has_chassis_wash_plates"
-                  label="Piastre lavachassis"
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        <hr className="border-border" />
         <div className="fs-row">
-          <div className="fs-item md:self-center md:mt-1">
+          <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_omz_pump"
               label="Pompa OMZ"
@@ -189,6 +164,33 @@ const HPPumpSection = () => {
           </div>
           <div className="fs-item" />
         </div>
+        {showChassiswashSensor && (
+          <>
+            <hr className="border-border" />
+            <p className="text-sm font-medium">Accessori</p>
+            <div className="fs-row">
+              <div className="fs-item" />
+              <div className="fs-item">
+                <SelectField<ConfigSchema>
+                  name="chassis_wash_sensor_type"
+                  dataType="string"
+                  label="Sensore ultrasuoni lavachassis"
+                  items={withNoSelection(
+                    selectFieldOptions.chassisWashSensorTypeOpts,
+                  )}
+                />
+              </div>
+              <div className="fs-item">
+                <div className="md:pt-8">
+                  <CheckboxField<ConfigSchema>
+                    name="has_chassis_wash_plates"
+                    label="Piastre lavachassis"
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Fieldset>
   );

@@ -6,6 +6,46 @@ test.describe("Configuration form — E2E", () => {
     await page.goto("/configurazioni/nuova");
   });
 
+  // ─── HP pump section — softstart checkbox layout ──────────────────────────
+
+  test("Pompa 15kW softstart: checkbox stays at same Y when Con softstart appears", async ({
+    page,
+  }) => {
+    await page.waitForLoadState("networkidle");
+    await page.getByLabel("Pompa 15kW").scrollIntoViewIfNeeded();
+
+    const pump15Checkbox = page.getByLabel("Pompa 15kW");
+
+    // Record Y of the Pompa 15kW checkbox before checking it
+    const before = await pump15Checkbox.boundingBox();
+
+    // Check "Pompa 15kW" — Con softstart appears below Uscita 1
+    await pump15Checkbox.check();
+    await expect(page.getByLabel("Con softstart")).toBeVisible();
+
+    // Pompa 15kW checkbox must not have shifted vertically
+    const after = await pump15Checkbox.boundingBox();
+    expect(after?.y).toBe(before?.y);
+  });
+
+  test("Pompa 15kW softstart: checkbox shows only when Pompa 15kW is checked", async ({
+    page,
+  }) => {
+    await page.waitForLoadState("networkidle");
+    await page.getByLabel("Pompa 15kW").scrollIntoViewIfNeeded();
+
+    // Initially absent from the DOM
+    await expect(page.getByLabel("Con softstart")).not.toBeVisible();
+
+    // Check → appears
+    await page.getByLabel("Pompa 15kW").check();
+    await expect(page.getByLabel("Con softstart")).toBeVisible();
+
+    // Uncheck → gone
+    await page.getByLabel("Pompa 15kW").uncheck();
+    await expect(page.getByLabel("Con softstart")).not.toBeVisible();
+  });
+
   // ─── Regression tests for inv_pump_outlet reset bug ───────────────────────
 
   test("regression: creates config with non-inverter pump (outlets default to 0)", async ({

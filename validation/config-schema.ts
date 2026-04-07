@@ -125,6 +125,7 @@ export const configDefaults: ConfigSchema = {
   anchor_type: undefined,
   // --- HP Pump Section ---
   has_15kw_pump: false,
+  has_15kw_pump_softstart: false,
   pump_outlet_1_15kw: undefined,
   pump_outlet_2_15kw: undefined,
   has_30kw_pump: false,

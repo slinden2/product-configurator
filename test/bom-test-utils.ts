@@ -48,6 +48,7 @@ export function makeGeneralBOMConfig(
     card_qty: 0,
     is_fast: false,
     has_15kw_pump: false,
+    has_15kw_pump_softstart: false,
     pump_outlet_1_15kw: null,
     pump_outlet_2_15kw: null,
     has_30kw_pump: false,

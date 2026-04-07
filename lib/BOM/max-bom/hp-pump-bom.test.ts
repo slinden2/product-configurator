@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 vi.mock("@/db", () => ({
   db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
@@ -7,8 +7,8 @@ vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
 }));
 
-import { hpPumpBOM } from "@/lib/BOM/max-bom/hp-pump-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
+import { hpPumpBOM } from "@/lib/BOM/max-bom/hp-pump-bom";
 import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>
@@ -26,6 +26,7 @@ const qty = (config: GeneralBOMConfig, pn: string) => {
 
 const PNS = {
   PUMP_15KW: "1100.024.030",
+  PUMP_15KW_WITH_SOFTSTART: "1100.024.032",
   PUMP_30KW: "1100.024.031",
   OMZ_PUMP: "510.01.002",
   PNEUMATIC_VALVE_15KW_WITH_ANTIFREEZE: "1100.024.040",
@@ -39,6 +40,8 @@ const PNS = {
   CHASSIS_WASH_15KW: "1100.024.004",
   CHASSIS_WASH_30KW_HORIZONTAL: "1100.024.100",
   CHASSIS_WASH_30KW_WITH_LATERAL_BARS: "1100.024.003",
+  CHASSIS_WASH_PLATES_15KW: "1100.024.008",
+  CHASSIS_WASH_PLATES_30KW: "1100.024.009",
   ULTRASONIC_SENSOR_POST: "1100.021.000",
   ULTRASONIC_SENSOR_WALL: "1100.052.000",
   DUAL_ULTRASONIC_SENSORS_POST: "1100.021.001",
@@ -74,6 +77,24 @@ const PNS = {
 describe("hpPumpBOM — pump selection", () => {
   test("has_15kw_pump → 15kW pump included", () => {
     expect(pns(makeConfig({ has_15kw_pump: true }))).toContain(PNS.PUMP_15KW);
+  });
+
+  test("has_15kw_pump + has_15kw_pump_softstart → softstart pump included, standard excluded", () => {
+    const config = makeConfig({
+      has_15kw_pump: true,
+      has_15kw_pump_softstart: true,
+    });
+    expect(pns(config)).toContain(PNS.PUMP_15KW_WITH_SOFTSTART);
+    expect(pns(config)).not.toContain(PNS.PUMP_15KW);
+  });
+
+  test("has_15kw_pump + !has_15kw_pump_softstart → standard pump included, softstart excluded", () => {
+    const config = makeConfig({
+      has_15kw_pump: true,
+      has_15kw_pump_softstart: false,
+    });
+    expect(pns(config)).toContain(PNS.PUMP_15KW);
+    expect(pns(config)).not.toContain(PNS.PUMP_15KW_WITH_SOFTSTART);
   });
 
   test("has_30kw_pump → 30kW pump included", () => {
@@ -185,6 +206,53 @@ describe("hpPumpBOM — chassis wash", () => {
       pump_outlet_1_30kw: "CHASSIS_WASH_LATERAL_HORIZONTAL",
     });
     expect(pns(config)).toContain(PNS.CHASSIS_WASH_30KW_WITH_LATERAL_BARS);
+  });
+});
+
+describe("hpPumpBOM — chassis wash plates", () => {
+  test("15kW + CHASSIS_WASH outlet + has_chassis_wash_plates → plates included", () => {
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "CHASSIS_WASH",
+      has_chassis_wash_plates: true,
+    });
+    expect(pns(config)).toContain(PNS.CHASSIS_WASH_PLATES_15KW);
+  });
+
+  test("15kW + CHASSIS_WASH outlet + !has_chassis_wash_plates → plates excluded", () => {
+    const config = makeConfig({
+      has_15kw_pump: true,
+      pump_outlet_1_15kw: "CHASSIS_WASH",
+      has_chassis_wash_plates: false,
+    });
+    expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_PLATES_15KW);
+  });
+
+  test("30kW + CHASSIS_WASH_HORIZONTAL + has_chassis_wash_plates → 30kW plates included", () => {
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "CHASSIS_WASH_HORIZONTAL",
+      has_chassis_wash_plates: true,
+    });
+    expect(pns(config)).toContain(PNS.CHASSIS_WASH_PLATES_30KW);
+  });
+
+  test("30kW + CHASSIS_WASH_LATERAL_HORIZONTAL + has_chassis_wash_plates → 30kW plates included", () => {
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "CHASSIS_WASH_LATERAL_HORIZONTAL",
+      has_chassis_wash_plates: true,
+    });
+    expect(pns(config)).toContain(PNS.CHASSIS_WASH_PLATES_30KW);
+  });
+
+  test("30kW + non-chassis-wash outlet + has_chassis_wash_plates → 30kW plates excluded", () => {
+    const config = makeConfig({
+      has_30kw_pump: true,
+      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      has_chassis_wash_plates: true,
+    });
+    expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_PLATES_30KW);
   });
 });
 

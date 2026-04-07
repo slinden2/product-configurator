@@ -10,7 +10,7 @@ import type { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
 const PART_NUMBERS = {
   PUMP_75KW: "1100.024.033", // TODO Add this in the form
   PUMP_15KW: "1100.024.030",
-  PUMP_15KW_WITH_SOFTSTART: "1100.024.032", // TODO Add this in the form
+  PUMP_15KW_WITH_SOFTSTART: "1100.024.032",
   PUMP_30KW: "1100.024.031",
   OMZ_PUMP: "510.01.002",
   PNEUMATIC_VALVE_15KW_WITH_ANTIFREEZE: "1100.024.040",
@@ -120,9 +120,15 @@ const isOneOfOutlets = (outletArray: TOutlet[], value: TOutlet): boolean => {
 export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.PUMP_15KW,
-    conditions: [uses15kwPump],
+    conditions: [uses15kwPump, (config) => !config.has_15kw_pump_softstart],
     qty: 1,
     _description: "15kW pump",
+  },
+  {
+    pn: PART_NUMBERS.PUMP_15KW_WITH_SOFTSTART,
+    conditions: [uses15kwPump, (config) => config.has_15kw_pump_softstart],
+    qty: 1,
+    _description: "15kW pump with softstart",
   },
   {
     pn: PART_NUMBERS.PUMP_30KW,

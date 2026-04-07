@@ -48,6 +48,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_emergency_stop: values.has_emergency_stop,
     card_qty: values.card_qty,
     has_15kw_pump: values.has_15kw_pump,
+    has_15kw_pump_softstart: values.has_15kw_pump_softstart,
     has_30kw_pump: values.has_30kw_pump,
     has_omz_pump: values.has_omz_pump,
     has_chemical_roof_bar: values.has_chemical_roof_bar,

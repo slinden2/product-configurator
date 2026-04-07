@@ -112,6 +112,53 @@ describe("HPPumpSection", () => {
     });
   });
 
+  describe("chassis wash accessories", () => {
+    test("Piastre lavachassis checkbox renders when 15kW pump has chassis wash outlet", () => {
+      renderHPPumpSection({
+        has_15kw_pump: true,
+        pump_outlet_1_15kw: "CHASSIS_WASH",
+      });
+
+      expect(screen.getByText("Piastre lavachassis")).toBeInTheDocument();
+    });
+
+    test("Piastre lavachassis checkbox is not rendered when no chassis wash outlet is active", () => {
+      renderHPPumpSection();
+
+      expect(screen.queryByText("Piastre lavachassis")).not.toBeInTheDocument();
+    });
+
+    test("unchecking 15kW pump when it is the only chassis wash pump resets has_chassis_wash_plates", async () => {
+      const { getValues } = renderHPPumpSection({
+        has_15kw_pump: true,
+        pump_outlet_1_15kw: "CHASSIS_WASH",
+        has_chassis_wash_plates: true,
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      // has_15kw_pump is the first checkbox
+      await userEvent.click(checkboxes[0]);
+
+      expect(getValues().has_chassis_wash_plates).toBe(false);
+    });
+
+    test("unchecking 30kW pump when it has no chassis wash outlet does not reset has_chassis_wash_plates", async () => {
+      // 15kW has chassis wash (accessories are active), 30kW does not
+      const { getValues } = renderHPPumpSection({
+        has_15kw_pump: true,
+        pump_outlet_1_15kw: "CHASSIS_WASH",
+        has_chassis_wash_plates: true,
+        has_30kw_pump: true,
+        pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      });
+
+      await userEvent.click(screen.getByLabelText("Pompa 30kW"));
+
+      expect(getValues().has_30kw_pump).toBe(false);
+      expect(getValues().has_chassis_wash_plates).toBe(true);
+    });
+  });
+
   describe("OMZ pump", () => {
     test("OMZ outlet is disabled when has_omz_pump is false", () => {
       renderHPPumpSection({ has_omz_pump: false });

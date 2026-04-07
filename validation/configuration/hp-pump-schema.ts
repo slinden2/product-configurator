@@ -185,11 +185,13 @@ const hpPump15kwDiscriminatedUnion = z
       .discriminatedUnion("has_15kw_pump", [
         z.object({
           has_15kw_pump: z.literal(false),
+          has_15kw_pump_softstart: z.boolean().default(false),
           pump_outlet_1_15kw: z.undefined(),
           pump_outlet_2_15kw: z.undefined(),
         }),
         z.object({
           has_15kw_pump: z.literal(true),
+          has_15kw_pump_softstart: z.boolean().default(false),
           pump_outlet_1_15kw: HPPumpOutlet15kwEnum.optional(),
           pump_outlet_2_15kw: HPPumpOutlet15kwEnum.optional(),
         }),
