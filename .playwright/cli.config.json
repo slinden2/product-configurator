@@ -1,0 +1,9 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chromium"
+    }
+  },
+  "outputDir": ".playwright/output"
+}
