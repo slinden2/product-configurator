@@ -65,8 +65,7 @@ const baseTouchSchema = z
         // Only check fixing type if position is known
         // If pos is INTERNAL or ONBOARD_RIGHT, fixing type must NOT be selected
         if (
-          (data.touch_pos === "ON_PANEL" ||
-            data.touch_pos === "ON_DET_CAB") &&
+          (data.touch_pos === "ON_PANEL" || data.touch_pos === "ON_DET_CAB") &&
           data.touch_fixing_type !== undefined
         ) {
           ctx.addIssue({
@@ -118,6 +117,7 @@ const accessoriesSchema = z
       .refine((val) => val % 50 === 0, { message: "Solo multipli di 50" })
       .default(0),
     is_fast: z.boolean().default(false),
+    has_emergency_stop: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     if (data.has_itecoweb && data.has_card_reader) {

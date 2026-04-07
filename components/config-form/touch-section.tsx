@@ -1,10 +1,10 @@
+import { useEffect } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import { useEffect } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 
 const TouchSection = () => {
   const { control, setValue } = useFormContext<ConfigSchema>();
@@ -116,6 +116,15 @@ const TouchSection = () => {
                   </ul>
                 </>
               }
+            />
+          </div>
+        </div>
+        <div className="fs-row">
+          <div className="fs-item">
+            <CheckboxField<ConfigSchema>
+              name="has_emergency_stop"
+              label="Fungo di emergenza esterno"
+              description="Comprensivo di due scatole con fungo di emergenza poste sui montanti anteriori"
             />
           </div>
         </div>

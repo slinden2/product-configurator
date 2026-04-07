@@ -1,28 +1,3 @@
-import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
-import { userProfiles } from "@/db/schemas/user-profiles";
-import { type WashBay, washBays } from "@/db/schemas/wash-bays";
-import { type WaterTank, waterTanks } from "@/db/schemas/water-tanks";
-import {
-  BrushColors,
-  BrushTypes,
-  MachineTypes,
-  ChassisWashSensorTypes,
-  ChemPumpPos,
-  ConfigurationStatus,
-  AnchorTypes,
-  HpPump15kwOutlets,
-  HpPump30kwOutlets,
-  HpPumpOMZkwOutlets,
-  RailTypes,
-  SupplyFixTypes,
-  SupplySides,
-  SupplyTypes,
-  TouchFixTypes,
-  TouchPos,
-  Water1Pumps,
-  Water2Pumps,
-  WaterTypes,
-} from "@/types";
 import { relations } from "drizzle-orm";
 import {
   boolean,
@@ -34,6 +9,31 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
+import { userProfiles } from "@/db/schemas/user-profiles";
+import { type WashBay, washBays } from "@/db/schemas/wash-bays";
+import { type WaterTank, waterTanks } from "@/db/schemas/water-tanks";
+import {
+  AnchorTypes,
+  BrushColors,
+  BrushTypes,
+  ChassisWashSensorTypes,
+  ChemPumpPos,
+  ConfigurationStatus,
+  HpPump15kwOutlets,
+  HpPump30kwOutlets,
+  HpPumpOMZkwOutlets,
+  MachineTypes,
+  RailTypes,
+  SupplyFixTypes,
+  SupplySides,
+  SupplyTypes,
+  TouchFixTypes,
+  TouchPos,
+  Water1Pumps,
+  Water2Pumps,
+  WaterTypes,
+} from "@/types";
 
 export type Configuration = typeof configurations.$inferSelect;
 export type NewConfiguration = typeof configurations.$inferInsert;
@@ -114,6 +114,7 @@ export const configurations = pgTable("configurations", {
   has_itecoweb: boolean().notNull(),
   has_card_reader: boolean().notNull(),
   is_fast: boolean().notNull(),
+  has_emergency_stop: boolean().notNull().default(false),
   card_qty: integer().notNull(),
   has_15kw_pump: boolean().notNull(),
   pump_outlet_1_15kw: hpPump15kwOutletTypeEnum("pump_outlet_1_15kw"),

@@ -1,4 +1,7 @@
-import type { ConfigSchema, UpdateConfigSchema } from "@/validation/config-schema";
+import type {
+  ConfigSchema,
+  UpdateConfigSchema,
+} from "@/validation/config-schema";
 import type { configurations } from "@/db/schemas"; // Import Drizzle schema
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
@@ -42,6 +45,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_itecoweb: values.has_itecoweb,
     has_card_reader: values.has_card_reader,
     is_fast: values.is_fast,
+    has_emergency_stop: values.has_emergency_stop,
     card_qty: values.card_qty,
     has_15kw_pump: values.has_15kw_pump,
     has_30kw_pump: values.has_30kw_pump,

@@ -16,7 +16,7 @@ const PART_NUMBERS = {
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
-  EXT_EMERGENCY_STOP_ASSY: "1100.055.007", // TODO Add option for this in the config form
+  EXT_EMERGENCY_STOP_ASSY: "1100.055.007",
 } as const satisfies Record<string, string>;
 
 const uses1ExternalTouch = (config: GeneralBOMConfig): boolean => {
@@ -28,8 +28,7 @@ const usesDualTouch = (config: GeneralBOMConfig): boolean =>
 
 const usesOnboardTouch = (config: GeneralBOMConfig): boolean =>
   (config.touch_qty === 1 &&
-    (config.touch_pos === "ON_PANEL" ||
-      config.touch_pos === "ON_DET_CAB")) ||
+    (config.touch_pos === "ON_PANEL" || config.touch_pos === "ON_DET_CAB")) ||
   config.touch_qty === 2;
 
 export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
@@ -83,8 +82,7 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.BOX_FOR_TOUCH_ON_DET_CAB,
     conditions: [
-      (config) =>
-        config.touch_qty === 1 && config.touch_pos === "ON_DET_CAB",
+      (config) => config.touch_qty === 1 && config.touch_pos === "ON_DET_CAB",
     ],
     qty: 1,
     _description: "Box for touch on detergent cabinet",
@@ -136,5 +134,11 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "External console post, dual touch",
+  },
+  {
+    pn: PART_NUMBERS.EXT_EMERGENCY_STOP_ASSY,
+    conditions: [(config) => config.has_emergency_stop === true],
+    qty: 2,
+    _description: "External emergency stop assembly",
   },
 ];

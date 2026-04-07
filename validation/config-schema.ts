@@ -140,6 +140,7 @@ export const configDefaults: ConfigSchema = {
   has_card_reader: false,
   card_qty: 0,
   is_fast: false,
+  has_emergency_stop: false,
   touch_qty: undefined,
   touch_pos: undefined,
   touch_fixing_type: undefined,
