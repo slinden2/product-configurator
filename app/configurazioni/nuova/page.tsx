@@ -6,7 +6,6 @@ const NewConfiguration = async () => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-
   return (
     <div>
       <div className="mb-6">

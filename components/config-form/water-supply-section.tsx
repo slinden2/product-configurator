@@ -77,20 +77,18 @@ const WaterSupplySection = () => {
           </div>
           {isInvPump1Selected && (
             <div className="fs-item">
-              
-                <SelectField<ConfigSchema>
-                  name="inv_pump_outlet_dosatron_qty"
-                  dataType="number"
-                  label="Uscite Dosatron"
-                  items={selectFieldOptions.inverterPumpOutletOpts}
-                />
-                <SelectField<ConfigSchema>
-                  name="inv_pump_outlet_pw_qty"
-                  dataType="number"
-                  label="Uscite idropulitrice"
-                  items={selectFieldOptions.inverterPumpOutletOpts}
-                />
-              
+              <SelectField<ConfigSchema>
+                name="inv_pump_outlet_dosatron_qty"
+                dataType="number"
+                label="Uscite Dosatron"
+                items={selectFieldOptions.inverterPumpOutletOpts}
+              />
+              <SelectField<ConfigSchema>
+                name="inv_pump_outlet_pw_qty"
+                dataType="number"
+                label="Uscite idropulitrice"
+                items={selectFieldOptions.inverterPumpOutletOpts}
+              />
             </div>
           )}
           <div className="fs-item">

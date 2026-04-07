@@ -34,7 +34,9 @@ vi.mock("@/components/confirm-modal", () => ({
     isOpen ? (
       <tr data-testid="confirm-modal">
         <td>
-          <button type="button" onClick={onConfirm}>{confirmText ?? "Conferma"}</button>
+          <button type="button" onClick={onConfirm}>
+            {confirmText ?? "Conferma"}
+          </button>
           <button type="button" onClick={() => onOpenChange(false)}>
             {cancelText ?? "Annulla"}
           </button>

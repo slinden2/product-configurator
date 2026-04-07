@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import ForgotPasswordForm from "@/app/(auth)/recupera-password/forgot-password-form";
 

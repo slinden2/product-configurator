@@ -6,7 +6,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "@/components/input-field";
-import { type NewPasswordSchema, newPassWordSchema } from "@/validation/auth-schema";
+import {
+  type NewPasswordSchema,
+  newPassWordSchema,
+} from "@/validation/auth-schema";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resetPassword } from "@/app/actions/auth";
 import { toast } from "sonner";

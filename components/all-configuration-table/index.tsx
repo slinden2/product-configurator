@@ -97,7 +97,9 @@ const AllConfigurationsTable = async ({
             )}
             {hasNext ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/configurazioni?page=${page + 1}`}>Successiva</Link>
+                <Link href={`/configurazioni?page=${page + 1}`}>
+                  Successiva
+                </Link>
               </Button>
             ) : (
               <Button variant="outline" size="sm" disabled>

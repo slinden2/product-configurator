@@ -195,25 +195,37 @@ describe("anchor type BOM routing", () => {
 
   test("ANCHORED + ZINC + STD → zinc anchors included", () => {
     const item = findItem(ZINC_ANCHOR);
-    expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC", "STD"))).toBe(true);
+    expect(evalConditions(item, railCfg("ANCHORED", 25, "ZINC", "STD"))).toBe(
+      true,
+    );
   });
 
   test("ANCHORED + ZINC + OMZ → zinc anchors NOT included, stainless used instead", () => {
     const zinc = findItem(ZINC_ANCHOR);
     const stainless = findItem(STAINLESS_ANCHOR);
-    expect(evalConditions(zinc, railCfg("ANCHORED", 25, "ZINC", "OMZ"))).toBe(false);
-    expect(evalConditions(stainless, railCfg("ANCHORED", 25, "ZINC", "OMZ"))).toBe(true);
+    expect(evalConditions(zinc, railCfg("ANCHORED", 25, "ZINC", "OMZ"))).toBe(
+      false,
+    );
+    expect(
+      evalConditions(stainless, railCfg("ANCHORED", 25, "ZINC", "OMZ")),
+    ).toBe(true);
   });
 
   test("ANCHORED + CHEMICAL → resin anchors included regardless of machine type", () => {
     const item = findItem(RESIN_ANCHOR);
-    expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL", "STD"))).toBe(true);
-    expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL", "OMZ"))).toBe(true);
+    expect(
+      evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL", "STD")),
+    ).toBe(true);
+    expect(
+      evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL", "OMZ")),
+    ).toBe(true);
   });
 
   test("ANCHORED + CHEMICAL → resin cartridges included", () => {
     const item = findItem(RESIN);
-    expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL"))).toBe(true);
+    expect(evalConditions(item, railCfg("ANCHORED", 25, "CHEMICAL"))).toBe(
+      true,
+    );
   });
 
   test("ANCHORED + ZINC → resin NOT included", () => {

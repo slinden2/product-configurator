@@ -1,4 +1,3 @@
-
 import { updateConfigSchema } from "@/validation/config-schema";
 import {
   getConfigurationWithTanksAndBays,

@@ -152,7 +152,11 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
 
                   if (shouldReset) {
                     item.fieldsToReset.forEach((fieldToReset) => {
-                      const valueToSet = (item.resetToValue ?? undefined) as PathValue<TFieldValues, FieldPath<TFieldValues>>;
+                      const valueToSet = (item.resetToValue ??
+                        undefined) as PathValue<
+                        TFieldValues,
+                        FieldPath<TFieldValues>
+                      >;
 
                       setValue(fieldToReset, valueToSet, {
                         shouldValidate: false,

@@ -139,7 +139,11 @@ export async function handleSubRecordAction<
     await db.transaction(async (tx) => {
       switch (options.actionType) {
         case "insert":
-          operationResult = await options.queryFn(parentId, validatedData as z.infer<TFormSchema>, tx);
+          operationResult = await options.queryFn(
+            parentId,
+            validatedData as z.infer<TFormSchema>,
+            tx,
+          );
           break;
         case "edit":
           operationResult = await options.queryFn(

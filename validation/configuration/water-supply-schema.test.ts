@@ -74,7 +74,13 @@ describe("waterSupplySchema", () => {
       // Regression: when water_1_pump changes away from inverter, outlets must reset to 0
       // not undefined — z.number() rejects undefined and blocks all form submissions
       const invalidData = {
-        ...createWaterSupplyObject("NETWORK", "BOOST_15KW", undefined, undefined, false),
+        ...createWaterSupplyObject(
+          "NETWORK",
+          "BOOST_15KW",
+          undefined,
+          undefined,
+          false,
+        ),
         inv_pump_outlet_dosatron_qty: undefined,
         inv_pump_outlet_pw_qty: undefined,
       };

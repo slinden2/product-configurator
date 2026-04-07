@@ -112,96 +112,96 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
       </div>
       {showEnergyChainFields && (
         <div className="border-t border-border pt-4 mt-2">
-            <div className="fs-row md:items-end">
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="energy_chain_width"
-                  dataType="string"
-                  label="Larghezza catena"
-                  items={selectFieldOptions.cableChainWidths}
-                />
-              </div>
-              <div className="fs-item">
-                <CheckboxField<WashBaySchema>
-                  name="has_shelf_extension"
-                  label="Con prolunga per mensola alim."
-                />
-              </div>
+          <div className="fs-row md:items-end">
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="energy_chain_width"
+                dataType="string"
+                label="Larghezza catena"
+                items={selectFieldOptions.cableChainWidths}
+              />
             </div>
-            <p className="text-sm text-muted-foreground italic my-4">
-              Cavo Alimentazione 5G2,5 sempre incluso nella catena portacavi.
-            </p>
-            <div className="fs-row">
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_signal_cable_qty"
-                  dataType="number"
-                  label="Cavo segnali 12G1"
-                  items={getNumericSelectOptions([1, 2])}
-                />
-              </div>
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_profinet_cable_qty"
-                  dataType="number"
-                  label="Cavo Profinet"
-                  items={getNumericSelectOptions([0, 1])}
-                />
-              </div>
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_water_1_tube_qty"
-                  dataType="number"
-                  label={'Tubo acqua 1"'}
-                  items={getNumericSelectOptions([1, 2])}
-                />
-              </div>
-            </div>
-            <div className="fs-row">
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_water_34_tube_qty"
-                  dataType="number"
-                  label={'Tubo acqua 3/4"'}
-                  items={getNumericSelectOptions([0, 1, 2])}
-                />
-              </div>
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_r1_1_tube_qty"
-                  dataType="number"
-                  label={'Tubo R1 1"'}
-                  items={getNumericSelectOptions([0, 1, 2])}
-                />
-              </div>
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_r2_1_tube_qty"
-                  dataType="number"
-                  label={'Tubo R2 1"'}
-                  items={getNumericSelectOptions([0, 1, 2])}
-                />
-              </div>
-            </div>
-            <div className="fs-row">
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_r2_34_inox_tube_qty"
-                  dataType="number"
-                  label={'Tubo R2 3/4" INOX'}
-                  items={getNumericSelectOptions([0, 1, 2, 3])}
-                />
-              </div>
-              <div className="fs-item">
-                <SelectField<WashBaySchema>
-                  name="ec_air_tube_qty"
-                  dataType="number"
-                  label="Tubo aria 8x17"
-                  items={getNumericSelectOptions([0, 1])}
-                />
-              </div>
+            <div className="fs-item">
+              <CheckboxField<WashBaySchema>
+                name="has_shelf_extension"
+                label="Con prolunga per mensola alim."
+              />
             </div>
           </div>
+          <p className="text-sm text-muted-foreground italic my-4">
+            Cavo Alimentazione 5G2,5 sempre incluso nella catena portacavi.
+          </p>
+          <div className="fs-row">
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_signal_cable_qty"
+                dataType="number"
+                label="Cavo segnali 12G1"
+                items={getNumericSelectOptions([1, 2])}
+              />
+            </div>
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_profinet_cable_qty"
+                dataType="number"
+                label="Cavo Profinet"
+                items={getNumericSelectOptions([0, 1])}
+              />
+            </div>
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_water_1_tube_qty"
+                dataType="number"
+                label={'Tubo acqua 1"'}
+                items={getNumericSelectOptions([1, 2])}
+              />
+            </div>
+          </div>
+          <div className="fs-row">
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_water_34_tube_qty"
+                dataType="number"
+                label={'Tubo acqua 3/4"'}
+                items={getNumericSelectOptions([0, 1, 2])}
+              />
+            </div>
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_r1_1_tube_qty"
+                dataType="number"
+                label={'Tubo R1 1"'}
+                items={getNumericSelectOptions([0, 1, 2])}
+              />
+            </div>
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_r2_1_tube_qty"
+                dataType="number"
+                label={'Tubo R2 1"'}
+                items={getNumericSelectOptions([0, 1, 2])}
+              />
+            </div>
+          </div>
+          <div className="fs-row">
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_r2_34_inox_tube_qty"
+                dataType="number"
+                label={'Tubo R2 3/4" INOX'}
+                items={getNumericSelectOptions([0, 1, 2, 3])}
+              />
+            </div>
+            <div className="fs-item">
+              <SelectField<WashBaySchema>
+                name="ec_air_tube_qty"
+                dataType="number"
+                label="Tubo aria 8x17"
+                items={getNumericSelectOptions([0, 1])}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

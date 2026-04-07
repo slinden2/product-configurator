@@ -78,7 +78,11 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                     fieldsToResetOnUncheck?.forEach((item) => {
                       item.fieldsToReset.forEach((fieldToReset) => {
                         // Use resetToValue from config if provided, otherwise default to undefined
-                        const valueToSet = (item.resetToValue ?? undefined) as PathValue<TFieldValues, FieldPath<TFieldValues>>;
+                        const valueToSet = (item.resetToValue ??
+                          undefined) as PathValue<
+                          TFieldValues,
+                          FieldPath<TFieldValues>
+                        >;
                         setValue(fieldToReset, valueToSet, {
                           shouldValidate: false, // Avoid immediate validation on reset
                           shouldDirty: true, // Mark form as dirty
