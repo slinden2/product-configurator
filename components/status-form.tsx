@@ -29,11 +29,33 @@ interface StatusFormProps {
   userRole: Role;
 }
 
-const ALLOWED_STATUSES: Record<Role, ConfigurationStatusType[]> = {
-  SALES: ["DRAFT", "SUBMITTED"],
-  ENGINEER: ["DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED"],
-  ADMIN: ["DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED", "CLOSED"],
-};
+function getValidTransitions(
+  role: Role,
+  currentStatus: ConfigurationStatusType,
+): ConfigurationStatusType[] {
+  if (role === "ADMIN") {
+    return configStatusOpts
+      .map((o) => o.value as ConfigurationStatusType)
+      .filter((s) => s !== currentStatus);
+  }
+  if (role === "SALES") {
+    if (currentStatus === "DRAFT") return ["SUBMITTED"];
+    if (currentStatus === "SUBMITTED") return ["DRAFT"];
+    return [];
+  }
+  // ENGINEER
+  const transitions: Record<
+    ConfigurationStatusType,
+    ConfigurationStatusType[]
+  > = {
+    DRAFT: ["SUBMITTED"],
+    SUBMITTED: ["DRAFT", "IN_REVIEW"],
+    IN_REVIEW: ["SUBMITTED", "APPROVED"],
+    APPROVED: ["IN_REVIEW"],
+    CLOSED: [],
+  };
+  return transitions[currentStatus] ?? [];
+}
 
 const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -64,8 +86,24 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
     }
   };
 
-  const userConfigStatusOpts = configStatusOpts.filter((opt) =>
-    ALLOWED_STATUSES[userRole].includes(opt.value as ConfigurationStatusType),
+  const validTargets = getValidTransitions(userRole, initialStatus);
+  const currentLabel =
+    configStatusOpts.find((o) => o.value === initialStatus)?.label ??
+    initialStatus;
+
+  if (validTargets.length === 0) {
+    return (
+      <div>
+        <p className="text-sm font-medium mb-2">Stato</p>
+        <p className="text-sm text-muted-foreground">{currentLabel}</p>
+      </div>
+    );
+  }
+
+  const selectableOpts = configStatusOpts.filter(
+    (opt) =>
+      opt.value === initialStatus ||
+      validTargets.includes(opt.value as ConfigurationStatusType),
   );
 
   return (
@@ -96,7 +134,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {userConfigStatusOpts.map((opt) => (
+                  {selectableOpts.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value.toString()}>
                       {opt.label}
                     </SelectItem>

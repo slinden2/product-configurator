@@ -53,8 +53,8 @@ describe("StatusForm", () => {
     });
   });
 
-  describe("Role-based status filtering", () => {
-    test("SALES sees only DRAFT and SUBMITTED", async () => {
+  describe("Role-based status rendering", () => {
+    test("SALES at DRAFT sees select with Bozza and Inviato only", async () => {
       render(<StatusForm confId={1} initialStatus="DRAFT" userRole="SALES" />);
 
       await userEvent.click(screen.getByRole("combobox"));
@@ -74,29 +74,49 @@ describe("StatusForm", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("ENGINEER sees DRAFT, SUBMITTED, IN_REVIEW, and APPROVED", async () => {
+    test("SALES at IN_REVIEW sees text label, no select", () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusForm confId={1} initialStatus="IN_REVIEW" userRole="SALES" />,
+      );
+
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(screen.getByText("In revisione")).toBeInTheDocument();
+    });
+
+    test("SALES at APPROVED sees text label, no select", () => {
+      render(
+        <StatusForm confId={1} initialStatus="APPROVED" userRole="SALES" />,
+      );
+
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(screen.getByText("Approvato")).toBeInTheDocument();
+    });
+
+    test("ENGINEER at APPROVED sees select with Approvato and In revisione only", async () => {
+      render(
+        <StatusForm confId={1} initialStatus="APPROVED" userRole="ENGINEER" />,
       );
 
       await userEvent.click(screen.getByRole("combobox"));
 
-      expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
       expect(
-        screen.getByRole("option", { name: "Inviato" }),
+        screen.getByRole("option", { name: "Approvato" }),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("option", { name: "In revisione" }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("option", { name: "Approvato" }),
-      ).toBeInTheDocument();
+        screen.queryByRole("option", { name: "Bozza" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Inviato" }),
+      ).not.toBeInTheDocument();
       expect(
         screen.queryByRole("option", { name: "Chiuso" }),
       ).not.toBeInTheDocument();
     });
 
-    test("ADMIN sees all statuses", async () => {
+    test("ADMIN sees all statuses in select", async () => {
       render(<StatusForm confId={1} initialStatus="DRAFT" userRole="ADMIN" />);
 
       await userEvent.click(screen.getByRole("combobox"));
