@@ -11,6 +11,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Configuratore | ITECO SRL",
   description: "Sistema di gestione configurazioni - ITECO SRL",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
