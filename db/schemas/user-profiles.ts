@@ -59,4 +59,3 @@ export const userProfiles = pgTable(
     }),
   ],
 ).enableRLS();
-

@@ -1,7 +1,7 @@
+import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { type NewPartNumber, partNumbers, pnTypeEnum } from "@/db/schemas";
 import { fetchPartNumbersFromTSE } from "@/lib/db-sync/tse";
-import { sql } from "drizzle-orm";
 
 const BATCH_SIZE = 1000;
 
@@ -25,7 +25,7 @@ function isPartNumberArray(array: any): array is NewPartNumber[] {
   );
 }
 
-async function batchUpsert() {
+export async function batchUpsert() {
   console.log("Starting batchUpsert function...");
 
   console.time("Fetch records from TSE");
@@ -70,5 +70,3 @@ async function batchUpsert() {
     `Upsert completed: ${cleanPartNumbers.length} records in ${Math.ceil(cleanPartNumbers.length / BATCH_SIZE)} batch(es).`,
   );
 }
-
-await batchUpsert();

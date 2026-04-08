@@ -144,4 +144,3 @@ export const configurations = pgTable("configurations", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 }).enableRLS();
-

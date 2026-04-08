@@ -28,4 +28,3 @@ export const activityLogs = pgTable("activity_logs", {
     .notNull()
     .defaultNow(),
 }).enableRLS();
-

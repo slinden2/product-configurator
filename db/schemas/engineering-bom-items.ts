@@ -58,4 +58,3 @@ export const engineeringBomItems = pgTable("engineering_bom_items", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 }).enableRLS();
-

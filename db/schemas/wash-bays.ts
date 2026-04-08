@@ -52,4 +52,3 @@ export const washBays = pgTable("wash_bays", {
     .references(() => configurations.id, { onDelete: "cascade" })
     .notNull(),
 }).enableRLS();
-
