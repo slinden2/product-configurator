@@ -32,6 +32,8 @@ export const MSG = {
       "Configurazione non trovata o non autorizzata per l'aggiornamento.",
     energyChainRequiresGantry:
       "Con alimentazione a catena portacavi, è obbligatoria almeno una pista con portale e larghezza catena configurata.",
+    approvedRequiresBom:
+      "Per approvare la configurazione è obbligatoria creare la distinta di commessa.",
   },
   bom: {
     unauthorized: "Non autorizzato a modificare la distinta di commessa.",

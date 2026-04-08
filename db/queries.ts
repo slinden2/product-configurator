@@ -281,6 +281,13 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.statusUnauthorized, 403);
   }
 
+  if (statusData.status === "APPROVED") {
+    const bomExists = await hasEngineeringBom(confId);
+    if (!bomExists) {
+      throw new QueryError(MSG.config.approvedRequiresBom, 400);
+    }
+  }
+
   // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
   const forwardStatuses: ConfigurationStatusType[] = [
     "SUBMITTED",

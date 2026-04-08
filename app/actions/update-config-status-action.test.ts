@@ -107,6 +107,19 @@ describe("updateConfigStatusAction", () => {
     });
   });
 
+  test("returns error when approving without engineering BOM", async () => {
+    mockUpdateConfigStatus.mockRejectedValue(
+      new QueryError(MSG.config.approvedRequiresBom, 400),
+    );
+    const result = await updateConfigStatusAction(CONF_ID, {
+      status: "APPROVED",
+    });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.approvedRequiresBom,
+    });
+  });
+
   test("returns error when energy chain constraint is not met", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
       new QueryError(MSG.config.energyChainRequiresGantry, 400),
