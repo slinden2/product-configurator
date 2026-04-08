@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getAllUsersWithStats } from "@/db/queries";
-import { db } from "@/db";
 import { userProfiles } from "@/db/schemas";
-import { asc } from "drizzle-orm";
 
 // --- Mocks ---
 
