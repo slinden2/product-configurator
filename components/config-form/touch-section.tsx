@@ -112,7 +112,6 @@ const TouchSection = () => {
                     <li>Barre supplementari di risciacquo</li>
                     <li>Semaforo posteriore</li>
                     <li>Bracci lunghi per fotocellule</li>
-                    <li>Licenza piattaforma Itecoweb</li>
                   </ul>
                 </>
               }
