@@ -51,3 +51,6 @@ no-git/
 # Dropbox temporary attribute files
 *.ffs_tmp
 *.dropbox.attrs
+
+# Supabase
+/supabase/.temp/
