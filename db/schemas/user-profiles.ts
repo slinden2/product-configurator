@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   pgEnum,
   pgPolicy,
@@ -8,7 +8,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { authenticatedRole, authUsers } from "drizzle-orm/supabase";
-import { configurations } from "@/db/schemas/configurations";
 import { Roles } from "@/types";
 
 export type UserProfile = typeof userProfiles.$inferSelect;
@@ -61,6 +60,3 @@ export const userProfiles = pgTable(
   ],
 ).enableRLS();
 
-export const usersProfilesRelations = relations(userProfiles, ({ many }) => ({
-  configurations: many(configurations),
-}));

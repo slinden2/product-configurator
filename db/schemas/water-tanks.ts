@@ -1,6 +1,5 @@
 import { configurations } from "@/db/schemas/configurations";
 import { WaterTankTypes } from "@/types";
-import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -34,9 +33,3 @@ export const waterTanks = pgTable("water_tanks", {
     .notNull(),
 }).enableRLS();
 
-export const waterTanksRelations = relations(waterTanks, ({ one }) => ({
-  configuration: one(configurations, {
-    fields: [waterTanks.configuration_id],
-    references: [configurations.id],
-  }),
-}));

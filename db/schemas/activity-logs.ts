@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import {
   integer,
   jsonb,
@@ -30,9 +29,3 @@ export const activityLogs = pgTable("activity_logs", {
     .defaultNow(),
 }).enableRLS();
 
-export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
-  user: one(userProfiles, {
-    fields: [activityLogs.user_id],
-    references: [userProfiles.id],
-  }),
-}));

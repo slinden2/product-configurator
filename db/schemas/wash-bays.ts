@@ -1,6 +1,5 @@
 import { configurations } from "@/db/schemas/configurations";
 import { EnergyChainWidths, PressureWashers } from "@/types";
-import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -54,9 +53,3 @@ export const washBays = pgTable("wash_bays", {
     .notNull(),
 }).enableRLS();
 
-export const washBaysRelations = relations(washBays, ({ one }) => ({
-  configuration: one(configurations, {
-    fields: [washBays.configuration_id],
-    references: [configurations.id],
-  }),
-}));

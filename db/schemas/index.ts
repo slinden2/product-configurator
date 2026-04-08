@@ -2,6 +2,7 @@ export * from "./activity-logs";
 export * from "./configurations";
 export * from "./engineering-bom-items";
 export * from "./part-numbers";
+export * from "./relations";
 export * from "./user-profiles";
 export * from "./wash-bays";
 export * from "./water-tanks";

@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -60,12 +59,3 @@ export const engineeringBomItems = pgTable("engineering_bom_items", {
     .$onUpdate(() => new Date()),
 }).enableRLS();
 
-export const engineeringBomItemsRelations = relations(
-  engineeringBomItems,
-  ({ one }) => ({
-    configuration: one(configurations, {
-      fields: [engineeringBomItems.configuration_id],
-      references: [configurations.id],
-    }),
-  }),
-);

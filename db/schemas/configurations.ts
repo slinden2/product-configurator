@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -9,10 +8,9 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
 import { userProfiles } from "@/db/schemas/user-profiles";
-import { type WashBay, washBays } from "@/db/schemas/wash-bays";
-import { type WaterTank, waterTanks } from "@/db/schemas/water-tanks";
+import type { WashBay } from "@/db/schemas/wash-bays";
+import type { WaterTank } from "@/db/schemas/water-tanks";
 import {
   AnchorTypes,
   BrushColors,
@@ -147,15 +145,3 @@ export const configurations = pgTable("configurations", {
     .$onUpdate(() => new Date()),
 }).enableRLS();
 
-export const configurationsRelations = relations(
-  configurations,
-  ({ many, one }) => ({
-    user: one(userProfiles, {
-      fields: [configurations.user_id],
-      references: [userProfiles.id],
-    }),
-    water_tanks: many(waterTanks),
-    wash_bays: many(washBays),
-    engineering_bom_items: many(engineeringBomItems),
-  }),
-);
