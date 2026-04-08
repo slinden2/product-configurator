@@ -70,6 +70,7 @@ npm run seed:reset       # Reset and reseed database
 - Status Protection: Before performing any mutation on a Configuration, verify the ConfigurationStatus. Mutations must fail if status is APPROVED or CLOSED.
 - DRY: Do not duplicate logic. Extract repeated patterns into shared utilities (`lib/`), helper functions, or reusable components (`components/shared/`). Before writing new code, check if an existing function or component already handles the same concern.
 - Component Readability: Keep React components focused and readable. If a component grows too large or handles multiple concerns, split it into smaller, well-named sub-components. Avoid deeply nested conditionals and long render functions — extract sections into dedicated components or custom hooks.
+- Formatting after Bash: If a file is created, moved, renamed, or otherwise modified via a Bash command (e.g. `mv`, `cp`, `sed`), immediately run `npm run format` afterwards. The PostToolUse hook only covers Edit/Write — Bash-based file changes must be formatted manually.
 
 ## Development Checklist
 
