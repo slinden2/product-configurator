@@ -21,18 +21,17 @@ const pns = (config: GeneralBOMConfig) =>
 const PNUMS = {
   ADDITIONAL_LATERAL_RINSE_BARS: "450.65.000",
   ADDITIONAL_RINSE_ARCH: "450.65.002",
-  SHORT_PHOTOCELL_SUPPORTS: "925.00.000",
   LONG_PHOTOCELL_SUPPORTS: "926.03.000",
   POSTERIOR_TRAFFIC_LIGHTS: "926.01.000",
 };
 
 describe("fastBOM — not fast", () => {
-  test("!is_fast, brush_qty=2 → only short photocell supports", () => {
-    expect(pns(cfg(false, 2))).toEqual([PNUMS.SHORT_PHOTOCELL_SUPPORTS]);
+  test("!is_fast, brush_qty=2 → no fast items", () => {
+    expect(pns(cfg(false, 2))).toEqual([]);
   });
 
-  test("!is_fast, brush_qty=3 → only short photocell supports", () => {
-    expect(pns(cfg(false, 3))).toEqual([PNUMS.SHORT_PHOTOCELL_SUPPORTS]);
+  test("!is_fast, brush_qty=3 → no fast items", () => {
+    expect(pns(cfg(false, 3))).toEqual([]);
   });
 });
 
@@ -51,11 +50,6 @@ describe("fastBOM — is fast", () => {
       PNUMS.LONG_PHOTOCELL_SUPPORTS,
       PNUMS.POSTERIOR_TRAFFIC_LIGHTS,
     ]);
-  });
-
-  test("is_fast never includes short photocell supports", () => {
-    expect(pns(cfg(true, 2))).not.toContain(PNUMS.SHORT_PHOTOCELL_SUPPORTS);
-    expect(pns(cfg(true, 3))).not.toContain(PNUMS.SHORT_PHOTOCELL_SUPPORTS);
   });
 
   test("!is_fast never includes long photocell supports or traffic lights", () => {

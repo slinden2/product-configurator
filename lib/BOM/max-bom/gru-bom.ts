@@ -5,6 +5,7 @@ const PART_NUMBERS = {
   ZERO_BRUSHES: "450.0E.GRU0",
   TWO_BRUSHES: "450.0E.GRU2",
   THREE_BRUSHES: "450.0E.GRU",
+  SHORT_PHOTOCELL_SUPPORTS: "925.00.000",
 } as const satisfies Record<string, string>;
 
 export const gruBOM: MaxBOMItem<GeneralBOMConfig>[] = [
@@ -25,5 +26,11 @@ export const gruBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [(config) => config.brush_qty === 3],
     qty: 1,
     _description: "GRU - three brushes",
+  },
+  {
+    pn: PART_NUMBERS.SHORT_PHOTOCELL_SUPPORTS,
+    conditions: [(config) => !config.is_fast],
+    qty: 1,
+    _description: "Short photocell supports",
   },
 ];

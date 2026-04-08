@@ -11,35 +11,50 @@ import { gruBOM } from "@/lib/BOM/max-bom/gru-bom";
 import { GeneralMaxBOM } from "@/lib/BOM/max-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
-const cfg = (brush_qty: number) =>
-  ({ brush_qty }) as Parameters<(typeof gruBOM)[0]["conditions"][0]>[0];
+const cfg = (brush_qty: number, is_fast = false) =>
+  ({ brush_qty, is_fast }) as GeneralBOMConfig;
 
 const included = (config: GeneralBOMConfig) =>
   gruBOM.filter((item) => item.conditions.every((fn) => fn(config)));
 
 describe("gruBOM", () => {
-  test("brush_qty=0 → only zero-brush GRU included", () => {
-    const items = included(cfg(0) as GeneralBOMConfig);
-    expect(items).toHaveLength(1);
+  test("brush_qty=0 → zero-brush GRU + short photocell supports", () => {
+    const items = included(cfg(0));
+    expect(items).toHaveLength(2);
     expect(items[0].pn).toBe("450.0E.GRU0");
+    expect(items[1].pn).toBe("925.00.000");
   });
 
-  test("brush_qty=2 → only two-brush GRU included", () => {
-    const items = included(cfg(2) as GeneralBOMConfig);
-    expect(items).toHaveLength(1);
+  test("brush_qty=2 → two-brush GRU + short photocell supports", () => {
+    const items = included(cfg(2));
+    expect(items).toHaveLength(2);
     expect(items[0].pn).toBe("450.0E.GRU2");
+    expect(items[1].pn).toBe("925.00.000");
   });
 
-  test("brush_qty=3 → only three-brush GRU included", () => {
-    const items = included(cfg(3) as GeneralBOMConfig);
-    expect(items).toHaveLength(1);
+  test("brush_qty=3 → three-brush GRU + short photocell supports", () => {
+    const items = included(cfg(3));
+    expect(items).toHaveLength(2);
     expect(items[0].pn).toBe("450.0E.GRU");
+    expect(items[1].pn).toBe("925.00.000");
   });
 
-  test("exactly one GRU item is always selected for valid brush quantities", () => {
+  test("exactly one GRU item + short photocell supports for valid brush quantities", () => {
     for (const qty of [0, 2, 3]) {
-      expect(included(cfg(qty) as GeneralBOMConfig)).toHaveLength(1);
+      expect(included(cfg(qty))).toHaveLength(2);
     }
+  });
+});
+
+describe("gruBOM — SHORT_PHOTOCELL_SUPPORTS", () => {
+  test("non-fast config includes short photocell supports", () => {
+    expect(included(cfg(2, false))).toEqual(
+      expect.arrayContaining([expect.objectContaining({ pn: "925.00.000" })]),
+    );
+  });
+
+  test("fast config does NOT include short photocell supports", () => {
+    expect(included(cfg(2, true)).map((i) => i.pn)).not.toContain("925.00.000");
   });
 });
 
