@@ -1,4 +1,3 @@
-import { configurations } from "@/db/schemas/configurations";
 import { relations } from "drizzle-orm";
 import {
   boolean,
@@ -8,6 +7,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
+import { configurations } from "@/db/schemas/configurations";
 
 export const ebomCategoryEnum = pgEnum("ebom_category", [
   "GENERAL",

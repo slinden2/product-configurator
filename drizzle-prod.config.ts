@@ -1,4 +1,4 @@
-process.loadEnvFile(".env.local");
+process.loadEnvFile(".env.production");
 
 import { defineConfig } from "drizzle-kit";
 

@@ -15,11 +15,13 @@
     "zod": "npx tsx ./validation/zod-test-file.ts",
     "type-check": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
     "type-check:incremental": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --incremental",
-    "job": "npx tsx ./lib//db-sync/job.ts",
+    "job": "npx tsx ./lib/db-sync/job.ts",
     "seed": "npx tsx ./db/seed.ts",
     "seed:reset": "npx tsx ./db/seed.ts --reset",
     "test:e2e": "npx playwright test",
-    "test:e2e:ui": "npx playwright test --ui"
+    "test:e2e:ui": "npx playwright test --ui",
+    "drizzle:push": "npx drizzle-kit push",
+    "drizzle:push:prod": "npx drizzle-kit push --config=drizzle-prod.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.0.0",
