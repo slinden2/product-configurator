@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
+import { BOM_EXEMPT_FIELDS } from "@/validation/config-schema";
 import type { ConfigurationStatusType, Role } from "@/types";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
@@ -141,7 +142,10 @@ const ConfigForm = ({
   }
 
   async function onSubmit(values: ConfigSchema) {
-    if (hasEngineeringBom && id) {
+    const onlyExemptFieldsDirty = Object.keys(form.formState.dirtyFields).every(
+      (key) => BOM_EXEMPT_FIELDS.has(key as keyof ConfigSchema),
+    );
+    if (hasEngineeringBom && id && !onlyExemptFieldsDirty) {
       pendingValuesRef.current = values;
       setShowBomWarning(true);
       return;

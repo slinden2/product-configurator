@@ -86,6 +86,27 @@ export const selectConfigSchema = configSchema.and(
 
 export type SelectConfigSchema = z.infer<typeof selectConfigSchema>;
 
+/** Fields that do NOT affect BOM generation — edits to these skip BOM invalidation */
+export const BOM_EXEMPT_FIELDS = new Set<keyof ConfigSchema>([
+  "name",
+  "description",
+  "sales_notes",
+  "engineering_notes",
+]);
+
+export function hasBomRelevantChanges(
+  oldConfig: Record<string, unknown>,
+  newConfig: Record<string, unknown>,
+): boolean {
+  for (const key of Object.keys(newConfig)) {
+    if (BOM_EXEMPT_FIELDS.has(key as keyof ConfigSchema)) continue;
+    const oldVal = oldConfig[key] ?? null;
+    const newVal = newConfig[key] ?? null;
+    if (oldVal !== newVal) return true;
+  }
+  return false;
+}
+
 export const configDefaults: ConfigSchema = {
   name: "",
   machine_type: "STD",

@@ -33,8 +33,11 @@ All Italian error messages are centralized in `lib/messages.ts` as the `MSG` con
 When a configuration is edited, the engineering BOM snapshot becomes stale. Any action that mutates configuration data must:
 
 1. Check `hasEngineeringBom(confId)` after the mutation succeeds.
-2. If true, call `deleteAllEngineeringBomItems(confId)` to invalidate the snapshot.
+2. If true, call `hasBomRelevantChanges(oldConfig, newData)` (from `validation/config-schema.ts`) to determine if BOM-affecting fields actually changed. Only call `deleteAllEngineeringBomItems(confId)` if they did.
 3. Revalidate the BOM page path: `revalidatePath(/configurazioni/bom/${confId})`.
+
+**Exempt fields** (`BOM_EXEMPT_FIELDS` in `validation/config-schema.ts`)
+Edits to only these fields do NOT invalidate the BOM. Any new field added to the schema is BOM-relevant by default — explicitly add it to `BOM_EXEMPT_FIELDS` to opt out.
 
 This applies to `editConfigurationAction` and any new action that changes configuration fields used by BOM rules.
 

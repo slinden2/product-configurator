@@ -15,7 +15,10 @@ import {
   updateConfiguration,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
-import { configSchema } from "@/validation/config-schema";
+import {
+  configSchema,
+  hasBomRelevantChanges,
+} from "@/validation/config-schema";
 
 export const editConfigurationAction = async (
   confId: number,
@@ -72,9 +75,9 @@ export const editConfigurationAction = async (
         await resetWashBayEnergyChainFields(confId, tx);
       }
 
-      // Delete engineering BOM if it exists — config changes invalidate the snapshot
+      // Delete engineering BOM if it exists and BOM-relevant fields changed
       const ebomExists = await hasEngineeringBom(confId, tx);
-      if (ebomExists) {
+      if (ebomExists && hasBomRelevantChanges(configuration, validation.data)) {
         await deleteAllEngineeringBomItems(confId, tx);
       }
     });
