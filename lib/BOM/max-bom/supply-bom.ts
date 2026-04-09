@@ -1,5 +1,6 @@
 import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { usesEnergyChain } from "./conditions";
 
 const PART_NUMBERS = {
   STRAIGHT_SHELF: "1100.019.000",
@@ -57,10 +58,6 @@ const usesPost = (config: GeneralBOMConfig): boolean => {
 
 const usesShelf = (config: GeneralBOMConfig): boolean => {
   return config.supply_fixing_type === "WALL";
-};
-
-const usesEnergyChain = (config: GeneralBOMConfig): boolean => {
-  return config.supply_type === "ENERGY_CHAIN";
 };
 
 const needsAir = (config: GeneralBOMConfig): boolean => {

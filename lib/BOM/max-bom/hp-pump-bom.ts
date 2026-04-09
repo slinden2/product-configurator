@@ -2,6 +2,8 @@ import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 import {
   isOMZ,
+  isSTD,
+  uses15kwOr30kwPump,
   usesHPRoofBar,
   usesOMZPump,
 } from "@/lib/BOM/max-bom/conditions";
@@ -40,6 +42,8 @@ const PART_NUMBERS = {
   HIGH_MEDIUM_SPINNERS_4X150L: "940.13.000",
   HP_ROOF_BAR: "450.50.000",
   CHEMICAL_ROOF_BAR: "450.50.300",
+  STANDARD_BANNER_HP_BAR: "450.50.060", // TODO Add to Excel
+  OMZ_BANNER_HP_BAR: "450.50.072", // TODO Add to Excel
   HIGH_SPINNERS_4X43L: "940.12.000",
   HP_VALVE_ASSY: "450.50.301",
   HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS: "9000.530.030",
@@ -64,8 +68,6 @@ const uses15kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_15kw_pump;
 const uses30kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_30kw_pump;
-const uses15kwOr30kwPump = (config: GeneralBOMConfig): boolean =>
-  config.has_15kw_pump || config.has_30kw_pump;
 
 const usesHPDeviationValveKit = (config: GeneralBOMConfig) => {
   return (
@@ -414,6 +416,18 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: 1,
     _description: "High and medium spinners (4x150l)",
+  },
+  {
+    pn: PART_NUMBERS.STANDARD_BANNER_HP_BAR,
+    conditions: [isSTD, usesHPRoofBar],
+    qty: 1,
+    _description: "Standard banner for HP bar",
+  },
+  {
+    pn: PART_NUMBERS.OMZ_BANNER_HP_BAR,
+    conditions: [isOMZ, usesHPRoofBar],
+    qty: 1,
+    _description: "OMZ banner for HP bar",
   },
   {
     pn: PART_NUMBERS.HP_ROOF_BAR,

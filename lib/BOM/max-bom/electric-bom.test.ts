@@ -38,6 +38,14 @@ const PNS = {
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
+  COUPLING_RELAY_ASSY: "1100.055.008",
+  JUNCTION_BOX_X14_X15: "1100.055.003",
+  JUNCTION_BOX_X16_X17: "1100.055.010",
+  JUNCTION_BOX_X20_X21: "1100.055.001",
+  JUNCTION_BOX_X22_X23: "1100.055.004",
+  JUNCTION_BOX_X24_REM1: "1100.055.002",
+  JUNCTION_BOX_X25_REM2: "1100.055.005",
+  JUNCTION_BOX_ETH_ON_POST: "1100.055.009",
 };
 
 describe("electricBOM — RFID reader", () => {
@@ -187,5 +195,187 @@ describe("electricBOM — external console variants", () => {
     const result = pns(makeConfig({ touch_qty: 2, touch_fixing_type: "POST" }));
     expect(result).toContain(PNS.EXTERNAL_CONSOLE_POST_DUAL_TOUCH);
     expect(result).not.toContain(PNS.EXTERNAL_CONSOLE_WALL_DUAL_TOUCH);
+  });
+});
+
+describe("electricBOM — coupling relay assembly", () => {
+  test("has_15kw_pump=true → coupling relay included", () => {
+    expect(pns(makeConfig({ has_15kw_pump: true }))).toContain(
+      PNS.COUPLING_RELAY_ASSY,
+    );
+  });
+
+  test("has_30kw_pump=true → coupling relay included", () => {
+    expect(pns(makeConfig({ has_30kw_pump: true }))).toContain(
+      PNS.COUPLING_RELAY_ASSY,
+    );
+  });
+
+  test("neither 15kw nor 30kw pump → coupling relay excluded", () => {
+    expect(
+      pns(makeConfig({ has_15kw_pump: false, has_30kw_pump: false })),
+    ).not.toContain(PNS.COUPLING_RELAY_ASSY);
+  });
+});
+
+describe("electricBOM — junction box X20-X21 (always included)", () => {
+  test("default config → X20-X21 included", () => {
+    expect(pns(makeConfig())).toContain(PNS.JUNCTION_BOX_X20_X21);
+  });
+
+  test("OMZ config → X20-X21 still included", () => {
+    expect(
+      pns(makeConfig({ machine_type: "OMZ", has_omz_pump: true })),
+    ).toContain(PNS.JUNCTION_BOX_X20_X21);
+  });
+});
+
+describe("electricBOM — junction box X14-X15 (energy chain)", () => {
+  test("ENERGY_CHAIN → X14-X15 included", () => {
+    expect(pns(makeConfig({ supply_type: "ENERGY_CHAIN" }))).toContain(
+      PNS.JUNCTION_BOX_X14_X15,
+    );
+  });
+
+  test("non-energy-chain → X14-X15 excluded", () => {
+    expect(pns(makeConfig({ supply_type: "STRAIGHT_SHELF" }))).not.toContain(
+      PNS.JUNCTION_BOX_X14_X15,
+    );
+  });
+});
+
+describe("electricBOM — junction box X16-X17 (energy chain + external/dual touch)", () => {
+  test("ENERGY_CHAIN + external touch → X16-X17 included", () => {
+    expect(
+      pns(
+        makeConfig({
+          supply_type: "ENERGY_CHAIN",
+          touch_qty: 1,
+          touch_pos: "EXTERNAL",
+        }),
+      ),
+    ).toContain(PNS.JUNCTION_BOX_X16_X17);
+  });
+
+  test("ENERGY_CHAIN + dual touch → X16-X17 included", () => {
+    expect(
+      pns(makeConfig({ supply_type: "ENERGY_CHAIN", touch_qty: 2 })),
+    ).toContain(PNS.JUNCTION_BOX_X16_X17);
+  });
+
+  test("ENERGY_CHAIN + ON_PANEL touch → X16-X17 excluded", () => {
+    expect(
+      pns(
+        makeConfig({
+          supply_type: "ENERGY_CHAIN",
+          touch_qty: 1,
+          touch_pos: "ON_PANEL",
+        }),
+      ),
+    ).not.toContain(PNS.JUNCTION_BOX_X16_X17);
+  });
+
+  test("non-energy-chain + dual touch → X16-X17 excluded", () => {
+    expect(
+      pns(makeConfig({ supply_type: "STRAIGHT_SHELF", touch_qty: 2 })),
+    ).not.toContain(PNS.JUNCTION_BOX_X16_X17);
+  });
+});
+
+describe("electricBOM — junction box X24-REM1 (STD only)", () => {
+  test("STD machine → X24-REM1 included", () => {
+    expect(pns(makeConfig({ machine_type: "STD" }))).toContain(
+      PNS.JUNCTION_BOX_X24_REM1,
+    );
+  });
+
+  test("OMZ machine → X24-REM1 excluded", () => {
+    expect(pns(makeConfig({ machine_type: "OMZ" }))).not.toContain(
+      PNS.JUNCTION_BOX_X24_REM1,
+    );
+  });
+});
+
+describe("electricBOM — junction boxes X22-X23 & X25-REM2 (usesDualJunctionBoxes)", () => {
+  const assertDualBoxes = (config: ReturnType<typeof makeConfig>) => {
+    const result = pns(config);
+    expect(result).toContain(PNS.JUNCTION_BOX_X22_X23);
+    expect(result).toContain(PNS.JUNCTION_BOX_X25_REM2);
+  };
+
+  const assertNoDualBoxes = (config: ReturnType<typeof makeConfig>) => {
+    const result = pns(config);
+    expect(result).not.toContain(PNS.JUNCTION_BOX_X22_X23);
+    expect(result).not.toContain(PNS.JUNCTION_BOX_X25_REM2);
+  };
+
+  test("external touch → dual junction boxes included", () => {
+    assertDualBoxes(
+      makeConfig({
+        touch_qty: 1,
+        touch_pos: "EXTERNAL",
+        touch_fixing_type: "WALL",
+      }),
+    );
+  });
+
+  test("dual touch → dual junction boxes included", () => {
+    assertDualBoxes(makeConfig({ touch_qty: 2, touch_fixing_type: "WALL" }));
+  });
+
+  test("OMZ pump → dual junction boxes included", () => {
+    assertDualBoxes(makeConfig({ has_omz_pump: true }));
+  });
+
+  test("itecoweb + chemical_pump_pos=WASH_BAY → dual junction boxes included", () => {
+    assertDualBoxes(
+      makeConfig({
+        has_itecoweb: true,
+        has_chemical_pump: true,
+        chemical_pump_pos: "WASH_BAY",
+      }),
+    );
+  });
+
+  test("default config (ON_PANEL, no OMZ, no itecoweb) → dual junction boxes excluded", () => {
+    assertNoDualBoxes(makeConfig());
+  });
+
+  test("itecoweb only (no WASH_BAY pump) → dual junction boxes excluded", () => {
+    assertNoDualBoxes(
+      makeConfig({ has_itecoweb: true, chemical_pump_pos: null }),
+    );
+  });
+});
+
+describe("electricBOM — junction box ETH on post (itecoweb + NOT dual junction boxes)", () => {
+  test("itecoweb + simple config (ON_PANEL, no OMZ pump) → ETH on post included", () => {
+    expect(pns(makeConfig({ has_itecoweb: true }))).toContain(
+      PNS.JUNCTION_BOX_ETH_ON_POST,
+    );
+  });
+
+  test("itecoweb + dual touch → ETH on post excluded", () => {
+    expect(
+      pns(
+        makeConfig({
+          has_itecoweb: true,
+          touch_qty: 2,
+          touch_fixing_type: "WALL",
+        }),
+      ),
+    ).not.toContain(PNS.JUNCTION_BOX_ETH_ON_POST);
+  });
+
+  test("itecoweb + OMZ pump → ETH on post excluded", () => {
+    expect(
+      pns(makeConfig({ has_itecoweb: true, has_omz_pump: true })),
+    ).not.toContain(PNS.JUNCTION_BOX_ETH_ON_POST);
+  });
+
+  test("no itecoweb → ETH on post excluded", () => {
+    expect(pns(makeConfig({ has_itecoweb: false }))).not.toContain(
+      PNS.JUNCTION_BOX_ETH_ON_POST,
+    );
   });
 });

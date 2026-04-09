@@ -1,5 +1,11 @@
 import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import {
+  isSTD,
+  uses15kwOr30kwPump,
+  usesEnergyChain,
+  usesOMZPump,
+} from "./conditions";
 
 const PART_NUMBERS = {
   RFID_READER: "890.10.003",
@@ -17,6 +23,15 @@ const PART_NUMBERS = {
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
   EXT_EMERGENCY_STOP_ASSY: "1100.055.007",
+  COUPLING_RELAY_ASSY: "1100.055.008",
+  // Junction boxes
+  JUNCTION_BOX_X14_X15: "1100.055.003", // TODO Add to Excel
+  JUNCTION_BOX_X16_X17: "1100.055.010", // TODO Add to Excel
+  JUNCTION_BOX_X20_X21: "1100.055.001", // TODO Add to Excel
+  JUNCTION_BOX_X22_X23: "1100.055.004", // TODO Add to Excel
+  JUNCTION_BOX_X24_REM1: "1100.055.002", // TODO Add to Excel
+  JUNCTION_BOX_X25_REM2: "1100.055.005", // TODO Add to Excel
+  JUNCTION_BOX_ETH_ON_POST: "1100.055.009", // TODO Add to Excel
 } as const satisfies Record<string, string>;
 
 const uses1ExternalTouch = (config: GeneralBOMConfig): boolean => {
@@ -30,6 +45,13 @@ const usesOnboardTouch = (config: GeneralBOMConfig): boolean =>
   (config.touch_qty === 1 &&
     (config.touch_pos === "ON_PANEL" || config.touch_pos === "ON_DET_CAB")) ||
   config.touch_qty === 2;
+
+const usesDualJunctionBoxes = (config: GeneralBOMConfig): boolean =>
+  uses1ExternalTouch(config) ||
+  usesDualTouch(config) ||
+  usesOMZPump(config) ||
+  // Detergent level sensor requires X25
+  (config.has_itecoweb && config.chemical_pump_pos === "WASH_BAY");
 
 export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
@@ -140,5 +162,61 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [(config) => config.has_emergency_stop === true],
     qty: 2,
     _description: "External emergency stop assembly",
+  },
+  {
+    pn: PART_NUMBERS.COUPLING_RELAY_ASSY,
+    conditions: [uses15kwOr30kwPump],
+    qty: 1,
+    _description: "Coupling relay assembly",
+  },
+
+  // Junction boxes
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_X14_X15,
+    conditions: [usesEnergyChain],
+    qty: 1,
+    _description: "Junction box X14-X15",
+  },
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_X16_X17,
+    conditions: [
+      usesEnergyChain,
+      (config) => uses1ExternalTouch(config) || usesDualTouch(config),
+    ],
+    qty: 1,
+    _description: "Junction box X16-X17",
+  },
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_X20_X21,
+    conditions: [() => true],
+    qty: 1,
+    _description: "Junction box X20-X21",
+  },
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_X22_X23,
+    conditions: [usesDualJunctionBoxes],
+    qty: 1,
+    _description: "Junction box X22-X23",
+  },
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_X24_REM1,
+    conditions: [isSTD],
+    qty: 1,
+    _description: "Junction box X24 REM1",
+  },
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_X25_REM2,
+    conditions: [usesDualJunctionBoxes],
+    qty: 1,
+    _description: "Junction box X25 REM2",
+  },
+  {
+    pn: PART_NUMBERS.JUNCTION_BOX_ETH_ON_POST,
+    conditions: [
+      (config) => config.has_itecoweb,
+      (config) => !usesDualJunctionBoxes(config),
+    ],
+    qty: 1,
+    _description: "Junction box for ethernet on post",
   },
 ];

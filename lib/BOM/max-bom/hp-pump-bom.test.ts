@@ -52,6 +52,8 @@ const PNS = {
   HIGH_BARS_2X150L_LOW_SPINNERS_2X150: "940.08.000",
   LOW_MEDIUM_SPINNERS_4X150L: "940.13.001",
   HIGH_MEDIUM_SPINNERS_4X150L: "940.13.000",
+  STANDARD_BANNER_HP_BAR: "450.50.060",
+  OMZ_BANNER_HP_BAR: "450.50.072",
   HP_ROOF_BAR: "450.50.000",
   CHEMICAL_ROOF_BAR: "450.50.300",
   HIGH_SPINNERS_4X43L: "940.12.000",
@@ -361,6 +363,58 @@ describe("hpPumpBOM — spinners (30kW)", () => {
       pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
     });
     expect(pns(config)).toContain(PNS.HIGH_MEDIUM_SPINNERS_4X150L);
+  });
+});
+
+describe("hpPumpBOM — HP bar banners", () => {
+  test("STD + HP_ROOF_BAR → STANDARD_BANNER_HP_BAR included", () => {
+    const config = makeConfig({
+      machine_type: "STD",
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+    });
+    expect(pns(config)).toContain(PNS.STANDARD_BANNER_HP_BAR);
+    expect(pns(config)).not.toContain(PNS.OMZ_BANNER_HP_BAR);
+  });
+
+  test("STD + HP_ROOF_BAR_SPINNERS → STANDARD_BANNER_HP_BAR included", () => {
+    const config = makeConfig({
+      machine_type: "STD",
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
+    });
+    expect(pns(config)).toContain(PNS.STANDARD_BANNER_HP_BAR);
+  });
+
+  test("OMZ + HP_ROOF_BAR → OMZ_BANNER_HP_BAR included", () => {
+    const config = makeConfig({
+      machine_type: "OMZ",
+      has_omz_pump: true,
+      pump_outlet_omz: "HP_ROOF_BAR",
+    });
+    expect(pns(config)).toContain(PNS.OMZ_BANNER_HP_BAR);
+    expect(pns(config)).not.toContain(PNS.STANDARD_BANNER_HP_BAR);
+  });
+
+  test("STD without HP bar → STANDARD_BANNER_HP_BAR excluded", () => {
+    expect(pns(makeConfig({ machine_type: "STD" }))).not.toContain(
+      PNS.STANDARD_BANNER_HP_BAR,
+    );
+  });
+
+  test("OMZ without HP bar → OMZ_BANNER_HP_BAR excluded", () => {
+    expect(pns(makeConfig({ machine_type: "OMZ" }))).not.toContain(
+      PNS.OMZ_BANNER_HP_BAR,
+    );
+  });
+
+  test("OMZ + SPINNERS outlet → OMZ_BANNER_HP_BAR excluded", () => {
+    const config = makeConfig({
+      machine_type: "OMZ",
+      has_omz_pump: true,
+      pump_outlet_omz: "SPINNERS",
+    });
+    expect(pns(config)).not.toContain(PNS.OMZ_BANNER_HP_BAR);
   });
 });
 

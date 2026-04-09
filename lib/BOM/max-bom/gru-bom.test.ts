@@ -10,6 +10,7 @@ vi.mock("@/db/queries", () => ({
 import { gruBOM } from "@/lib/BOM/max-bom/gru-bom";
 import { GeneralMaxBOM } from "@/lib/BOM/max-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
+import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const cfg = (brush_qty: number, is_fast = false) =>
   ({ brush_qty, is_fast }) as GeneralBOMConfig;
@@ -55,6 +56,30 @@ describe("gruBOM — SHORT_PHOTOCELL_SUPPORTS", () => {
 
   test("fast config does NOT include short photocell supports", () => {
     expect(included(cfg(2, true)).map((i) => i.pn)).not.toContain("925.00.000");
+  });
+});
+
+const pns = (config: GeneralBOMConfig) =>
+  gruBOM
+    .filter((item) => item.conditions.every((fn) => fn(config)))
+    .map((item) => item.pn);
+
+const PNS = {
+  STANDARD_BANNER: "450.25.018",
+  OMZ_BANNER: "450.25.026",
+};
+
+describe("gruBOM — banners", () => {
+  test("STD machine → STANDARD_BANNER included, OMZ_BANNER excluded", () => {
+    const result = pns(makeConfig({ machine_type: "STD" }));
+    expect(result).toContain(PNS.STANDARD_BANNER);
+    expect(result).not.toContain(PNS.OMZ_BANNER);
+  });
+
+  test("OMZ machine → OMZ_BANNER included, STANDARD_BANNER excluded", () => {
+    const result = pns(makeConfig({ machine_type: "OMZ" }));
+    expect(result).toContain(PNS.OMZ_BANNER);
+    expect(result).not.toContain(PNS.STANDARD_BANNER);
   });
 });
 
