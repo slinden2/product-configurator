@@ -92,6 +92,26 @@ describe("washBaySchema", () => {
       });
       expect(result.success).toBe(false);
     });
+
+    test("should pass when pressure_washer_qty is 3", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        pressure_washer_type: "L21_150BAR",
+        pressure_washer_qty: 3,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("should fail when pressure_washer_qty exceeds max of 3", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        pressure_washer_type: "L21_150BAR",
+        pressure_washer_qty: 4,
+      });
+      expect(result.success).toBe(false);
+    });
   });
 
   describe("Default values", () => {

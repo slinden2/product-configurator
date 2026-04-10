@@ -41,7 +41,7 @@ export const washBaySchema = z
     pressure_washer_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2)
+      .max(3)
       .optional(),
     has_gantry: z.boolean().default(false),
     energy_chain_width: CableChainWidthEnum.optional(),
