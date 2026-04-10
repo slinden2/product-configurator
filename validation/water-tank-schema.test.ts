@@ -22,7 +22,11 @@ describe("waterTankSchema", () => {
       "L2000",
       "L2000_JOLLY",
       "L2500",
+      "L3000",
       "L4500",
+      "L5000",
+      "L7000",
+      "L9000",
     ])("should pass with valid type '%s'", (type) => {
       expect(() =>
         waterTankSchema.parse({

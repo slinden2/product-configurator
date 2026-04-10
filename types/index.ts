@@ -89,7 +89,11 @@ export const WaterTankTypes = [
   "L2000",
   "L2000_JOLLY",
   "L2500",
+  "L3000",
   "L4500",
+  "L5000",
+  "L7000",
+  "L9000",
 ] as const;
 export type WaterTankType = (typeof WaterTankTypes)[number];
 

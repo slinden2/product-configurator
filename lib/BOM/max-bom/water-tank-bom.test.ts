@@ -63,6 +63,43 @@ describe("waterTankBOM — tank type selection", () => {
       expect(result.filter((pn) => tankPNs.includes(pn))).toHaveLength(1);
     }
   });
+
+  test("type=L3000 → 3000L tank", () => {
+    expect(pns(makeTank({ type: "L3000" }))).toContain("");
+    const item = waterTankBOM.find(
+      (i) =>
+        i.conditions.every((fn) => fn(makeTank({ type: "L3000" }))) &&
+        i._description === "Water tank, 3000L",
+    );
+    expect(item).toBeDefined();
+  });
+
+  test("type=L5000 → 5000L tank", () => {
+    const item = waterTankBOM.find(
+      (i) =>
+        i.conditions.every((fn) => fn(makeTank({ type: "L5000" }))) &&
+        i._description === "Water tank, 5000L",
+    );
+    expect(item).toBeDefined();
+  });
+
+  test("type=L7000 → 7000L tank", () => {
+    const item = waterTankBOM.find(
+      (i) =>
+        i.conditions.every((fn) => fn(makeTank({ type: "L7000" }))) &&
+        i._description === "Water tank, 7000L",
+    );
+    expect(item).toBeDefined();
+  });
+
+  test("type=L9000 → 9000L tank", () => {
+    const item = waterTankBOM.find(
+      (i) =>
+        i.conditions.every((fn) => fn(makeTank({ type: "L9000" }))) &&
+        i._description === "Water tank, 9000L",
+    );
+    expect(item).toBeDefined();
+  });
 });
 
 describe("waterTankBOM — standard tank inlets/outlets", () => {

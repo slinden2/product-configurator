@@ -1,9 +1,9 @@
-import { WaterTankTypes, type SelectOption } from "@/types";
+import { z } from "zod";
+import { type SelectOption, WaterTankTypes } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
-import { z } from "zod";
 
 export const WaterTankTypeEnum = z.enum(WaterTankTypes, {
   message: genericRequiredMessage,
@@ -11,7 +11,16 @@ export const WaterTankTypeEnum = z.enum(WaterTankTypes, {
 
 export const waterTankOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterTankTypeEnum,
-  ["2000L", "2000L Jolly", "2500L", "4500L"],
+  [
+    "2000L",
+    "2000L Jolly",
+    "2500L",
+    "3000L",
+    "4500L",
+    "5000L",
+    "7000L",
+    "9000L",
+  ],
 );
 
 export const waterTankSchema = z

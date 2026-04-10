@@ -3,9 +3,13 @@ import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 
 const PART_NUMBERS = {
   WATER_TANK_2000L: "921.00.201",
-  WATER_TANK_JOLLY: "921.00.200",
+  WATER_TANK_JOLLY_2000L: "921.00.200",
   WATER_TANK_2500L: "921.00.250",
+  WATER_TANK_3000L: "", // TODO Add to Excel and BOM
   WATER_TANK_4500L: "921.00.450",
+  WATER_TANK_5000L: "", // TODO Add to Excel and BOM
+  WATER_TANK_7000L: "", // TODO Add to Excel and BOM
+  WATER_TANK_9000L: "", // TODO Add to Excel and BOM
   INLET_WITH_FLOAT: "1100.064.001",
   INLET_WITHOUT_FLOAT: "1100.064.002",
   INLET_WITH_FLOAT_JOLLY: "1100.064.003",
@@ -27,7 +31,7 @@ export const waterTankBOM: MaxBOMItem<WaterTank>[] = [
     _description: "Water tank, 2000L",
   },
   {
-    pn: PART_NUMBERS.WATER_TANK_JOLLY,
+    pn: PART_NUMBERS.WATER_TANK_JOLLY_2000L,
     conditions: [(config) => config.type === "L2000_JOLLY"],
     qty: 1,
     _description: "Water tank, Jolly",
@@ -39,10 +43,34 @@ export const waterTankBOM: MaxBOMItem<WaterTank>[] = [
     _description: "Water tank, 2500L",
   },
   {
+    pn: PART_NUMBERS.WATER_TANK_3000L,
+    conditions: [(config) => config.type === "L3000"],
+    qty: 1,
+    _description: "Water tank, 3000L",
+  },
+  {
     pn: PART_NUMBERS.WATER_TANK_4500L,
     conditions: [(config) => config.type === "L4500"],
     qty: 1,
     _description: "Water tank, 4500L",
+  },
+  {
+    pn: PART_NUMBERS.WATER_TANK_5000L,
+    conditions: [(config) => config.type === "L5000"],
+    qty: 1,
+    _description: "Water tank, 5000L",
+  },
+  {
+    pn: PART_NUMBERS.WATER_TANK_7000L,
+    conditions: [(config) => config.type === "L7000"],
+    qty: 1,
+    _description: "Water tank, 7000L",
+  },
+  {
+    pn: PART_NUMBERS.WATER_TANK_9000L,
+    conditions: [(config) => config.type === "L9000"],
+    qty: 1,
+    _description: "Water tank, 9000L",
   },
   {
     pn: PART_NUMBERS.INLET_WITH_FLOAT,
