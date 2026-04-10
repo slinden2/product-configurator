@@ -61,7 +61,7 @@ test.describe("Configuration form — E2E", () => {
     await selectRadixOption(
       page,
       "Pompa di rilancio",
-      "Pompa di rilancio 1.5kW",
+      "Pompa di rilancio 1.5kW + Q.E.",
       0,
     );
 
@@ -99,7 +99,7 @@ test.describe("Configuration form — E2E", () => {
     await selectRadixOption(
       page,
       "Pompa di rilancio",
-      "Pompa di rilancio 1.5kW",
+      "Pompa di rilancio 1.5kW + Q.E.",
       0,
     );
     await expect(page.getByLabel("Uscite Dosatron")).not.toBeVisible();

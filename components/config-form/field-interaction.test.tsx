@@ -174,7 +174,7 @@ describe("Multi-step field dependency chains", () => {
       const allPumpTriggers = screen.getAllByLabelText("Pompa di rilancio");
       await userEvent.click(allPumpTriggers[0]);
       const options = screen.getAllByRole("option", {
-        name: "Pompa di rilancio 1.5kW",
+        name: "Pompa di rilancio 1.5kW + Q.E.",
       });
       await userEvent.click(options[0]);
 

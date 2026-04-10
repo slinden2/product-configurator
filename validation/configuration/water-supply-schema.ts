@@ -24,8 +24,8 @@ export const WaterPump1Enum = z.enum(Water1Pumps);
 export const waterPump1Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterPump1Enum,
   [
-    "Pompa di rilancio 1.5kW",
-    "Pompa di rilancio 2.2kW",
+    "Pompa di rilancio 1.5kW + Q.E.",
+    "Pompa di rilancio 2.2kW + Q.E.",
     "Pompa inv. 3kW 200l/min",
     "Pompa inv. 3kW 250l/min",
   ],
@@ -35,7 +35,7 @@ export const WaterPump2Enum = z.enum(Water2Pumps);
 
 export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterPump2Enum,
-  ["Pompa di rilancio 1.5kW", "Pompa di rilancio 2.2kW"],
+  ["Pompa di rilancio 1.5kW + Q.E.", "Pompa di rilancio 2.2kW + Q.E."],
 );
 
 export const inverterPumpOutletOpts: SelectOption[] = [
