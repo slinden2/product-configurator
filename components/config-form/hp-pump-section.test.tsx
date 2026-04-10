@@ -149,7 +149,7 @@ describe("HPPumpSection", () => {
         pump_outlet_1_15kw: "CHASSIS_WASH",
         has_chassis_wash_plates: true,
         has_30kw_pump: true,
-        pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+        pump_outlet_1_30kw: "FULL_ARCH",
       });
 
       await userEvent.click(screen.getByLabelText("Pompa 30kW"));

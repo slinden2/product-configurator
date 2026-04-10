@@ -51,7 +51,7 @@ const PNS = {
   LOW_SPINNERS_2X150L: "940.11.000",
   HIGH_BARS_2X150L_LOW_SPINNERS_2X150: "940.08.000",
   LOW_MEDIUM_SPINNERS_4X150L: "940.13.001",
-  HIGH_MEDIUM_SPINNERS_4X150L: "940.13.000",
+  FULL_ARCH: "1100.036.006",
   STANDARD_BANNER_HP_BAR: "450.50.060",
   OMZ_BANNER_HP_BAR: "450.50.072",
   HP_ROOF_BAR: "450.50.000",
@@ -166,7 +166,7 @@ describe("hpPumpBOM — 30kW pneumatic valves", () => {
   test("30kW + one outlet + !has_antifreeze → single valve no antifreeze", () => {
     const config = makeConfig({
       has_30kw_pump: true,
-      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      pump_outlet_1_30kw: "FULL_ARCH",
       has_antifreeze: false,
     });
     expect(pns(config)).toContain(PNS.PNEUMATIC_VALVE_30KW_NO_ANTIFREEZE);
@@ -175,7 +175,7 @@ describe("hpPumpBOM — 30kW pneumatic valves", () => {
   test("30kW + two outlets + has_antifreeze → two valves with antifreeze", () => {
     const config = makeConfig({
       has_30kw_pump: true,
-      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      pump_outlet_1_30kw: "FULL_ARCH",
       pump_outlet_2_30kw: "LOW_MEDIUM_SPINNERS",
       has_antifreeze: true,
     });
@@ -251,7 +251,7 @@ describe("hpPumpBOM — chassis wash plates", () => {
   test("30kW + non-chassis-wash outlet + has_chassis_wash_plates → 30kW plates excluded", () => {
     const config = makeConfig({
       has_30kw_pump: true,
-      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      pump_outlet_1_30kw: "FULL_ARCH",
       has_chassis_wash_plates: true,
     });
     expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_PLATES_30KW);
@@ -357,12 +357,12 @@ describe("hpPumpBOM — spinners (30kW)", () => {
     expect(pns(config)).toContain(PNS.LOW_MEDIUM_SPINNERS_4X150L);
   });
 
-  test("30kW + HIGH_MEDIUM_SPINNERS → high and medium spinners 4x150L", () => {
+  test("30kW + FULL_ARCH → full arch BOM item", () => {
     const config = makeConfig({
       has_30kw_pump: true,
-      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      pump_outlet_1_30kw: "FULL_ARCH",
     });
-    expect(pns(config)).toContain(PNS.HIGH_MEDIUM_SPINNERS_4X150L);
+    expect(pns(config)).toContain(PNS.FULL_ARCH);
   });
 });
 
@@ -508,10 +508,10 @@ describe("hpPumpBOM — hoses for spinners (no shelf extension)", () => {
     expect(qty(config, PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS)).toBe(1);
   });
 
-  test("30kW + HIGH_MEDIUM_SPINNERS + !has_shelf_extension → T-fitting hose (qty=2)", () => {
+  test("30kW + FULL_ARCH + !has_shelf_extension → T-fitting hose (qty=2)", () => {
     const config = makeConfig({
       has_30kw_pump: true,
-      pump_outlet_1_30kw: "HIGH_MEDIUM_SPINNERS",
+      pump_outlet_1_30kw: "FULL_ARCH",
       has_shelf_extension: false,
     });
     expect(pns(config)).toContain(PNS.HOSE_SHELF_TO_T_FITTING_2_SPINNERS);

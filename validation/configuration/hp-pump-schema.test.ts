@@ -97,7 +97,7 @@ describe("hpPumpSchema", () => {
           chassis_wash_sensor_type: "DOUBLE_POST",
         },
       ],
-      [createHpPumpObject(30, true, "HIGH_MEDIUM_SPINNERS", undefined)],
+      [createHpPumpObject(30, true, "FULL_ARCH", undefined)],
       [
         {
           ...createHpPumpObject(

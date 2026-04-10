@@ -36,10 +36,10 @@ const PART_NUMBERS = {
   DUAL_ULTRASONIC_SENSORS_WALL: "1100.052.004",
   MID_HEIGHT_HP_BARS: "1100.036.005",
   FULL_HEIGHT_HP_BARS: "1100.036.000",
+  FULL_ARCH: "1100.036.006", // TODO Add to Excel
   LOW_SPINNERS_2X150L: "940.11.000",
   HIGH_BARS_2X150L_LOW_SPINNERS_2X150: "940.08.000",
   LOW_MEDIUM_SPINNERS_4X150L: "940.13.001",
-  HIGH_MEDIUM_SPINNERS_4X150L: "940.13.000",
   HP_ROOF_BAR: "450.50.000",
   CHEMICAL_ROOF_BAR: "450.50.300",
   STANDARD_BANNER_HP_BAR: "450.50.060", // TODO Add to Excel
@@ -91,7 +91,7 @@ const usesHoseFromShelfToTFitting = (config: GeneralBOMConfig): boolean => {
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-      "HIGH_MEDIUM_SPINNERS",
+      "FULL_ARCH",
     ) ||
     isOneOfOutlets(
       [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
@@ -405,17 +405,17 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Low and medium spinners (4x150l)",
   },
   {
-    pn: PART_NUMBERS.HIGH_MEDIUM_SPINNERS_4X150L,
+    pn: PART_NUMBERS.FULL_ARCH,
     conditions: [
       uses30kwPump,
       (config) =>
         isOneOfOutlets(
           [config.pump_outlet_1_30kw, config.pump_outlet_2_30kw],
-          "HIGH_MEDIUM_SPINNERS",
+          "FULL_ARCH",
         ),
     ],
     qty: 1,
-    _description: "High and medium spinners (4x150l)",
+    _description: "Full arch",
   },
   {
     pn: PART_NUMBERS.STANDARD_BANNER_HP_BAR,

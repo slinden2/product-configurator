@@ -33,7 +33,7 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
     "Lavachassis orizzontale + laterale",
     "2 robottine basse, barre alte",
     "2 robottine basse + 2 medie",
-    "2 robottine alte + 2 medie",
+    "Arco completo",
   ]);
 
 export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, {

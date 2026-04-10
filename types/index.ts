@@ -66,7 +66,7 @@ export const HpPump30kwOutlets = [
   "CHASSIS_WASH_LATERAL_HORIZONTAL",
   "LOW_SPINNERS_HIGH_BARS",
   "LOW_MEDIUM_SPINNERS",
-  "HIGH_MEDIUM_SPINNERS",
+  "FULL_ARCH",
 ] as const;
 export type HpPump30kwOutletType = (typeof HpPump30kwOutlets)[number];
 
