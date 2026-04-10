@@ -72,13 +72,13 @@ describe("LoginForm", () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.type(screen.getByLabelText("Password"), "password123");
       await user.click(screen.getByRole("button", { name: "Accedi" }));
 
       await waitFor(() => {
         expect(mockSignIn).toHaveBeenCalledWith({
-          email: "test@example.com",
+          email: "test@itecosrl.com",
           password: "password123",
         });
         expect(mockPush).toHaveBeenCalledWith("/configurazioni");
@@ -94,7 +94,7 @@ describe("LoginForm", () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.type(screen.getByLabelText("Password"), "wrong");
       await user.click(screen.getByRole("button", { name: "Accedi" }));
 

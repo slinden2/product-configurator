@@ -57,14 +57,14 @@ describe("ForgotPasswordForm", () => {
       const user = userEvent.setup();
       render(<ForgotPasswordForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockForgotPassword).toHaveBeenCalledWith({
-          email: "test@example.com",
+          email: "test@itecosrl.com",
         });
         expect(mockToastSuccess).toHaveBeenCalledWith(
           MSG.toast.passwordResetEmailSent,
@@ -82,7 +82,7 @@ describe("ForgotPasswordForm", () => {
       const user = userEvent.setup();
       render(<ForgotPasswordForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" }),
       );

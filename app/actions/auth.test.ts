@@ -88,7 +88,7 @@ import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
-const mockUser = { id: "user-1", email: "test@example.com" };
+const mockUser = { id: "user-1", email: "test@itecosrl.com" };
 
 // --- Tests ---
 
@@ -129,7 +129,7 @@ describe("signUp", () => {
     });
 
     const result = await signUp({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
       confirmPassword: "password123",
     });
@@ -146,7 +146,7 @@ describe("signUp", () => {
     });
 
     const result = await signUp({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
       confirmPassword: "password123",
     });
@@ -165,7 +165,7 @@ describe("signUp", () => {
     });
 
     const result = await signUp({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
       confirmPassword: "password123",
     });
@@ -206,7 +206,7 @@ describe("signIn", () => {
     mockValues.mockResolvedValue(undefined);
 
     const result = await signIn({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
     });
 
@@ -218,7 +218,7 @@ describe("signIn", () => {
     expect(mockValues).toHaveBeenCalledWith(
       expect.objectContaining({
         id: mockUser.id,
-        email: "test@example.com",
+        email: "test@itecosrl.com",
         role: "SALES",
         last_login_at: expect.any(Date),
       }),
@@ -235,7 +235,7 @@ describe("signIn", () => {
     mockWhere.mockResolvedValue(undefined);
 
     const result = await signIn({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
     });
 
@@ -255,7 +255,7 @@ describe("signIn", () => {
     });
 
     const result = await signIn({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "wrong",
     });
 
@@ -275,7 +275,7 @@ describe("signIn", () => {
     mockFindFirst.mockRejectedValue(new Error("DB connection failed"));
 
     const result = await signIn({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
     });
 
@@ -294,7 +294,7 @@ describe("signIn", () => {
     mockValues.mockRejectedValue(new Error("Insert failed"));
 
     const result = await signIn({
-      email: "test@example.com",
+      email: "test@itecosrl.com",
       password: "password123",
     });
 
@@ -351,12 +351,15 @@ describe("forgotPassword", () => {
   test("returns success and passes correct redirectTo URL", async () => {
     mockResetPasswordForEmail.mockResolvedValue({ error: null });
 
-    const result = await forgotPassword({ email: "test@example.com" });
+    const result = await forgotPassword({ email: "test@itecosrl.com" });
 
     expect(result).toEqual({ success: true });
-    expect(mockResetPasswordForEmail).toHaveBeenCalledWith("test@example.com", {
-      redirectTo: "http://localhost:3000/resetta-password",
-    });
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
+      "test@itecosrl.com",
+      {
+        redirectTo: "http://localhost:3000/resetta-password",
+      },
+    );
   });
 
   test("returns error when Supabase fails", async () => {
@@ -364,7 +367,7 @@ describe("forgotPassword", () => {
       error: { message: "Rate limited" },
     });
 
-    const result = await forgotPassword({ email: "test@example.com" });
+    const result = await forgotPassword({ email: "test@itecosrl.com" });
 
     expect(result).toEqual({
       success: false,

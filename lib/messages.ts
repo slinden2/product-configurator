@@ -15,6 +15,8 @@ export const MSG = {
     missingResetCode: "Codice di reset mancante.",
     genericError: "Errore durante l'autenticazione.",
     invalidData: "Dati di autenticazione non validi.",
+    emailDomainNotAllowed:
+      "Solo indirizzi email @itecosrl.com sono consentiti.",
   },
   config: {
     notFound: "Configurazione non trovata.",

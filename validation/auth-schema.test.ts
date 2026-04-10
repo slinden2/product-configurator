@@ -7,14 +7,22 @@ import {
 import { describe, test, expect } from "vitest";
 
 describe("authSchema", () => {
-  test("should pass with a valid email", () => {
-    expect(() => authSchema.parse({ email: "user@example.com" })).not.toThrow();
+  test("should pass with a valid @itecosrl.com email", () => {
+    expect(() =>
+      authSchema.parse({ email: "user@itecosrl.com" }),
+    ).not.toThrow();
   });
 
-  test("should pass with a subdomain email", () => {
+  test("should fail with a valid email from another domain", () => {
+    expect(() => authSchema.parse({ email: "user@example.com" })).toThrow(
+      "Solo indirizzi email @itecosrl.com sono consentiti.",
+    );
+  });
+
+  test("should fail with a subdomain email outside @itecosrl.com", () => {
     expect(() =>
       authSchema.parse({ email: "user@mail.example.co.uk" }),
-    ).not.toThrow();
+    ).toThrow("Solo indirizzi email @itecosrl.com sono consentiti.");
   });
 
   test("should fail with an invalid email format", () => {
@@ -86,7 +94,7 @@ describe("newPassWordSchema", () => {
 describe("loginSchema", () => {
   test("should pass with valid email and any password", () => {
     expect(() =>
-      loginSchema.parse({ email: "user@example.com", password: "any" }),
+      loginSchema.parse({ email: "user@itecosrl.com", password: "any" }),
     ).not.toThrow();
   });
 
@@ -107,7 +115,7 @@ describe("signupSchema", () => {
   test("should pass with valid email and matching passwords", () => {
     expect(() =>
       signupSchema.parse({
-        email: "user@example.com",
+        email: "user@itecosrl.com",
         password: "mypassword",
         confirmPassword: "mypassword",
       }),
@@ -117,7 +125,7 @@ describe("signupSchema", () => {
   test("should fail when passwords do not match", () => {
     expect(() =>
       signupSchema.parse({
-        email: "user@example.com",
+        email: "user@itecosrl.com",
         password: "mypassword",
         confirmPassword: "wrongpassword",
       }),
@@ -135,7 +143,7 @@ describe("signupSchema", () => {
 
   test("should fail with short password", () => {
     const result = signupSchema.safeParse({
-      email: "user@example.com",
+      email: "user@itecosrl.com",
       password: "123",
       confirmPassword: "123",
     });

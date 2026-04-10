@@ -57,7 +57,7 @@ describe("SignupForm", () => {
       const user = userEvent.setup();
       render(<SignupForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.type(screen.getByLabelText("Password"), "password123");
       await user.type(
         screen.getByLabelText("Conferma password"),
@@ -67,7 +67,7 @@ describe("SignupForm", () => {
 
       await waitFor(() => {
         expect(mockSignUp).toHaveBeenCalledWith({
-          email: "test@example.com",
+          email: "test@itecosrl.com",
           password: "password123",
           confirmPassword: "password123",
         });
@@ -84,7 +84,7 @@ describe("SignupForm", () => {
       const user = userEvent.setup();
       render(<SignupForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.type(screen.getByLabelText("Password"), "password123");
       await user.type(
         screen.getByLabelText("Conferma password"),
@@ -115,7 +115,7 @@ describe("SignupForm", () => {
       const user = userEvent.setup();
       render(<SignupForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.type(screen.getByLabelText("Password"), "password123");
       await user.type(
         screen.getByLabelText("Conferma password"),
@@ -132,7 +132,7 @@ describe("SignupForm", () => {
       const user = userEvent.setup();
       render(<SignupForm />);
 
-      await user.type(screen.getByLabelText("Email"), "test@example.com");
+      await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.type(screen.getByLabelText("Password"), "ab");
       await user.type(screen.getByLabelText("Conferma password"), "ab");
       await user.click(screen.getByRole("button", { name: "Registra" }));

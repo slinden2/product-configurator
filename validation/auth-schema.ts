@@ -1,7 +1,14 @@
 import { z } from "zod";
+import { MSG } from "@/lib/messages";
 
 export const authSchema = z.object({
-  email: z.string().email("Email non valida."),
+  email: z
+    .string()
+    .email("Email non valida.")
+    .refine(
+      (email) => email.endsWith("@itecosrl.com"),
+      MSG.auth.emailDomainNotAllowed,
+    ),
 });
 
 export const newPassWordSchema = z
