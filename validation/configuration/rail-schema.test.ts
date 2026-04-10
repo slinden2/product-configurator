@@ -115,11 +115,11 @@ describe("railSchema", () => {
       expect(() => railSchema.parse(invalidData)).toThrow();
     });
 
-    test("should throw error if rail_guide_qty is above 2", () => {
+    test("should throw error if rail_guide_qty is above 3", () => {
       const invalidData = createRailObject({
         rail_type: RailTypeEnum.enum.WELDED,
         rail_length: 21,
-        rail_guide_qty: 3,
+        rail_guide_qty: 4,
       });
       expect(() => railSchema.parse(invalidData)).toThrow();
     });

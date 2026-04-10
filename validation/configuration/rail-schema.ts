@@ -43,6 +43,10 @@ export const railGuideNum: SelectOption[] = [
     value: 2,
     label: "Due coppie",
   },
+  {
+    value: 3,
+    label: "Tre coppie",
+  },
 ];
 
 export const railSchema = z
@@ -57,7 +61,7 @@ export const railSchema = z
     rail_guide_qty: z.coerce
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2)
+      .max(3)
       .default(0),
     anchor_type: AnchorTypeEnum.optional(),
   })
