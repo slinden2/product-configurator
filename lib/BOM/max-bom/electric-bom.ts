@@ -159,8 +159,8 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.EXT_EMERGENCY_STOP_ASSY,
-    conditions: [(config) => config.has_emergency_stop === true],
-    qty: 2,
+    conditions: [(config) => config.emergency_stop_qty > 0],
+    qty: (config) => config.emergency_stop_qty,
     _description: "External emergency stop assembly",
   },
   {

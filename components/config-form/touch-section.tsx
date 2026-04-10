@@ -119,11 +119,13 @@ const TouchSection = () => {
           </div>
         </div>
         <div className="fs-row">
-          <div className="fs-item">
-            <CheckboxField<ConfigSchema>
-              name="has_emergency_stop"
+          <div className="fs-item w-1/2 md:w-1/3">
+            <SelectField<ConfigSchema>
+              name="emergency_stop_qty"
+              dataType="number"
               label="Fungo di emergenza esterno"
-              description="Comprensivo di due scatole con fungo di emergenza poste sui montanti anteriori"
+              description="Posto sui montanti anteriori"
+              items={selectFieldOptions.emergencyStopQtyOpts}
             />
           </div>
         </div>

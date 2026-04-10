@@ -47,6 +47,7 @@ export function makeGeneralBOMConfig(
     has_card_reader: false,
     card_qty: 0,
     is_fast: false,
+    emergency_stop_qty: 0,
     has_15kw_pump: false,
     has_15kw_pump_softstart: false,
     pump_outlet_1_15kw: null,

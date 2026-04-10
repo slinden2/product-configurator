@@ -9,6 +9,10 @@ import {
 
 export const touchQtyOpts: SelectOption[] = getNumericSelectOptions([1, 2]);
 
+export const emergencyStopQtyOpts: SelectOption[] = getNumericSelectOptions([
+  0, 1, 2,
+]);
+
 export const TouchPosEnum = z.enum(TouchPos, {
   message: genericRequiredMessage,
 });
@@ -117,7 +121,11 @@ const accessoriesSchema = z
       .refine((val) => val % 50 === 0, { message: "Solo multipli di 50" })
       .default(0),
     is_fast: z.boolean().default(false),
-    has_emergency_stop: z.boolean().default(false),
+    emergency_stop_qty: z
+      .union([z.literal(0), z.literal(1), z.literal(2)], {
+        errorMap: () => ({ message: genericRequiredMessage }),
+      })
+      .default(0),
   })
   .superRefine((data, ctx) => {
     if (data.has_itecoweb && data.has_card_reader) {

@@ -77,7 +77,7 @@ export function makeValidConfig(
     has_card_reader: false,
     card_qty: 0,
     is_fast: false,
-    has_emergency_stop: false,
+    emergency_stop_qty: 0,
     ...overrides,
   } as UpdateConfigSchema;
 }

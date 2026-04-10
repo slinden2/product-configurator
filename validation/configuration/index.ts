@@ -29,6 +29,7 @@ import {
   TouchFixingType,
   TouchPosEnum,
   cardQtyOpts,
+  emergencyStopQtyOpts,
   touchFixingTypeOpts,
   touchQtyOpts,
   touchPositionOpts,
@@ -116,6 +117,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   touchPositionOpts,
   touchFixingTypeOpts,
   cardQtyOpts,
+  emergencyStopQtyOpts,
   pressureWasherOpts,
   waterTankOpts,
 };

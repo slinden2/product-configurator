@@ -112,7 +112,7 @@ export const configurations = pgTable("configurations", {
   has_itecoweb: boolean().notNull(),
   has_card_reader: boolean().notNull(),
   is_fast: boolean().notNull(),
-  has_emergency_stop: boolean().notNull().default(false),
+  emergency_stop_qty: integer().notNull().default(0),
   card_qty: integer().notNull(),
   has_15kw_pump: boolean().notNull(),
   has_15kw_pump_softstart: boolean().notNull().default(false),

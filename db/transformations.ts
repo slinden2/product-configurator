@@ -45,7 +45,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_itecoweb: values.has_itecoweb,
     has_card_reader: values.has_card_reader,
     is_fast: values.is_fast,
-    has_emergency_stop: values.has_emergency_stop,
+    emergency_stop_qty: values.emergency_stop_qty,
     card_qty: values.card_qty,
     has_15kw_pump: values.has_15kw_pump,
     has_15kw_pump_softstart: values.has_15kw_pump_softstart,

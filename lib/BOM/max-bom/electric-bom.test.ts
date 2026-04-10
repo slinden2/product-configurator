@@ -38,6 +38,7 @@ const PNS = {
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
   EXTERNAL_CONSOLE_WALL_DUAL_TOUCH: "1100.053.000",
   EXTERNAL_CONSOLE_POST_DUAL_TOUCH: "1100.054.000",
+  EXT_EMERGENCY_STOP_ASSY: "1100.055.007",
   COUPLING_RELAY_ASSY: "1100.055.008",
   JUNCTION_BOX_X14_X15: "1100.055.003",
   JUNCTION_BOX_X16_X17: "1100.055.010",
@@ -377,5 +378,25 @@ describe("electricBOM — junction box ETH on post (itecoweb + NOT dual junction
     expect(pns(makeConfig({ has_itecoweb: false }))).not.toContain(
       PNS.JUNCTION_BOX_ETH_ON_POST,
     );
+  });
+});
+
+describe("electricBOM — external emergency stop assembly", () => {
+  test("emergency_stop_qty=0 → not included", () => {
+    expect(pns(makeConfig({ emergency_stop_qty: 0 }))).not.toContain(
+      PNS.EXT_EMERGENCY_STOP_ASSY,
+    );
+  });
+
+  test("emergency_stop_qty=1 → included with qty 1", () => {
+    const config = makeConfig({ emergency_stop_qty: 1 });
+    expect(pns(config)).toContain(PNS.EXT_EMERGENCY_STOP_ASSY);
+    expect(qty(config, PNS.EXT_EMERGENCY_STOP_ASSY)).toBe(1);
+  });
+
+  test("emergency_stop_qty=2 → included with qty 2", () => {
+    const config = makeConfig({ emergency_stop_qty: 2 });
+    expect(pns(config)).toContain(PNS.EXT_EMERGENCY_STOP_ASSY);
+    expect(qty(config, PNS.EXT_EMERGENCY_STOP_ASSY)).toBe(2);
   });
 });
