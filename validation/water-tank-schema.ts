@@ -34,12 +34,12 @@ export const waterTankSchema = z
     inlet_no_float_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2)
+      .max(1)
       .default(0),
     outlet_w_valve_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
-      .max(2)
+      .max(3)
       .default(0),
     outlet_no_valve_qty: z
       .number({ message: genericRequiredMessage })
@@ -47,6 +47,7 @@ export const waterTankSchema = z
       .max(2)
       .default(0),
     has_blower: z.boolean().default(false),
+    has_electric_float_for_purifier: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     if (data.type === undefined) {
@@ -84,4 +85,5 @@ export const waterTankDefaults: WaterTankSchema = {
   outlet_w_valve_qty: 0,
   outlet_no_valve_qty: 0,
   has_blower: false,
+  has_electric_float_for_purifier: false,
 };

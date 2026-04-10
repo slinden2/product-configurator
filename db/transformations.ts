@@ -111,7 +111,15 @@ export function transformDbNullToUndefined(data: Record<string, unknown>) {
 export function transformWaterTankSchemaToDbData(values: WaterTankSchema) {
   return {
     ...values,
-    type: values.type as "L2000" | "L2000_JOLLY" | "L2500" | "L4500",
+    type: values.type as
+      | "L2000"
+      | "L2000_JOLLY"
+      | "L2500"
+      | "L3000"
+      | "L4500"
+      | "L5000"
+      | "L7000"
+      | "L9000",
   };
 }
 

@@ -19,6 +19,7 @@ const PART_NUMBERS = {
   OUTLET_WITH_VALVE_JOLLY: "1100.064.007",
   OUTLET_WITHOUT_VALVE_JOLLY: "1100.064.008",
   BLOWER: "1100.064.009",
+  ELECTRIC_FLOAT_FOR_PURIFIER: "N/A", // TODO Add part number and add to Excel
 } as const satisfies Record<string, string>;
 
 const usesJolly = (config: WaterTank) => config.type === "L2000_JOLLY";
@@ -149,5 +150,11 @@ export const waterTankBOM: MaxBOMItem<WaterTank>[] = [
     conditions: [(config) => config.has_blower],
     qty: 1,
     _description: "Blower",
+  },
+  {
+    pn: PART_NUMBERS.ELECTRIC_FLOAT_FOR_PURIFIER,
+    conditions: [(config) => config.has_electric_float_for_purifier],
+    qty: 1,
+    _description: "Galleggiante elettrico per depuratore",
   },
 ];

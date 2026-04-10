@@ -21,6 +21,7 @@ export const waterTanks = pgTable("water_tanks", {
   outlet_w_valve_qty: integer().notNull(),
   outlet_no_valve_qty: integer().notNull(),
   has_blower: boolean().notNull(),
+  has_electric_float_for_purifier: boolean().notNull().default(false),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()
     .defaultNow(),

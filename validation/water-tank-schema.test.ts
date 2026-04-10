@@ -86,13 +86,43 @@ describe("waterTankSchema", () => {
     });
   });
 
-  describe("Quantity limits (max 2 per field)", () => {
-    test("should fail when outlet_w_valve_qty exceeds max of 2", () => {
+  describe("Quantity limits", () => {
+    test("should pass when outlet_w_valve_qty is 3 (max)", () => {
       expect(() =>
         waterTankSchema.parse({
           type: "L2000",
           outlet_w_valve_qty: 3,
           outlet_no_valve_qty: 0,
+        }),
+      ).not.toThrow();
+    });
+
+    test("should fail when outlet_w_valve_qty exceeds max of 3", () => {
+      expect(() =>
+        waterTankSchema.parse({
+          type: "L2000",
+          outlet_w_valve_qty: 4,
+          outlet_no_valve_qty: 0,
+        }),
+      ).toThrow();
+    });
+
+    test("should pass when inlet_no_float_qty is 1 (max)", () => {
+      expect(() =>
+        waterTankSchema.parse({
+          type: "L2000",
+          inlet_no_float_qty: 1,
+          outlet_w_valve_qty: 1,
+        }),
+      ).not.toThrow();
+    });
+
+    test("should fail when inlet_no_float_qty exceeds max of 1", () => {
+      expect(() =>
+        waterTankSchema.parse({
+          type: "L2000",
+          inlet_no_float_qty: 2,
+          outlet_w_valve_qty: 1,
         }),
       ).toThrow();
     });
@@ -135,6 +165,26 @@ describe("waterTankSchema", () => {
         outlet_w_valve_qty: 1,
       });
       expect(result.has_blower).toBe(false);
+    });
+  });
+
+  describe("has_electric_float_for_purifier flag", () => {
+    test("should pass with has_electric_float_for_purifier true", () => {
+      expect(() =>
+        waterTankSchema.parse({
+          type: "L2000",
+          outlet_w_valve_qty: 1,
+          has_electric_float_for_purifier: true,
+        }),
+      ).not.toThrow();
+    });
+
+    test("should default has_electric_float_for_purifier to false", () => {
+      const result = waterTankSchema.parse({
+        type: "L2000",
+        outlet_w_valve_qty: 1,
+      });
+      expect(result.has_electric_float_for_purifier).toBe(false);
     });
   });
 });

@@ -19,6 +19,7 @@ function makeTank(overrides: Partial<WaterTank> = {}): WaterTank {
     outlet_w_valve_qty: 1,
     outlet_no_valve_qty: 0,
     has_blower: false,
+    has_electric_float_for_purifier: false,
     created_at: new Date(),
     updated_at: new Date(),
     configuration_id: 1,
@@ -191,6 +192,14 @@ describe("waterTankBOM — blower", () => {
   test("has_blower=true → blower included", () => {
     expect(pns(makeTank({ has_blower: true }))).toContain("1100.064.009");
   });
+});
+
+describe("waterTankBOM — electric float for purifier", () => {
+  // TODO: fill in PN once known and replace test.todo with real assertions
+  test.todo(
+    "has_electric_float_for_purifier=false → not included (PN pending)",
+  );
+  test.todo("has_electric_float_for_purifier=true → included (PN pending)");
 });
 
 describe("waterTankBOM — zero qty items excluded", () => {
