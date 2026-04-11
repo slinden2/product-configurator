@@ -33,10 +33,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
 
     setIsDeleting(true);
     try {
-      const response = await deleteConfigurationAction(
-        configuration.id,
-        user.id,
-      );
+      const response = await deleteConfigurationAction(configuration.id);
       if (!response.success) {
         toast.error(MSG.toast.deleteError);
       } else {
@@ -49,7 +46,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       setIsDeleting(false);
       setIsConfirmDeleteOpen(false);
     }
-  }, [canDelete, configuration.id, user.id]);
+  }, [canDelete, configuration.id]);
 
   const handleDeleteClick = () => {
     if (!canDelete) return;

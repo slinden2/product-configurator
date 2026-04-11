@@ -69,14 +69,14 @@ describe("deleteConfigurationAction", () => {
   });
 
   test("returns success when owner deletes DRAFT config", async () => {
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({ success: true });
     expect(mockDeleteConfiguration).toHaveBeenCalledWith(CONF_ID);
   });
 
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({
       success: false,
       error: MSG.auth.userNotAuthenticated,
@@ -89,7 +89,7 @@ describe("deleteConfigurationAction", () => {
       role: "SALES",
       initials: "OU",
     });
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
   });
 
@@ -99,13 +99,23 @@ describe("deleteConfigurationAction", () => {
       role: "ADMIN",
       initials: "AU",
     });
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
+    expect(result).toEqual({ success: true });
+  });
+
+  test("ENGINEER can delete another user's config", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "engineer-user",
+      role: "ENGINEER",
+      initials: "EN",
+    });
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({ success: true });
   });
 
   test("returns error when configuration not found", async () => {
     mockGetConfiguration.mockResolvedValue(undefined);
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({
       success: false,
       error: MSG.config.notFound,
@@ -114,14 +124,14 @@ describe("deleteConfigurationAction", () => {
 
   test("cannot delete APPROVED config", async () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
   test("cannot delete CLOSED config", async () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "CLOSED" }));
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
@@ -133,13 +143,13 @@ describe("deleteConfigurationAction", () => {
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
   test("revalidates both /configurazioni and / after deletion", async () => {
-    await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    await deleteConfigurationAction(CONF_ID);
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith("/configurazioni");
     expect(revalidatePath).toHaveBeenCalledWith("/");
@@ -147,7 +157,7 @@ describe("deleteConfigurationAction", () => {
 
   test("returns error on db failure", async () => {
     mockDeleteConfiguration.mockRejectedValue(new Error("DB error"));
-    const result = await deleteConfigurationAction(CONF_ID, OWNER_ID);
+    const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
   });

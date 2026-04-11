@@ -22,7 +22,7 @@ const config = {
   server,
   database,
   options: {
-    trustServerCertificate: true,
+    trustServerCertificate: process.env.NODE_ENV !== "production",
   },
 };
 

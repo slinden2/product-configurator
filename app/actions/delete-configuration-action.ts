@@ -12,21 +12,22 @@ import {
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 
-export const deleteConfigurationAction = async (id: number, userId: string) => {
+export const deleteConfigurationAction = async (id: number) => {
   const user = await getUserData();
 
   if (!user) {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
-  if (user.id !== userId && user.role !== "ADMIN") {
-    return { success: false as const, error: MSG.auth.unauthorized };
-  }
-
   const configuration = await getConfiguration(id);
 
   if (!configuration) {
     return { success: false as const, error: MSG.config.notFound };
+  }
+
+  // SALES users can only delete their own configurations
+  if (user.role === "SALES" && user.id !== configuration.user_id) {
+    return { success: false as const, error: MSG.auth.unauthorized };
   }
 
   // Status protection: only allow deletion if user can edit this status

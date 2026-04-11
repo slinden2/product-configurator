@@ -340,14 +340,14 @@ describe("ConfigurationRow", () => {
       expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
     });
 
-    test("confirming delete calls action with config id and user id", async () => {
+    test("confirming delete calls action with config id only", async () => {
       renderRow({ id: 5 }, { id: "user-abc" });
 
       await userEvent.click(screen.getByLabelText("Elimina configurazione"));
       await userEvent.click(screen.getByText("Elimina"));
 
       await waitFor(() => {
-        expect(mockDeleteConfiguration).toHaveBeenCalledWith(5, "user-abc");
+        expect(mockDeleteConfiguration).toHaveBeenCalledWith(5);
       });
     });
 
