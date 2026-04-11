@@ -30,7 +30,11 @@ export async function fillMinimalForm(
   supplyType: "Mensola dritta" | "Catena portacavi" = "Mensola dritta",
 ) {
   // General
-  await page.getByLabel("Nome del cliente").fill(name);
+  // Use getByRole instead of getByLabel: during React hydration there can be a brief
+  // window where both the server-rendered and client-rendered inputs coexist in the DOM.
+  // getByRole only matches elements accessible in the ARIA tree (visible), so it reliably
+  // resolves to exactly 1 element even during that transient overlap.
+  await page.getByRole("textbox", { name: "Nome del cliente" }).fill(name);
 
   // Brush (no brushes)
   await selectRadixOption(page, "Numero di spazzole", "No spazzole");
