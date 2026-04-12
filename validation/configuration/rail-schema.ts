@@ -68,21 +68,21 @@ export const railSchema = z
   .superRefine((data, ctx) => {
     if (data.rail_type === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["rail_type"],
       });
     }
     if (data.rail_length === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["rail_length"],
       });
     }
     if (data.rail_type === "ANCHORED" && data.anchor_type === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["anchor_type"],
       });

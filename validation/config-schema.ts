@@ -32,7 +32,7 @@ export const configSchema = baseSchema
       data.rail_length < 25
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Con la catena portacavi le rotaie devono essere almeno 25 metri.",
         path: ["rail_length"],
@@ -41,7 +41,7 @@ export const configSchema = baseSchema
     // Limit rail length to 7 if is_fast is set
     if (data.is_fast && data.rail_length && data.rail_length > 7) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Per un portale fast le rotaie devono essere da 7 metri.",
         path: ["rail_length"],
       });
@@ -49,7 +49,7 @@ export const configSchema = baseSchema
     // Disallow chemical pump if brush quantity is 0
     if (data.brush_qty === 0 && data.has_shampoo_pump) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
       });
@@ -57,7 +57,7 @@ export const configSchema = baseSchema
     // Disallow acid pump if brush quantity is 2
     if (data.brush_qty === 2 && data.has_acid_pump) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
       });
@@ -65,7 +65,7 @@ export const configSchema = baseSchema
     // Disallow OMZ pump for 2 brush configurations
     if (data.brush_qty === 2 && data.has_omz_pump) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
       });

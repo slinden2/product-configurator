@@ -95,7 +95,7 @@ function validatePumpOutlets<T>(
   if (pumpOutlet1 === undefined && pumpOutlet2 === undefined) {
     errorPaths.forEach((path) => {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Devi selezionare almeno una uscita.",
         path: [path],
       });
@@ -107,7 +107,7 @@ function validatePumpOutlets<T>(
   if (pumpOutlet1 !== undefined && pumpOutlet1 === pumpOutlet2) {
     errorPaths.forEach((path) => {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Le uscite non possono essere uguali.",
         path: [path],
       });
@@ -126,7 +126,7 @@ function validatePumpOutlets<T>(
     ) {
       errorPaths.forEach((path) => {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Non puoi selezionare lavachassis due volte.",
           path: [path],
         });
@@ -146,7 +146,7 @@ function validatePumpOutlets<T>(
     if (!outlet1IsChassis && !outlet2IsChassis) {
       errorPaths.forEach((path) => {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Una delle uscite dev'essere lavachassis.",
           path: [path],
         });
@@ -271,7 +271,7 @@ const hpPumpOmzDiscriminatedUnion = z
         // Check if OMZ pump selected but outlet is not
         if (data.has_omz_pump && data.pump_outlet_omz === undefined) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: genericRequiredMessage,
             path: ["pump_outlet_omz"],
           });
@@ -287,7 +287,7 @@ const hpPumpOmzDiscriminatedUnion = z
               OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS;
           if (!outletAllowsChemBar) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message:
                 "Barra nebulizzazione disponibile solo con barra oscillante.",
               path: ["has_chemical_roof_bar"],
@@ -312,12 +312,12 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
     if (data.has_15kw_pump && data.has_30kw_pump) {
       // Add issue to both checkboxes
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
         path: ["has_15kw_pump"],
       });
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
         path: ["has_30kw_pump"],
       });
@@ -329,7 +329,7 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
       data.chassis_wash_sensor_type === undefined
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Seleziona il tipo di sensore per il lavachassis.",
         path: ["chassis_wash_sensor_type"],
       });

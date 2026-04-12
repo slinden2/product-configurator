@@ -61,7 +61,7 @@ export const waterSupplySchema = z
   .superRefine((data, ctx) => {
     if (data.water_1_pump !== undefined && data.water_1_type === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Se selezioni la pompa di rilancio devi scegliere anche il tipo acqua 1.",
         path: ["water_1_type"],
@@ -70,7 +70,7 @@ export const waterSupplySchema = z
 
     if (data.water_2_pump !== undefined && data.water_2_type === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Se selezioni la seconda pompa devi scegliere anche il tipo acqua 2.",
         path: ["water_2_type"],
@@ -96,12 +96,12 @@ function validateInverterPumpOutlets(
   if (isInverterPumpSelected && numOfSelectedOutlets < 2) {
     // Add issue to both fields for better UX
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Seleziona almeno due uscite totali (Dosatron + Idro).",
       path: ["inv_pump_outlet_dosatron_qty"], // Point to relevant fields
     });
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Seleziona almeno due uscite totali (Dosatron + Idro).",
       path: ["inv_pump_outlet_pw_qty"],
     });
@@ -110,7 +110,7 @@ function validateInverterPumpOutlets(
   // If outlets selected (>0) but no inverter pump
   if (!isInverterPumpSelected && numOfSelectedOutlets > 0) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message:
         "Non puoi selezionare uscite pompa inverter se la pompa inverter non è selezionata.",
       path: ["water_1_pump"],

@@ -50,7 +50,7 @@ const baseTouchSchema = z
   .superRefine((data, ctx) => {
     if (data.touch_qty === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["touch_qty"],
       });
@@ -61,7 +61,7 @@ const baseTouchSchema = z
       // Position is required
       if (data.touch_pos === undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["touch_pos"],
         });
@@ -73,7 +73,7 @@ const baseTouchSchema = z
           data.touch_fixing_type !== undefined
         ) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `${invalidOption} (pos. interna non ha fissaggio)`,
             path: ["touch_fixing_type"],
           });
@@ -84,7 +84,7 @@ const baseTouchSchema = z
           data.touch_fixing_type === undefined
         ) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: genericRequiredMessage,
             path: ["touch_fixing_type"],
           });
@@ -94,7 +94,7 @@ const baseTouchSchema = z
       // Fixing type is required
       if (data.touch_fixing_type === undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["touch_fixing_type"],
         });
@@ -102,7 +102,7 @@ const baseTouchSchema = z
       // Position must NOT be selected
       if (data.touch_pos !== undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `${invalidOption} (pos. non applicabile con 2 pannelli)`,
           path: ["touch_pos"],
         });
@@ -130,12 +130,12 @@ const accessoriesSchema = z
   .superRefine((data, ctx) => {
     if (data.has_itecoweb && data.has_card_reader) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: invalidOption,
         path: ["has_itecoweb"],
       });
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: invalidOption,
         path: ["has_card_reader"],
       });

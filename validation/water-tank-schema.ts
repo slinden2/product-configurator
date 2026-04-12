@@ -52,7 +52,7 @@ export const waterTankSchema = z
   .superRefine((data, ctx) => {
     if (data.type === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["type"],
       });
@@ -63,7 +63,7 @@ export const waterTankSchema = z
         .filter((field) => field.startsWith("outlet"))
         .forEach((outlet) => {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: "Inserisci almeno una uscita.",
             path: [outlet],
           });

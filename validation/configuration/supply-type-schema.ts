@@ -85,7 +85,7 @@ export const supplyTypeSchema = z
   .superRefine((data, ctx) => {
     if (data.supply_type === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["supply_type"],
       });
@@ -93,7 +93,7 @@ export const supplyTypeSchema = z
 
     if (data.supply_side === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["supply_side"],
       });
@@ -104,7 +104,7 @@ export const supplyTypeSchema = z
       data.supply_type !== SupplyTypeEnum.enum.STRAIGHT_SHELF
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["supply_fixing_type"],
       });
@@ -118,7 +118,7 @@ export const supplyTypeSchema = z
         data.has_post_frame
       ) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Telaio disponibile solo con fissaggio a Palo.",
           path: ["has_post_frame"],
         });

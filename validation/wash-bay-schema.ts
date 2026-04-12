@@ -63,7 +63,7 @@ export const washBaySchema = z
       (data.pressure_washer_qty === 0 || data.pressure_washer_qty === undefined)
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["pressure_washer_qty"],
       });
@@ -75,7 +75,7 @@ export const washBaySchema = z
       data.pressure_washer_type === undefined
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["pressure_washer_type"],
       });
@@ -85,14 +85,14 @@ export const washBaySchema = z
     if (data.has_gantry && data.energy_chain_width !== undefined) {
       if (data.ec_signal_cable_qty === undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["ec_signal_cable_qty"],
         });
       }
       if (data.ec_water_1_tube_qty === undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["ec_water_1_tube_qty"],
         });

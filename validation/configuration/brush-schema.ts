@@ -58,7 +58,7 @@ export const brushSchema = z
   .superRefine((data, ctx) => {
     if (data.brush_qty === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["brush_qty"],
       });
@@ -68,7 +68,7 @@ export const brushSchema = z
     if (data.brush_qty && data.brush_qty > 0) {
       if (!data.brush_type) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["brush_type"],
         });
@@ -76,7 +76,7 @@ export const brushSchema = z
 
       if (!data.brush_color) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["brush_color"],
         });

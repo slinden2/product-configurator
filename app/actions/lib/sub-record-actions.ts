@@ -1,6 +1,6 @@
 "use server";
 
-import type { z } from "zod";
+import { z } from "zod";
 import {
   getUserData,
   getConfiguration,
@@ -31,7 +31,7 @@ interface SubRecordOptionsBase {
   entityName: string;
 }
 
-interface InsertSubRecordOptions<TFormSchema extends z.ZodTypeAny>
+interface InsertSubRecordOptions<TFormSchema extends z.ZodType>
   extends SubRecordOptionsBase {
   actionType: "insert";
   formData: unknown;
@@ -43,7 +43,7 @@ interface InsertSubRecordOptions<TFormSchema extends z.ZodTypeAny>
   ) => Promise<QueryResult>;
 }
 
-interface EditSubRecordOptions<TFormSchema extends z.ZodTypeAny>
+interface EditSubRecordOptions<TFormSchema extends z.ZodType>
   extends SubRecordOptionsBase {
   actionType: "edit";
   recordId: number;
@@ -67,7 +67,7 @@ interface DeleteSubRecordOptions extends SubRecordOptionsBase {
   ) => Promise<QueryResult>;
 }
 
-type SubRecordOptions<TFormSchema extends z.ZodTypeAny> =
+type SubRecordOptions<TFormSchema extends z.ZodType> =
   | InsertSubRecordOptions<TFormSchema>
   | EditSubRecordOptions<TFormSchema>
   | DeleteSubRecordOptions;
@@ -78,7 +78,7 @@ type SubRecordOptions<TFormSchema extends z.ZodTypeAny> =
  * error handling, and cache revalidation.
  */
 export async function handleSubRecordAction<
-  TFormSchema extends z.ZodTypeAny = z.ZodTypeAny,
+  TFormSchema extends z.ZodType = z.ZodType,
 >(options: SubRecordOptions<TFormSchema>): Promise<SubRecordActionResult> {
   const { actionType, parentId, revalidatePathStr, entityName } = options;
 
@@ -87,7 +87,10 @@ export async function handleSubRecordAction<
   if (actionType === "insert" || actionType === "edit") {
     const validation = options.schema.safeParse(options.formData);
     if (!validation.success) {
-      console.error(`Invalid ${entityName} data:`, validation.error.flatten());
+      console.error(
+        `Invalid ${entityName} data:`,
+        z.treeifyError(validation.error),
+      );
       return {
         success: false as const,
         error: validation.error?.message || MSG.entity.invalidData(entityName),

@@ -48,14 +48,14 @@ export const chemPumpSchema = z
     if (data.has_chemical_pump) {
       if (data.chemical_qty === undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["chemical_qty"],
         });
       }
       if (data.chemical_pump_pos === undefined) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: genericRequiredMessage,
           path: ["chemical_pump_pos"],
         });
@@ -64,7 +64,7 @@ export const chemPumpSchema = z
 
     if (data.has_acid_pump && data.acid_pump_pos === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: genericRequiredMessage,
         path: ["acid_pump_pos"],
       });
@@ -78,7 +78,7 @@ export const chemPumpSchema = z
     ) {
       for (const field of ["chemical_pump_pos", "acid_pump_pos"] as const) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message:
             "A bordo impianto si possono montare solo due pompe di prelavaggio.",
           path: [field],
