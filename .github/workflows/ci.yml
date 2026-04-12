@@ -58,16 +58,19 @@ jobs:
       - run: npm ci
       - run: npm run test:run
 
-  # Fires the Vercel Deploy Hook only after all checks pass.
-  # Requires the VERCEL_DEPLOY_HOOK_URL secret to be set in repo settings.
-  # Vercel must have its build command (Build & Deployment settings) set to `exit 0`
-  # so git pushes alone no longer trigger deploys — this job becomes the sole deploy trigger.
+  # Deploys to Vercel production only after all checks pass.
+  # Requires three secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID.
+  # Vercel's git integration must be disconnected so git pushes no longer auto-deploy.
   deploy:
     needs: [lint, format, type-check, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Vercel deploy
-        run: curl -fsSL -X POST "$VERCEL_DEPLOY_HOOK_URL"
+      - uses: actions/checkout@v4
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      - name: Deploy to production
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
