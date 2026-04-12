@@ -41,7 +41,7 @@ const baseTouchSchema = z
   .object({
     touch_qty: z
       .union([z.literal(1), z.literal(2)], {
-        errorMap: () => ({ message: genericRequiredMessage }), // Error if not 1 or 2 after selection
+        error: genericRequiredMessage, // Error if not 1 or 2 after selection
       })
       .optional(), // Optional for initial undefined state
     touch_pos: TouchPosEnum.optional(),
@@ -115,7 +115,7 @@ const accessoriesSchema = z
     has_itecoweb: z.boolean().default(false),
     has_card_reader: z.boolean().default(false),
     card_qty: z
-      .number({ invalid_type_error: "Quantità invalida" })
+      .number({ error: "Quantità invalida" })
       .min(0)
       .max(300)
       .refine((val) => val % 50 === 0, { message: "Solo multipli di 50" })
@@ -123,7 +123,7 @@ const accessoriesSchema = z
     is_fast: z.boolean().default(false),
     emergency_stop_qty: z
       .union([z.literal(0), z.literal(1), z.literal(2)], {
-        errorMap: () => ({ message: genericRequiredMessage }),
+        error: genericRequiredMessage,
       })
       .default(0),
   })

@@ -40,7 +40,7 @@ export const brushNums: SelectOption[] = [
 export const brushSchema = z
   .object({
     brush_qty: z
-      .number({ invalid_type_error: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .refine((val) => val === 0 || val === 2 || val === 3, {
         message: "Numero di spazzole deve essere 0, 2 o 3.",
       })

@@ -4,11 +4,10 @@ import type { SelectOption } from "@/types";
 export const genericRequiredMessage = "Scelta obbligatoria";
 export const invalidOption = "Opzione invalida";
 
-export function generateSelectOptionsFromZodEnum<T extends string>(
-  enumObject: z.ZodEnum<[T, ...T[]]>,
-  labels: string[],
-): SelectOption[] {
-  return enumObject._def.values.map((value: T, i) => ({
+export function generateSelectOptionsFromZodEnum<
+  T extends Record<string, string>,
+>(enumObject: z.ZodEnum<T>, labels: string[]): SelectOption[] {
+  return enumObject.options.map((value, i) => ({
     value,
     label: labels[i],
   }));

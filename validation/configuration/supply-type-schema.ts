@@ -33,7 +33,7 @@ export const cableChainWidths: SelectOption[] =
   ]);
 
 export const SupplyFixingTypeEnum = z.enum(SupplyFixTypes, {
-  errorMap: () => ({ message: genericRequiredMessage }),
+  message: genericRequiredMessage,
 });
 
 export const supplyFixingTypes: SelectOption[] =

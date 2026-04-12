@@ -27,86 +27,62 @@ export const chemicalNum: SelectOption[] = [
   },
 ];
 
-const detergentPumpDiscriminatedUnion = z.discriminatedUnion(
-  "has_chemical_pump",
-  [
-    z.object({
-      has_chemical_pump: z.literal(false),
-      chemical_qty: z.undefined(),
-      chemical_pump_pos: z.undefined(),
-      has_foam: z.literal(false),
-    }),
-    z.object({
-      has_chemical_pump: z.literal(true),
-      chemical_qty: z
-        .number({
-          invalid_type_error: "Quantità invalida",
-          required_error: genericRequiredMessage,
-        })
-        .refine(
-          (value) => chemicalNum.map((item) => item.value).includes(value),
-          {
-            message: "Numero di pompe di prelavaggio deve essere 1 o 2.",
-          },
-        ),
-      chemical_pump_pos: ChemicalPumpPosEnum,
-      has_foam: z.boolean().default(false),
-    }),
-  ],
-);
-
-const detergentPumpSchema = z
-  .object({
-    has_chemical_pump: z.boolean().default(false),
-    has_foam: z.boolean().default(false),
-  })
-  .passthrough()
-  .pipe(detergentPumpDiscriminatedUnion);
-
-const acidPumpDiscriminatedUnion = z.discriminatedUnion("has_acid_pump", [
-  z.object({
-    has_acid_pump: z.literal(false),
-    acid_pump_pos: z.undefined(),
-  }),
-  z.object({
-    has_acid_pump: z.literal(true),
-    acid_pump_pos: ChemicalPumpPosEnum,
-  }),
-]);
-
-const acidPumpSchema = z
-  .object({
-    has_acid_pump: z.boolean().default(false),
-  })
-  .passthrough()
-  .pipe(acidPumpDiscriminatedUnion);
-
 export const chemPumpSchema = z
   .object({
     has_shampoo_pump: z.boolean().default(false),
     has_wax_pump: z.boolean().default(false),
+    has_chemical_pump: z.boolean().default(false),
+    chemical_qty: z
+      .number({ error: genericRequiredMessage })
+      .refine(
+        (value) => chemicalNum.map((item) => item.value).includes(value),
+        { message: "Numero di pompe di prelavaggio deve essere 1 o 2." },
+      )
+      .optional(),
+    chemical_pump_pos: ChemicalPumpPosEnum.optional(),
+    has_foam: z.boolean().default(false),
+    has_acid_pump: z.boolean().default(false),
+    acid_pump_pos: ChemicalPumpPosEnum.optional(),
   })
-  .and(detergentPumpSchema)
-  .and(acidPumpSchema)
   .superRefine((data, ctx) => {
+    if (data.has_chemical_pump) {
+      if (data.chemical_qty === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: genericRequiredMessage,
+          path: ["chemical_qty"],
+        });
+      }
+      if (data.chemical_pump_pos === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: genericRequiredMessage,
+          path: ["chemical_pump_pos"],
+        });
+      }
+    }
+
+    if (data.has_acid_pump && data.acid_pump_pos === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: genericRequiredMessage,
+        path: ["acid_pump_pos"],
+      });
+    }
+
     if (
-      data.chemical_qty &&
       data.chemical_qty === 2 &&
       data.chemical_pump_pos === ChemicalPumpPosEnum.enum.ONBOARD &&
       data.has_acid_pump &&
       data.acid_pump_pos === ChemicalPumpPosEnum.enum.ONBOARD
     ) {
-      const fieldNames: Array<"chemical_pump_pos" | "acid_pump_pos"> = [
-        "chemical_pump_pos",
-        "acid_pump_pos",
-      ];
-      fieldNames.forEach((field) => {
+      for (const field of ["chemical_pump_pos", "acid_pump_pos"] as const) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
             "A bordo impianto si possono montare solo due pompe di prelavaggio.",
           path: [field],
         });
-      });
+      }
     }
   });

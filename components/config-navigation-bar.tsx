@@ -40,7 +40,7 @@ export default function ConfigNavigationBar({
             href={item.path(confId)}
             className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${
               activePage === item.key
-                ? "bg-background text-foreground shadow-sm font-medium"
+                ? "bg-background text-foreground shadow-xs font-medium"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >

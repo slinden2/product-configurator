@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import {
   configDefaults,
+  type ConfigInputSchema,
   type ConfigSchema,
   configSchema,
   type UpdateConfigSchema,
@@ -67,7 +68,7 @@ const ConfigForm = ({
     (!isNewConfiguration &&
       (!status || !userRole || !isEditable(status, userRole)));
 
-  const form = useForm<UpdateConfigSchema>({
+  const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
     resolver: zodResolver(configSchema),
     defaultValues: configuration
       ? Object.assign({}, configDefaults, configuration)
@@ -127,7 +128,7 @@ const ConfigForm = ({
     }
   }
 
-  function onInvalid(errors: FieldErrors<UpdateConfigSchema>) {
+  function onInvalid(errors: FieldErrors<ConfigInputSchema>) {
     toast.error(MSG.toast.validationErrors);
     const firstErrorKey = Object.keys(errors)[0];
     if (firstErrorKey) {

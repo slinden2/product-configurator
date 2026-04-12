@@ -227,7 +227,7 @@ export async function addEngineeringBomItemAction(
   if (!validation.success) {
     return {
       success: false as const,
-      error: validation.error.errors.map((e) => e.message).join(", "),
+      error: validation.error.issues.map((e) => e.message).join(", "),
     };
   }
 

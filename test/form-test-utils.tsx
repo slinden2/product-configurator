@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import {
+  type ConfigInputSchema,
   type ConfigSchema,
   configDefaults,
   configSchema,
@@ -92,12 +93,12 @@ export function renderWithConfigFormProvider(
   overrides: Partial<ConfigSchema> = {},
   children: React.ReactNode,
 ) {
-  let getValues: () => ConfigSchema;
+  let getValues: () => ConfigInputSchema;
 
   const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
+    const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
       resolver: zodResolver(configSchema),
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
+      defaultValues: { ...configDefaults, ...overrides } as ConfigInputSchema,
     });
     getValues = form.getValues;
     return (

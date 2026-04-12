@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Form } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcw, Save, Trash2 } from "lucide-react";
 import {
@@ -34,13 +34,16 @@ interface ActionResult {
 }
 
 // --- Generic Props Interface ---
-interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
+interface SubRecordFormProps<
+  TData extends FieldValues,
+  TFormSchema extends z.ZodType<TData>,
+> {
   parentId: number; // ID of the parent (e.g., confId)
   parentStatus: ConfigurationStatusType;
   userRole?: Role;
   schema: TFormSchema; // Zod schema for validation
-  entityDefaults: z.infer<TFormSchema>; // Default values for new entity
-  entityData?: z.infer<TFormSchema> & { id: number }; // Optional existing data (must have id)
+  entityDefaults: TData; // Default values for new entity
+  entityData?: TData & { id: number }; // Optional existing data (must have id)
   entityName: "Serbatoio" | "Pista"; // Name for UI text (e.g., "Serbatoio")
   entityIndex?: number; // Optional index for titles
   onDelete?: (id: number) => void; // Callback after delete
@@ -49,14 +52,11 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
   // Server Actions
-  insertAction: (
-    parentId: number,
-    values: z.infer<TFormSchema>,
-  ) => Promise<ActionResult>;
+  insertAction: (parentId: number, values: TData) => Promise<ActionResult>;
   editAction: (
     parentId: number,
     id: number,
-    values: z.infer<TFormSchema>,
+    values: TData,
   ) => Promise<ActionResult>;
   deleteAction: (parentId: number, id: number) => Promise<ActionResult>;
   hasEngineeringBom?: boolean;
@@ -64,8 +64,10 @@ interface SubRecordFormProps<TFormSchema extends z.ZodTypeAny> {
   FieldsComponent: React.ComponentType;
 }
 
-// Use ZodTypeAny for the generic constraint
-const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
+const SubRecordForm = <
+  TData extends FieldValues,
+  TFormSchema extends z.ZodType<TData>,
+>({
   parentId,
   parentStatus,
   userRole,
@@ -84,9 +86,8 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   deleteAction,
   hasEngineeringBom,
   FieldsComponent,
-}: SubRecordFormProps<TFormSchema>) => {
-  // Infer the TS type from the Zod schema
-  type FormData = z.infer<TFormSchema>;
+}: SubRecordFormProps<TData, TFormSchema>) => {
+  type FormData = TData;
 
   // --- State & Form Hook ---
   const [isLoading, setIsLoading] = useState<"submit" | "delete" | false>(
@@ -100,8 +101,10 @@ const SubRecordForm = <TFormSchema extends z.ZodTypeAny>({
   const formIsDisabled =
     !!isLoading || !userRole || !isEditable(parentStatus, userRole);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(schema),
+  // Zod v4 defaults Input=unknown in ZodType<O>; cast to ZodType<TData, FieldValues> so
+  // zodResolver's overload resolves correctly. All Zod object schemas satisfy this at runtime.
+  const form = useForm<FieldValues, unknown, TData>({
+    resolver: zodResolver(schema as z.ZodType<TData, FieldValues>),
     defaultValues: entityData
       ? { ...entityDefaults, ...entityData }
       : entityDefaults,

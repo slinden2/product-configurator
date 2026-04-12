@@ -73,6 +73,7 @@ export const configSchema = baseSchema
   });
 
 export type ConfigSchema = z.infer<typeof configSchema>;
+export type ConfigInputSchema = z.input<typeof configSchema>;
 
 export const updateConfigSchema = configSchema.and(
   z.object({ user_id: z.string() }),
