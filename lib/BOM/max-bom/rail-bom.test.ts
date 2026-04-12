@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 // Mock @/db to prevent DATABASE_URL check on module load
 vi.mock("@/db", () => ({
@@ -9,8 +9,8 @@ vi.mock("@/db/queries", () => ({
 }));
 
 import {
-  calculate3mRailQty,
   calculate1mRailQty,
+  calculate3mRailQty,
   calculateAnchorQty,
   calculateResinQty,
   railBOM,

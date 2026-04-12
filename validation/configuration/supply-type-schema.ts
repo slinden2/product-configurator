@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   EnergyChainWidths,
   type SelectOption,
@@ -9,7 +10,6 @@ import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
-import { z } from "zod";
 
 export const SupplyTypeEnum = z.enum(SupplyTypes, {
   message: genericRequiredMessage,

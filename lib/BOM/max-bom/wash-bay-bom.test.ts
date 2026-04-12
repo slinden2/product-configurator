@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 // Mock @/db to prevent DATABASE_URL check on module load
 vi.mock("@/db", () => ({
@@ -8,14 +8,14 @@ vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
 }));
 
+import type { WashBay } from "@/db/schemas";
+import type { WithSupplyData } from "@/lib/BOM";
 import {
   calculateLinePostAssyQty,
   calculateLinePostAssyQtyWithPanels,
   calculateSidePanelQty,
   washBayBOM,
 } from "@/lib/BOM/max-bom/wash-bay-bom";
-import type { WashBay } from "@/db/schemas";
-import type { WithSupplyData } from "@/lib/BOM";
 
 type WashBayConfig = WashBay & WithSupplyData;
 

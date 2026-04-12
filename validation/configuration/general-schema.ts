@@ -1,5 +1,5 @@
-import { MachineTypes } from "@/types";
 import { z } from "zod";
+import { MachineTypes } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,

@@ -1,17 +1,16 @@
-import { updateConfigSchema } from "@/validation/config-schema";
+import { notFound, redirect } from "next/navigation";
+import ConfigNavigationBar from "@/components/config-navigation-bar";
+import FormContainer from "@/components/form-container";
+import StatusForm from "@/components/status-form";
 import {
   getConfigurationWithTanksAndBays,
   getUserData,
   hasEngineeringBom,
 } from "@/db/queries";
-import FormContainer from "@/components/form-container";
-import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 import { transformDbNullToUndefined } from "@/db/transformations";
+import { updateConfigSchema } from "@/validation/config-schema";
 import { updateWashBaySchema } from "@/validation/wash-bay-schema";
-import StatusForm from "@/components/status-form";
-import ConfigNavigationBar from "@/components/config-navigation-bar";
-import { notFound } from "next/navigation";
-import { redirect } from "next/navigation";
+import { updateWaterTankSchema } from "@/validation/water-tank-schema";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;

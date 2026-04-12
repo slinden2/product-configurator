@@ -1,17 +1,19 @@
 "use client";
 
-import ConfigForm from "@/components/config-form";
-import type { UpdateConfigSchema } from "@/validation/config-schema";
-import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
+import { PlusCircle } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import WaterTankForm from "./water-tank-form";
-import { Button } from "./ui/button";
-import { PlusCircle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
-import WashBayForm from "./wash-bay-form";
-import useMediaQuery from "@/hooks/use-media-query";
+import { isEditable } from "@/app/actions/lib/auth-checks";
+import ConfigForm from "@/components/config-form";
+import {
+  ResponsiveModal,
+  ResponsiveModalClose,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "@/components/ui/responsive-modal";
 import {
   Select,
   SelectContent,
@@ -19,17 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import useMediaQuery from "@/hooks/use-media-query";
 import type { ConfigurationStatusType, Role } from "@/types";
-import { isEditable } from "@/app/actions/lib/auth-checks";
-import {
-  ResponsiveModal,
-  ResponsiveModalContent,
-  ResponsiveModalHeader,
-  ResponsiveModalFooter,
-  ResponsiveModalTitle,
-  ResponsiveModalDescription,
-  ResponsiveModalClose,
-} from "@/components/ui/responsive-modal";
+import type { UpdateConfigSchema } from "@/validation/config-schema";
+import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
+import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
+import { Button } from "./ui/button";
+import WashBayForm from "./wash-bay-form";
+import WaterTankForm from "./water-tank-form";
 
 interface ConfigurationFormProps {
   confId?: number;

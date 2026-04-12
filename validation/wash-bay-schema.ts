@@ -1,10 +1,10 @@
+import { z } from "zod";
 import { PressureWashers, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
 import { CableChainWidthEnum } from "@/validation/configuration/supply-type-schema";
-import { z } from "zod";
 
 export const PressureWasherTypeEnum = z.enum(PressureWashers, {
   message: genericRequiredMessage,

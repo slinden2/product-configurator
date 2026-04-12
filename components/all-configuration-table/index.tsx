@@ -1,3 +1,7 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -6,11 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { type AllConfigurations, getUserData } from "@/db/queries";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 
 interface AllConfigurationsTableProps {
   configurations: AllConfigurations;

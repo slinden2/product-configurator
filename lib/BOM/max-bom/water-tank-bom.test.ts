@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 vi.mock("@/db", () => ({
   db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
@@ -7,8 +7,8 @@ vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
 }));
 
-import { waterTankBOM } from "@/lib/BOM/max-bom/water-tank-bom";
 import type { WaterTank } from "@/db/schemas";
+import { waterTankBOM } from "@/lib/BOM/max-bom/water-tank-bom";
 
 function makeTank(overrides: Partial<WaterTank> = {}): WaterTank {
   return {

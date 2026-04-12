@@ -1,14 +1,19 @@
 "use client";
 
-import type { ConfigurationStatusType, Role } from "@/types";
-import {
-  configStatusOpts,
-  configStatusSchema,
-  type ConfigStatusSchema,
-} from "@/validation/config-status-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
+import { MSG } from "@/lib/messages";
+import { cn } from "@/lib/utils";
+import type { ConfigurationStatusType, Role } from "@/types";
+import {
+  type ConfigStatusSchema,
+  configStatusOpts,
+  configStatusSchema,
+} from "@/validation/config-status-schema";
 import { Form, FormField, FormItem, FormLabel } from "./ui/form";
 import {
   Select,
@@ -17,11 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
-import { MSG } from "@/lib/messages";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 interface StatusFormProps {
   confId: number;

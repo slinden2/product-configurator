@@ -1,10 +1,10 @@
 "use client";
 
+import { LogOut } from "lucide-react";
+import React from "react";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { LogOut } from "lucide-react";
-import React from "react";
 
 const Logout = () => {
   const [loading, setLoading] = React.useState(false);

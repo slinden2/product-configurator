@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
-import { describe, test, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
-import { useForm, FormProvider } from "react-hook-form";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { cleanup, render, screen } from "@testing-library/react";
+import { FormProvider, useForm } from "react-hook-form";
+import { afterEach, describe, expect, test } from "vitest";
 import SupplySection from "@/components/config-form/supply-section";
+import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 
 afterEach(cleanup);
 

@@ -1,9 +1,9 @@
-import Fieldset from "@/components/fieldset";
-import CheckboxField from "@/components/checkbox-field";
-import SelectField from "@/components/select-field";
-import { selectFieldOptions } from "@/validation/configuration";
 import { useFormContext, useWatch } from "react-hook-form";
+import CheckboxField from "@/components/checkbox-field";
+import Fieldset from "@/components/fieldset";
+import SelectField from "@/components/select-field";
 import type { ConfigSchema } from "@/validation/config-schema";
+import { selectFieldOptions } from "@/validation/configuration";
 
 const ChemPumpSection = () => {
   const { control } = useFormContext<ConfigSchema>();

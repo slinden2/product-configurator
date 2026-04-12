@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import type React from "react";
-import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type React from "react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // --- Mock functions (before vi.mock) ---
 
@@ -62,12 +63,11 @@ vi.mock("next/link", () => ({
 
 // --- Imports (after mocks) ---
 
-import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 import { toast } from "sonner";
+import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import type { ConfigurationStatusType } from "@/types";
-import type { Role } from "@/types";
+import type { ConfigurationStatusType, Role } from "@/types";
 
 // --- Helpers ---
 

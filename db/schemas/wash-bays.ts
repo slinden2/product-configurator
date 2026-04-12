@@ -1,5 +1,3 @@
-import { configurations } from "@/db/schemas/configurations";
-import { EnergyChainWidths, PressureWashers } from "@/types";
 import {
   boolean,
   integer,
@@ -7,6 +5,8 @@ import {
   pgTable,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { configurations } from "@/db/schemas/configurations";
+import { EnergyChainWidths, PressureWashers } from "@/types";
 
 export const energyChainWidthEnum = pgEnum(
   "energy_chain_width",

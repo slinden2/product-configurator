@@ -1,16 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { forgotPassword } from "@/app/actions/auth";
+import InputField from "@/components/input-field";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import InputField from "@/components/input-field";
-import { type AuthSchema, authSchema } from "@/validation/auth-schema";
-import { useRouter } from "next/navigation";
-import { forgotPassword } from "@/app/actions/auth";
-import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
+import { type AuthSchema, authSchema } from "@/validation/auth-schema";
 
 const ForgotPasswordForm = () => {
   const form = useForm<AuthSchema>({

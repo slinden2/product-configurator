@@ -1,8 +1,8 @@
+import { describe, expect, test } from "vitest";
 import {
   ChemicalPumpPosEnum,
   chemPumpSchema,
 } from "@/validation/configuration/chem-pump-schema";
-import { describe, test, expect } from "vitest";
 
 // Utility function to create test data for chemPumpSchema
 function createChemPumpObject({

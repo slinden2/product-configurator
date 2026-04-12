@@ -1,17 +1,17 @@
 "use client";
 
+import { Edit, ScrollText, Trash2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { deleteConfigurationAction } from "@/app/actions/delete-configuration-action";
+import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import IconButton from "@/components/all-configuration-table/icon-button";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { AllConfigurations, UserData } from "@/db/queries";
-import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import { Edit, ScrollText, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
 import { MSG } from "@/lib/messages";
-import { toast } from "sonner";
-import { isEditable } from "@/app/actions/lib/auth-checks";
+import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 
 interface ConfigurationRowProps {
   configuration: NonNullable<AllConfigurations> extends Array<infer T>

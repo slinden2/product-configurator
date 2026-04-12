@@ -1,10 +1,10 @@
+import { describe, expect, test } from "vitest";
 import { genericRequiredMessage, invalidOption } from "@/validation/common";
 import {
   TouchFixingType,
   TouchPosEnum,
   touchSchema,
 } from "@/validation/configuration/touch-schema";
-import { describe, test, expect } from "vitest";
 
 // Helper function to create test data objects
 function createTouchData({

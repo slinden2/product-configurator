@@ -1,6 +1,6 @@
-import type { Configuration, EngineeringBomItem } from "@/db/schemas";
-import { getEngineeringBomItems, hasEngineeringBom } from "@/db/queries";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { getEngineeringBomItems, hasEngineeringBom } from "@/db/queries";
+import type { Configuration, EngineeringBomItem } from "@/db/schemas";
 import {
   BOM,
   type BOMItemWithCost,

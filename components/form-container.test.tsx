@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
-import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
+import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
 
 // --- Mocks (before imports) ---
 

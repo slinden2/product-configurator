@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 // Must be mocked before BOM is imported — prevents DATABASE_URL check
 vi.mock("@/db", () => ({

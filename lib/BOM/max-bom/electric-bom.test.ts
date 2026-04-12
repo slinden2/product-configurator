@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 vi.mock("@/db", () => ({
   db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
@@ -7,8 +7,8 @@ vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
 }));
 
-import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
+import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
 import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const pns = (config: GeneralBOMConfig) =>

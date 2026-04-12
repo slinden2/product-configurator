@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 vi.mock("@/db", () => ({
   db: { query: { partNumbers: { findMany: vi.fn().mockResolvedValue([]) } } },
@@ -7,8 +7,8 @@ vi.mock("@/db/queries", () => ({
   getPartNumbersByArray: vi.fn().mockResolvedValue([]),
 }));
 
-import { fastBOM } from "@/lib/BOM/max-bom/fast-bom";
 import type { GeneralBOMConfig } from "@/lib/BOM";
+import { fastBOM } from "@/lib/BOM/max-bom/fast-bom";
 
 const cfg = (is_fast: boolean, brush_qty: number) =>
   ({ is_fast, brush_qty }) as GeneralBOMConfig;

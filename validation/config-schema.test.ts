@@ -1,5 +1,5 @@
+import { describe, expect, test } from "vitest";
 import { configSchema } from "@/validation/config-schema";
-import { describe, test, expect } from "vitest";
 
 // A minimal valid configuration that satisfies all sub-schemas
 const validBase = {

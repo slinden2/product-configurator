@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import type React from "react";
-import { vi, describe, test, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type React from "react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 // --- Mocks ---
 
@@ -23,8 +24,8 @@ vi.mock("next/link", () => ({
 
 // --- Imports ---
 
-import IconButton from "@/components/all-configuration-table/icon-button";
 import { Edit } from "lucide-react";
+import IconButton from "@/components/all-configuration-table/icon-button";
 
 // --- Setup ---
 

@@ -1,10 +1,10 @@
+import { describe, expect, test } from "vitest";
 import type {
   HpPump15kwOutletType,
   HpPump30kwOutletType,
   HpPumpOMZkwOutletType,
 } from "@/types";
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
-import { describe, test, expect } from "vitest";
 
 type OutletType = HpPump15kwOutletType | HpPump30kwOutletType | undefined;
 

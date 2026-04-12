@@ -1,8 +1,8 @@
+import { useWatch } from "react-hook-form";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import { useWatch } from "react-hook-form";
 
 const RailSection = () => {
   const railType = useWatch<ConfigSchema, "rail_type">({ name: "rail_type" });

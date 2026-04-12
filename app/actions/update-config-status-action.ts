@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
-import { logActivity } from "@/db/queries";
 import {
   getConfiguration,
   getUserData,
+  logActivity,
   QueryError,
   updateConfigStatus,
 } from "@/db/queries";

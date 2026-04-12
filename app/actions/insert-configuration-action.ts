@@ -2,8 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
-import { logActivity } from "@/db/queries";
-import { getUserData, insertConfiguration, QueryError } from "@/db/queries";
+import {
+  getUserData,
+  insertConfiguration,
+  logActivity,
+  QueryError,
+} from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
 

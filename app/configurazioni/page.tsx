@@ -1,9 +1,9 @@
-import AllConfigurationsTable from "@/components/all-configuration-table";
-import { Button } from "@/components/ui/button";
-import { getUserConfigurations, getUserData } from "@/db/queries";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import AllConfigurationsTable from "@/components/all-configuration-table";
+import { Button } from "@/components/ui/button";
+import { getUserConfigurations, getUserData } from "@/db/queries";
 
 const PAGE_SIZE = 20;
 

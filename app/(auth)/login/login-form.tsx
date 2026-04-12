@@ -1,15 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { signIn } from "@/app/actions/auth";
+import InputField from "@/components/input-field";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import InputField from "@/components/input-field";
 import { type LoginSchema, loginSchema } from "@/validation/auth-schema";
-import { signIn } from "@/app/actions/auth";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 const LoginForm = () => {
   const form = useForm<LoginSchema>({

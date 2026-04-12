@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 // Mock db/queries for buildEbomCostExportData
 const mockGetPartNumbersByArray = vi.fn();
@@ -8,12 +8,12 @@ vi.mock("@/db/queries", () => ({
 }));
 
 import {
-  groupEbomByCategory,
-  buildEbomExportData,
-  getEarliestCreatedAt,
-  getBomRulesVersion,
   buildEbomCostExportData,
+  buildEbomExportData,
+  getBomRulesVersion,
+  getEarliestCreatedAt,
   groupByTag,
+  groupEbomByCategory,
   hasTagData,
 } from "@/app/configurazioni/bom/[id]/bom-helpers";
 import type { EngineeringBomItem } from "@/db/schemas";

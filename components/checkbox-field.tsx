@@ -1,9 +1,10 @@
+import type { CheckedState } from "@radix-ui/react-checkbox"; // Import type for clarity
 import type * as React from "react";
 import {
-  useFormContext,
-  type FieldValues,
   type FieldPath,
+  type FieldValues,
   type PathValue,
+  useFormContext,
 } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,7 +16,6 @@ import {
   FormMessage,
   useFormDisabled,
 } from "@/components/ui/form";
-import type { CheckedState } from "@radix-ui/react-checkbox"; // Import type for clarity
 
 // Interface for the reset configuration, using generics
 interface ResetCheckboxConfig<TFieldValues extends FieldValues> {

@@ -1,10 +1,10 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
+import MainNavServer from "@/components/main-nav-server";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import MainNavServer from "@/components/main-nav-server";
 
 const inter = Inter({ subsets: ["latin"] });
 

@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // --- Mocks ---
 
@@ -96,16 +96,16 @@ vi.mock("drizzle-orm", async (importOriginal) => {
 
 // --- Imports ---
 
+import { revalidatePath } from "next/cache";
 import {
-  snapshotEngineeringBomAction,
-  regenerateEngineeringBomAction,
   addEngineeringBomItemAction,
-  updateEngineeringBomItemQtyAction,
-  toggleDeleteEngineeringBomItemAction,
+  regenerateEngineeringBomAction,
   searchPartNumbersAction,
+  snapshotEngineeringBomAction,
+  toggleDeleteEngineeringBomItemAction,
+  updateEngineeringBomItemQtyAction,
 } from "@/app/actions/engineering-bom-actions";
 import { MSG } from "@/lib/messages";
-import { revalidatePath } from "next/cache";
 
 // --- Helpers ---
 

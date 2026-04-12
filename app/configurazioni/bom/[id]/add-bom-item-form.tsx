@@ -1,5 +1,8 @@
 "use client";
 
+import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
   addEngineeringBomItemAction,
   searchPartNumbersAction,
@@ -19,7 +22,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { PartNumber } from "@/db/schemas";
 import {
   Select,
   SelectContent,
@@ -27,11 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronsUpDown, Pencil, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import type { PartNumber } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { type BomTag, BomTagLabels } from "@/types";
-import { toast } from "sonner";
 
 interface AddBomItemFormProps {
   confId: number;

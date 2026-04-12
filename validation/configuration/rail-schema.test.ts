@@ -1,10 +1,10 @@
+import { describe, expect, test } from "vitest";
 import { genericRequiredMessage } from "@/validation/common";
 import {
   AnchorTypeEnum,
   RailTypeEnum,
   railSchema,
 } from "@/validation/configuration/rail-schema";
-import { describe, test, expect } from "vitest";
 
 // Helper function to create rail data objects for testing
 function createRailObject({

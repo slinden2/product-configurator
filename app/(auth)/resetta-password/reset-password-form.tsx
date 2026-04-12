@@ -1,19 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { resetPassword } from "@/app/actions/auth";
+import InputField from "@/components/input-field";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import InputField from "@/components/input-field";
+import { MSG } from "@/lib/messages";
 import {
   type NewPasswordSchema,
   newPassWordSchema,
 } from "@/validation/auth-schema";
-import { useRouter, useSearchParams } from "next/navigation";
-import { resetPassword } from "@/app/actions/auth";
-import { toast } from "sonner";
-import { MSG } from "@/lib/messages";
 
 const ResetPasswordForm = () => {
   const form = useForm<NewPasswordSchema>({

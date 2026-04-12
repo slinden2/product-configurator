@@ -1,5 +1,8 @@
 "use client";
 
+import { RefreshCw } from "lucide-react";
+import { useTransition } from "react";
+import { toast } from "sonner";
 import { regenerateEngineeringBomAction } from "@/app/actions/engineering-bom-actions";
 import {
   AlertDialog,
@@ -14,10 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { RefreshCw } from "lucide-react";
-import { useTransition } from "react";
 import { MSG } from "@/lib/messages";
-import { toast } from "sonner";
 
 interface RegenerateButtonProps {
   confId: number;

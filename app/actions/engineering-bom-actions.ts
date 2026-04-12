@@ -5,13 +5,13 @@ import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
-import { logActivity } from "@/db/queries";
 import {
   getConfigurationWithTanksAndBays,
   getPartNumbersByArray,
   getUserData,
   hasEngineeringBom,
   insertEngineeringBomItems,
+  logActivity,
   QueryError,
   searchPartNumbers,
 } from "@/db/queries";

@@ -1,10 +1,10 @@
+import { describe, expect, test } from "vitest";
 import {
   authSchema,
   loginSchema,
   newPassWordSchema,
   signupSchema,
 } from "@/validation/auth-schema";
-import { describe, test, expect } from "vitest";
 
 describe("authSchema", () => {
   test("should pass with a valid @itecosrl.com email", () => {

@@ -1,10 +1,10 @@
+import { z } from "zod";
 import { NOT_SELECTED_LABEL } from "@/lib/utils";
 import { AnchorTypes, RailTypes, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
-import { z } from "zod";
 
 export const RailTypeEnum = z.enum(RailTypes, {
   message: genericRequiredMessage,

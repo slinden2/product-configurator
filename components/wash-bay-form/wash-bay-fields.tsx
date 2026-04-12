@@ -1,10 +1,10 @@
+import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
 import { selectFieldOptions } from "@/validation/configuration";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
-import { useFormContext, useWatch } from "react-hook-form";
 
 interface WashBayFieldsProps {
   supplyType?: string;

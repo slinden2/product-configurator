@@ -1,11 +1,11 @@
 import {
+  boolean,
   integer,
   numeric,
+  pgEnum,
   pgTable,
   timestamp,
   varchar,
-  boolean,
-  pgEnum,
 } from "drizzle-orm/pg-core";
 
 export type PartNumber = typeof partNumbers.$inferSelect;

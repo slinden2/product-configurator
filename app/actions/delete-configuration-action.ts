@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import { logActivity } from "@/db/queries";
 import {
   deleteConfiguration,
   getConfiguration,
   getUserData,
+  logActivity,
   QueryError,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";

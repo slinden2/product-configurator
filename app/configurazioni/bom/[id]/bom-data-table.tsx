@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowDownUp } from "lucide-react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,8 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { BOMItemWithDescription } from "@/lib/BOM";
-import { ArrowDownUp } from "lucide-react";
-import { useState } from "react";
 
 interface BOMDataTableProps {
   items: BOMItemWithDescription[];

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { fillMinimalForm, selectRadixOption } from "./helpers";
 
 test.describe("Water tank form", () => {

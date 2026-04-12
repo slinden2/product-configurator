@@ -1,9 +1,9 @@
 import type * as React from "react";
 import {
-  useFormContext,
-  type FieldValues,
   type FieldPath,
+  type FieldValues,
   type PathValue,
+  useFormContext,
   useWatch,
 } from "react-hook-form";
 import {
@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { SelectOption } from "@/types";
 import { NOT_SELECTED_LABEL, NOT_SELECTED_VALUE } from "@/lib/utils";
+import type { SelectOption } from "@/types";
 
 // Interface for the reset configuration, now using generics
 interface ResetConfig<TFieldValues extends FieldValues> {

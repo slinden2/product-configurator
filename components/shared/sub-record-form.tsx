@@ -1,11 +1,15 @@
 "use client";
 
-import type React from "react";
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Form } from "@/components/ui/form";
-import { useForm, type FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcw, Save, Trash2 } from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { type FieldValues, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import type { z } from "zod";
+import { isEditable } from "@/app/actions/lib/auth-checks";
+import Fieldset from "@/components/fieldset";
+import BomWarningDialog from "@/components/shared/bom-warning-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,15 +21,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Form, FormDisabledContext } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
 import { MSG } from "@/lib/messages";
-import { FormDisabledContext } from "@/components/ui/form";
-import Fieldset from "@/components/fieldset";
-import BomWarningDialog from "@/components/shared/bom-warning-dialog";
-import type { z } from "zod";
 import type { ConfigurationStatusType, Role } from "@/types";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 
 // Shared result type for server actions
 interface ActionResult {

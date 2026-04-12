@@ -1,5 +1,5 @@
+import { describe, expect, test } from "vitest";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
-import { describe, test, expect } from "vitest";
 
 describe("supplyTypeSchema", () => {
   describe("supply_type undefined", () => {

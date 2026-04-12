@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import type React from "react";
-import { describe, test, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm, FormProvider } from "react-hook-form";
+import type React from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { afterEach, describe, expect, test } from "vitest";
 import InputField from "@/components/input-field";
 
 afterEach(cleanup);

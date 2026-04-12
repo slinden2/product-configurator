@@ -1,7 +1,7 @@
+import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 import type React from "react";
 import { cn } from "@/lib/utils";
-import { type VariantProps, cva } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
 
 const spinnerVariants = cva("flex-col items-center justify-center", {
   variants: {

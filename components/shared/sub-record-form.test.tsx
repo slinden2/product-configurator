@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
-import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
+import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
 
 // --- Mocks (before imports) ---
 
@@ -36,9 +36,9 @@ vi.mock("@/app/actions/wash-bay-actions", () => ({
 
 // --- Imports (after mocks) ---
 
-import WaterTankForm from "@/components/water-tank-form";
-import WashBayForm from "@/components/wash-bay-form";
 import { toast } from "sonner";
+import WashBayForm from "@/components/wash-bay-form";
+import WaterTankForm from "@/components/water-tank-form";
 import { selectRadixOption } from "@/test/form-test-utils";
 
 // --- Test Data ---

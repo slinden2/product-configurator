@@ -1,11 +1,11 @@
+import { PlusCircle } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getConfigurationStatusCounts } from "@/db/queries";
 import { STATUS_CONFIG } from "@/lib/status-config";
 import { ConfigurationStatus } from "@/types";
-import { PlusCircle } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 
 const Dashboard = async () => {
   const counts = await getConfigurationStatusCounts();

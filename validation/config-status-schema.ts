@@ -1,9 +1,9 @@
+import { z } from "zod";
 import { ConfigurationStatus, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
-import { z } from "zod";
 
 const configStatusEnum = z.enum(ConfigurationStatus, {
   message: genericRequiredMessage,

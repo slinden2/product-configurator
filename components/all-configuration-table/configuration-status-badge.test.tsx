@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
-import { describe, test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, test } from "vitest";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
-import { ConfigurationStatus, type ConfigurationStatusType } from "@/types";
 import { STATUS_CONFIG } from "@/lib/status-config";
+import { ConfigurationStatus, type ConfigurationStatusType } from "@/types";
 
 const testCases: [ConfigurationStatusType, string, string][] =
   ConfigurationStatus.map((status) => [

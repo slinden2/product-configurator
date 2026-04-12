@@ -1,6 +1,6 @@
+import { describe, expect, test } from "vitest";
 import type { Water1PumpType, Water2PumpType, WaterType } from "@/types";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
-import { describe, test, expect } from "vitest";
 
 type TWaterType = WaterType | null | undefined;
 

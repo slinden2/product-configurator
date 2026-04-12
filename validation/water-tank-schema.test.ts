@@ -1,5 +1,5 @@
+import { describe, expect, test } from "vitest";
 import { waterTankSchema } from "@/validation/water-tank-schema";
-import { describe, test, expect } from "vitest";
 
 describe("waterTankSchema", () => {
   describe("Type requirement", () => {

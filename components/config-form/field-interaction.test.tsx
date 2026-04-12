@@ -1,16 +1,17 @@
 // @vitest-environment jsdom
-import type React from "react";
-import { describe, test, expect, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm, FormProvider } from "react-hook-form";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import type React from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { afterEach, describe, expect, test } from "vitest";
 import BrushSection from "@/components/config-form/brush-section";
-import WaterSupplySection from "@/components/config-form/water-supply-section";
-import SupplySection from "@/components/config-form/supply-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
+import SupplySection from "@/components/config-form/supply-section";
 import TouchSection from "@/components/config-form/touch-section";
+import WaterSupplySection from "@/components/config-form/water-supply-section";
 import { selectRadixOption } from "@/test/form-test-utils";
+import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 
 afterEach(cleanup);
 

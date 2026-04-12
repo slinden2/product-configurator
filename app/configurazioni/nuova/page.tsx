@@ -1,6 +1,6 @@
+import { redirect } from "next/navigation";
 import FormContainer from "@/components/form-container";
 import { getUserData } from "@/db/queries";
-import { redirect } from "next/navigation";
 
 const NewConfiguration = async () => {
   const user = await getUserData();

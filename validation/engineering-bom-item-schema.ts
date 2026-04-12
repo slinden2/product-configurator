@@ -1,5 +1,5 @@
-import { BomTags } from "@/types";
 import { z } from "zod";
+import { BomTags } from "@/types";
 
 export const engineeringBomItemSchema = z.object({
   pn: z.string().min(1, "Codice articolo obbligatorio.").max(25),

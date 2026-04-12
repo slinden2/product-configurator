@@ -1,39 +1,39 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { type FieldErrors, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
+import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
+import { isEditable } from "@/app/actions/lib/auth-checks";
+import BrushSection from "@/components/config-form/brush-section";
+import ChemPumpSection from "@/components/config-form/chem-pump-section";
+import GeneralSection from "@/components/config-form/general-section";
+import HPPumpSection from "@/components/config-form/hp-pump-section";
+import RailSection from "@/components/config-form/rail-section";
+import SupplySection from "@/components/config-form/supply-section";
+import TouchSection from "@/components/config-form/touch-section";
+import WaterSupplySection from "@/components/config-form/water-supply-section";
+import Fieldset from "@/components/fieldset";
+import BomWarningDialog from "@/components/shared/bom-warning-dialog";
+import TextareaField from "@/components/textarea-field";
+import { Button } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
+import { Spinner } from "@/components/ui/spinner";
+import { MSG } from "@/lib/messages";
+import type { ConfigurationStatusType, Role } from "@/types";
 import {
-  configDefaults,
+  BOM_EXEMPT_FIELDS,
   type ConfigInputSchema,
   type ConfigSchema,
+  configDefaults,
   configSchema,
   type UpdateConfigSchema,
 } from "@/validation/config-schema";
-import { type FieldErrors, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import GeneralSection from "@/components/config-form/general-section";
-import BrushSection from "@/components/config-form/brush-section";
-import ChemPumpSection from "@/components/config-form/chem-pump-section";
-import SupplySection from "@/components/config-form/supply-section";
-import WaterSupplySection from "@/components/config-form/water-supply-section";
-import RailSection from "@/components/config-form/rail-section";
-import TouchSection from "@/components/config-form/touch-section";
-import HPPumpSection from "@/components/config-form/hp-pump-section";
-import { Save } from "lucide-react";
-import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
-import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
-import BomWarningDialog from "@/components/shared/bom-warning-dialog";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { MSG } from "@/lib/messages";
-import { BOM_EXEMPT_FIELDS } from "@/validation/config-schema";
-import type { ConfigurationStatusType, Role } from "@/types";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 import BackButton from "../back-button";
-import Fieldset from "@/components/fieldset";
-import TextareaField from "@/components/textarea-field";
 
 interface ConfigurationFormProps {
   id?: number;

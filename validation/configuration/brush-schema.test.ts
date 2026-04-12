@@ -1,6 +1,6 @@
+import { describe, expect, test } from "vitest";
 import type { BrushColorType, BrushType } from "@/types";
 import { brushSchema } from "@/validation/configuration/brush-schema";
-import { describe, test, expect } from "vitest";
 
 function createBrushObject(
   brushQty: number | undefined,

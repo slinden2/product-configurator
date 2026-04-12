@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UpdateConfigSchema } from "@/validation/config-schema";
 
 // --- Mocks (before imports) ---
@@ -33,8 +33,8 @@ vi.mock("@hookform/devtools", () => ({
 
 // --- Imports (after mocks) ---
 
-import ConfigForm from "@/components/config-form";
 import { toast } from "sonner";
+import ConfigForm from "@/components/config-form";
 
 // --- Test Data ---
 

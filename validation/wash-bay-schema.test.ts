@@ -1,5 +1,5 @@
+import { describe, expect, test } from "vitest";
 import { washBaySchema } from "@/validation/wash-bay-schema";
-import { describe, test, expect } from "vitest";
 
 describe("washBaySchema", () => {
   describe("Lance quantities (must be 0 or 2)", () => {

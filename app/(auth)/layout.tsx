@@ -1,5 +1,5 @@
-import { getUserSession } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
+import { getUserSession } from "@/app/actions/auth";
 
 export default async function AuthLayout({
   children,

@@ -1,14 +1,14 @@
+import { z } from "zod";
 import {
+  type SelectOption,
   Water1Pumps,
   Water2Pumps,
   WaterTypes,
-  type SelectOption,
 } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
 } from "@/validation/common";
-import { z } from "zod";
 
 export const WaterTypeEnum = z.enum(WaterTypes, {
   message: genericRequiredMessage,

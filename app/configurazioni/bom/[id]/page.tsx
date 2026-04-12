@@ -1,3 +1,4 @@
+import { notFound, redirect } from "next/navigation";
 import { prepareBOMPageData } from "@/app/configurazioni/bom/[id]/bom-helpers";
 import {
   GeneralSection,
@@ -12,7 +13,6 @@ import { getBOM, getConfiguration, getUserData } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import ExportCostsButton from "./export-costs-button";
-import { notFound, redirect } from "next/navigation";
 
 interface BOMViewProps {
   params: Promise<{ id: string }>;

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // --- Mocks (before imports) ---
 
@@ -18,8 +18,8 @@ vi.mock("@/app/actions/update-config-status-action", () => ({
 
 // --- Imports (after mocks) ---
 
-import StatusForm from "@/components/status-form";
 import { toast } from "sonner";
+import StatusForm from "@/components/status-form";
 import { MSG } from "@/lib/messages";
 
 // --- Helpers ---

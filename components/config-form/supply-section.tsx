@@ -1,10 +1,10 @@
+import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import { withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import { useFormContext, useWatch } from "react-hook-form";
 
 const SupplySection = () => {
   const { control } = useFormContext<ConfigSchema>();

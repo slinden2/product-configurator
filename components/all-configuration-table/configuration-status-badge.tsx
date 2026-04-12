@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import type { ConfigurationStatusType } from "@/types";
 import { STATUS_CONFIG } from "@/lib/status-config";
+import type { ConfigurationStatusType } from "@/types";
 
 interface ConfigurationStatusBadgeProps {
   status: ConfigurationStatusType;
