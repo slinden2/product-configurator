@@ -27,7 +27,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
           <SelectField<WashBaySchema>
             name="hp_lance_qty"
             dataType="number"
-            label="Numero lance HP"
+            label="Linea trolley HP"
             items={getNumericSelectOptions([0, 2])}
           />
         </div>
@@ -35,7 +35,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
           <SelectField<WashBaySchema>
             name="det_lance_qty"
             dataType="number"
-            label={`Numero lance detergente`}
+            label="Linea trolley detergente"
             items={getNumericSelectOptions([0, 2])}
           />
         </div>

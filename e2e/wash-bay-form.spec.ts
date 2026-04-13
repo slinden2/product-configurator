@@ -53,8 +53,8 @@ test.describe("Wash bay form — without energy chain", () => {
   test("adds a wash bay with lances and hose reel", async ({ page }) => {
     await page.getByRole("button", { name: "Aggiungi pista" }).click();
 
-    await selectRadixOption(page, "Numero lance HP", "2");
-    await selectRadixOption(page, "Numero lance detergente", "2");
+    await selectRadixOption(page, "Linea trolley HP", "2");
+    await selectRadixOption(page, "Linea trolley detergente", "2");
     await selectRadixOption(page, "Numero avvolgitori", "1");
     await page.getByLabel("Prima pista").click();
     await page.getByLabel("Con pannellature").click();
@@ -105,7 +105,7 @@ test.describe("Wash bay form — without energy chain", () => {
     await page.waitForLoadState("networkidle");
 
     // Edit: add lances
-    await selectRadixOption(page, "Numero lance HP", "2");
+    await selectRadixOption(page, "Linea trolley HP", "2");
     await page.getByRole("button", { name: "Salva" }).click();
 
     await expect(page.getByText("Pista 1 aggiornata.")).toBeVisible();
