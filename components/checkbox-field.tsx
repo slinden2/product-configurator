@@ -96,10 +96,14 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                 // aria-label={label} // Can be used if label text isn't sufficient
               />
             </FormControl>
-            <div className="space-y-2 leading-none">
+            <div className="leading-none">
               {/* Clicking label should also toggle checkbox */}
               <FormLabel className="cursor-pointer">{label}</FormLabel>
-              {description && <FormDescription>{description}</FormDescription>}
+              {description && (
+                <FormDescription className="mt-1.5">
+                  {description}
+                </FormDescription>
+              )}
             </div>
             {/* Display validation errors associated with this field */}
             {/* Note: FormMessage needs to be outside the label div to appear correctly */}

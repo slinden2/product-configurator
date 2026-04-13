@@ -84,7 +84,7 @@ const TouchSection = () => {
               label="Itecoweb"
               description={
                 <>
-                  <span>Comprensivo di:</span>
+                  <span className="mb-1 block">Comprensivo di:</span>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Dispositivo Itecoweb nel Q.E.</li>
                     <li>Lettore schede nel Q.E.</li>
@@ -107,7 +107,7 @@ const TouchSection = () => {
               label="Portale fast"
               description={
                 <>
-                  <span>Comprensivo di:</span>
+                  <span className="mb-1 block">Comprensivo di:</span>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Barre supplementari di risciacquo</li>
                     <li>Semaforo posteriore</li>
