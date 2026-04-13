@@ -133,6 +133,7 @@ export const configDefaults: ConfigSchema = {
   water_2_type: undefined,
   water_2_pump: undefined,
   has_antifreeze: false,
+  has_filter_backwash: false,
   inv_pump_outlet_dosatron_qty: 0,
   inv_pump_outlet_pw_qty: 0,
   // --- Supply Section ---

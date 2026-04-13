@@ -47,6 +47,7 @@ export const inverterPumpOutletOpts: SelectOption[] = [
 export const inverterPumpSchema = z.object({
   inv_pump_outlet_dosatron_qty: z.number().min(0).max(2),
   inv_pump_outlet_pw_qty: z.number().min(0).max(2),
+  has_filter_backwash: z.boolean().default(false),
 });
 
 export const waterSupplySchema = z
@@ -77,10 +78,10 @@ export const waterSupplySchema = z
       });
     }
 
-    validateInverterPumpOutlets(data, ctx);
+    validateInverterPumpFields(data, ctx);
   });
 
-function validateInverterPumpOutlets(
+function validateInverterPumpFields(
   data: z.infer<typeof waterSupplySchema>,
   ctx: z.RefinementCtx,
 ) {
@@ -107,13 +108,22 @@ function validateInverterPumpOutlets(
     });
   }
 
-  // If outlets selected (>0) but no inverter pump
+  // If outlets or backwash selected but no inverter pump
   if (!isInverterPumpSelected && numOfSelectedOutlets > 0) {
     ctx.addIssue({
       code: "custom",
       message:
         "Non puoi selezionare uscite pompa inverter se la pompa inverter non è selezionata.",
       path: ["water_1_pump"],
+    });
+  }
+
+  if (!isInverterPumpSelected && data.has_filter_backwash) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Il controlavaggio filtro è disponibile solo con pompa inverter.",
+      path: ["has_filter_backwash"],
     });
   }
 }

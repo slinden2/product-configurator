@@ -18,7 +18,7 @@ import type { BomTag } from "@/types";
  * Bump this version every time any BOM rule file under `lib/BOM/max-bom/` is modified.
  * It is stored on engineering BOM snapshots so engineers can tell which rule set produced the BOM.
  */
-export const BOM_RULES_VERSION = "260411";
+export const BOM_RULES_VERSION = "260413";
 
 export type ValidationFn<T> = (config: T) => boolean;
 

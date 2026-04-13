@@ -1,6 +1,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
+import { Separator } from "@/components/ui/separator";
 import SelectField from "@/components/select-field";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
@@ -50,6 +51,11 @@ const WaterSupplySection = () => {
                     ],
                     resetToValue: 0,
                   },
+                  {
+                    triggerValue: NOT_SELECTED_VALUE,
+                    fieldsToReset: ["has_filter_backwash"],
+                    resetToValue: false,
+                  },
                 ]}
               />
               <SelectField<ConfigSchema>
@@ -71,25 +77,53 @@ const WaterSupplySection = () => {
                     ],
                     resetToValue: 0,
                   },
+                  {
+                    triggerValue: [
+                      NOT_SELECTED_VALUE,
+                      zodEnums.WaterPump1Enum.enum.BOOST_15KW,
+                      zodEnums.WaterPump1Enum.enum.BOOST_22KW,
+                    ],
+                    fieldsToReset: ["has_filter_backwash"],
+                    resetToValue: false,
+                  },
                 ]}
               />
             </div>
           </div>
           {isInvPump1Selected && (
-            <div className="fs-item">
-              <SelectField<ConfigSchema>
-                name="inv_pump_outlet_dosatron_qty"
-                dataType="number"
-                label="Uscite Dosatron"
-                items={selectFieldOptions.inverterPumpOutletOpts}
+            <>
+              <Separator orientation="horizontal" className="md:hidden block" />
+              <Separator
+                orientation="vertical"
+                className="hidden md:block self-stretch h-auto"
               />
-              <SelectField<ConfigSchema>
-                name="inv_pump_outlet_pw_qty"
-                dataType="number"
-                label="Uscite idropulitrice"
-                items={selectFieldOptions.inverterPumpOutletOpts}
+              <div className="fs-item">
+                <p className="text-sm font-medium mb-3">
+                  Accessori pompa inverter
+                </p>
+                <SelectField<ConfigSchema>
+                  name="inv_pump_outlet_dosatron_qty"
+                  dataType="number"
+                  label="Uscite Dosatron"
+                  items={selectFieldOptions.inverterPumpOutletOpts}
+                />
+                <SelectField<ConfigSchema>
+                  name="inv_pump_outlet_pw_qty"
+                  dataType="number"
+                  label="Uscite idropulitrice"
+                  items={selectFieldOptions.inverterPumpOutletOpts}
+                />
+                <CheckboxField<ConfigSchema>
+                  name="has_filter_backwash"
+                  label="Uscita controlavaggio filtro"
+                />
+              </div>
+              <Separator orientation="horizontal" className="md:hidden block" />
+              <Separator
+                orientation="vertical"
+                className="hidden md:block self-stretch h-auto"
               />
-            </div>
+            </>
           )}
           <div className="fs-item">
             <div className="space-y-3 md:flex md:flex-col md:justify-between md:h-full">
@@ -115,7 +149,6 @@ const WaterSupplySection = () => {
               />
             </div>
           </div>
-          {!isInvPump1Selected && <div className="fs-item" />}
         </div>
         <div className="">
           <CheckboxField<ConfigSchema>

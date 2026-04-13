@@ -15,6 +15,7 @@ const PART_NUMBERS = {
   INV_4KW_400L: "1100.024.057",
   OUTLET_DOSATRON: "1100.024.055",
   OUTLET_PW: "1100.024.056",
+  FILTER_BACKWASH_OUTLET: "1100.024.058", // TODO Add to Excel
 } as const satisfies Record<string, string>;
 
 const hasWater1Solenoid = (config: GeneralBOMConfig): boolean => {
@@ -134,5 +135,11 @@ export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     ],
     qty: (config) => config.inv_pump_outlet_pw_qty || 0,
     _description: "Pressure washer outlet for inverter pump",
+  },
+  {
+    pn: PART_NUMBERS.FILTER_BACKWASH_OUTLET,
+    conditions: [(config) => config.has_filter_backwash],
+    qty: 1,
+    _description: "Filter back wash outlet",
   },
 ];

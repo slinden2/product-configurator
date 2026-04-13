@@ -90,4 +90,48 @@ describe("WaterSupplySection", () => {
 
     expect(getValues().has_antifreeze).toBe(true);
   });
+
+  describe("Filter backwash checkbox", () => {
+    test("checkbox is hidden when no inverter pump is selected", () => {
+      renderWaterSupplySection({ water_1_pump: "BOOST_15KW" });
+
+      expect(
+        screen.queryByText("Uscita controlavaggio filtro"),
+      ).not.toBeInTheDocument();
+    });
+
+    test("checkbox is shown when INV_3KW_200L is selected", () => {
+      renderWaterSupplySection({ water_1_pump: "INV_3KW_200L" });
+
+      expect(
+        screen.getByText("Uscita controlavaggio filtro"),
+      ).toBeInTheDocument();
+    });
+
+    test("checkbox is shown when INV_3KW_250L is selected", () => {
+      renderWaterSupplySection({ water_1_pump: "INV_3KW_250L" });
+
+      expect(
+        screen.getByText("Uscita controlavaggio filtro"),
+      ).toBeInTheDocument();
+    });
+
+    test("checkbox toggles has_filter_backwash form value", async () => {
+      const { getValues } = renderWaterSupplySection({
+        water_1_pump: "INV_3KW_200L",
+      });
+
+      expect(getValues().has_filter_backwash).toBe(false);
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      const filterCheckbox = checkboxes.find(
+        (el) => el.getAttribute("data-state") !== undefined,
+      );
+      await userEvent.click(
+        filterCheckbox ?? checkboxes[checkboxes.length - 1],
+      );
+
+      expect(getValues().has_filter_backwash).toBe(true);
+    });
+  });
 });

@@ -208,4 +208,49 @@ describe("waterSupplySchema", () => {
       ).not.toThrow();
     });
   });
+
+  describe("Filter backwash tests", () => {
+    test("should throw if has_filter_backwash=true without inverter pump", () => {
+      const invalidData = {
+        ...createWaterSupplyObject(
+          "NETWORK",
+          "BOOST_15KW",
+          undefined,
+          undefined,
+          false,
+        ),
+        has_filter_backwash: true,
+      };
+      expect(() => waterSupplySchema.parse(invalidData)).toThrow();
+    });
+
+    test("should validate if has_filter_backwash=true with inverter pump", () => {
+      const validData = {
+        ...createWaterSupplyObject(
+          "NETWORK",
+          "INV_3KW_200L",
+          undefined,
+          undefined,
+          false,
+          { inv_pump_outlet_pw_qty: 1, inv_pump_outlet_dosatron_qty: 1 },
+        ),
+        has_filter_backwash: true,
+      };
+      expect(() => waterSupplySchema.parse(validData)).not.toThrow();
+    });
+
+    test("should validate if has_filter_backwash=false without inverter pump", () => {
+      const validData = {
+        ...createWaterSupplyObject(
+          "NETWORK",
+          "BOOST_15KW",
+          undefined,
+          undefined,
+          false,
+        ),
+        has_filter_backwash: false,
+      };
+      expect(() => waterSupplySchema.parse(validData)).not.toThrow();
+    });
+  });
 });

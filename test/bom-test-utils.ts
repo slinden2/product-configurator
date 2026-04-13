@@ -32,6 +32,7 @@ export function makeGeneralBOMConfig(
     water_2_type: null,
     water_2_pump: null,
     has_antifreeze: false,
+    has_filter_backwash: false,
     supply_type: "STRAIGHT_SHELF",
     supply_fixing_type: null,
     supply_side: "LEFT",

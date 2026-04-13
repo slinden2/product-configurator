@@ -32,6 +32,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_foam: values.has_foam,
     has_acid_pump: values.has_acid_pump,
     has_antifreeze: values.has_antifreeze,
+    has_filter_backwash: values.has_filter_backwash,
     supply_type: values.supply_type as
       | "STRAIGHT_SHELF"
       | "BOOM"

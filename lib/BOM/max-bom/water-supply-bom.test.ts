@@ -36,6 +36,7 @@ const PNS = {
   INV_3KW_250L: "1100.024.054",
   OUTLET_DOSATRON: "1100.024.055",
   OUTLET_PW: "1100.024.056",
+  FILTER_BACKWASH_OUTLET: "1100.024.058",
 };
 
 describe("waterSupplyBOM — solenoids", () => {
@@ -172,5 +173,18 @@ describe("waterSupplyBOM — inverter pumps", () => {
       inv_pump_outlet_dosatron_qty: 2,
     });
     expect(pns(config)).not.toContain(PNS.OUTLET_DOSATRON);
+  });
+});
+
+describe("waterSupplyBOM — filter backwash", () => {
+  test("has_filter_backwash=true → filter backwash outlet included (qty=1)", () => {
+    const config = makeConfig({ has_filter_backwash: true });
+    expect(pns(config)).toContain(PNS.FILTER_BACKWASH_OUTLET);
+    expect(qty(config, PNS.FILTER_BACKWASH_OUTLET)).toBe(1);
+  });
+
+  test("has_filter_backwash=false → filter backwash outlet not included", () => {
+    const config = makeConfig({ has_filter_backwash: false });
+    expect(pns(config)).not.toContain(PNS.FILTER_BACKWASH_OUTLET);
   });
 });

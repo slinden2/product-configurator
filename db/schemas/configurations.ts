@@ -95,6 +95,7 @@ export const configurations = pgTable("configurations", {
   water_1_pump: water1PumpTypeEnum("water_1_pump_type"),
   inv_pump_outlet_dosatron_qty: integer(),
   inv_pump_outlet_pw_qty: integer(),
+  has_filter_backwash: boolean().notNull().default(false),
   water_2_type: waterTypeEnum("water_2_type"),
   water_2_pump: water2PumpTypeEnum("water_2_pump_type"),
   has_antifreeze: boolean().notNull(),
