@@ -126,12 +126,16 @@ describe("washBaySchema", () => {
       expect(result.has_bay_dividers).toBe(false);
     });
 
-    test("should apply default 0 for hose_reel_qty", () => {
+    test("should apply default 0 for all hose reel fields", () => {
       const result = washBaySchema.parse({
         hp_lance_qty: 0,
         det_lance_qty: 0,
       });
-      expect(result.hose_reel_qty).toBe(0);
+      expect(result.hose_reel_hp_with_post_qty).toBe(0);
+      expect(result.hose_reel_hp_without_post_qty).toBe(0);
+      expect(result.hose_reel_det_with_post_qty).toBe(0);
+      expect(result.hose_reel_det_without_post_qty).toBe(0);
+      expect(result.hose_reel_hp_det_with_post_qty).toBe(0);
     });
   });
 
@@ -146,24 +150,58 @@ describe("washBaySchema", () => {
       ).not.toThrow();
     });
 
-    test("should accept hose_reel_qty up to max 2", () => {
+    test("should accept each hose reel field up to max 2", () => {
       expect(() =>
         washBaySchema.parse({
           hp_lance_qty: 0,
           det_lance_qty: 0,
-          hose_reel_qty: 2,
+          hose_reel_hp_with_post_qty: 2,
+          hose_reel_hp_without_post_qty: 0,
+          hose_reel_det_with_post_qty: 0,
+          hose_reel_det_without_post_qty: 0,
+          hose_reel_hp_det_with_post_qty: 0,
         }),
       ).not.toThrow();
     });
 
-    test("should fail when hose_reel_qty exceeds max of 2", () => {
+    test("should fail when any hose reel field exceeds max of 2", () => {
       expect(() =>
         washBaySchema.parse({
           hp_lance_qty: 0,
           det_lance_qty: 0,
-          hose_reel_qty: 3,
+          hose_reel_hp_with_post_qty: 3,
         }),
       ).toThrow();
+    });
+
+    test("should fail when total hose reels exceed 3", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        hose_reel_hp_with_post_qty: 2,
+        hose_reel_hp_without_post_qty: 2,
+        hose_reel_det_with_post_qty: 0,
+        hose_reel_det_without_post_qty: 0,
+        hose_reel_hp_det_with_post_qty: 0,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const msg =
+          result.error.flatten().fieldErrors.hose_reel_hp_with_post_qty;
+        expect(msg?.[0]).toContain("non può superare 3");
+      }
+    });
+
+    test("should accept total hose reels equal to 3", () => {
+      expect(() =>
+        washBaySchema.parse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          hose_reel_hp_with_post_qty: 1,
+          hose_reel_det_with_post_qty: 1,
+          hose_reel_hp_det_with_post_qty: 1,
+        }),
+      ).not.toThrow();
     });
   });
 

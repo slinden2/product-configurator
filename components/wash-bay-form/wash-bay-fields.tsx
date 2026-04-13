@@ -39,14 +39,6 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             items={getNumericSelectOptions([0, 2])}
           />
         </div>
-        <div className="fs-item">
-          <SelectField<WashBaySchema>
-            name="hose_reel_qty"
-            dataType="number"
-            label="Numero avvolgitori"
-            items={getNumericSelectOptions([0, 1, 2])}
-          />
-        </div>
       </div>
       <div className="fs-row">
         <div className="fs-item">
@@ -110,8 +102,58 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
           />
         </div>
       </div>
+      <div className="border-t border-border pt-4 mt-2">
+        <h3 className="text-sm font-medium mb-3">Avvolgitori</h3>
+        <div className="fs-row">
+          <div className="fs-item">
+            <SelectField<WashBaySchema>
+              name="hose_reel_hp_with_post_qty"
+              dataType="number"
+              label="HP con palo"
+              items={getNumericSelectOptions([0, 1, 2])}
+            />
+          </div>
+          <div className="fs-item">
+            <SelectField<WashBaySchema>
+              name="hose_reel_hp_without_post_qty"
+              dataType="number"
+              label="HP senza palo"
+              items={getNumericSelectOptions([0, 1, 2])}
+            />
+          </div>
+        </div>
+        <div className="fs-row">
+          <div className="fs-item">
+            <SelectField<WashBaySchema>
+              name="hose_reel_det_with_post_qty"
+              dataType="number"
+              label="Detergente con palo"
+              items={getNumericSelectOptions([0, 1, 2])}
+            />
+          </div>
+          <div className="fs-item">
+            <SelectField<WashBaySchema>
+              name="hose_reel_det_without_post_qty"
+              dataType="number"
+              label="Detergente senza palo"
+              items={getNumericSelectOptions([0, 1, 2])}
+            />
+          </div>
+        </div>
+        <div className="fs-row">
+          <div className="fs-item">
+            <SelectField<WashBaySchema>
+              name="hose_reel_hp_det_with_post_qty"
+              dataType="number"
+              label="HP+Detergente con palo"
+              items={getNumericSelectOptions([0, 1, 2])}
+            />
+          </div>
+        </div>
+      </div>
       {showEnergyChainFields && (
         <div className="border-t border-border pt-4 mt-2">
+          <h3 className="text-sm font-medium mb-3">Catenaria</h3>
           <div className="fs-row md:items-end">
             <div className="fs-item">
               <SelectField<WashBaySchema>

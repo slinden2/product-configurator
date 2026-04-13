@@ -18,8 +18,11 @@ const PART_NUMBERS = {
   DETERGENT_LANCE_ASSY: "1100.300.082",
   HP_LANCE_ASSY_WEEPING: "1100.300.083", // TODO Add selections in the form
   DETERGENT_LANCE_ASSY_WEEPING: "1100.300.084", // TODO Add selections in the form
-  HOSE_REEL_ASSY: "1100.300.071",
-  HOSE_REEL_ASSY_FOR_POST_PANEL_READY: "1100.300.072",
+  HOSE_REEL_HP_WITH_POST_ASSY: "TODO-HP-WITH-POST", // TODO Replace with real PN and add to Excel
+  HOSE_REEL_HP_WITHOUT_POST_ASSY: "TODO-HP-WITHOUT-POST", // TODO Replace with real PN and add to Excel
+  HOSE_REEL_DET_WITH_POST_ASSY: "TODO-DET-WITH-POST", // TODO Replace with real PN and add to Excel
+  HOSE_REEL_DET_WITHOUT_POST_ASSY: "TODO-DET-WITHOUT-POST", // TODO Replace with real PN and add to Excel
+  HOSE_REEL_HP_DET_WITH_POST_ASSY: "TODO-HP-DET-WITH-POST", // TODO Replace with real PN and add to Excel
   SIDE_PANEL_ASSY: "1100.300.021",
   SIDE_PANEL_ASSY_FOR_CENTRAL_POST_LINE: "1100.300.022",
   SLIDING_BRACKETS_FOR_FESTOON_LINE_WITH_BOOM: "1100.300.061",
@@ -223,22 +226,34 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
     _description: "Detergent lance assembly",
   },
   {
-    pn: PART_NUMBERS.HOSE_REEL_ASSY,
-    conditions: [
-      (config) => config.hose_reel_qty > 0,
-      (config) => !usesPanels(config),
-    ],
-    qty: (config) => config.hose_reel_qty,
-    _description: "Hose reel assembly",
+    pn: PART_NUMBERS.HOSE_REEL_HP_WITH_POST_ASSY,
+    conditions: [(config) => config.hose_reel_hp_with_post_qty > 0],
+    qty: (config) => config.hose_reel_hp_with_post_qty,
+    _description: "Hose reel HP with post",
   },
   {
-    pn: PART_NUMBERS.HOSE_REEL_ASSY_FOR_POST_PANEL_READY,
-    conditions: [
-      (config) => config.hose_reel_qty > 0,
-      (config) => usesPanels(config),
-    ],
-    qty: (config) => config.hose_reel_qty,
-    _description: "Hose reel assembly for post, panel ready",
+    pn: PART_NUMBERS.HOSE_REEL_HP_WITHOUT_POST_ASSY,
+    conditions: [(config) => config.hose_reel_hp_without_post_qty > 0],
+    qty: (config) => config.hose_reel_hp_without_post_qty,
+    _description: "Hose reel HP without post",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_REEL_DET_WITH_POST_ASSY,
+    conditions: [(config) => config.hose_reel_det_with_post_qty > 0],
+    qty: (config) => config.hose_reel_det_with_post_qty,
+    _description: "Hose reel detergent with post",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_REEL_DET_WITHOUT_POST_ASSY,
+    conditions: [(config) => config.hose_reel_det_without_post_qty > 0],
+    qty: (config) => config.hose_reel_det_without_post_qty,
+    _description: "Hose reel detergent without post",
+  },
+  {
+    pn: PART_NUMBERS.HOSE_REEL_HP_DET_WITH_POST_ASSY,
+    conditions: [(config) => config.hose_reel_hp_det_with_post_qty > 0],
+    qty: (config) => config.hose_reel_hp_det_with_post_qty,
+    _description: "Hose reel HP+detergent with post",
   },
   {
     pn: PART_NUMBERS.SIDE_PANEL_ASSY,

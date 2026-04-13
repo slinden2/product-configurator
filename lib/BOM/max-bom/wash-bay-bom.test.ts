@@ -25,7 +25,11 @@ function makeConfig(overrides: Partial<WashBayConfig> = {}): WashBayConfig {
     id: 1,
     hp_lance_qty: 2,
     det_lance_qty: 0,
-    hose_reel_qty: 0,
+    hose_reel_hp_with_post_qty: 0,
+    hose_reel_hp_without_post_qty: 0,
+    hose_reel_det_with_post_qty: 0,
+    hose_reel_det_without_post_qty: 0,
+    hose_reel_hp_det_with_post_qty: 0,
     pressure_washer_type: null,
     pressure_washer_qty: null,
     has_gantry: false,
@@ -278,5 +282,64 @@ describe("Energy chain hoses & cables BOM", () => {
     expect(
       items.find((i) => i._description.includes('R1 tube 1"')),
     ).toBeUndefined();
+  });
+});
+
+describe("Hose reel BOM rules", () => {
+  test("HP with post: emits correct pn and qty when > 0", () => {
+    const config = makeConfig({ hose_reel_hp_with_post_qty: 2 });
+    const items = filterBOM(config);
+    const item = items.find((i) => i._description === "Hose reel HP with post");
+    expect(item).toBeDefined();
+    expect(item?.qty).toBe(2);
+  });
+
+  test("HP without post: emits correct pn and qty when > 0", () => {
+    const config = makeConfig({ hose_reel_hp_without_post_qty: 1 });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Hose reel HP without post",
+    );
+    expect(item).toBeDefined();
+    expect(item?.qty).toBe(1);
+  });
+
+  test("Detergent with post: emits correct pn and qty when > 0", () => {
+    const config = makeConfig({ hose_reel_det_with_post_qty: 2 });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Hose reel detergent with post",
+    );
+    expect(item).toBeDefined();
+    expect(item?.qty).toBe(2);
+  });
+
+  test("Detergent without post: emits correct pn and qty when > 0", () => {
+    const config = makeConfig({ hose_reel_det_without_post_qty: 1 });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Hose reel detergent without post",
+    );
+    expect(item).toBeDefined();
+    expect(item?.qty).toBe(1);
+  });
+
+  test("HP+Det with post: emits correct pn and qty when > 0", () => {
+    const config = makeConfig({ hose_reel_hp_det_with_post_qty: 2 });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Hose reel HP+detergent with post",
+    );
+    expect(item).toBeDefined();
+    expect(item?.qty).toBe(2);
+  });
+
+  test("all hose reel fields at 0 → no hose reel items emitted", () => {
+    const config = makeConfig();
+    const items = filterBOM(config);
+    const hoseReelItems = items.filter((i) =>
+      i._description.startsWith("Hose reel"),
+    );
+    expect(hoseReelItems).toHaveLength(0);
   });
 });

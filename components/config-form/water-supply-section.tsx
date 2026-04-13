@@ -1,8 +1,8 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
-import { Separator } from "@/components/ui/separator";
 import SelectField from "@/components/select-field";
+import { Separator } from "@/components/ui/separator";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";

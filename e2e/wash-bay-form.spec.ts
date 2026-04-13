@@ -50,12 +50,13 @@ test.describe("Wash bay form — without energy chain", () => {
     ).toBeVisible();
   });
 
-  test("adds a wash bay with lances and hose reel", async ({ page }) => {
+  test("adds a wash bay with lances and hose reels", async ({ page }) => {
     await page.getByRole("button", { name: "Aggiungi pista" }).click();
 
     await selectRadixOption(page, "Linea trolley HP", "2");
     await selectRadixOption(page, "Linea trolley detergente", "2");
-    await selectRadixOption(page, "Numero avvolgitori", "1");
+    await selectRadixOption(page, "HP con palo", "1");
+    await selectRadixOption(page, "Detergente con palo", "1");
     await page.getByLabel("Prima pista").click();
     await page.getByLabel("Con pannellature").click();
 

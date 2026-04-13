@@ -32,7 +32,27 @@ export const washBaySchema = z
         message: lanceErrMsg,
       })
       .default(0),
-    hose_reel_qty: z
+    hose_reel_hp_with_post_qty: z
+      .number({ message: genericRequiredMessage })
+      .min(0)
+      .max(2)
+      .default(0),
+    hose_reel_hp_without_post_qty: z
+      .number({ message: genericRequiredMessage })
+      .min(0)
+      .max(2)
+      .default(0),
+    hose_reel_det_with_post_qty: z
+      .number({ message: genericRequiredMessage })
+      .min(0)
+      .max(2)
+      .default(0),
+    hose_reel_det_without_post_qty: z
+      .number({ message: genericRequiredMessage })
+      .min(0)
+      .max(2)
+      .default(0),
+    hose_reel_hp_det_with_post_qty: z
       .number({ message: genericRequiredMessage })
       .min(0)
       .max(2)
@@ -81,6 +101,20 @@ export const washBaySchema = z
       });
     }
 
+    const totalHoseReels =
+      data.hose_reel_hp_with_post_qty +
+      data.hose_reel_hp_without_post_qty +
+      data.hose_reel_det_with_post_qty +
+      data.hose_reel_det_without_post_qty +
+      data.hose_reel_hp_det_with_post_qty;
+    if (totalHoseReels > 3) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Il numero totale di avvolgitori non può superare 3.",
+        path: ["hose_reel_hp_with_post_qty"],
+      });
+    }
+
     // When energy chain is active, signal cable and water 1" tube are required
     if (data.has_gantry && data.energy_chain_width !== undefined) {
       if (data.ec_signal_cable_qty === undefined) {
@@ -110,7 +144,11 @@ export type UpdateWashBaySchema = z.infer<typeof updateWashBaySchema>;
 export const washBayDefaults: WashBaySchema = {
   hp_lance_qty: 0,
   det_lance_qty: 0,
-  hose_reel_qty: 0,
+  hose_reel_hp_with_post_qty: 0,
+  hose_reel_hp_without_post_qty: 0,
+  hose_reel_det_with_post_qty: 0,
+  hose_reel_det_without_post_qty: 0,
+  hose_reel_hp_det_with_post_qty: 0,
   pressure_washer_type: undefined,
   pressure_washer_qty: undefined,
   has_gantry: false,
