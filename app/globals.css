@@ -138,6 +138,11 @@
   h4 {
     @apply text-xl font-bold;
   }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer components {
