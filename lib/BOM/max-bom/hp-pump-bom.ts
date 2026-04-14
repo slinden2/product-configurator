@@ -4,13 +4,19 @@ import {
   isOMZ,
   isSTD,
   uses15kwOr30kwPump,
+  uses75kwPump,
+  usesAnyHpPumpWithChassisWash,
   usesHPRoofBar,
   usesOMZPump,
 } from "@/lib/BOM/max-bom/conditions";
-import type { HpPump15kwOutletType, HpPump30kwOutletType } from "@/types";
+import type {
+  HpPump15kwOutletType,
+  HpPump30kwOutletType,
+  HpPump75kwOutletType,
+} from "@/types";
 
 const PART_NUMBERS = {
-  PUMP_75KW: "1100.024.033", // TODO Add this in the form
+  PUMP_75KW: "1100.024.033",
   PUMP_15KW: "1100.024.030",
   PUMP_15KW_WITH_SOFTSTART: "1100.024.032",
   PUMP_30KW: "1100.024.031",
@@ -23,11 +29,19 @@ const PART_NUMBERS = {
   PNEUMATIC_VALVE_30KW_NO_ANTIFREEZE: "1100.024.045",
   TWO_PNEUMATIC_VALVES_30KW_WITH_ANTIFREEZE: "1100.024.046",
   TWO_PNEUMATIC_VALVES_30KW_NO_ANTIFREEZE: "1100.024.047",
+  PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE:
+    "TODO:PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE", // TODO Add real PN and add to Excel
+  PNEUMATIC_VALVE_75KW_NO_ANTIFREEZE: "TODO:PNEUMATIC_VALVE_75KW_NO_ANTIFREEZE", // TODO Add real PN and add to Excel
+  TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE:
+    "TODO:TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE", // TODO Add real PN and add to Excel
+  TWO_PNEUMATIC_VALVES_75KW_NO_ANTIFREEZE:
+    "TODO:TWO_PNEUMATIC_VALVES_75KW_NO_ANTIFREEZE", // TODO Add real PN and add to Excel
   CHASSIS_WASH_75KW: "1100.024.130",
   CHASSIS_WASH_15KW: "1100.024.004",
   CHASSIS_WASH_30KW_HORIZONTAL: "1100.024.100",
   CHASSIS_WASH_30KW_WITH_LATERAL_BARS: "1100.024.003",
-  CHASSIS_WASH_PLATES_75KW: "1100.024.021", // TODO Add this in the BOM
+  LOW_BARS_75KW: "TODO:LOW_BARS_75KW", // TODO add real PN and add to Excel
+  CHASSIS_WASH_PLATES_75KW: "1100.024.021",
   CHASSIS_WASH_PLATES_15KW: "1100.024.008",
   CHASSIS_WASH_PLATES_30KW: "1100.024.009",
   ULTRASONIC_SENSOR_POST: "1100.021.000",
@@ -104,7 +118,11 @@ const usesHoseFromShelfToTFitting = (config: GeneralBOMConfig): boolean => {
   );
 };
 
-type TOutlet = HpPump15kwOutletType | HpPump30kwOutletType | null;
+type TOutlet =
+  | HpPump15kwOutletType
+  | HpPump30kwOutletType
+  | HpPump75kwOutletType
+  | null;
 const hasOneOutlet = (outlet1: TOutlet, outlet2: TOutlet): boolean => {
   const boolA = !!outlet1;
   const boolB = !!outlet2;
@@ -143,6 +161,12 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [usesOMZPump],
     qty: 1,
     _description: "OMZ pump",
+  },
+  {
+    pn: PART_NUMBERS.PUMP_75KW,
+    conditions: [uses75kwPump],
+    qty: 1,
+    _description: "7.5kW pump",
   },
   {
     pn: PART_NUMBERS.PNEUMATIC_VALVE_15KW_WITH_ANTIFREEZE,
@@ -233,6 +257,50 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "2 x 30kW pump outlet, no antifreeze",
   },
   {
+    pn: PART_NUMBERS.PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        hasOneOutlet(config.pump_outlet_1_75kw, config.pump_outlet_2_75kw),
+      (config) => config.has_antifreeze,
+    ],
+    qty: 1,
+    _description: "7.5kW pump outlet, with antifreeze",
+  },
+  {
+    pn: PART_NUMBERS.PNEUMATIC_VALVE_75KW_NO_ANTIFREEZE,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        hasOneOutlet(config.pump_outlet_1_75kw, config.pump_outlet_2_75kw),
+      (config) => !config.has_antifreeze,
+    ],
+    qty: 1,
+    _description: "7.5kW pump outlet, no antifreeze",
+  },
+  {
+    pn: PART_NUMBERS.TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        hasTwoOutlets(config.pump_outlet_1_75kw, config.pump_outlet_2_75kw),
+      (config) => config.has_antifreeze,
+    ],
+    qty: 1,
+    _description: "2 x 7.5kW pump outlet, with antifreeze",
+  },
+  {
+    pn: PART_NUMBERS.TWO_PNEUMATIC_VALVES_75KW_NO_ANTIFREEZE,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        hasTwoOutlets(config.pump_outlet_1_75kw, config.pump_outlet_2_75kw),
+      (config) => !config.has_antifreeze,
+    ],
+    qty: 1,
+    _description: "2 x 7.5kW pump outlet, no antifreeze",
+  },
+  {
     pn: PART_NUMBERS.CHASSIS_WASH_15KW,
     conditions: [
       uses15kwPump,
@@ -304,9 +372,49 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     _description: "Chassis wash plates (30kW)",
   },
   {
+    pn: PART_NUMBERS.CHASSIS_WASH_75KW,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        isOneOfOutlets(
+          [config.pump_outlet_1_75kw, config.pump_outlet_2_75kw],
+          "CHASSIS_WASH",
+        ),
+    ],
+    qty: 1,
+    _description: "Chassis wash (7.5kW)",
+  },
+  {
+    pn: PART_NUMBERS.LOW_BARS_75KW,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        isOneOfOutlets(
+          [config.pump_outlet_1_75kw, config.pump_outlet_2_75kw],
+          "LOW_BARS",
+        ),
+    ],
+    qty: 1,
+    _description: "Low HP bars (7.5kW)",
+  },
+  {
+    pn: PART_NUMBERS.CHASSIS_WASH_PLATES_75KW,
+    conditions: [
+      uses75kwPump,
+      (config) =>
+        isOneOfOutlets(
+          [config.pump_outlet_1_75kw, config.pump_outlet_2_75kw],
+          "CHASSIS_WASH",
+        ),
+      (config) => config.has_chassis_wash_plates,
+    ],
+    qty: 1,
+    _description: "Chassis wash plates (7.5kW)",
+  },
+  {
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_POST,
     conditions: [
-      uses15kwOr30kwPump,
+      usesAnyHpPumpWithChassisWash,
       (config) => config.chassis_wash_sensor_type === "SINGLE_POST",
     ],
     qty: 1,
@@ -315,7 +423,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.DUAL_ULTRASONIC_SENSORS_POST,
     conditions: [
-      uses15kwOr30kwPump,
+      usesAnyHpPumpWithChassisWash,
       (config) => config.chassis_wash_sensor_type === "DOUBLE_POST",
     ],
     qty: 1,
@@ -324,7 +432,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_WALL,
     conditions: [
-      uses15kwOr30kwPump,
+      usesAnyHpPumpWithChassisWash,
       (config) => config.chassis_wash_sensor_type === "SINGLE_WALL",
     ],
     qty: 1,
@@ -333,7 +441,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.DUAL_ULTRASONIC_SENSORS_WALL,
     conditions: [
-      uses15kwOr30kwPump,
+      usesAnyHpPumpWithChassisWash,
       (config) => config.chassis_wash_sensor_type === "DOUBLE_WALL",
     ],
     qty: 1,

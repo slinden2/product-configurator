@@ -2,11 +2,13 @@ import { describe, expect, test } from "vitest";
 import type {
   HpPump15kwOutletType,
   HpPump30kwOutletType,
+  HpPump75kwOutletType,
   HpPumpOMZkwOutletType,
 } from "@/types";
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
 
 type OutletType = HpPump15kwOutletType | HpPump30kwOutletType | undefined;
+type Outlet75kwType = HpPump75kwOutletType | undefined;
 
 function createHpPumpObject(
   kw: number = 15,
@@ -18,6 +20,18 @@ function createHpPumpObject(
     [`has_${kw}kw_pump`]: hasPump,
     [`pump_outlet_1_${kw}kw`]: outlet1,
     [`pump_outlet_2_${kw}kw`]: outlet2,
+  };
+}
+
+function create75kwPumpObject(
+  hasPump: boolean = false,
+  outlet1: Outlet75kwType = undefined,
+  outlet2: Outlet75kwType = undefined,
+) {
+  return {
+    has_75kw_pump: hasPump,
+    pump_outlet_1_75kw: outlet1,
+    pump_outlet_2_75kw: outlet2,
   };
 }
 
@@ -113,6 +127,74 @@ describe("hpPumpSchema", () => {
       expect(() => hpPumpSchema.parse(testObject)).not.toThrow();
     });
   });
+  describe("7.5kW pump tests", () => {
+    test("should throw when pump is selected but no outlet", () => {
+      expect(() =>
+        hpPumpSchema.parse(create75kwPumpObject(true, undefined, undefined)),
+      ).toThrow();
+    });
+
+    test.each([
+      [create75kwPumpObject(true, "CHASSIS_WASH", "CHASSIS_WASH")],
+    ])("should throw if both outlets are the same, %o", (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).toThrow();
+    });
+
+    test("should throw if 7.5kW and 15kW are both selected", () => {
+      expect(() =>
+        hpPumpSchema.parse({
+          ...create75kwPumpObject(true, "LOW_BARS", undefined),
+          ...createHpPumpObject(15, true, "LOW_SPINNERS", undefined),
+        }),
+      ).toThrow();
+    });
+
+    test("should throw if 7.5kW and 30kW are both selected", () => {
+      expect(() =>
+        hpPumpSchema.parse({
+          ...create75kwPumpObject(true, "LOW_BARS", undefined),
+          ...createHpPumpObject(30, true, "FULL_ARCH", undefined),
+        }),
+      ).toThrow();
+    });
+
+    test("should throw if CHASSIS_WASH is selected without chassis_wash_sensor_type", () => {
+      expect(() =>
+        hpPumpSchema.parse(
+          create75kwPumpObject(true, "CHASSIS_WASH", undefined),
+        ),
+      ).toThrow();
+    });
+
+    test.each([
+      [
+        {
+          ...create75kwPumpObject(true, "CHASSIS_WASH", undefined),
+          chassis_wash_sensor_type: "SINGLE_POST",
+        },
+      ],
+      [create75kwPumpObject(true, "LOW_BARS", undefined)],
+      [
+        {
+          ...create75kwPumpObject(true, "CHASSIS_WASH", "LOW_BARS"),
+          chassis_wash_sensor_type: "DOUBLE_WALL",
+        },
+      ],
+    ])("should not throw for valid 7.5kW configurations, %o", (testObject) => {
+      expect(() => hpPumpSchema.parse(testObject)).not.toThrow();
+    });
+
+    test("7.5kW can coexist with OMZ pump", () => {
+      expect(() =>
+        hpPumpSchema.parse({
+          ...create75kwPumpObject(true, "LOW_BARS", undefined),
+          has_omz_pump: true,
+          pump_outlet_omz: "SPINNERS",
+        }),
+      ).not.toThrow();
+    });
+  });
+
   describe("OMZ pump tests", () => {
     test.each([
       createOMZPumpObject(true, undefined),

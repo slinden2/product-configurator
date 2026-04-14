@@ -20,6 +20,7 @@ import {
   ConfigurationStatus,
   HpPump15kwOutlets,
   HpPump30kwOutlets,
+  HpPump75kwOutlets,
   HpPumpOMZkwOutlets,
   MachineTypes,
   RailTypes,
@@ -61,6 +62,10 @@ export const hpPump15kwOutletTypeEnum = pgEnum(
 export const hpPump30kwOutletTypeEnum = pgEnum(
   "hp_pump_30kw_outlet_type",
   HpPump30kwOutlets,
+);
+export const hpPump75kwOutletTypeEnum = pgEnum(
+  "hp_pump_75kw_outlet_type",
+  HpPump75kwOutlets,
 );
 export const hpPumpOMZOutletTypeEnum = pgEnum(
   "hp_pump_omz_outlet_type",
@@ -122,6 +127,9 @@ export const configurations = pgTable("configurations", {
   has_30kw_pump: boolean().notNull(),
   pump_outlet_1_30kw: hpPump30kwOutletTypeEnum("pump_outlet_1_30kw"),
   pump_outlet_2_30kw: hpPump30kwOutletTypeEnum("pump_outlet_2_30kw"),
+  has_75kw_pump: boolean().notNull().default(false),
+  pump_outlet_1_75kw: hpPump75kwOutletTypeEnum("pump_outlet_1_75kw"),
+  pump_outlet_2_75kw: hpPump75kwOutletTypeEnum("pump_outlet_2_75kw"),
   chassis_wash_sensor_type: chassisWashSensorTypeEnum(
     "chassis_wash_sensor_type",
   ),

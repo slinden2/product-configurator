@@ -3,6 +3,7 @@ import {
   ChassisWashSensorTypes,
   HpPump15kwOutlets,
   HpPump30kwOutlets,
+  HpPump75kwOutlets,
   HpPumpOMZkwOutlets,
   type SelectOption,
 } from "@/types";
@@ -36,6 +37,16 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
     "Arco completo",
   ]);
 
+export const HPPumpOutlet75kwEnum = z.enum(HpPump75kwOutlets, {
+  message: genericRequiredMessage,
+});
+
+export const hpPumpOutlet75kwTypes: SelectOption[] =
+  generateSelectOptionsFromZodEnum(HPPumpOutlet75kwEnum, [
+    "Lavachassis",
+    "Barre HP basse",
+  ]);
+
 export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, {
   message: genericRequiredMessage,
 });
@@ -48,22 +59,27 @@ export const chassisWashSensorTypeOpts: SelectOption[] =
     "Doppio sensore a parete",
   ]);
 
-export function hasAnyChassiswashOutlet(data: {
+export function hasAnyChassisWashOutlet(data: {
   pump_outlet_1_15kw?: string;
   pump_outlet_2_15kw?: string;
   pump_outlet_1_30kw?: string;
   pump_outlet_2_30kw?: string;
+  pump_outlet_1_75kw?: string;
+  pump_outlet_2_75kw?: string;
 }): boolean {
   const cw15: string[] = [HPPumpOutlet15kwEnum.enum.CHASSIS_WASH];
   const cw30: string[] = [
     HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_HORIZONTAL,
     HPPumpOutlet30kwEnum.enum.CHASSIS_WASH_LATERAL_HORIZONTAL,
   ];
+  const cw75: string[] = [HPPumpOutlet75kwEnum.enum.CHASSIS_WASH];
   return (
     cw15.includes(data.pump_outlet_1_15kw ?? "") ||
     cw15.includes(data.pump_outlet_2_15kw ?? "") ||
     cw30.includes(data.pump_outlet_1_30kw ?? "") ||
-    cw30.includes(data.pump_outlet_2_30kw ?? "")
+    cw30.includes(data.pump_outlet_2_30kw ?? "") ||
+    cw75.includes(data.pump_outlet_1_75kw ?? "") ||
+    cw75.includes(data.pump_outlet_2_75kw ?? "")
   );
 }
 
@@ -248,6 +264,40 @@ const hpPump30kwDiscriminatedUnion = z
       ),
   );
 
+const hpPump75kwDiscriminatedUnion = z
+  .object({
+    has_75kw_pump: z.boolean().default(false),
+  })
+  .passthrough()
+  .pipe(
+    z
+      .discriminatedUnion("has_75kw_pump", [
+        z.object({
+          has_75kw_pump: z.literal(false),
+          pump_outlet_1_75kw: z.undefined(),
+          pump_outlet_2_75kw: z.undefined(),
+        }),
+        z.object({
+          has_75kw_pump: z.literal(true),
+          pump_outlet_1_75kw: HPPumpOutlet75kwEnum.optional(),
+          pump_outlet_2_75kw: HPPumpOutlet75kwEnum.optional(),
+        }),
+      ])
+      .superRefine((data, ctx) =>
+        validatePumpOutlets(
+          data.has_75kw_pump,
+          data.pump_outlet_1_75kw,
+          data.pump_outlet_2_75kw,
+          ctx,
+          HPPumpOutlet75kwEnum.enum.CHASSIS_WASH,
+          ["pump_outlet_1_75kw", "pump_outlet_2_75kw"],
+        ),
+      )
+      .transform((data) =>
+        transformPumpOutlets(data, "pump_outlet_1_75kw", "pump_outlet_2_75kw"),
+      ),
+  );
+
 const hpPumpOmzDiscriminatedUnion = z
   .object({
     has_omz_pump: z.boolean().default(false),
@@ -297,9 +347,22 @@ const hpPumpOmzDiscriminatedUnion = z
       }),
   );
 
+function rejectPumpCombination(
+  ctx: z.RefinementCtx,
+  active: boolean,
+  fieldA: string,
+  fieldB: string,
+  message: string,
+) {
+  if (!active) return;
+  ctx.addIssue({ code: "custom", message, path: [fieldA] });
+  ctx.addIssue({ code: "custom", message, path: [fieldB] });
+}
+
 // --- Final Combined Schema ---
 export const hpPumpSchema = hpPump15kwDiscriminatedUnion
   .and(hpPump30kwDiscriminatedUnion) // Merge 30kW logic
+  .and(hpPump75kwDiscriminatedUnion) // Merge 7.5kW logic
   .and(hpPumpOmzDiscriminatedUnion) // Merge OMZ logic
   .and(
     z.object({
@@ -308,24 +371,30 @@ export const hpPumpSchema = hpPump15kwDiscriminatedUnion
     }),
   )
   .superRefine((data, ctx) => {
-    // Final check: cannot have both 15kW and 30kW pumps
-    if (data.has_15kw_pump && data.has_30kw_pump) {
-      // Add issue to both checkboxes
-      ctx.addIssue({
-        code: "custom",
-        message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
-        path: ["has_15kw_pump"],
-      });
-      ctx.addIssue({
-        code: "custom",
-        message: "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
-        path: ["has_30kw_pump"],
-      });
-    }
+    rejectPumpCombination(
+      ctx,
+      data.has_15kw_pump && data.has_30kw_pump,
+      "has_15kw_pump",
+      "has_30kw_pump",
+      "Non puoi selezionare entrambe le pompe (15kW e 30kW)",
+    );
+    rejectPumpCombination(
+      ctx,
+      data.has_75kw_pump && data.has_15kw_pump,
+      "has_75kw_pump",
+      "has_15kw_pump",
+      "Non puoi selezionare entrambe le pompe (7.5kW e 15kW)",
+    );
+    rejectPumpCombination(
+      ctx,
+      data.has_75kw_pump && data.has_30kw_pump,
+      "has_75kw_pump",
+      "has_30kw_pump",
+      "Non puoi selezionare entrambe le pompe (7.5kW e 30kW)",
+    );
 
-    // If any chassis wash outlet is selected, sensor type is required
     if (
-      hasAnyChassiswashOutlet(data) &&
+      hasAnyChassisWashOutlet(data) &&
       data.chassis_wash_sensor_type === undefined
     ) {
       ctx.addIssue({

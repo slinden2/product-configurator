@@ -33,9 +33,70 @@ describe("HPPumpSection", () => {
     renderHPPumpSection();
 
     expect(screen.getByText("Pompe HP")).toBeInTheDocument();
+    expect(screen.getByText("Pompa 7.5kW")).toBeInTheDocument();
     expect(screen.getByText("Pompa 15kW")).toBeInTheDocument();
     expect(screen.getByText("Pompa 30kW")).toBeInTheDocument();
     expect(screen.getByText("Pompa OMZ")).toBeInTheDocument();
+  });
+
+  describe("7.5kW pump outlets", () => {
+    test("outlet selects are disabled when has_75kw_pump is false", () => {
+      renderHPPumpSection({ has_75kw_pump: false });
+
+      const outlets = screen.getAllByLabelText("Uscita 1");
+      const outlets2 = screen.getAllByLabelText("Uscita 2");
+      // First row outlets (7.5kW)
+      expect(outlets[0]).toBeDisabled();
+      expect(outlets2[0]).toBeDisabled();
+    });
+
+    test("outlet selects are enabled when has_75kw_pump is true", () => {
+      renderHPPumpSection({ has_75kw_pump: true });
+
+      const outlets = screen.getAllByLabelText("Uscita 1");
+      const outlets2 = screen.getAllByLabelText("Uscita 2");
+      expect(outlets[0]).not.toBeDisabled();
+      expect(outlets2[0]).not.toBeDisabled();
+    });
+
+    test("unchecking 7.5kW pump resets its outlet fields", async () => {
+      const { getValues } = renderHPPumpSection({
+        has_75kw_pump: true,
+        pump_outlet_1_75kw: "CHASSIS_WASH",
+        pump_outlet_2_75kw: "LOW_BARS",
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      // has_75kw_pump is the first checkbox
+      await userEvent.click(checkboxes[0]);
+
+      expect(getValues().has_75kw_pump).toBe(false);
+      expect(getValues().pump_outlet_1_75kw).toBeUndefined();
+      expect(getValues().pump_outlet_2_75kw).toBeUndefined();
+    });
+
+    test("chassis wash accessories appear when 7.5kW has CHASSIS_WASH outlet", () => {
+      renderHPPumpSection({
+        has_75kw_pump: true,
+        pump_outlet_1_75kw: "CHASSIS_WASH",
+      });
+
+      expect(screen.getByText("Piastre lavachassis")).toBeInTheDocument();
+    });
+
+    test("unchecking 7.5kW pump when it is the only chassis wash pump resets has_chassis_wash_plates", async () => {
+      const { getValues } = renderHPPumpSection({
+        has_75kw_pump: true,
+        pump_outlet_1_75kw: "CHASSIS_WASH",
+        has_chassis_wash_plates: true,
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      // has_75kw_pump is the first checkbox
+      await userEvent.click(checkboxes[0]);
+
+      expect(getValues().has_chassis_wash_plates).toBe(false);
+    });
   });
 
   describe("15kW pump outlets", () => {
@@ -44,9 +105,9 @@ describe("HPPumpSection", () => {
 
       const outlets = screen.getAllByLabelText("Uscita 1");
       const outlets2 = screen.getAllByLabelText("Uscita 2");
-      // First row outlets (15kW)
-      expect(outlets[0]).toBeDisabled();
-      expect(outlets2[0]).toBeDisabled();
+      // second row outlets (15kW)
+      expect(outlets[1]).toBeDisabled();
+      expect(outlets2[1]).toBeDisabled();
     });
 
     test("outlet selects are enabled when has_15kw_pump is true", () => {
@@ -54,8 +115,8 @@ describe("HPPumpSection", () => {
 
       const outlets = screen.getAllByLabelText("Uscita 1");
       const outlets2 = screen.getAllByLabelText("Uscita 2");
-      expect(outlets[0]).not.toBeDisabled();
-      expect(outlets2[0]).not.toBeDisabled();
+      expect(outlets[1]).not.toBeDisabled();
+      expect(outlets2[1]).not.toBeDisabled();
     });
 
     test("unchecking 15kW pump resets its outlet fields", async () => {
@@ -66,8 +127,8 @@ describe("HPPumpSection", () => {
       });
 
       const checkboxes = screen.getAllByRole("checkbox");
-      // has_15kw_pump is the first checkbox
-      await userEvent.click(checkboxes[0]);
+      // has_15kw_pump is the second checkbox
+      await userEvent.click(checkboxes[1]);
 
       expect(getValues().has_15kw_pump).toBe(false);
       expect(getValues().pump_outlet_1_15kw).toBeUndefined();
@@ -81,9 +142,9 @@ describe("HPPumpSection", () => {
 
       const outlets = screen.getAllByLabelText("Uscita 1");
       const outlets2 = screen.getAllByLabelText("Uscita 2");
-      // Second row outlets (30kW)
-      expect(outlets[1]).toBeDisabled();
-      expect(outlets2[1]).toBeDisabled();
+      // Third row outlets (30kW)
+      expect(outlets[2]).toBeDisabled();
+      expect(outlets2[2]).toBeDisabled();
     });
 
     test("outlet selects are enabled when has_30kw_pump is true", () => {
@@ -91,8 +152,8 @@ describe("HPPumpSection", () => {
 
       const outlets = screen.getAllByLabelText("Uscita 1");
       const outlets2 = screen.getAllByLabelText("Uscita 2");
-      expect(outlets[1]).not.toBeDisabled();
-      expect(outlets2[1]).not.toBeDisabled();
+      expect(outlets[2]).not.toBeDisabled();
+      expect(outlets2[2]).not.toBeDisabled();
     });
 
     test("unchecking 30kW pump resets its outlet fields", async () => {
@@ -103,8 +164,8 @@ describe("HPPumpSection", () => {
       });
 
       const checkboxes = screen.getAllByRole("checkbox");
-      // has_30kw_pump is the second checkbox
-      await userEvent.click(checkboxes[1]);
+      // has_30kw_pump is the third checkbox
+      await userEvent.click(checkboxes[2]);
 
       expect(getValues().has_30kw_pump).toBe(false);
       expect(getValues().pump_outlet_1_30kw).toBeUndefined();
@@ -136,8 +197,8 @@ describe("HPPumpSection", () => {
       });
 
       const checkboxes = screen.getAllByRole("checkbox");
-      // has_15kw_pump is the first checkbox
-      await userEvent.click(checkboxes[0]);
+      // has_15kw_pump is the second checkbox
+      await userEvent.click(checkboxes[1]);
 
       expect(getValues().has_chassis_wash_plates).toBe(false);
     });
@@ -164,15 +225,15 @@ describe("HPPumpSection", () => {
       renderHPPumpSection({ has_omz_pump: false });
 
       const outlets = screen.getAllByLabelText("Uscita 1");
-      // Third row outlet (OMZ)
-      expect(outlets[2]).toBeDisabled();
+      // Fourth row outlet (OMZ) — after 15kW, 30kW, 7.5kW rows
+      expect(outlets[3]).toBeDisabled();
     });
 
     test("OMZ outlet is enabled when has_omz_pump is true", () => {
       renderHPPumpSection({ has_omz_pump: true });
 
       const outlets = screen.getAllByLabelText("Uscita 1");
-      expect(outlets[2]).not.toBeDisabled();
+      expect(outlets[3]).not.toBeDisabled();
     });
 
     test("chemical roof bar checkbox is hidden (opacity-0) when outlet is not HP_ROOF_BAR", () => {
@@ -202,8 +263,8 @@ describe("HPPumpSection", () => {
       });
 
       const checkboxes = screen.getAllByRole("checkbox");
-      // has_omz_pump is the third checkbox
-      await userEvent.click(checkboxes[2]);
+      // has_omz_pump is the fourth checkbox (after 15kW, 30kW, 7.5kW)
+      await userEvent.click(checkboxes[3]);
 
       expect(getValues().has_omz_pump).toBe(false);
       expect(getValues().pump_outlet_omz).toBeUndefined();

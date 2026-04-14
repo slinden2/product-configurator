@@ -25,6 +25,17 @@ const qty = (config: GeneralBOMConfig, pn: string) => {
 };
 
 const PNS = {
+  PUMP_75KW: "1100.024.033",
+  PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE:
+    "TODO:PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE",
+  PNEUMATIC_VALVE_75KW_NO_ANTIFREEZE: "TODO:PNEUMATIC_VALVE_75KW_NO_ANTIFREEZE",
+  TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE:
+    "TODO:TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE",
+  TWO_PNEUMATIC_VALVES_75KW_NO_ANTIFREEZE:
+    "TODO:TWO_PNEUMATIC_VALVES_75KW_NO_ANTIFREEZE",
+  CHASSIS_WASH_75KW: "1100.024.130",
+  LOW_BARS_75KW: "TODO:LOW_BARS_75KW",
+  CHASSIS_WASH_PLATES_75KW: "1100.024.021",
   PUMP_15KW: "1100.024.030",
   PUMP_15KW_WITH_SOFTSTART: "1100.024.032",
   PUMP_30KW: "1100.024.031",
@@ -651,5 +662,125 @@ describe("hpPumpBOM — OMZ machine type components", () => {
     expect(
       qty(config, PNS.HOSE_RIGHT_SHELF_TO_VALVE_ASSY_4_SPINNERS_OMZ_W_EXT),
     ).toBe(2);
+  });
+});
+
+describe("hpPumpBOM — 7.5kW pump", () => {
+  test("has_75kw_pump → 7.5kW pump included", () => {
+    expect(pns(makeConfig({ has_75kw_pump: true }))).toContain(PNS.PUMP_75KW);
+  });
+
+  test("no has_75kw_pump → 7.5kW pump excluded", () => {
+    expect(pns(makeConfig())).not.toContain(PNS.PUMP_75KW);
+  });
+
+  test("7.5kW + one outlet + has_antifreeze → single valve with antifreeze", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "LOW_BARS",
+      has_antifreeze: true,
+    });
+    expect(pns(config)).toContain(PNS.PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE);
+    expect(pns(config)).not.toContain(
+      PNS.TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE,
+    );
+  });
+
+  test("7.5kW + one outlet + !has_antifreeze → single valve no antifreeze", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "LOW_BARS",
+      has_antifreeze: false,
+    });
+    expect(pns(config)).toContain(PNS.PNEUMATIC_VALVE_75KW_NO_ANTIFREEZE);
+    expect(pns(config)).not.toContain(PNS.PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE);
+  });
+
+  test("7.5kW + two outlets + has_antifreeze → two valves with antifreeze", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+      pump_outlet_2_75kw: "LOW_BARS",
+      has_antifreeze: true,
+    });
+    expect(pns(config)).toContain(
+      PNS.TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE,
+    );
+    expect(pns(config)).not.toContain(PNS.PNEUMATIC_VALVE_75KW_WITH_ANTIFREEZE);
+  });
+
+  test("7.5kW + two outlets + !has_antifreeze → two valves no antifreeze", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+      pump_outlet_2_75kw: "LOW_BARS",
+      has_antifreeze: false,
+    });
+    expect(pns(config)).toContain(PNS.TWO_PNEUMATIC_VALVES_75KW_NO_ANTIFREEZE);
+    expect(pns(config)).not.toContain(
+      PNS.TWO_PNEUMATIC_VALVES_75KW_WITH_ANTIFREEZE,
+    );
+  });
+
+  test("7.5kW + CHASSIS_WASH outlet → chassis wash 7.5kW included", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+    });
+    expect(pns(config)).toContain(PNS.CHASSIS_WASH_75KW);
+  });
+
+  test("7.5kW + LOW_BARS outlet → low HP bars included", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "LOW_BARS",
+    });
+    expect(pns(config)).toContain(PNS.LOW_BARS_75KW);
+    expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_75KW);
+  });
+
+  test("7.5kW + CHASSIS_WASH + has_chassis_wash_plates → plates included", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+      has_chassis_wash_plates: true,
+    });
+    expect(pns(config)).toContain(PNS.CHASSIS_WASH_PLATES_75KW);
+  });
+
+  test("7.5kW + CHASSIS_WASH + !has_chassis_wash_plates → plates excluded", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+      has_chassis_wash_plates: false,
+    });
+    expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_PLATES_75KW);
+  });
+
+  test("7.5kW + LOW_BARS + has_chassis_wash_plates → 7.5kW plates excluded (no chassis wash)", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "LOW_BARS",
+      has_chassis_wash_plates: true,
+    });
+    expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_PLATES_75KW);
+  });
+
+  test("7.5kW + CHASSIS_WASH + SINGLE_POST sensor → ultrasonic sensor on post", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+      chassis_wash_sensor_type: "SINGLE_POST",
+    });
+    expect(pns(config)).toContain(PNS.ULTRASONIC_SENSOR_POST);
+  });
+
+  test("7.5kW + CHASSIS_WASH + DOUBLE_WALL sensor → dual sensors on wall", () => {
+    const config = makeConfig({
+      has_75kw_pump: true,
+      pump_outlet_1_75kw: "CHASSIS_WASH",
+      chassis_wash_sensor_type: "DOUBLE_WALL",
+    });
+    expect(pns(config)).toContain(PNS.DUAL_ULTRASONIC_SENSORS_WALL);
   });
 });
