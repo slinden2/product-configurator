@@ -1,9 +1,11 @@
 "use client";
 
-import { Edit, ScrollText, Trash2 } from "lucide-react";
+import { Copy, Edit, ScrollText, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { deleteConfigurationAction } from "@/app/actions/delete-configuration-action";
+import { duplicateConfigurationAction } from "@/app/actions/duplicate-configuration-action";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import IconButton from "@/components/all-configuration-table/icon-button";
@@ -21,12 +23,15 @@ interface ConfigurationRowProps {
 }
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
+  const router = useRouter();
   const canEdit =
     ["ADMIN", "ENGINEER"].includes(user.role) ||
     configuration.user.id === user.id;
   const canDelete = canEdit && isEditable(configuration.status, user.role);
+  const canDuplicate = canEdit;
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const performDelete = useCallback(async () => {
     if (!canDelete) return;
@@ -47,6 +52,25 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       setIsConfirmDeleteOpen(false);
     }
   }, [canDelete, configuration.id]);
+
+  const performDuplicate = useCallback(async () => {
+    if (!canDuplicate) return;
+    setIsDuplicating(true);
+    try {
+      const response = await duplicateConfigurationAction(configuration.id);
+      if (!response.success) {
+        toast.error(response.error ?? MSG.toast.duplicateError);
+        return;
+      }
+      toast.success(MSG.toast.configDuplicated);
+      router.push(`/configurazioni/modifica/${response.id}`);
+    } catch (error) {
+      toast.error(MSG.toast.duplicateError);
+      console.error("Duplicate failed:", error);
+    } finally {
+      setIsDuplicating(false);
+    }
+  }, [canDuplicate, configuration.id, router]);
 
   const handleDeleteClick = () => {
     if (!canDelete) return;
@@ -87,6 +111,14 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
             title="Visualizza distinta"
             variant="ghost"
             disabled={false}
+          />
+          <IconButton
+            className="w-8 h-8"
+            Icon={Copy}
+            title="Duplica configurazione"
+            variant="ghost"
+            disabled={!canDuplicate || isDuplicating}
+            onClick={performDuplicate}
           />
           <IconButton
             className="w-8 h-8 text-red-500 hover:text-red-500"

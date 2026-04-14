@@ -13,9 +13,13 @@ import {
 import { db } from "@/db";
 import {
   activityLogs,
+  type ConfigurationWithWaterTanksAndWashBays,
   configurations,
   engineeringBomItems,
+  type NewConfiguration,
   type NewEngineeringBomItem,
+  type NewWashBay,
+  type NewWaterTank,
   partNumbers,
   userProfiles,
   washBays,
@@ -189,6 +193,74 @@ export const insertConfiguration = async (
   }
 
   return insertedConfiguration;
+};
+
+export const duplicateConfigurationRecord = async (
+  source: ConfigurationWithWaterTanksAndWashBays,
+  newUserId: string,
+): Promise<{ id: number }> => {
+  return db.transaction(async (tx) => {
+    const {
+      id: _id,
+      created_at: _ca,
+      updated_at: _ua,
+      user_id: _uid,
+      status: _s,
+      water_tanks: _wt,
+      wash_bays: _wb,
+      ...rest
+    } = source;
+
+    const newConfigValues: NewConfiguration = {
+      ...rest,
+      user_id: newUserId,
+      status: "DRAFT",
+      name: `Copia di ${source.name}`.slice(0, 255),
+    };
+
+    const [newConfig] = await tx
+      .insert(configurations)
+      .values(newConfigValues)
+      .returning({ id: configurations.id });
+
+    if (!newConfig) {
+      throw new QueryError(MSG.config.duplicateFailed, 500);
+    }
+
+    if (source.water_tanks.length > 0) {
+      const newTanks: NewWaterTank[] = source.water_tanks.map(
+        ({
+          id: _id,
+          created_at: _ca,
+          updated_at: _ua,
+          configuration_id: _cid,
+          ...t
+        }) => ({
+          ...t,
+          configuration_id: newConfig.id,
+        }),
+      );
+      await tx.insert(waterTanks).values(newTanks);
+    }
+
+    if (source.wash_bays.length > 0) {
+      const newBays: NewWashBay[] = source.wash_bays.map(
+        ({
+          id: _id,
+          created_at: _ca,
+          updated_at: _ua,
+          configuration_id: _cid,
+          ...b
+        }) => ({
+          ...b,
+          configuration_id: newConfig.id,
+        }),
+      );
+      await tx.insert(washBays).values(newBays);
+    }
+
+    return newConfig;
+  });
 };
 
 export const deleteConfiguration = async (id: number) => {
