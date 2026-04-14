@@ -48,7 +48,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
   disabled,
   fieldsToResetOnUncheck, // Use the updated prop name
 }: CheckboxFieldProps<TFieldValues>) => {
-  const { control, setValue } = useFormContext<TFieldValues>();
+  const { control, setValue, trigger } = useFormContext<TFieldValues>();
   const formDisabled = useFormDisabled();
 
   return (
@@ -72,21 +72,29 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                   field.onChange(newValue);
                   field.onBlur(); // Mark field as touched for validation
 
-                  // --- Reset Logic ---
-                  // If the new value is false (meaning checkbox was unchecked)
+                  // --- Reset / Revalidate Logic ---
                   if (!newValue) {
+                    // Unchecked: reset dependent fields so their values are cleared
                     fieldsToResetOnUncheck?.forEach((item) => {
                       item.fieldsToReset.forEach((fieldToReset) => {
-                        // Use resetToValue from config if provided, otherwise default to undefined
                         const valueToSet = (item.resetToValue ??
                           undefined) as PathValue<
                           TFieldValues,
                           FieldPath<TFieldValues>
                         >;
                         setValue(fieldToReset, valueToSet, {
-                          shouldValidate: false, // Avoid immediate validation on reset
-                          shouldDirty: true, // Mark form as dirty
+                          shouldValidate: true,
+                          shouldDirty: true,
                         });
+                      });
+                    });
+                  } else {
+                    // Checked: re-validate dependent fields so any stale errors
+                    // from when the checkbox was off are cleared now that the
+                    // discriminated-union branch has switched to the "true" schema.
+                    fieldsToResetOnUncheck?.forEach((item) => {
+                      item.fieldsToReset.forEach((fieldToReset) => {
+                        void trigger(fieldToReset);
                       });
                     });
                   }

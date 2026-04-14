@@ -8,9 +8,18 @@ import {
   hasEngineeringBom,
 } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
-import { updateConfigSchema } from "@/validation/config-schema";
-import { updateWashBaySchema } from "@/validation/wash-bay-schema";
-import { updateWaterTankSchema } from "@/validation/water-tank-schema";
+import {
+  type UpdateConfigSchema,
+  updateConfigSchema,
+} from "@/validation/config-schema";
+import {
+  type UpdateWashBaySchema,
+  updateWashBaySchema,
+} from "@/validation/wash-bay-schema";
+import {
+  type UpdateWaterTankSchema,
+  updateWaterTankSchema,
+} from "@/validation/water-tank-schema";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -32,15 +41,31 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const transformedConfigurationData =
     transformDbNullToUndefined(configuration);
 
-  const validatedConfiguration = updateConfigSchema.parse(
+  // Use safeParse so stale enum values or removed fields don't crash the page.
+  // Invalid data passes through as-is; the client form runs trigger() on mount
+  // and shows the affected fields in red so the user knows what to fix.
+  const configParsed = updateConfigSchema.safeParse(
     transformedConfigurationData,
   );
-  const validatedWaterTanks = water_tanks.map((wt) =>
-    updateWaterTankSchema.parse(transformDbNullToUndefined(wt)),
-  );
-  const validatedWashBays = wash_bays.map((wb) =>
-    updateWashBaySchema.parse(transformDbNullToUndefined(wb)),
-  );
+  const validatedConfiguration: UpdateConfigSchema = configParsed.success
+    ? configParsed.data
+    : (transformedConfigurationData as unknown as UpdateConfigSchema);
+
+  const validatedWaterTanks: UpdateWaterTankSchema[] = water_tanks.map((wt) => {
+    const raw = transformDbNullToUndefined(wt);
+    const parsed = updateWaterTankSchema.safeParse(raw);
+    return parsed.success
+      ? parsed.data
+      : (raw as unknown as UpdateWaterTankSchema);
+  });
+
+  const validatedWashBays: UpdateWashBaySchema[] = wash_bays.map((wb) => {
+    const raw = transformDbNullToUndefined(wb);
+    const parsed = updateWashBaySchema.safeParse(raw);
+    return parsed.success
+      ? parsed.data
+      : (raw as unknown as UpdateWashBaySchema);
+  });
 
   const ebomExists = await hasEngineeringBom(id);
 
