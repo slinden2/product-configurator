@@ -28,6 +28,7 @@ export const MSG = {
     cannotEditSubRecord:
       "Non è possibile modificare i record di una configurazione in questo stato.",
     createFailed: "Impossibile creare la configurazione.",
+    duplicateFailed: "Impossibile duplicare la configurazione.",
     statusAlreadyUpdated: "Stato già aggiornato.",
     statusUnauthorized: "Stato non autorizzato.",
     updateNotFoundOrUnauthorized:
@@ -65,6 +66,8 @@ export const MSG = {
     configUpdated: "Configurazione aggiornata.",
     configCreated: "Configurazione creata.",
     configDeleted: "Configurazione eliminata con successo.",
+    configDuplicated: "Configurazione duplicata.",
+    duplicateError: "Errore durante la duplicazione.",
     configIncompleteUpdate: "Dati incompleti per l'aggiornamento.",
     statusUpdated: "Stato aggiornato.",
     statusUpdateFailed: "Impossibile aggiornare lo stato.",

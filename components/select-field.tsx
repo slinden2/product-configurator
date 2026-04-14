@@ -129,17 +129,23 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
         const stringValueForSelectTrigger =
           watchedValue !== null && watchedValue !== undefined
             ? watchedValue.toString()
-            : ""; // Use "" ONLY for the trigger state when RHF value is undefined/null
+            : "";
 
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <Select
+              // Force Radix to remount when transitioning between "has a value"
+              // and "no value". Radix does not reliably clear its displayed text
+              // when the controlled value changes to "" after having shown a real
+              // selection; remounting resets Radix's internal display state.
+              key={watchedValue == null ? "empty" : "has-value"}
               value={stringValueForSelectTrigger}
               onValueChange={(selectedValueString) => {
                 const parsedTypedValue = parseValue(selectedValueString);
                 field.onChange(parsedTypedValue);
                 field.onBlur();
+                trigger(name);
 
                 fieldsToResetOnValue?.forEach((item) => {
                   const triggerValues = Array.isArray(item.triggerValue)
@@ -159,7 +165,7 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                       >;
 
                       setValue(fieldToReset, valueToSet, {
-                        shouldValidate: false,
+                        shouldValidate: true,
                         shouldDirty: true,
                         shouldTouch: false,
                       });

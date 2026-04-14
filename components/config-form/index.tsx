@@ -69,7 +69,15 @@ const ConfigForm = ({
       (!status || !userRole || !isEditable(status, userRole)));
 
   const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
-    resolver: zodResolver(configSchema),
+    resolver: zodResolver(configSchema, {
+      error: (issue) => {
+        const i = issue as { code: string; expected?: string };
+        if (i.code === "invalid_type" && i.expected === "undefined") {
+          return "Valore non valido.";
+        }
+        return undefined;
+      },
+    }),
     defaultValues: configuration
       ? Object.assign({}, configDefaults, configuration)
       : configDefaults,
@@ -79,11 +87,13 @@ const ConfigForm = ({
     if (formKey) onDirtyChange?.(formKey, form.formState.isDirty);
   }, [form.formState.isDirty, formKey, onDirtyChange]);
 
+  // Validate on mount in edit mode so fields with stale/invalid stored values
+  // show as red immediately rather than only failing on the first Save attempt.
   useEffect(() => {
-    if (form.formState.isSubmitSuccessful) {
-      form.reset(form.getValues());
+    if (!isNewConfiguration) {
+      void form.trigger();
     }
-  }, [form.formState.isSubmitSuccessful, form]);
+  }, [form, isNewConfiguration]);
 
   async function executeSubmit(values: ConfigSchema) {
     try {
@@ -98,9 +108,7 @@ const ConfigForm = ({
         const result = await editConfigurationAction(id, values);
         if (result.success) {
           toast.success(MSG.toast.configUpdated);
-
           form.reset(values);
-
           if (formKey) {
             onSaved?.(formKey);
             // Explicitly notify the parent that the form is no longer dirty

@@ -8,10 +8,21 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // --- Mock functions (before vi.mock) ---
 
 const mockDeleteConfiguration = vi.fn();
+const mockDuplicateConfiguration = vi.fn();
+const mockRouterPush = vi.fn();
 
 vi.mock("@/app/actions/delete-configuration-action", () => ({
   deleteConfigurationAction: (...args: unknown[]) =>
     mockDeleteConfiguration(...args),
+}));
+
+vi.mock("@/app/actions/duplicate-configuration-action", () => ({
+  duplicateConfigurationAction: (...args: unknown[]) =>
+    mockDuplicateConfiguration(...args),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockRouterPush }),
 }));
 
 vi.mock("sonner", () => ({
@@ -127,6 +138,7 @@ afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
   mockDeleteConfiguration.mockResolvedValue({ success: true });
+  mockDuplicateConfiguration.mockResolvedValue({ success: true, id: 99 });
 });
 
 // --- Tests ---
