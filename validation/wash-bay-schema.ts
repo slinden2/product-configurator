@@ -76,6 +76,7 @@ export const washBaySchema = z
     ec_air_tube_qty: z.number().min(0).max(1).optional(),
     is_first_bay: z.boolean().default(false),
     has_bay_dividers: z.boolean().default(false),
+    has_weeping_lances: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     if (
@@ -132,6 +133,20 @@ export const washBaySchema = z
         });
       }
     }
+
+    // Weeping lances require at least one HP source
+    const totalHpSources =
+      data.hp_lance_qty +
+      data.hose_reel_hp_with_post_qty +
+      data.hose_reel_hp_without_post_qty +
+      data.hose_reel_hp_det_with_post_qty;
+    if (data.has_weeping_lances && totalHpSources === 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Disponibile solo con linee HP.",
+        path: ["has_weeping_lances"],
+      });
+    }
   });
 
 export type WashBaySchema = z.infer<typeof washBaySchema>;
@@ -164,4 +179,5 @@ export const washBayDefaults: WashBaySchema = {
   ec_air_tube_qty: undefined,
   is_first_bay: false,
   has_bay_dividers: false,
+  has_weeping_lances: false,
 };

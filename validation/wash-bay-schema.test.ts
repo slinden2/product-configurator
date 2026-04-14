@@ -114,6 +114,48 @@ describe("washBaySchema", () => {
     });
   });
 
+  describe("has_weeping_lances", () => {
+    test("should pass when true and hp_lance_qty=2", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 2,
+        det_lance_qty: 0,
+        has_weeping_lances: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("should pass when true and only a HP hose reel is present", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        hose_reel_hp_with_post_qty: 1,
+        has_weeping_lances: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("should fail when true and all HP sources are zero", () => {
+      const result = washBaySchema.safeParse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+        has_weeping_lances: true,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const msg = result.error.flatten().fieldErrors.has_weeping_lances;
+        expect(msg?.[0]).toContain("linee HP");
+      }
+    });
+
+    test("should default to false when omitted", () => {
+      const result = washBaySchema.parse({
+        hp_lance_qty: 0,
+        det_lance_qty: 0,
+      });
+      expect(result.has_weeping_lances).toBe(false);
+    });
+  });
+
   describe("Default values", () => {
     test("should apply default false for all boolean flags", () => {
       const result = washBaySchema.parse({
@@ -124,6 +166,7 @@ describe("washBaySchema", () => {
       expect(result.has_shelf_extension).toBe(false);
       expect(result.is_first_bay).toBe(false);
       expect(result.has_bay_dividers).toBe(false);
+      expect(result.has_weeping_lances).toBe(false);
     });
 
     test("should apply default 0 for all hose reel fields", () => {

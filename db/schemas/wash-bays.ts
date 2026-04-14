@@ -45,6 +45,7 @@ export const washBays = pgTable("wash_bays", {
   ec_air_tube_qty: integer(),
   is_first_bay: boolean().notNull(),
   has_bay_dividers: boolean().notNull(),
+  has_weeping_lances: boolean().notNull().default(false),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()
     .defaultNow(),

@@ -144,6 +144,7 @@ const getWashBayComplicated = (
   ec_air_tube_qty: 1,
   is_first_bay: true,
   has_bay_dividers: false,
+  has_weeping_lances: false,
 });
 
 const configurationFast: ConfigSchema = {

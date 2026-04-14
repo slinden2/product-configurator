@@ -16,8 +16,7 @@ const PART_NUMBERS = {
     "1100.300.052",
   HP_LANCE_ASSY: "1100.300.081",
   DETERGENT_LANCE_ASSY: "1100.300.082",
-  HP_LANCE_ASSY_WEEPING: "1100.300.083", // TODO Add selections in the form
-  DETERGENT_LANCE_ASSY_WEEPING: "1100.300.084", // TODO Add selections in the form
+  HP_WEEPING_LANCE_ASSY: "1100.300.083",
   HOSE_REEL_HP_WITH_POST_ASSY: "TODO-HP-WITH-POST", // TODO Replace with real PN and add to Excel
   HOSE_REEL_HP_WITHOUT_POST_ASSY: "TODO-HP-WITHOUT-POST", // TODO Replace with real PN and add to Excel
   HOSE_REEL_DET_WITH_POST_ASSY: "TODO-DET-WITH-POST", // TODO Replace with real PN and add to Excel
@@ -77,6 +76,18 @@ const usesShortAndLongShelves = (config: WashBay) =>
   config.hp_lance_qty + config.det_lance_qty > 2;
 
 const usesPanels = (config: WashBay) => config.has_bay_dividers;
+
+const calculateHpLanceQty = (config: WashBay) =>
+  config.hp_lance_qty +
+  config.hose_reel_hp_with_post_qty +
+  config.hose_reel_hp_without_post_qty +
+  config.hose_reel_hp_det_with_post_qty;
+
+const calculateDetLanceQty = (config: WashBay) =>
+  config.det_lance_qty +
+  config.hose_reel_det_with_post_qty +
+  config.hose_reel_det_without_post_qty +
+  config.hose_reel_hp_det_with_post_qty;
 
 const usesSlidingBrackets = (config: WashBay & WithSupplyData) =>
   config.supply_type === "BOOM" && config.has_gantry;
@@ -215,14 +226,26 @@ export const washBayBOM: MaxBOMItem<WashBay & WithSupplyData>[] = [
   },
   {
     pn: PART_NUMBERS.HP_LANCE_ASSY,
-    conditions: [(config) => config.hp_lance_qty > 0],
-    qty: (config) => config.hp_lance_qty,
+    conditions: [
+      (config) => calculateHpLanceQty(config) > 0,
+      (config) => !config.has_weeping_lances,
+    ],
+    qty: (config) => calculateHpLanceQty(config),
     _description: "HP lance assembly",
   },
   {
+    pn: PART_NUMBERS.HP_WEEPING_LANCE_ASSY,
+    conditions: [
+      (config) => calculateHpLanceQty(config) > 0,
+      (config) => config.has_weeping_lances,
+    ],
+    qty: (config) => calculateHpLanceQty(config),
+    _description: "HP weeping lance assembly",
+  },
+  {
     pn: PART_NUMBERS.DETERGENT_LANCE_ASSY,
-    conditions: [(config) => config.det_lance_qty > 0],
-    qty: (config) => config.det_lance_qty,
+    conditions: [(config) => calculateDetLanceQty(config) > 0],
+    qty: (config) => calculateDetLanceQty(config),
     _description: "Detergent lance assembly",
   },
   {

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
@@ -11,12 +12,41 @@ interface WashBayFieldsProps {
 }
 
 const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
-  const { control } = useFormContext<WashBaySchema>();
+  const { control, setValue } = useFormContext<WashBaySchema>();
   const pressureWashTypeWatch = useWatch({
     control,
     name: "pressure_washer_type",
   });
   const hasGantryWatch = useWatch({ control, name: "has_gantry" });
+
+  const hpLanceQty = useWatch({ control, name: "hp_lance_qty" });
+  const hoseReelHpWithPost = useWatch({
+    control,
+    name: "hose_reel_hp_with_post_qty",
+  });
+  const hoseReelHpWithoutPost = useWatch({
+    control,
+    name: "hose_reel_hp_without_post_qty",
+  });
+  const hoseReelHpDet = useWatch({
+    control,
+    name: "hose_reel_hp_det_with_post_qty",
+  });
+
+  const hasHpSource =
+    hpLanceQty > 0 ||
+    hoseReelHpWithPost > 0 ||
+    hoseReelHpWithoutPost > 0 ||
+    hoseReelHpDet > 0;
+
+  useEffect(() => {
+    if (!hasHpSource) {
+      setValue("has_weeping_lances", false, {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+  }, [hasHpSource, setValue]);
 
   const showEnergyChainFields = hasGantryWatch && supplyType === "ENERGY_CHAIN";
 
@@ -99,6 +129,14 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
           <CheckboxField<WashBaySchema>
             name="has_bay_dividers"
             label="Con pannellature"
+          />
+        </div>
+        <div className="fs-item">
+          <CheckboxField<WashBaySchema>
+            name="has_weeping_lances"
+            label="Pistole perdenti"
+            description="Solo per linee HP"
+            disabled={!hasHpSource}
           />
         </div>
       </div>

@@ -45,6 +45,7 @@ function makeConfig(overrides: Partial<WashBayConfig> = {}): WashBayConfig {
     ec_r2_34_inox_tube_qty: null,
     is_first_bay: false,
     has_bay_dividers: false,
+    has_weeping_lances: false,
     created_at: new Date(),
     updated_at: new Date(),
     configuration_id: 1,
@@ -341,5 +342,151 @@ describe("Hose reel BOM rules", () => {
       i._description.startsWith("Hose reel"),
     );
     expect(hoseReelItems).toHaveLength(0);
+  });
+});
+
+describe("HP lance BOM formula (includes trolley + hose reels)", () => {
+  test("hp_lance_qty=2, no reels → HP_LANCE_ASSY qty=2", () => {
+    const config = makeConfig({ hp_lance_qty: 2 });
+    const items = filterBOM(config);
+    const item = items.find((i) => i._description === "HP lance assembly");
+    expect(item?.qty).toBe(2);
+  });
+
+  test("hp_lance_qty=0, hose_reel_hp_with_post=1 → HP_LANCE_ASSY qty=1", () => {
+    const config = makeConfig({
+      hp_lance_qty: 0,
+      hose_reel_hp_with_post_qty: 1,
+    });
+    const items = filterBOM(config);
+    const item = items.find((i) => i._description === "HP lance assembly");
+    expect(item?.qty).toBe(1);
+  });
+
+  test("hp_lance_qty=2, hose_reel_hp_without_post=1 → HP_LANCE_ASSY qty=3", () => {
+    const config = makeConfig({
+      hp_lance_qty: 2,
+      hose_reel_hp_without_post_qty: 1,
+    });
+    const items = filterBOM(config);
+    const item = items.find((i) => i._description === "HP lance assembly");
+    expect(item?.qty).toBe(3);
+  });
+
+  test("combo reel contributes 1 HP lance → HP_LANCE_ASSY qty increments", () => {
+    const config = makeConfig({
+      hp_lance_qty: 0,
+      hose_reel_hp_det_with_post_qty: 1,
+    });
+    const items = filterBOM(config);
+    const item = items.find((i) => i._description === "HP lance assembly");
+    expect(item?.qty).toBe(1);
+  });
+
+  test("all HP sources zero → HP_LANCE_ASSY absent", () => {
+    const config = makeConfig({ hp_lance_qty: 0 });
+    const items = filterBOM(config);
+    expect(
+      items.find((i) => i._description === "HP lance assembly"),
+    ).toBeUndefined();
+  });
+});
+
+describe("Detergent lance BOM formula (includes trolley + hose reels)", () => {
+  test("det_lance_qty=2, no reels → DETERGENT_LANCE_ASSY qty=2", () => {
+    const config = makeConfig({ hp_lance_qty: 0, det_lance_qty: 2 });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Detergent lance assembly",
+    );
+    expect(item?.qty).toBe(2);
+  });
+
+  test("det_lance_qty=0, hose_reel_det_with_post=2 → DETERGENT_LANCE_ASSY qty=2", () => {
+    const config = makeConfig({
+      hp_lance_qty: 0,
+      det_lance_qty: 0,
+      hose_reel_det_with_post_qty: 2,
+    });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Detergent lance assembly",
+    );
+    expect(item?.qty).toBe(2);
+  });
+
+  test("combo reel contributes 1 det lance → DETERGENT_LANCE_ASSY qty increments", () => {
+    const config = makeConfig({
+      hp_lance_qty: 0,
+      det_lance_qty: 0,
+      hose_reel_hp_det_with_post_qty: 1,
+    });
+    const items = filterBOM(config);
+    const item = items.find(
+      (i) => i._description === "Detergent lance assembly",
+    );
+    expect(item?.qty).toBe(1);
+  });
+
+  test("all det sources zero → DETERGENT_LANCE_ASSY absent", () => {
+    const config = makeConfig({ hp_lance_qty: 2, det_lance_qty: 0 });
+    const items = filterBOM(config);
+    expect(
+      items.find((i) => i._description === "Detergent lance assembly"),
+    ).toBeUndefined();
+  });
+});
+
+describe("Weeping HP lances BOM swap", () => {
+  test("has_weeping_lances=true → HP_WEEPING_LANCE_ASSY with same qty, HP_LANCE_ASSY absent", () => {
+    const config = makeConfig({ hp_lance_qty: 2, has_weeping_lances: true });
+    const items = filterBOM(config);
+    expect(
+      items.find((i) => i._description === "HP lance assembly"),
+    ).toBeUndefined();
+    const weeping = items.find(
+      (i) => i._description === "HP weeping lance assembly",
+    );
+    expect(weeping).toBeDefined();
+    expect(weeping?.qty).toBe(2);
+  });
+
+  test("has_weeping_lances=true with hose reels → weeping qty includes all HP sources", () => {
+    const config = makeConfig({
+      hp_lance_qty: 2,
+      hose_reel_hp_with_post_qty: 1,
+      hose_reel_hp_det_with_post_qty: 1,
+      has_weeping_lances: true,
+    });
+    const items = filterBOM(config);
+    const weeping = items.find(
+      (i) => i._description === "HP weeping lance assembly",
+    );
+    expect(weeping?.qty).toBe(4); // 2 + 1 + 1
+  });
+
+  test("has_weeping_lances=false → HP_LANCE_ASSY present, HP_WEEPING_LANCE_ASSY absent", () => {
+    const config = makeConfig({ hp_lance_qty: 2, has_weeping_lances: false });
+    const items = filterBOM(config);
+    expect(
+      items.find((i) => i._description === "HP lance assembly"),
+    ).toBeDefined();
+    expect(
+      items.find((i) => i._description === "HP weeping lance assembly"),
+    ).toBeUndefined();
+  });
+
+  test("weeping flag does not affect DETERGENT_LANCE_ASSY", () => {
+    const config = makeConfig({
+      hp_lance_qty: 2,
+      det_lance_qty: 2,
+      has_weeping_lances: true,
+    });
+    const items = filterBOM(config);
+    const det = items.find(
+      (i) => i._description === "Detergent lance assembly",
+    );
+    expect(det).toBeDefined();
+    expect(det?.qty).toBe(2);
   });
 });
