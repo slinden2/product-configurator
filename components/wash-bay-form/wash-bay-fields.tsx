@@ -217,7 +217,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
                 name="ec_signal_cable_qty"
                 dataType="number"
                 label="Cavo segnali 12G1"
-                items={getNumericSelectOptions([1, 2])}
+                items={getNumericSelectOptions([1, 2, 3])}
               />
             </div>
             <div className="fs-item">
@@ -225,7 +225,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
                 name="ec_profinet_cable_qty"
                 dataType="number"
                 label="Cavo Profinet"
-                items={getNumericSelectOptions([0, 1])}
+                items={getNumericSelectOptions([0, 1, 2])}
               />
             </div>
             <div className="fs-item">

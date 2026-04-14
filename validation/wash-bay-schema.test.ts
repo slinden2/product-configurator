@@ -257,7 +257,7 @@ describe("washBaySchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("should accept ec_profinet_cable_qty within range 0-1", () => {
+    test("should accept ec_profinet_cable_qty within range 0-2", () => {
       expect(
         washBaySchema.safeParse({
           hp_lance_qty: 0,
@@ -272,14 +272,43 @@ describe("washBaySchema", () => {
           ec_profinet_cable_qty: 1,
         }).success,
       ).toBe(true);
-    });
-
-    test("should reject ec_profinet_cable_qty > 1", () => {
       expect(
         washBaySchema.safeParse({
           hp_lance_qty: 0,
           det_lance_qty: 0,
           ec_profinet_cable_qty: 2,
+        }).success,
+      ).toBe(true);
+    });
+
+    test("should reject ec_profinet_cable_qty > 2", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_profinet_cable_qty: 3,
+        }).success,
+      ).toBe(false);
+    });
+
+    test("should accept ec_signal_cable_qty up to 3", () => {
+      for (const qty of [1, 2, 3]) {
+        expect(
+          washBaySchema.safeParse({
+            hp_lance_qty: 0,
+            det_lance_qty: 0,
+            ec_signal_cable_qty: qty,
+          }).success,
+        ).toBe(true);
+      }
+    });
+
+    test("should reject ec_signal_cable_qty > 3", () => {
+      expect(
+        washBaySchema.safeParse({
+          hp_lance_qty: 0,
+          det_lance_qty: 0,
+          ec_signal_cable_qty: 4,
         }).success,
       ).toBe(false);
     });
