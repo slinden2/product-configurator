@@ -4,6 +4,7 @@ import { Copy, Edit, ScrollText, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { checkConfigurationValidityAction } from "@/app/actions/check-configuration-validity-action";
 import { deleteConfigurationAction } from "@/app/actions/delete-configuration-action";
 import { duplicateConfigurationAction } from "@/app/actions/duplicate-configuration-action";
 import { isEditable } from "@/app/actions/lib/auth-checks";
@@ -32,6 +33,9 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isConfirmDuplicateOpen, setIsConfirmDuplicateOpen] = useState(false);
+  const [isCheckingValidity, setIsCheckingValidity] = useState(false);
+  const [hasValidationIssues, setHasValidationIssues] = useState(false);
 
   const performDelete = useCallback(async () => {
     if (!canDelete) return;
@@ -69,8 +73,31 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       console.error("Duplicate failed:", error);
     } finally {
       setIsDuplicating(false);
+      setIsConfirmDuplicateOpen(false);
     }
   }, [canDuplicate, configuration.id, router]);
+
+  const handleDuplicateClick = useCallback(async () => {
+    if (!canDuplicate) return;
+    setHasValidationIssues(false);
+    setIsCheckingValidity(true);
+    setIsConfirmDuplicateOpen(true);
+    try {
+      const response = await checkConfigurationValidityAction(configuration.id);
+      if (!response.success) {
+        // Advisory check failed — skip the warning but keep the modal open
+        // so the user can still proceed with the duplicate.
+        console.error("Validity check returned error:", response.error);
+        return;
+      }
+      setHasValidationIssues(response.hasValidationIssues);
+    } catch (error) {
+      // Silently ignore — the check is advisory; the duplicate can still proceed.
+      console.error("Validity check failed:", error);
+    } finally {
+      setIsCheckingValidity(false);
+    }
+  }, [canDuplicate, configuration.id]);
 
   const handleDeleteClick = () => {
     if (!canDelete) return;
@@ -117,8 +144,8 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
             Icon={Copy}
             title="Duplica configurazione"
             variant="ghost"
-            disabled={!canDuplicate || isDuplicating}
-            onClick={performDuplicate}
+            disabled={!canDuplicate || isDuplicating || isCheckingValidity}
+            onClick={handleDuplicateClick}
           />
           <IconButton
             className="w-8 h-8 text-red-500 hover:text-red-500"
@@ -148,6 +175,36 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         confirmVariant="destructive"
         cancelText="Annulla"
         isConfirming={isDeleting}
+      />
+      <ConfirmModal
+        isOpen={isConfirmDuplicateOpen}
+        onOpenChange={(open) => {
+          if (!isDuplicating) {
+            setIsConfirmDuplicateOpen(open);
+          }
+        }}
+        title={MSG.duplicateConfirm.title}
+        description={
+          <>
+            Vuoi duplicare la configurazione{" "}
+            <span className="font-semibold">{configuration.name}</span>?{" "}
+            {MSG.duplicateConfirm.body}
+            <span
+              className={`grid transition-all duration-300 ease-in-out ${hasValidationIssues ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+            >
+              <span className="overflow-hidden">
+                <span className="mt-3 block text-sm text-yellow-600 dark:text-yellow-500">
+                  {MSG.duplicateConfirm.validationWarning}
+                </span>
+              </span>
+            </span>
+          </>
+        }
+        onConfirm={performDuplicate}
+        confirmText={MSG.duplicateConfirm.confirm}
+        confirmVariant="default"
+        isConfirming={isDuplicating}
+        confirmDisabled={isCheckingValidity}
       />
     </>
   );

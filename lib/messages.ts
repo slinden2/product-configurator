@@ -116,4 +116,11 @@ export const MSG = {
       "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
     confirm: "Salva e elimina distinta",
   },
+  duplicateConfirm: {
+    title: "Conferma duplicazione",
+    body: "Verrà creata una copia in stato BOZZA che potrai modificare.",
+    validationWarning:
+      "Attenzione: questa configurazione contiene valori non più validi secondo le regole attuali. Dopo la duplicazione dovrai correggere i campi evidenziati prima di salvare.",
+    confirm: "Duplica",
+  },
 } as const;

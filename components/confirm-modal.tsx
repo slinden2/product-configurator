@@ -21,6 +21,8 @@ interface ConfirmModalProps {
   confirmVariant?: ButtonProps["variant"];
   cancelText?: string;
   isConfirming?: boolean;
+  /** Disables the confirm button without showing a spinner (e.g. background pre-check). */
+  confirmDisabled?: boolean;
 }
 
 export const ConfirmModal = ({
@@ -33,6 +35,7 @@ export const ConfirmModal = ({
   confirmVariant = "destructive",
   cancelText = "Annulla",
   isConfirming = false,
+  confirmDisabled = false,
 }: ConfirmModalProps) => {
   return (
     <ResponsiveModal open={isOpen} onOpenChange={onOpenChange}>
@@ -48,7 +51,7 @@ export const ConfirmModal = ({
               type="button"
               variant="outline"
               disabled={isConfirming}
-              className="sm:min-w-[100px]"
+              className="sm:min-w-25"
             >
               {cancelText}
             </Button>
@@ -58,10 +61,14 @@ export const ConfirmModal = ({
             type="button"
             variant={confirmVariant}
             onClick={onConfirm}
-            disabled={isConfirming}
-            className="sm:min-w-[100px]"
+            disabled={isConfirming || confirmDisabled}
+            className="sm:min-w-25"
           >
-            {isConfirming ? <Spinner className="h-4 w-4" /> : confirmText}
+            {isConfirming ? (
+              <Spinner className="h-4 w-4 text-current" />
+            ) : (
+              confirmText
+            )}
           </Button>
         </ResponsiveModalFooter>
       </ResponsiveModalContent>

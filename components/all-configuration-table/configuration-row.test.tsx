@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockDeleteConfiguration = vi.fn();
 const mockDuplicateConfiguration = vi.fn();
+const mockCheckConfigurationValidity = vi.fn();
 const mockRouterPush = vi.fn();
 
 vi.mock("@/app/actions/delete-configuration-action", () => ({
@@ -19,6 +20,11 @@ vi.mock("@/app/actions/delete-configuration-action", () => ({
 vi.mock("@/app/actions/duplicate-configuration-action", () => ({
   duplicateConfigurationAction: (...args: unknown[]) =>
     mockDuplicateConfiguration(...args),
+}));
+
+vi.mock("@/app/actions/check-configuration-validity-action", () => ({
+  checkConfigurationValidityAction: (...args: unknown[]) =>
+    mockCheckConfigurationValidity(...args),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -34,19 +40,24 @@ vi.mock("@/components/confirm-modal", () => ({
     isOpen,
     onConfirm,
     onOpenChange,
+    description,
     confirmText,
+    confirmDisabled,
     cancelText,
   }: {
     isOpen: boolean;
     onConfirm: () => void;
     onOpenChange: (open: boolean) => void;
+    description?: React.ReactNode;
     confirmText?: string;
+    confirmDisabled?: boolean;
     cancelText?: string;
   }) =>
     isOpen ? (
       <tr data-testid="confirm-modal">
         <td>
-          <button type="button" onClick={onConfirm}>
+          <div data-testid="modal-description">{description}</div>
+          <button type="button" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmText ?? "Conferma"}
           </button>
           <button type="button" onClick={() => onOpenChange(false)}>
@@ -139,6 +150,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockDeleteConfiguration.mockResolvedValue({ success: true });
   mockDuplicateConfiguration.mockResolvedValue({ success: true, id: 99 });
+  mockCheckConfigurationValidity.mockResolvedValue({
+    success: true,
+    hasValidationIssues: false,
+  });
 });
 
 // --- Tests ---
@@ -401,6 +416,144 @@ describe("ConfigurationRow", () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(MSG.toast.deleteError);
+      });
+    });
+  });
+
+  describe("Duplicate flow", () => {
+    test("clicking Duplica opens confirmation modal without calling duplicateConfigurationAction", async () => {
+      renderRow();
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+
+      expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
+      expect(mockDuplicateConfiguration).not.toHaveBeenCalled();
+    });
+
+    test("confirming in the duplicate modal calls duplicateConfigurationAction and redirects", async () => {
+      renderRow({ id: 7 });
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+
+      // Wait for the pre-check to finish so the confirm button is re-enabled
+      await waitFor(() => {
+        expect(
+          screen.getByText(MSG.duplicateConfirm.confirm),
+        ).not.toBeDisabled();
+      });
+
+      await userEvent.click(screen.getByText(MSG.duplicateConfirm.confirm));
+
+      await waitFor(() => {
+        expect(mockDuplicateConfiguration).toHaveBeenCalledWith(7);
+      });
+      await waitFor(() => {
+        expect(mockRouterPush).toHaveBeenCalledWith(
+          "/configurazioni/modifica/99",
+        );
+      });
+    });
+
+    test("shows validation warning when check returns hasValidationIssues: true", async () => {
+      mockCheckConfigurationValidity.mockResolvedValue({
+        success: true,
+        hasValidationIssues: true,
+      });
+
+      renderRow();
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+
+      // The text is always in the DOM (CSS grid animates from 0fr → 1fr);
+      // check the grid wrapper's class to confirm it's in the expanded state.
+      await waitFor(() => {
+        const warningEl = screen.getByText(
+          MSG.duplicateConfirm.validationWarning,
+        );
+        const grid = warningEl.closest(".grid");
+        expect(grid?.classList.contains("grid-rows-[1fr]")).toBe(true);
+      });
+    });
+
+    test("validity check failure keeps modal open and does not show an error toast", async () => {
+      mockCheckConfigurationValidity.mockResolvedValue({
+        success: false,
+        error: "Configurazione non trovata.",
+      });
+
+      renderRow();
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+
+      // Modal stays open
+      await waitFor(() => {
+        expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
+      });
+
+      // Confirm button becomes enabled (check settled, not still loading)
+      await waitFor(() => {
+        expect(
+          screen.getByText(MSG.duplicateConfirm.confirm),
+        ).not.toBeDisabled();
+      });
+
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    test("clicking Annulla closes the modal without calling duplicateConfigurationAction", async () => {
+      renderRow();
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText("Annulla"));
+
+      expect(screen.queryByTestId("confirm-modal")).not.toBeInTheDocument();
+      expect(mockDuplicateConfiguration).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Duplicate flow — server error", () => {
+    test("shows error toast when duplicateConfigurationAction returns failure", async () => {
+      mockDuplicateConfiguration.mockResolvedValue({
+        success: false,
+        error: "Impossibile duplicare la configurazione.",
+      });
+
+      renderRow();
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await waitFor(() => {
+        expect(
+          screen.getByText(MSG.duplicateConfirm.confirm),
+        ).not.toBeDisabled();
+      });
+      await userEvent.click(screen.getByText(MSG.duplicateConfirm.confirm));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Impossibile duplicare la configurazione.",
+        );
+      });
+    });
+  });
+
+  describe("Duplicate flow — exception", () => {
+    test("shows generic error toast when duplicateConfigurationAction throws", async () => {
+      mockDuplicateConfiguration.mockRejectedValue(new Error("Network error"));
+
+      renderRow();
+
+      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await waitFor(() => {
+        expect(
+          screen.getByText(MSG.duplicateConfirm.confirm),
+        ).not.toBeDisabled();
+      });
+      await userEvent.click(screen.getByText(MSG.duplicateConfirm.confirm));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MSG.toast.duplicateError);
       });
     });
   });
