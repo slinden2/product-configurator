@@ -97,6 +97,10 @@ After every code change, run all three checks before considering the task comple
 
 `@/*` maps to project root (configured in `tsconfig.json`).
 
+## GitHub Issues
+
+All GitHub issues (titles, bodies, comments) must be written in **English**, regardless of the Italian UI language of the app.
+
 ## Screenshots
 
 If I ask you to take a look at a screenshot you can find it here: C:\Users\Utente-006\Pictures\Screenshots
