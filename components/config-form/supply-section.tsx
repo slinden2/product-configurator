@@ -53,9 +53,12 @@ const SupplySection = () => {
               dataType="string"
               label="Tipo di fissaggio"
               items={
-                supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF
-                  ? withNoSelection(selectFieldOptions.supplyFixingTypes)
-                  : selectFieldOptions.supplyFixingTypes
+                supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.ENERGY_CHAIN
+                  ? selectFieldOptions.supplyFixingTypesEnergyChain
+                  : supplyTypeWatch ===
+                      zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF
+                    ? withNoSelection(selectFieldOptions.supplyFixingTypes)
+                    : selectFieldOptions.supplyFixingTypes
               }
               fieldsToResetOnValue={[
                 {

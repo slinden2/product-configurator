@@ -42,6 +42,12 @@ export const supplyFixingTypes: SelectOption[] =
     "Staffa a muro",
   ]);
 
+export const supplyFixingTypesEnergyChain: SelectOption[] =
+  generateSelectOptionsFromZodEnum(SupplyFixingTypeEnum, [
+    "Linea pali",
+    "Mensole a muro",
+  ]);
+
 export const SupplySideEnum = z.enum(SupplySides, {
   message: genericRequiredMessage,
 });

@@ -42,6 +42,7 @@ import {
   SupplySideEnum,
   SupplyTypeEnum,
   supplyFixingTypes,
+  supplyFixingTypesEnergyChain,
   supplySides,
   supplyTypes,
 } from "@/validation/configuration/supply-type-schema";
@@ -103,6 +104,7 @@ export const selectFieldOptions: SelectOptionGroup = {
   supplySides,
   supplyTypes,
   supplyFixingTypes,
+  supplyFixingTypesEnergyChain,
   cableChainWidths,
   waterTypes,
   waterPump1Opts,

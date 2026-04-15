@@ -32,6 +32,28 @@ describe("SupplySection", () => {
     expect(screen.getByText("Lato di alimentazione")).toBeInTheDocument();
   });
 
+  describe("supply_fixing_type labels", () => {
+    // Radix Select renders option text into the trigger via <SelectValue> when
+    // a value is selected. The dropdown content is only in the DOM when open,
+    // so we verify the trigger text (selected item label) instead of option list items.
+    test("trigger shows ENERGY_CHAIN labels when supply_type is ENERGY_CHAIN", () => {
+      renderSupplySection({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+      });
+
+      expect(screen.getByText("Linea pali")).toBeInTheDocument();
+      expect(screen.queryByText("Palo alimentazione")).not.toBeInTheDocument();
+    });
+
+    test("trigger shows default labels when supply_type is BOOM", () => {
+      renderSupplySection({ supply_type: "BOOM", supply_fixing_type: "POST" });
+
+      expect(screen.getByText("Palo alimentazione")).toBeInTheDocument();
+      expect(screen.queryByText("Linea pali")).not.toBeInTheDocument();
+    });
+  });
+
   describe("Post frame checkbox visibility", () => {
     test("hidden by default (no supply_type set)", () => {
       renderSupplySection();
