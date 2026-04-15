@@ -36,6 +36,22 @@ describe("calculate3mRailQty", () => {
   test("rail_length = 26 → 6 (floor((26-6)/3) = floor(6.67) = 6)", () => {
     expect(calculate3mRailQty(cfg(26))).toBe(6);
   });
+
+  test("rail_length = 15 → 3 (floor((15-6)/3) = floor(3) = 3)", () => {
+    expect(calculate3mRailQty(cfg(15))).toBe(3);
+  });
+
+  test("rail_length = 18 → 4 (floor((18-6)/3) = floor(4) = 4)", () => {
+    expect(calculate3mRailQty(cfg(18))).toBe(4);
+  });
+
+  test("rail_length = 30 → 8 (floor((30-6)/3) = floor(8) = 8)", () => {
+    expect(calculate3mRailQty(cfg(30))).toBe(8);
+  });
+
+  test("rail_length = 32 → 8 (floor((32-6)/3) = floor(8.67) = 8)", () => {
+    expect(calculate3mRailQty(cfg(32))).toBe(8);
+  });
 });
 
 describe("calculate1mRailQty", () => {
@@ -53,6 +69,22 @@ describe("calculate1mRailQty", () => {
 
   test("rail_length = 26 → 2 ((26-6) % 3 = 20 % 3 = 2)", () => {
     expect(calculate1mRailQty(cfg(26))).toBe(2);
+  });
+
+  test("rail_length = 15 → 0 ((15-6) % 3 = 9 % 3 = 0)", () => {
+    expect(calculate1mRailQty(cfg(15))).toBe(0);
+  });
+
+  test("rail_length = 18 → 0 ((18-6) % 3 = 12 % 3 = 0)", () => {
+    expect(calculate1mRailQty(cfg(18))).toBe(0);
+  });
+
+  test("rail_length = 30 → 0 ((30-6) % 3 = 24 % 3 = 0)", () => {
+    expect(calculate1mRailQty(cfg(30))).toBe(0);
+  });
+
+  test("rail_length = 32 → 2 ((32-6) % 3 = 26 % 3 = 2)", () => {
+    expect(calculate1mRailQty(cfg(32))).toBe(2);
   });
 });
 
@@ -161,6 +193,22 @@ describe("calculateAnchorQty", () => {
   test("rail_length = 26 → 2 + 44 + 2×12 + 6×20 = 190", () => {
     expect(calculateAnchorQty(cfg(26))).toBe(190);
   });
+
+  test("rail_length = 15 → 2 + 44 + 0×12 + 3×20 = 106", () => {
+    expect(calculateAnchorQty(cfg(15))).toBe(106);
+  });
+
+  test("rail_length = 18 → 2 + 44 + 0×12 + 4×20 = 126", () => {
+    expect(calculateAnchorQty(cfg(18))).toBe(126);
+  });
+
+  test("rail_length = 30 → 2 + 44 + 0×12 + 8×20 = 206", () => {
+    expect(calculateAnchorQty(cfg(30))).toBe(206);
+  });
+
+  test("rail_length = 32 → 2 + 44 + 2×12 + 8×20 = 230", () => {
+    expect(calculateAnchorQty(cfg(32))).toBe(230);
+  });
 });
 
 describe("calculateResinQty", () => {
@@ -178,6 +226,22 @@ describe("calculateResinQty", () => {
 
   test("rail_length = 26 → 190 anchors × 9ml = 1710ml → ceil(1710/500) = 4", () => {
     expect(calculateResinQty(cfg(26))).toBe(4);
+  });
+
+  test("rail_length = 15 → 106 anchors × 9ml = 954ml → ceil(954/500) = 2", () => {
+    expect(calculateResinQty(cfg(15))).toBe(2);
+  });
+
+  test("rail_length = 18 → 126 anchors × 9ml = 1134ml → ceil(1134/500) = 3", () => {
+    expect(calculateResinQty(cfg(18))).toBe(3);
+  });
+
+  test("rail_length = 30 → 206 anchors × 9ml = 1854ml → ceil(1854/500) = 4", () => {
+    expect(calculateResinQty(cfg(30))).toBe(4);
+  });
+
+  test("rail_length = 32 → 230 anchors × 9ml = 2070ml → ceil(2070/500) = 5", () => {
+    expect(calculateResinQty(cfg(32))).toBe(5);
   });
 });
 

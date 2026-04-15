@@ -99,7 +99,7 @@ describe("railSchema", () => {
     test("should throw error if rail_length is above maximum value", () => {
       const invalidData = createRailObject({
         rail_type: RailTypeEnum.enum.WELDED,
-        rail_length: 27,
+        rail_length: 33,
         rail_guide_qty: 1,
       });
       expect(() => railSchema.parse(invalidData)).toThrow();

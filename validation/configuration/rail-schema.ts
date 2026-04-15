@@ -24,9 +24,13 @@ export const anchorTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
 
 export const railLengths: SelectOption[] = [
   { value: 7, label: "7 metri" },
+  { value: 15, label: "15 metri" },
+  { value: 18, label: "18 metri" },
   { value: 21, label: "21 metri" },
   { value: 25, label: "25 metri" },
   { value: 26, label: "26 metri" },
+  { value: 30, label: "30 metri" },
+  { value: 32, label: "32 metri" },
 ];
 
 // Number of guide rails
