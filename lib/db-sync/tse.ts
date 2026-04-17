@@ -71,3 +71,62 @@ export const fetchPartNumbersFromTSE = async (): Promise<DBData[]> => {
 
   return data;
 };
+
+export interface BomStructureRow {
+  parent_pn: string;
+  child_pn: string;
+  qty: number;
+  pos: number;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
+function isBomStructureRowArray(array: any[]): array is BomStructureRow[] {
+  array.forEach((item) => {
+    if (
+      !(
+        typeof item.parent_pn === "string" &&
+        typeof item.child_pn === "string" &&
+        typeof item.qty === "number" &&
+        typeof item.pos === "number"
+      )
+    ) {
+      console.log(item);
+    }
+  });
+
+  return array.every(
+    (item) =>
+      typeof item.parent_pn === "string" &&
+      typeof item.child_pn === "string" &&
+      typeof item.qty === "number" &&
+      typeof item.pos === "number",
+  );
+}
+
+export const fetchBomStructureFromTSE = async (): Promise<
+  BomStructureRow[]
+> => {
+  let conn: ConnectionPool | undefined;
+  let data: BomStructureRow[] = [];
+
+  try {
+    conn = await sql.connect(config);
+
+    const query = fs.readFileSync(
+      path.join(__dirname, "fetch-bom-structure-query.sql"),
+      "utf8",
+    );
+    const result = await sql.query(query);
+
+    data = isBomStructureRowArray(result.recordset) ? result.recordset : [];
+  } catch (err) {
+    console.error("Error fetching BOM structure from TSE:", err);
+    throw err;
+  } finally {
+    if (conn) {
+      await conn.close();
+    }
+  }
+
+  return data;
+};

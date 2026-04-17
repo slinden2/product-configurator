@@ -1,4 +1,5 @@
 export * from "./activity-logs";
+export * from "./bom-lines";
 export * from "./configurations";
 export * from "./engineering-bom-items";
 export * from "./part-numbers";

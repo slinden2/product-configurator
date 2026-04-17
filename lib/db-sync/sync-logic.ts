@@ -1,7 +1,16 @@
-import { sql } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { type NewPartNumber, partNumbers, pnTypeEnum } from "@/db/schemas";
-import { fetchPartNumbersFromTSE } from "@/lib/db-sync/tse";
+import {
+  bomLines,
+  type NewBomLine,
+  type NewPartNumber,
+  partNumbers,
+  pnTypeEnum,
+} from "@/db/schemas";
+import {
+  fetchBomStructureFromTSE,
+  fetchPartNumbersFromTSE,
+} from "@/lib/db-sync/tse";
 
 const BATCH_SIZE = 1000;
 
@@ -25,8 +34,8 @@ function isPartNumberArray(array: any): array is NewPartNumber[] {
   );
 }
 
-export async function batchUpsert() {
-  console.log("Starting batchUpsert function...");
+export async function batchUpsertPartNumbers() {
+  console.log("Starting batchUpsertPartNumbers function...");
 
   console.time("Fetch records from TSE");
   const rawPartNumbers = await fetchPartNumbersFromTSE();
@@ -68,5 +77,59 @@ export async function batchUpsert() {
   console.timeEnd("Update records in Supabase");
   console.log(
     `Upsert completed: ${cleanPartNumbers.length} records in ${Math.ceil(cleanPartNumbers.length / BATCH_SIZE)} batch(es).`,
+  );
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
+function isBomLineInsertArray(array: any): array is NewBomLine[] {
+  return array.every(
+    // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
+    (item: any) =>
+      typeof item.parent_pn === "string" &&
+      typeof item.child_pn === "string" &&
+      typeof item.qty === "string" &&
+      typeof item.pos === "number",
+  );
+}
+
+export async function batchUpsertBomStructure() {
+  console.log("Starting batchUpsertBomStructure function...");
+
+  console.time("Fetch BOM structure from TSE");
+  const raw = await fetchBomStructureFromTSE();
+  console.timeEnd("Fetch BOM structure from TSE");
+
+  if (raw.length === 0) {
+    console.warn(
+      "No BOM structure rows fetched from TSE — structure sync skipped.",
+    );
+    return;
+  }
+
+  const clean: NewBomLine[] = raw.map((r) => ({
+    parent_pn: r.parent_pn.trim(),
+    child_pn: r.child_pn.trim(),
+    qty: String(r.qty),
+    pos: Number(r.pos),
+  }));
+
+  if (!isBomLineInsertArray(clean)) {
+    throw new Error("Invalid BOM structure array");
+  }
+
+  const incomingParents = Array.from(new Set(clean.map((r) => r.parent_pn)));
+
+  console.time("Replace BOM structure in Supabase");
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(bomLines)
+      .where(inArray(bomLines.parent_pn, incomingParents));
+    for (let i = 0; i < clean.length; i += BATCH_SIZE) {
+      await tx.insert(bomLines).values(clean.slice(i, i + BATCH_SIZE));
+    }
+  });
+  console.timeEnd("Replace BOM structure in Supabase");
+  console.log(
+    `BOM structure sync completed: ${clean.length} rows across ${incomingParents.length} parents, in ${Math.ceil(clean.length / BATCH_SIZE)} batch(es).`,
   );
 }

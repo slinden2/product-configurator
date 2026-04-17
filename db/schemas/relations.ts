@@ -1,7 +1,9 @@
 import { relations } from "drizzle-orm";
 import { activityLogs } from "@/db/schemas/activity-logs";
+import { bomLines } from "@/db/schemas/bom-lines";
 import { configurations } from "@/db/schemas/configurations";
 import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
+import { partNumbers } from "@/db/schemas/part-numbers";
 import { userProfiles } from "@/db/schemas/user-profiles";
 import { washBays } from "@/db/schemas/wash-bays";
 import { waterTanks } from "@/db/schemas/water-tanks";
@@ -51,5 +53,23 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(userProfiles, {
     fields: [activityLogs.user_id],
     references: [userProfiles.id],
+  }),
+}));
+
+export const partNumbersRelations = relations(partNumbers, ({ many }) => ({
+  bom_lines_as_parent: many(bomLines, { relationName: "bom_line_parent" }),
+  bom_lines_as_child: many(bomLines, { relationName: "bom_line_child" }),
+}));
+
+export const bomLinesRelations = relations(bomLines, ({ one }) => ({
+  parent: one(partNumbers, {
+    fields: [bomLines.parent_pn],
+    references: [partNumbers.pn],
+    relationName: "bom_line_parent",
+  }),
+  child: one(partNumbers, {
+    fields: [bomLines.child_pn],
+    references: [partNumbers.pn],
+    relationName: "bom_line_child",
   }),
 }));
