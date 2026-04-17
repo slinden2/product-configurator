@@ -17,7 +17,7 @@ export const bomLines = pgTable(
     parent_pn: varchar("parent_pn", { length: 25 }).notNull(),
     child_pn: varchar("child_pn", { length: 25 }).notNull(),
     qty: numeric("qty", { precision: 10, scale: 3 }).notNull(),
-    pos: integer("pos").notNull(),
+    sort_order: integer("sort_order").notNull(),
     created_at: timestamp("created_at", { mode: "date", precision: 3 })
       .notNull()
       .defaultNow(),
@@ -26,5 +26,7 @@ export const bomLines = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (t) => [uniqueIndex("bom_lines_parent_pos_unq").on(t.parent_pn, t.pos)],
+  (t) => [
+    uniqueIndex("bom_lines_parent_pos_unq").on(t.parent_pn, t.sort_order),
+  ],
 ).enableRLS();

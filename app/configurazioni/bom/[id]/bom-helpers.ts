@@ -1,6 +1,10 @@
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import { getEngineeringBomItems, hasEngineeringBom } from "@/db/queries";
-import type { Configuration, EngineeringBomItem } from "@/db/schemas";
+import {
+  type EngineeringBomItemWithPart,
+  getEngineeringBomItems,
+  hasEngineeringBom,
+} from "@/db/queries";
+import type { Configuration } from "@/db/schemas";
 import {
   BOM,
   type BOMItemWithCost,
@@ -9,20 +13,22 @@ import {
 } from "@/lib/BOM";
 import type { Role } from "@/types";
 
+export type { EngineeringBomItemWithPart };
+
 // ── Grouping ────────────────────────────────────────────────────────────
 
 export interface GroupedEbomItems {
-  general: EngineeringBomItem[];
-  waterTanks: Map<number, EngineeringBomItem[]>;
-  washBays: Map<number, EngineeringBomItem[]>;
+  general: EngineeringBomItemWithPart[];
+  waterTanks: Map<number, EngineeringBomItemWithPart[]>;
+  washBays: Map<number, EngineeringBomItemWithPart[]>;
 }
 
 export function groupEbomByCategory(
-  items: EngineeringBomItem[],
+  items: EngineeringBomItemWithPart[],
 ): GroupedEbomItems {
-  const general: EngineeringBomItem[] = [];
-  const waterTanks = new Map<number, EngineeringBomItem[]>();
-  const washBays = new Map<number, EngineeringBomItem[]>();
+  const general: EngineeringBomItemWithPart[] = [];
+  const waterTanks = new Map<number, EngineeringBomItemWithPart[]>();
+  const washBays = new Map<number, EngineeringBomItemWithPart[]>();
 
   for (const item of items) {
     switch (item.category) {
@@ -54,7 +60,7 @@ export { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 // ── Export data builders ────────────────────────────────────────────────
 
 export function buildEbomExportData(
-  activeItems: EngineeringBomItem[],
+  activeItems: EngineeringBomItemWithPart[],
 ): BOMItemWithDescription[] {
   return activeItems.map((i) => ({
     pn: i.pn,
@@ -65,13 +71,15 @@ export function buildEbomExportData(
 }
 
 export async function buildEbomCostExportData(
-  activeItems: EngineeringBomItem[],
+  activeItems: EngineeringBomItemWithPart[],
 ): Promise<{
   generalBOM: BOMItemWithCost[];
   waterTankBOMs: BOMItemWithCost[][];
   washBayBOMs: BOMItemWithCost[][];
 }> {
-  const toBomItem = (i: EngineeringBomItem): BOMItemWithDescription => ({
+  const toBomItem = (
+    i: EngineeringBomItemWithPart,
+  ): BOMItemWithDescription => ({
     pn: i.pn,
     qty: i.qty,
     _description: "",
@@ -105,8 +113,8 @@ export interface BOMPageData {
   waterTankBOMs: BOMItemWithDescription[][];
   washBayBOMs: BOMItemWithDescription[][];
   hasEbom: boolean;
-  ebomItems: EngineeringBomItem[];
-  activeEbomItems: EngineeringBomItem[];
+  ebomItems: EngineeringBomItemWithPart[];
+  activeEbomItems: EngineeringBomItemWithPart[];
   editable: boolean;
   ebomGrouped: GroupedEbomItems;
   exportData: BOMItemWithDescription[];
@@ -168,14 +176,18 @@ export async function prepareBOMPageData(
 
 // ── Metadata ────────────────────────────────────────────────────────────
 
-export function getEarliestCreatedAt(items: EngineeringBomItem[]): Date | null {
+export function getEarliestCreatedAt(
+  items: EngineeringBomItemWithPart[],
+): Date | null {
   if (items.length === 0) return null;
   return items.reduce((earliest, item) =>
     item.created_at < earliest.created_at ? item : earliest,
   ).created_at;
 }
 
-export function getBomRulesVersion(items: EngineeringBomItem[]): string | null {
+export function getBomRulesVersion(
+  items: EngineeringBomItemWithPart[],
+): string | null {
   if (items.length === 0) return null;
   return items[0].bom_rules_version;
 }

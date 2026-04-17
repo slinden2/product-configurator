@@ -42,7 +42,7 @@ export function Spinner({
   className,
 }: SpinnerContentProps) {
   return (
-    <span className={spinnerVariants({ show })}>
+    <span role="status" className={spinnerVariants({ show })}>
       <Loader2 className={cn(loaderVariants({ size }), className)} />
       {children}
     </span>

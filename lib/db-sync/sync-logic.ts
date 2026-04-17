@@ -88,7 +88,7 @@ function isBomLineInsertArray(array: any): array is NewBomLine[] {
       typeof item.parent_pn === "string" &&
       typeof item.child_pn === "string" &&
       typeof item.qty === "string" &&
-      typeof item.pos === "number",
+      typeof item.sort_order === "number",
   );
 }
 
@@ -110,7 +110,7 @@ export async function batchUpsertBomStructure() {
     parent_pn: r.parent_pn.trim(),
     child_pn: r.child_pn.trim(),
     qty: String(r.qty),
-    pos: Number(r.pos),
+    sort_order: Number(r.sort_order),
   }));
 
   if (!isBomLineInsertArray(clean)) {

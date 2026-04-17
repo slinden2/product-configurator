@@ -13,6 +13,7 @@ import {
 import { db } from "@/db";
 import {
   activityLogs,
+  bomLines,
   type ConfigurationWithWaterTanksAndWashBays,
   configurations,
   engineeringBomItems,
@@ -519,15 +520,75 @@ export async function getPartNumbersByArray(array: string[]) {
 // --- Engineering BOM ---
 
 export async function getEngineeringBomItems(confId: number) {
-  return db.query.engineeringBomItems.findMany({
-    where: eq(engineeringBomItems.configuration_id, confId),
-    orderBy: [
+  return db
+    .select({
+      id: engineeringBomItems.id,
+      configuration_id: engineeringBomItems.configuration_id,
+      category: engineeringBomItems.category,
+      category_index: engineeringBomItems.category_index,
+      pn: engineeringBomItems.pn,
+      is_custom: engineeringBomItems.is_custom,
+      description: engineeringBomItems.description,
+      qty: engineeringBomItems.qty,
+      original_qty: engineeringBomItems.original_qty,
+      is_deleted: engineeringBomItems.is_deleted,
+      is_added: engineeringBomItems.is_added,
+      sort_order: engineeringBomItems.sort_order,
+      tag: engineeringBomItems.tag,
+      bom_rules_version: engineeringBomItems.bom_rules_version,
+      created_at: engineeringBomItems.created_at,
+      updated_at: engineeringBomItems.updated_at,
+      pn_type: partNumbers.pn_type,
+      is_phantom: partNumbers.is_phantom,
+    })
+    .from(engineeringBomItems)
+    .leftJoin(partNumbers, eq(engineeringBomItems.pn, partNumbers.pn))
+    .where(eq(engineeringBomItems.configuration_id, confId))
+    .orderBy(
       asc(engineeringBomItems.category),
       asc(engineeringBomItems.category_index),
       asc(engineeringBomItems.sort_order),
-    ],
+    );
+}
+
+export type EngineeringBomItemWithPart = Awaited<
+  ReturnType<typeof getEngineeringBomItems>
+>[number];
+
+export async function getAssemblyChildren(parentPn: string) {
+  const rows = await db.query.bomLines.findMany({
+    where: eq(bomLines.parent_pn, parentPn),
+    orderBy: [asc(bomLines.sort_order)],
+    with: {
+      child: {
+        columns: {
+          pn: true,
+          description: true,
+          pn_type: true,
+          is_phantom: true,
+        },
+      },
+    },
+  });
+
+  return rows.flatMap((r) => {
+    if (!r.child) return [];
+    return [
+      {
+        pn: r.child.pn,
+        description: r.child.description,
+        qty: Number(r.qty),
+        sort_order: r.sort_order,
+        pn_type: r.child.pn_type,
+        is_phantom: r.child.is_phantom,
+      },
+    ];
   });
 }
+
+export type AssemblyChild = Awaited<
+  ReturnType<typeof getAssemblyChildren>
+>[number];
 
 export async function hasEngineeringBom(
   confId: number,

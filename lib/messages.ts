@@ -109,6 +109,7 @@ export const MSG = {
     roleUpdateFailed: "Impossibile aggiornare il ruolo.",
     passwordResetSent: "Email di reset password inviata.",
     passwordResetFailed: "Impossibile inviare l'email di reset.",
+    subBomLoadFailed: "Impossibile caricare la distinta del sotto-assieme.",
   },
   bomWarning: {
     title: "Distinta di commessa presente",

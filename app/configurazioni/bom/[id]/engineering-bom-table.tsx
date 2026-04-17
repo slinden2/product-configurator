@@ -1,7 +1,16 @@
 "use client";
 
-import { ArrowDownUp, Check, Pencil, Trash2, Undo2, X } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import {
+  ArrowDownUp,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
+import { Fragment, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   toggleDeleteEngineeringBomItemAction,
@@ -18,12 +27,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { EngineeringBomItem } from "@/db/schemas";
+import type { EngineeringBomItemWithPart } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
+import { AssemblyChildrenRows } from "./assembly-children-rows";
 
 interface EngineeringBomTableProps {
-  items: EngineeringBomItem[];
+  items: EngineeringBomItemWithPart[];
   confId: number;
   editable: boolean;
 }
@@ -33,7 +43,7 @@ interface SortState {
   direction: "asc" | "desc";
 }
 
-function sortByPn(arr: EngineeringBomItem[]) {
+function sortByPn(arr: EngineeringBomItemWithPart[]) {
   return [...arr].sort((a, b) => a.pn.localeCompare(b.pn));
 }
 
@@ -54,7 +64,20 @@ const EngineeringBomTable = ({
   }, [items]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editQty, setEditQty] = useState<string>("");
+  const [expandedRowIds, setExpandedRowIds] = useState<Set<number>>(new Set());
   const [isPending, startTransition] = useTransition();
+
+  function toggleExpanded(id: number) {
+    setExpandedRowIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
 
   function sortTable(key: SortState["key"]) {
     if (!key) return;
@@ -71,7 +94,7 @@ const EngineeringBomTable = ({
     setSorting({ key, direction });
   }
 
-  function startEdit(item: EngineeringBomItem) {
+  function startEdit(item: EngineeringBomItemWithPart) {
     setEditingId(item.id);
     setEditQty(String(item.qty));
   }
@@ -127,7 +150,7 @@ const EngineeringBomTable = ({
     });
   }
 
-  function getRowClassName(item: EngineeringBomItem): string {
+  function getRowClassName(item: EngineeringBomItemWithPart): string {
     if (item.is_deleted) return "opacity-50 bg-muted/30";
     if (item.is_custom) return "bg-orange-500/10";
     if (item.is_added) return "bg-green-500/10";
@@ -169,126 +192,158 @@ const EngineeringBomTable = ({
       </TableHeader>
       <TableBody className="text-sm">
         {dataArr.map((item, index) => (
-          <TableRow key={item.id} className={cn(getRowClassName(item))}>
-            <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
-            <TableCell
-              className={cn(
-                "w-32 py-2 whitespace-nowrap",
-                item.is_deleted && "line-through",
-              )}
-            >
-              {item.pn}
-            </TableCell>
-            <TableCell
-              className={cn(
-                "py-2 break-words min-w-0",
-                item.is_deleted && "line-through",
-              )}
-            >
-              {item.description}
-              {item.is_custom && !item.is_deleted && (
-                <Badge
-                  variant="outline"
-                  className="ml-2 text-orange-500 border-orange-500 text-[10px] px-1 py-0"
-                >
-                  WIP
-                </Badge>
-              )}
-            </TableCell>
-            <TableCell
-              className={cn(
-                "w-24 py-2 text-center",
-                item.is_deleted && "line-through",
-              )}
-            >
-              {editingId === item.id ? (
-                <Input
-                  type="number"
-                  min={1}
-                  value={editQty}
-                  onChange={(e) => setEditQty(e.target.value)}
-                  className="w-20 h-7 text-center mx-auto"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveEdit(item.id);
-                    if (e.key === "Escape") cancelEdit();
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <span>
-                  {item.qty}
-                  {!item.is_deleted &&
-                    item.original_qty !== null &&
-                    item.qty !== item.original_qty && (
-                      <span className="text-muted-foreground text-xs ml-1">
-                        (era {item.original_qty})
-                      </span>
-                    )}
-                </span>
-              )}
-            </TableCell>
-            {editable && (
-              <TableCell className="text-center">
-                {item.is_deleted ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    disabled={isPending}
-                    onClick={() => toggleDelete(item.id)}
-                    title="Ripristina"
+          <Fragment key={item.id}>
+            <TableRow className={cn(getRowClassName(item))}>
+              <TableCell className="hidden sm:table-cell">
+                <div className="flex items-center gap-0.5">
+                  {item.pn_type === "ASSY" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => toggleExpanded(item.id)}
+                      title={
+                        expandedRowIds.has(item.id) ? "Comprimi" : "Espandi"
+                      }
+                    >
+                      {expandedRowIds.has(item.id) ? (
+                        <ChevronDown size={14} />
+                      ) : (
+                        <ChevronRight size={14} />
+                      )}
+                    </Button>
+                  )}
+                  <span className={cn(item.pn_type !== "ASSY" && "pl-7")}>
+                    {index + 1}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell
+                className={cn(
+                  "w-32 py-2 whitespace-nowrap",
+                  item.is_deleted && "line-through",
+                )}
+              >
+                {item.pn}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  "py-2 break-words min-w-0",
+                  item.is_deleted && "line-through",
+                )}
+              >
+                {item.description}
+                {item.is_custom && !item.is_deleted && (
+                  <Badge
+                    variant="outline"
+                    className="ml-2 text-orange-500 border-orange-500 text-[10px] px-1 py-0"
                   >
-                    <Undo2 size={14} />
-                  </Button>
-                ) : editingId === item.id ? (
-                  <div className="flex items-center justify-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      disabled={isPending}
-                      onClick={() => saveEdit(item.id)}
-                      title="Conferma"
-                    >
-                      <Check size={14} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={cancelEdit}
-                      title="Annulla"
-                    >
-                      <X size={14} />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      disabled={isPending}
-                      onClick={() => startEdit(item)}
-                      title="Modifica quantità"
-                    >
-                      <Pencil size={14} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive"
-                      disabled={isPending}
-                      onClick={() => toggleDelete(item.id)}
-                      title="Elimina"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
+                    WIP
+                  </Badge>
                 )}
               </TableCell>
+              <TableCell
+                className={cn(
+                  "w-24 py-2 text-center",
+                  item.is_deleted && "line-through",
+                )}
+              >
+                {editingId === item.id ? (
+                  <Input
+                    type="number"
+                    min={1}
+                    value={editQty}
+                    onChange={(e) => setEditQty(e.target.value)}
+                    className="w-20 h-7 text-center mx-auto"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEdit(item.id);
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span>
+                    {item.qty}
+                    {!item.is_deleted &&
+                      item.original_qty !== null &&
+                      item.qty !== item.original_qty && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          (era {item.original_qty})
+                        </span>
+                      )}
+                  </span>
+                )}
+              </TableCell>
+              {editable && (
+                <TableCell className="text-center">
+                  {item.is_deleted ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      disabled={isPending}
+                      onClick={() => toggleDelete(item.id)}
+                      title="Ripristina"
+                    >
+                      <Undo2 size={14} />
+                    </Button>
+                  ) : editingId === item.id ? (
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={isPending}
+                        onClick={() => saveEdit(item.id)}
+                        title="Conferma"
+                      >
+                        <Check size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={cancelEdit}
+                        title="Annulla"
+                      >
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={isPending}
+                        onClick={() => startEdit(item)}
+                        title="Modifica quantità"
+                      >
+                        <Pencil size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive"
+                        disabled={isPending}
+                        onClick={() => toggleDelete(item.id)}
+                        title="Elimina"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  )}
+                </TableCell>
+              )}
+            </TableRow>
+            {item.pn_type === "ASSY" && expandedRowIds.has(item.id) && (
+              <AssemblyChildrenRows
+                parentPn={item.pn}
+                depth={1}
+                columnCount={editable ? 5 : 4}
+              />
             )}
-          </TableRow>
+          </Fragment>
         ))}
       </TableBody>
     </Table>

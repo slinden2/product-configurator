@@ -3,7 +3,7 @@ SELECT
     RTRIM(hdr.PD95_CODART_MG66)   AS parent_pn,
     RTRIM(rows.PD96_COMPON)       AS child_pn,
     rows.PD96_QUANT_1             AS qty,
-    rows.PD96_SEQCOMP             AS pos
+    rows.PD96_SEQCOMP             AS sort_order
 FROM PD95_DISBA hdr
 INNER JOIN PD96_LEGAMIDISBA rows
     ON rows.PD96_IDDISBA_PD95 = hdr.PD95_IDDISBA

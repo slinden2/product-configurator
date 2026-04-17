@@ -16,15 +16,13 @@ import {
   groupEbomByCategory,
   hasTagData,
 } from "@/app/configurazioni/bom/[id]/bom-helpers";
-import type { EngineeringBomItem } from "@/db/schemas";
+import type { EngineeringBomItemWithPart } from "@/db/queries";
 
 // --- Helpers ---
 
 function makeItem(
-  overrides: Partial<EngineeringBomItem> & {
-    bom_rules_version?: string | null;
-  } = {},
-): EngineeringBomItem {
+  overrides: Partial<EngineeringBomItemWithPart> = {},
+): EngineeringBomItemWithPart {
   return {
     id: 1,
     configuration_id: 1,
@@ -42,6 +40,8 @@ function makeItem(
     bom_rules_version: null,
     created_at: new Date("2026-03-20T10:00:00Z"),
     updated_at: new Date("2026-03-20T10:00:00Z"),
+    pn_type: null,
+    is_phantom: null,
     ...overrides,
   };
 }

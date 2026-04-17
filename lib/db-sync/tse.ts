@@ -76,7 +76,7 @@ export interface BomStructureRow {
   parent_pn: string;
   child_pn: string;
   qty: number;
-  pos: number;
+  sort_order: number;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
@@ -87,7 +87,7 @@ function isBomStructureRowArray(array: any[]): array is BomStructureRow[] {
         typeof item.parent_pn === "string" &&
         typeof item.child_pn === "string" &&
         typeof item.qty === "number" &&
-        typeof item.pos === "number"
+        typeof item.sort_order === "number"
       )
     ) {
       console.log(item);
@@ -99,7 +99,7 @@ function isBomStructureRowArray(array: any[]): array is BomStructureRow[] {
       typeof item.parent_pn === "string" &&
       typeof item.child_pn === "string" &&
       typeof item.qty === "number" &&
-      typeof item.pos === "number",
+      typeof item.sort_order === "number",
   );
 }
 
