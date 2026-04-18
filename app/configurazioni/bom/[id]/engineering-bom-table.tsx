@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  FileDown,
   Ghost,
   Pencil,
   Trash2,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { Fragment, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { getAssemblyChildrenAction } from "@/app/actions/bom-lines-actions";
 import {
   toggleDeleteEngineeringBomItemAction,
   updateEngineeringBomItemQtyAction,
@@ -29,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { EngineeringBomItemWithPart } from "@/db/queries";
+import { exportBomToXls } from "@/lib/BOM/export-xlsx";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 import { AssemblyChildrenRows } from "./assembly-children-rows";
@@ -148,6 +151,21 @@ const EngineeringBomTable = ({
           err instanceof Error ? err.message : MSG.toast.operationError,
         );
       }
+    });
+  }
+
+  function handleExportRow(item: EngineeringBomItemWithPart) {
+    startTransition(async () => {
+      const result = await getAssemblyChildrenAction(item.pn);
+      if (!result.success) {
+        toast.error(result.error ?? MSG.toast.subBomLoadFailed);
+        return;
+      }
+      if (result.data.length === 0) {
+        toast.error(MSG.toast.subBomEmpty);
+        return;
+      }
+      exportBomToXls(result.data, item.pn);
     });
   }
 
@@ -332,6 +350,18 @@ const EngineeringBomTable = ({
                       >
                         <Pencil size={14} />
                       </Button>
+                      {item.pn_type === "ASSY" && !item.is_deleted && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={isPending}
+                          onClick={() => handleExportRow(item)}
+                          title="Esporta sotto-assieme"
+                        >
+                          <FileDown size={14} />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"

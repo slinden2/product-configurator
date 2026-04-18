@@ -110,6 +110,7 @@ export const MSG = {
     passwordResetSent: "Email di reset password inviata.",
     passwordResetFailed: "Impossibile inviare l'email di reset.",
     subBomLoadFailed: "Impossibile caricare la distinta del sotto-assieme.",
+    subBomEmpty: "Il sotto-assieme non contiene articoli.",
   },
   bomWarning: {
     title: "Distinta di commessa presente",
