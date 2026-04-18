@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Ghost } from "lucide-react";
 import { Fragment, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getAssemblyChildrenAction } from "@/app/actions/bom-lines-actions";
@@ -115,7 +115,17 @@ export function AssemblyChildrenRows({
                 {child.pn}
               </TableCell>
               <TableCell className="py-1 break-words min-w-0">
-                {child.description}
+                <span className="flex items-center gap-1.5">
+                  {child.is_phantom && (
+                    <span title="Phantom">
+                      <Ghost
+                        size={12}
+                        className="shrink-0 text-muted-foreground"
+                      />
+                    </span>
+                  )}
+                  {child.description}
+                </span>
               </TableCell>
               <TableCell className="py-1 text-center">{child.qty}</TableCell>
               {columnCount === 5 && <TableCell />}

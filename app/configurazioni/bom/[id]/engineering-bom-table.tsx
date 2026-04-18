@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Ghost,
   Pencil,
   Trash2,
   Undo2,
@@ -232,7 +233,17 @@ const EngineeringBomTable = ({
                   item.is_deleted && "line-through",
                 )}
               >
-                {item.description}
+                <span className="flex items-center gap-1.5">
+                  {item.is_phantom && (
+                    <span title="Phantom">
+                      <Ghost
+                        size={13}
+                        className="shrink-0 text-muted-foreground"
+                      />
+                    </span>
+                  )}
+                  {item.description}
+                </span>
                 {item.is_custom && !item.is_deleted && (
                   <Badge
                     variant="outline"
