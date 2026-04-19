@@ -364,6 +364,7 @@ export function buildCostWorkbook(
     });
   });
 
+  buildParetoSheet(workbook, generalBOM, waterTankBOMs, washBayBOMs);
   return workbook;
 }
 
@@ -384,4 +385,193 @@ export async function createExcelFile(
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   saveAs(blob, "costi.xlsx");
+}
+
+// ── Analisi Costi (Pareto) sheet ────────────────────────────────────────────
+
+const PARETO_THRESHOLD = 0.8;
+
+interface AggregatedRow {
+  pn: string;
+  description: string;
+  qty: number;
+  cost: number;
+  total: number;
+  highlight: boolean;
+}
+
+function aggregateForPareto(
+  generalBOM: BOM,
+  waterTankBOMs: BOM[],
+  washBayBOMs: BOM[],
+): AggregatedRow[] {
+  const all = [...generalBOM, ...waterTankBOMs.flat(), ...washBayBOMs.flat()];
+  const byPn = new Map<
+    string,
+    { pn: string; description: string; qty: number; cost: number }
+  >();
+  for (const item of all) {
+    const existing = byPn.get(item.pn);
+    if (existing) {
+      existing.qty += item.qty;
+    } else {
+      byPn.set(item.pn, {
+        pn: item.pn,
+        description: item.description,
+        qty: item.qty,
+        cost: item.cost,
+      });
+    }
+  }
+
+  const rows = Array.from(byPn.values())
+    .map((r) => ({ ...r, total: r.cost * r.qty }))
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  const grandTotal = rows.reduce((s, r) => s + r.total, 0);
+  let prevCumulative = 0;
+  return rows.map((r) => {
+    const highlight =
+      grandTotal > 0 && prevCumulative / grandTotal < PARETO_THRESHOLD;
+    prevCumulative += r.total;
+    return { ...r, highlight };
+  });
+}
+
+function applyParetoRowStyle(
+  row: ExcelJS.Row,
+  highlight: boolean,
+  index: number,
+) {
+  const bgColor = highlight
+    ? COLORS.subtotalBg
+    : index % 2 === 0
+      ? COLORS.white
+      : COLORS.lightGray;
+  row.eachCell({ includeEmpty: true }, (cell) => {
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: bgColor },
+    };
+  });
+}
+
+function applyParetoTotalRowStyle(row: ExcelJS.Row) {
+  row.eachCell({ includeEmpty: true }, (cell) => {
+    cell.font = { bold: true };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.grandTotalBg },
+    };
+  });
+}
+
+function buildParetoSheet(
+  workbook: ExcelJS.Workbook,
+  generalBOM: BOM,
+  waterTankBOMs: BOM[],
+  washBayBOMs: BOM[],
+) {
+  const rows = aggregateForPareto(generalBOM, waterTankBOMs, washBayBOMs);
+  const sheet = workbook.addWorksheet("Analisi Costi");
+
+  sheet.columns = [
+    { key: "pn", width: 20 },
+    { key: "description", width: 60 },
+    { key: "qty", width: 10 },
+    { key: "unit_cost", width: 13 },
+    { key: "total_cost", width: 13 },
+    { key: "pct", width: 11 },
+    { key: "cum_pct", width: 13 },
+  ];
+  sheet.getColumn("description").alignment = { wrapText: true };
+  sheet.getColumn("unit_cost").numFmt = "€ #,##0.00";
+  sheet.getColumn("total_cost").numFmt = "€ #,##0.00";
+  sheet.getColumn("pct").numFmt = "0.00%";
+  sheet.getColumn("cum_pct").numFmt = "0.00%";
+
+  const headerRow = sheet.addRow([
+    "Codice",
+    "Descrizione",
+    "Qta",
+    "Costo Unit.",
+    "Costo Tot.",
+    "% Totale",
+    "% Cumulativo",
+  ]);
+  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.font = { bold: true };
+    cell.alignment = { horizontal: "center" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.lightGray },
+    };
+  });
+
+  sheet.views = [{ state: "frozen", ySplit: 1 }];
+
+  if (rows.length === 0) return;
+
+  const firstDataRow = sheet.rowCount + 1;
+  rows.forEach((r, i) => {
+    const rNum = firstDataRow + i;
+    const row = sheet.addRow({
+      pn: r.pn,
+      description: r.description,
+      qty: r.qty,
+      unit_cost: r.cost,
+      total_cost: { formula: `C${rNum}*D${rNum}` },
+      pct: undefined,
+      cum_pct: undefined,
+    });
+    applyParetoRowStyle(row, r.highlight, i);
+  });
+  const lastDataRow = sheet.rowCount;
+  const totalRowNum = lastDataRow + 1;
+
+  for (let i = 0; i < rows.length; i++) {
+    const rNum = firstDataRow + i;
+    sheet.getCell(`F${rNum}`).value = {
+      formula: `E${rNum}/$E$${totalRowNum}`,
+    };
+    sheet.getCell(`G${rNum}`).value = {
+      formula: `SUM($E$${firstDataRow}:E${rNum})/$E$${totalRowNum}`,
+    };
+  }
+
+  const totalRow = sheet.addRow({
+    pn: "TOTALE",
+    description: undefined,
+    qty: { formula: `SUM(C${firstDataRow}:C${lastDataRow})` },
+    unit_cost: undefined,
+    total_cost: { formula: `SUM(E${firstDataRow}:E${lastDataRow})` },
+    pct: 1,
+    cum_pct: 1,
+  });
+  applyParetoTotalRowStyle(totalRow);
+  totalRow.getCell("total_cost").numFmt = "€ #,##0.00";
+  totalRow.getCell("pct").numFmt = "0.00%";
+  totalRow.getCell("cum_pct").numFmt = "0.00%";
 }

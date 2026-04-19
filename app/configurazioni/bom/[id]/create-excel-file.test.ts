@@ -57,6 +57,23 @@ function findCellValues(sheet: ExcelJS.Worksheet): string[] {
   return values;
 }
 
+function getParetoSheet(wb: ExcelJS.Workbook) {
+  const sheet = wb.getWorksheet("Analisi Costi");
+  if (!sheet) throw new Error('Worksheet "Analisi Costi" not found');
+  return sheet;
+}
+
+function cellFillArgb(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  col: number,
+): string | undefined {
+  const fill = sheet.getRow(row).getCell(col).fill as
+    | { fgColor?: { argb?: string } }
+    | undefined;
+  return fill?.fgColor?.argb;
+}
+
 // --- Tests ---
 
 describe("summary table", () => {
@@ -174,5 +191,104 @@ describe("water tank and wash bay sections", () => {
       }
     });
     expect(subtotalFormula).toMatch(/^SUM\(E\d+:E\d+\)$/);
+  });
+});
+
+describe("Analisi Costi sheet (Pareto)", () => {
+  test("sheet is the second tab after Costi", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser());
+    expect(wb.worksheets[0].name).toBe("Costi");
+    expect(wb.worksheets[1].name).toBe("Analisi Costi");
+  });
+
+  test("aggregates duplicate PNs across sections into one row", () => {
+    const pn = "AGG-001";
+    const generalBOM: BOM = [makeCostItem({ pn, qty: 2, cost: 100 })];
+    const washBayBOMs: BOM[] = [[makeCostItem({ pn, qty: 3, cost: 100 })]];
+    const wb = buildCostWorkbook(generalBOM, [], washBayBOMs, makeUser());
+    const sheet = getParetoSheet(wb);
+    let pnRowCount = 0;
+    let aggregatedQty: number | null = null;
+    sheet.eachRow((row, rowNum) => {
+      if (rowNum === 1) return;
+      if (row.getCell(1).value === pn) {
+        pnRowCount++;
+        aggregatedQty = row.getCell(3).value as number;
+      }
+    });
+    expect(pnRowCount).toBe(1);
+    expect(aggregatedQty).toBe(5);
+  });
+
+  test("excludes zero-cost rows", () => {
+    const generalBOM: BOM = [
+      makeCostItem({ pn: "ZERO-COST", qty: 5, cost: 0 }),
+      makeCostItem({ pn: "ZERO-QTY", qty: 0, cost: 100 }),
+      makeCostItem({ pn: "OK-PN", qty: 2, cost: 50 }),
+    ];
+    const wb = buildCostWorkbook(generalBOM, [], [], makeUser());
+    const pns = findCellValues(getParetoSheet(wb));
+    expect(pns).not.toContain("ZERO-COST");
+    expect(pns).not.toContain("ZERO-QTY");
+    expect(pns).toContain("OK-PN");
+  });
+
+  test("sorts rows by total cost descending", () => {
+    const generalBOM: BOM = [
+      makeCostItem({ pn: "LOW-001", qty: 1, cost: 10 }),
+      makeCostItem({ pn: "HIGH-001", qty: 1, cost: 100 }),
+    ];
+    const wb = buildCostWorkbook(generalBOM, [], [], makeUser());
+    const sheet = getParetoSheet(wb);
+    expect(cellValue(sheet, 2, 1)).toBe("HIGH-001");
+    expect(cellValue(sheet, 3, 1)).toBe("LOW-001");
+  });
+
+  test("writes correct Excel formulas for derived columns", () => {
+    const generalBOM: BOM = [
+      makeCostItem({ pn: "PN-A", qty: 1, cost: 100 }),
+      makeCostItem({ pn: "PN-B", qty: 1, cost: 50 }),
+    ];
+    // header=row1, PN-A=row2, PN-B=row3, TOTALE=row4
+    const wb = buildCostWorkbook(generalBOM, [], [], makeUser());
+    const sheet = getParetoSheet(wb);
+    expect(cellFormula(sheet, 2, 5)).toBe("C2*D2");
+    expect(cellFormula(sheet, 2, 6)).toBe("E2/$E$4");
+    expect(cellFormula(sheet, 2, 7)).toBe("SUM($E$2:E2)/$E$4");
+  });
+
+  test("TOTALE row is present with SUM formula for total cost", () => {
+    const generalBOM: BOM = [makeCostItem({ pn: "PN-X", qty: 2, cost: 50 })];
+    // header=row1, PN-X=row2, TOTALE=row3
+    const wb = buildCostWorkbook(generalBOM, [], [], makeUser());
+    const sheet = getParetoSheet(wb);
+    expect(cellValue(sheet, 3, 1)).toBe("TOTALE");
+    expect(cellFormula(sheet, 3, 5)).toBe("SUM(E2:E2)");
+  });
+
+  test("highlights vital-few rows (top 80%) with yellow fill", () => {
+    // BIG is 90% of total → highlighted; SMALL is 10% → not highlighted
+    const generalBOM: BOM = [
+      makeCostItem({ pn: "BIG", qty: 1, cost: 900 }),
+      makeCostItem({ pn: "SMALL", qty: 1, cost: 100 }),
+    ];
+    const wb = buildCostWorkbook(generalBOM, [], [], makeUser());
+    const sheet = getParetoSheet(wb);
+    // Row 2 = BIG (prevCumulative=0 → 0/1000 < 0.8 → highlighted)
+    expect(cellFillArgb(sheet, 2, 1)).toBe("FFF2CC"); // COLORS.subtotalBg
+    // Row 3 = SMALL (prevCumulative=900 → 0.9 >= 0.8 → not highlighted)
+    expect(cellFillArgb(sheet, 3, 1)).not.toBe("FFF2CC");
+  });
+
+  test("header row is frozen", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser());
+    const sheet = getParetoSheet(wb);
+    expect(sheet.views[0]).toMatchObject({ state: "frozen", ySplit: 1 });
+  });
+
+  test("empty BOM produces sheet with only header row and no crash", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser());
+    const sheet = getParetoSheet(wb);
+    expect(sheet.rowCount).toBe(1);
   });
 });
