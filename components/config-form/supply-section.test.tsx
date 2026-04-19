@@ -4,6 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import SupplySection from "@/components/config-form/supply-section";
+import { MSG } from "@/lib/messages";
 import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 
 afterEach(cleanup);
@@ -51,6 +52,41 @@ describe("SupplySection", () => {
 
       expect(screen.getByText("Palo alimentazione")).toBeInTheDocument();
       expect(screen.queryByText("Linea pali")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("ENERGY_CHAIN + WALL warning banner", () => {
+    test("shown when supply_type is ENERGY_CHAIN and fixing is WALL", () => {
+      renderSupplySection({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "WALL",
+      });
+
+      expect(
+        screen.getByText(MSG.energyChainWall.supplySection),
+      ).toBeInTheDocument();
+    });
+
+    test("hidden when supply_type is ENERGY_CHAIN and fixing is POST", () => {
+      renderSupplySection({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+      });
+
+      expect(
+        screen.queryByText(MSG.energyChainWall.supplySection),
+      ).not.toBeInTheDocument();
+    });
+
+    test("hidden when supply_type is BOOM and fixing is WALL", () => {
+      renderSupplySection({
+        supply_type: "BOOM",
+        supply_fixing_type: "WALL",
+      });
+
+      expect(
+        screen.queryByText(MSG.energyChainWall.supplySection),
+      ).not.toBeInTheDocument();
     });
   });
 

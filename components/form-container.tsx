@@ -299,6 +299,7 @@ const FormContainer = ({
                   confStatus={confStatus}
                   userRole={userRole}
                   supplyType={configuration?.supply_type}
+                  supplyFixingType={configuration?.supply_fixing_type}
                   washBay={wb}
                   washBayIndex={index + 1}
                   onDelete={handleDeleteWashBay}
@@ -316,6 +317,7 @@ const FormContainer = ({
                 confStatus={confStatus}
                 userRole={userRole}
                 supplyType={configuration?.supply_type}
+                supplyFixingType={configuration?.supply_fixing_type}
                 onSaveSuccess={handleSaveSuccess}
                 formKey="new-bay"
                 onDirtyChange={handleDirtyChange}
@@ -344,11 +346,7 @@ const FormContainer = ({
           </ResponsiveModalHeader>
           <ResponsiveModalFooter className="gap-2">
             <ResponsiveModalClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="sm:min-w-[100px]"
-              >
+              <Button type="button" variant="outline" className="sm:min-w-25">
                 Continua a modificare
               </Button>
             </ResponsiveModalClose>
@@ -356,14 +354,14 @@ const FormContainer = ({
               type="button"
               variant="destructive"
               onClick={handleDiscardAndSwitch}
-              className="sm:min-w-[100px]"
+              className="sm:min-w-25"
             >
               Scarta modifiche
             </Button>
             <Button
               type="button"
               onClick={handleSaveAndSwitch}
-              className="sm:min-w-[100px]"
+              className="sm:min-w-25"
             >
               Salva
             </Button>

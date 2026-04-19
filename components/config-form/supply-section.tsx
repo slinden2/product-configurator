@@ -2,6 +2,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import InfoBanner from "@/components/shared/info-banner";
+import { MSG } from "@/lib/messages";
 import { withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
@@ -18,6 +20,10 @@ const SupplySection = () => {
     (supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.BOOM ||
       supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF) &&
     supplyFixingTypeWatch === zodEnums.SupplyFixingTypeEnum.enum.POST;
+
+  const showEcWallWarning =
+    supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.ENERGY_CHAIN &&
+    supplyFixingTypeWatch === zodEnums.SupplyFixingTypeEnum.enum.WALL;
 
   return (
     <Fieldset
@@ -68,6 +74,11 @@ const SupplySection = () => {
                 },
               ]}
             />
+            {showEcWallWarning && (
+              <InfoBanner variant="warning">
+                {MSG.energyChainWall.supplySection}
+              </InfoBanner>
+            )}
             {showPostFrame && (
               <CheckboxField<ConfigSchema>
                 name="has_post_frame"

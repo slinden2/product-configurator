@@ -20,6 +20,7 @@ interface WashBayFormProps {
   confStatus: ConfigurationStatusType;
   userRole?: Role;
   supplyType?: string;
+  supplyFixingType?: string;
   washBay?: UpdateWashBaySchema;
   washBayIndex?: number;
   onDelete?: (tankId: number) => void;
@@ -33,10 +34,15 @@ interface WashBayFormProps {
 const WashBayForm = (props: WashBayFormProps) => {
   const FieldsWithSupplyType = useMemo(() => {
     function Fields() {
-      return <WashBayFields supplyType={props.supplyType} />;
+      return (
+        <WashBayFields
+          supplyType={props.supplyType}
+          supplyFixingType={props.supplyFixingType}
+        />
+      );
     }
     return Fields;
-  }, [props.supplyType]);
+  }, [props.supplyType, props.supplyFixingType]);
 
   return (
     <SubRecordForm

@@ -125,4 +125,10 @@ export const MSG = {
       "Attenzione: questa configurazione contiene valori non più validi secondo le regole attuali. Dopo la duplicazione dovrai correggere i campi evidenziati prima di salvare.",
     confirm: "Duplica",
   },
+  energyChainWall: {
+    supplySection:
+      "Attenzione: la combinazione catena portacavi + mensole a muro richiede una revisione manuale da parte dell'ufficio tecnico. La distinta non può essere generata automaticamente per questa configurazione.",
+    washBayForm:
+      "Revisione ufficio tecnico richiesta: con catena portacavi + mensole a muro i campi non relativi alla catena sono bloccati. Configurare solo la sezione «Catenaria».",
+  },
 } as const;

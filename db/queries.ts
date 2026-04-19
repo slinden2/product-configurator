@@ -645,6 +645,29 @@ export async function resetWashBayEnergyChainFields(
     .where(eq(washBays.configuration_id, configurationId));
 }
 
+export async function resetWashBayNonEnergyChainFields(
+  configurationId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  await txOrDb
+    .update(washBays)
+    .set({
+      hp_lance_qty: 0,
+      det_lance_qty: 0,
+      pressure_washer_type: null,
+      pressure_washer_qty: null,
+      is_first_bay: false,
+      has_bay_dividers: false,
+      has_weeping_lances: false,
+      hose_reel_hp_with_post_qty: 0,
+      hose_reel_hp_without_post_qty: 0,
+      hose_reel_det_with_post_qty: 0,
+      hose_reel_det_without_post_qty: 0,
+      hose_reel_hp_det_with_post_qty: 0,
+    })
+    .where(eq(washBays.configuration_id, configurationId));
+}
+
 export async function getConfigurationStatusCounts() {
   const user = await getUserData();
   if (!user) return null;

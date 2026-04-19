@@ -12,6 +12,7 @@ import {
   logActivity,
   QueryError,
   resetWashBayEnergyChainFields,
+  resetWashBayNonEnergyChainFields,
   updateConfiguration,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -64,6 +65,14 @@ export const editConfigurationAction = async (
       configuration.supply_type === "ENERGY_CHAIN" &&
       validation.data.supply_type !== "ENERGY_CHAIN";
 
+    const becameEcWall =
+      !(
+        configuration.supply_type === "ENERGY_CHAIN" &&
+        configuration.supply_fixing_type === "WALL"
+      ) &&
+      validation.data.supply_type === "ENERGY_CHAIN" &&
+      validation.data.supply_fixing_type === "WALL";
+
     await db.transaction(async (tx) => {
       await updateConfiguration(
         confId,
@@ -73,6 +82,10 @@ export const editConfigurationAction = async (
 
       if (supplyTypeChangedFromEC) {
         await resetWashBayEnergyChainFields(confId, tx);
+      }
+
+      if (becameEcWall) {
+        await resetWashBayNonEnergyChainFields(confId, tx);
       }
 
       // Delete engineering BOM if it exists and BOM-relevant fields changed

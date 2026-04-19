@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
+import InfoBanner from "@/components/shared/info-banner";
+import { MSG } from "@/lib/messages";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
 import { selectFieldOptions } from "@/validation/configuration";
@@ -9,9 +11,13 @@ import type { WashBaySchema } from "@/validation/wash-bay-schema";
 
 interface WashBayFieldsProps {
   supplyType?: string;
+  supplyFixingType?: string;
 }
 
-const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
+const WashBayFields = ({
+  supplyType,
+  supplyFixingType,
+}: WashBayFieldsProps) => {
   const { control, setValue } = useFormContext<WashBaySchema>();
   const pressureWashTypeWatch = useWatch({
     control,
@@ -49,15 +55,22 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
   }, [hasHpSource, setValue]);
 
   const showEnergyChainFields = hasGantryWatch && supplyType === "ENERGY_CHAIN";
+  const isEcWall = supplyType === "ENERGY_CHAIN" && supplyFixingType === "WALL";
 
   return (
     <div className="fs-content">
+      {isEcWall && (
+        <InfoBanner variant="warning" className="mb-4">
+          {MSG.energyChainWall.washBayForm}
+        </InfoBanner>
+      )}
       <div className="fs-row">
         <div className="fs-item">
           <SelectField<WashBaySchema>
             name="hp_lance_qty"
             dataType="number"
             label="Linea trolley HP"
+            disabled={isEcWall}
             items={getNumericSelectOptions([0, 2])}
           />
         </div>
@@ -66,6 +79,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             name="det_lance_qty"
             dataType="number"
             label="Linea trolley detergente"
+            disabled={isEcWall}
             items={getNumericSelectOptions([0, 2])}
           />
         </div>
@@ -76,6 +90,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             name="pressure_washer_type"
             dataType="string"
             label="Tipo idropulitrice"
+            disabled={isEcWall}
             items={withNoSelection(selectFieldOptions.pressureWasherOpts)}
             fieldsToResetOnValue={[
               {
@@ -90,7 +105,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             name="pressure_washer_qty"
             dataType="number"
             label="Numero idropulitrici"
-            disabled={!pressureWashTypeWatch}
+            disabled={isEcWall || !pressureWashTypeWatch}
             items={getNumericSelectOptions([1, 2, 3])}
           />
         </div>
@@ -123,12 +138,14 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
           <CheckboxField<WashBaySchema>
             name="is_first_bay"
             label="Prima pista"
+            disabled={isEcWall}
           />
         </div>
         <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="has_bay_dividers"
             label="Con pannellature"
+            disabled={isEcWall}
           />
         </div>
         <div className="fs-item">
@@ -136,7 +153,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
             name="has_weeping_lances"
             label="Pistole perdenti"
             description="Solo per linee HP"
-            disabled={!hasHpSource}
+            disabled={isEcWall || !hasHpSource}
           />
         </div>
       </div>
@@ -148,6 +165,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               name="hose_reel_hp_with_post_qty"
               dataType="number"
               label="HP con palo"
+              disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
           </div>
@@ -156,6 +174,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               name="hose_reel_hp_without_post_qty"
               dataType="number"
               label="HP senza palo"
+              disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
           </div>
@@ -166,6 +185,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               name="hose_reel_det_with_post_qty"
               dataType="number"
               label="Detergente con palo"
+              disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
           </div>
@@ -174,6 +194,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               name="hose_reel_det_without_post_qty"
               dataType="number"
               label="Detergente senza palo"
+              disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
           </div>
@@ -184,6 +205,7 @@ const WashBayFields = ({ supplyType }: WashBayFieldsProps) => {
               name="hose_reel_hp_det_with_post_qty"
               dataType="number"
               label="HP+Detergente con palo"
+              disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
           </div>

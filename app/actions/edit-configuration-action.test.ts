@@ -8,6 +8,7 @@ const mockUpdateConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
 const mockResetWashBayEnergyChainFields = vi.fn();
+const mockResetWashBayNonEnergyChainFields = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -19,6 +20,8 @@ vi.mock("@/db/queries", () => ({
     mockDeleteAllEngineeringBomItems(...args),
   resetWashBayEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayEnergyChainFields(...args),
+  resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
+    mockResetWashBayNonEnergyChainFields(...args),
   logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
     errorCode: number;
@@ -140,6 +143,7 @@ describe("editConfigurationAction", () => {
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
     mockResetWashBayEnergyChainFields.mockResolvedValue(undefined);
+    mockResetWashBayNonEnergyChainFields.mockResolvedValue(undefined);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
@@ -351,5 +355,80 @@ describe("editConfigurationAction", () => {
     );
     expect(result.success).toBe(true);
     expect(mockResetWashBayEnergyChainFields).not.toHaveBeenCalled();
+  });
+
+  // --- Non-energy-chain field reset (ENERGY_CHAIN + WALL transition) ---
+
+  test("resets non-EC wash bay fields when transitioning to ENERGY_CHAIN + WALL", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN", supply_fixing_type: "POST" }),
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "WALL",
+        rail_length: 25,
+      }),
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayNonEnergyChainFields).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx,
+    );
+  });
+
+  test("resets non-EC wash bay fields when supply_type changes to ENERGY_CHAIN with WALL", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({
+        supply_type: "STRAIGHT_SHELF",
+        supply_fixing_type: undefined,
+      }),
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "WALL",
+        rail_length: 25,
+      }),
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayNonEnergyChainFields).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx,
+    );
+  });
+
+  test("does NOT reset non-EC fields when already ENERGY_CHAIN + WALL", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN", supply_fixing_type: "WALL" }),
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "WALL",
+        rail_length: 25,
+      }),
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayNonEnergyChainFields).not.toHaveBeenCalled();
+  });
+
+  test("does NOT reset non-EC fields when ENERGY_CHAIN + POST", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN", supply_fixing_type: "POST" }),
+    );
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+        rail_length: 25,
+      }),
+    );
+    expect(result.success).toBe(true);
+    expect(mockResetWashBayNonEnergyChainFields).not.toHaveBeenCalled();
   });
 });
