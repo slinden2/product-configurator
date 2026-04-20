@@ -17,11 +17,18 @@ const COLORS = {
   grandTotalBg: "FFD966",
 } as const;
 
+export type ExplodedBOM = {
+  generalBOM: BOM;
+  waterTankBOMs: BOM[];
+  washBayBOMs: BOM[];
+};
+
 export function buildCostWorkbook(
   generalBOM: BOM,
   waterTankBOMs: BOM[],
   washBayBOMs: BOM[],
   user: NonNullable<UserData>,
+  exploded?: ExplodedBOM,
 ): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = user.initials || user.id;
@@ -365,6 +372,14 @@ export function buildCostWorkbook(
   });
 
   buildParetoSheet(workbook, generalBOM, waterTankBOMs, washBayBOMs);
+  if (exploded) {
+    buildAnalisiComponentiSheet(
+      workbook,
+      exploded.generalBOM,
+      exploded.waterTankBOMs,
+      exploded.washBayBOMs,
+    );
+  }
   return workbook;
 }
 
@@ -373,12 +388,14 @@ export async function createExcelFile(
   waterTankBOMs: BOM[],
   washBayBOMs: BOM[],
   user: NonNullable<UserData>,
+  exploded?: ExplodedBOM,
 ) {
   const workbook = buildCostWorkbook(
     generalBOM,
     waterTankBOMs,
     washBayBOMs,
     user,
+    exploded,
   );
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
@@ -387,7 +404,7 @@ export async function createExcelFile(
   saveAs(blob, "costi.xlsx");
 }
 
-// ── Analisi Costi (Pareto) sheet ────────────────────────────────────────────
+// ── Shared analysis sheet helpers ───────────────────────────────────────────
 
 const PARETO_THRESHOLD = 0.8;
 
@@ -400,17 +417,12 @@ interface AggregatedRow {
   highlight: boolean;
 }
 
-function aggregateForPareto(
-  generalBOM: BOM,
-  waterTankBOMs: BOM[],
-  washBayBOMs: BOM[],
-): AggregatedRow[] {
-  const all = [...generalBOM, ...waterTankBOMs.flat(), ...washBayBOMs.flat()];
+function aggregateAndLabel(items: BOM): AggregatedRow[] {
   const byPn = new Map<
     string,
     { pn: string; description: string; qty: number; cost: number }
   >();
-  for (const item of all) {
+  for (const item of items) {
     const existing = byPn.get(item.pn);
     if (existing) {
       existing.qty += item.qty;
@@ -439,7 +451,7 @@ function aggregateForPareto(
   });
 }
 
-function applyParetoRowStyle(
+function applyAnalysisRowStyle(
   row: ExcelJS.Row,
   highlight: boolean,
   index: number,
@@ -464,7 +476,7 @@ function applyParetoRowStyle(
   });
 }
 
-function applyParetoTotalRowStyle(row: ExcelJS.Row) {
+function applyAnalysisTotalRowStyle(row: ExcelJS.Row) {
   row.eachCell({ includeEmpty: true }, (cell) => {
     cell.font = { bold: true };
     cell.border = {
@@ -481,14 +493,12 @@ function applyParetoTotalRowStyle(row: ExcelJS.Row) {
   });
 }
 
-function buildParetoSheet(
+function buildAnalysisSheet(
   workbook: ExcelJS.Workbook,
-  generalBOM: BOM,
-  waterTankBOMs: BOM[],
-  washBayBOMs: BOM[],
+  sheetName: string,
+  rows: AggregatedRow[],
 ) {
-  const rows = aggregateForPareto(generalBOM, waterTankBOMs, washBayBOMs);
-  const sheet = workbook.addWorksheet("Analisi Costi");
+  const sheet = workbook.addWorksheet(sheetName);
 
   sheet.columns = [
     { key: "pn", width: 20 },
@@ -546,7 +556,7 @@ function buildParetoSheet(
       pct: undefined,
       cum_pct: undefined,
     });
-    applyParetoRowStyle(row, r.highlight, i);
+    applyAnalysisRowStyle(row, r.highlight, i);
   });
   const lastDataRow = sheet.rowCount;
   const totalRowNum = lastDataRow + 1;
@@ -570,8 +580,36 @@ function buildParetoSheet(
     pct: 1,
     cum_pct: 1,
   });
-  applyParetoTotalRowStyle(totalRow);
+  applyAnalysisTotalRowStyle(totalRow);
   totalRow.getCell("total_cost").numFmt = "€ #,##0.00";
   totalRow.getCell("pct").numFmt = "0.00%";
   totalRow.getCell("cum_pct").numFmt = "0.00%";
+}
+
+function buildParetoSheet(
+  workbook: ExcelJS.Workbook,
+  generalBOM: BOM,
+  waterTankBOMs: BOM[],
+  washBayBOMs: BOM[],
+) {
+  const rows = aggregateAndLabel([
+    ...generalBOM,
+    ...waterTankBOMs.flat(),
+    ...washBayBOMs.flat(),
+  ]);
+  buildAnalysisSheet(workbook, "Analisi Costi", rows);
+}
+
+function buildAnalisiComponentiSheet(
+  workbook: ExcelJS.Workbook,
+  generalBOM: BOM,
+  waterTankBOMs: BOM[],
+  washBayBOMs: BOM[],
+) {
+  const rows = aggregateAndLabel([
+    ...generalBOM,
+    ...waterTankBOMs.flat(),
+    ...washBayBOMs.flat(),
+  ]);
+  buildAnalysisSheet(workbook, "Analisi Componenti", rows);
 }
