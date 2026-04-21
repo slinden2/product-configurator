@@ -40,7 +40,7 @@ npm run seed:reset       # Reset and reseed database
 - `db/schemas/` — Drizzle ORM table definitions
 - `db/queries.ts` — Database query functions
 - `db/transformations.ts` — Bridge between Zod validation schemas and DB format
-- `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`
+- `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`. All Zod schemas must be within the `validation/` folder.
 - `types/index.ts` — All enums and shared types (BrushType, WaterType, ConfigurationStatus, etc.)
 - `lib/messages.ts` — Centralized Italian messages (`MSG` constant) for all error/success/toast strings
 - `lib/BOM/` — BOM generation (see `lib/BOM/CLAUDE.md` for domain details)

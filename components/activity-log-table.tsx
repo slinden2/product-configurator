@@ -88,7 +88,7 @@ const ActivityLogTable = ({
           <div className="flex gap-2">
             {hasPrev ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/utenti/${userId}?page=${page - 1}`}>
+                <Link href={`/gestione/utenti/${userId}?page=${page - 1}`}>
                   Precedente
                 </Link>
               </Button>
@@ -99,7 +99,7 @@ const ActivityLogTable = ({
             )}
             {hasNext ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/utenti/${userId}?page=${page + 1}`}>
+                <Link href={`/gestione/utenti/${userId}?page=${page + 1}`}>
                   Successiva
                 </Link>
               </Button>

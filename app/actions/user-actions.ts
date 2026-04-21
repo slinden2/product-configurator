@@ -62,7 +62,7 @@ export async function changeUserRoleAction(formData: unknown) {
       metadata: { from_role: targetUser.role, to_role: newRole },
     });
 
-    revalidatePath("/utenti");
+    revalidatePath("/gestione/utenti");
     return { success: true as const };
   } catch (err) {
     console.error("Failed to change user role:", err);

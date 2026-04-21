@@ -10,6 +10,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import { cache } from "react";
 import { db } from "@/db";
 import {
   activityLogs,
@@ -22,13 +23,19 @@ import {
   type NewWashBay,
   type NewWaterTank,
   partNumbers,
+  priceCoefficients,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
-import type { ActivityAction, ConfigurationStatusType, Role } from "@/types";
+import type {
+  ActivityAction,
+  CoefficientSource,
+  ConfigurationStatusType,
+  Role,
+} from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
   ConfigSchema,
@@ -67,7 +74,7 @@ export class QueryError extends Error {
   }
 }
 
-export async function getUserData() {
+export const getUserData = async () => {
   const supabase = await createClient();
   const { error, data } = await supabase.auth.getUser();
 
@@ -93,7 +100,7 @@ export async function getUserData() {
     role: userProfile.role,
     initials: userProfile.initials,
   };
-}
+};
 
 // Gets all configurations for the user if the role is SALES.
 // For ENGINEER and ADMIN, gets all configurations
@@ -786,4 +793,137 @@ export async function searchPartNumbers(query: string, limit = 20) {
     limit,
     orderBy: [asc(partNumbers.pn)],
   });
+}
+
+// ── Price coefficients ──────────────────────────────────────────────────────
+
+export type PriceCoefficientWithUpdater = {
+  id: number;
+  pn: string;
+  coefficient: string;
+  source: CoefficientSource;
+  is_custom: boolean;
+  updated_by: string | null;
+  updaterEmail: string | null;
+  updaterInitials: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export async function getAllPriceCoefficients(): Promise<
+  PriceCoefficientWithUpdater[]
+> {
+  return db
+    .select({
+      id: priceCoefficients.id,
+      pn: priceCoefficients.pn,
+      coefficient: priceCoefficients.coefficient,
+      source: priceCoefficients.source,
+      is_custom: priceCoefficients.is_custom,
+      updated_by: priceCoefficients.updated_by,
+      updaterEmail: userProfiles.email,
+      updaterInitials: userProfiles.initials,
+      created_at: priceCoefficients.created_at,
+      updated_at: priceCoefficients.updated_at,
+    })
+    .from(priceCoefficients)
+    .leftJoin(userProfiles, eq(priceCoefficients.updated_by, userProfiles.id))
+    .orderBy(asc(priceCoefficients.pn));
+}
+
+export async function getPriceCoefficientsByArray(
+  pns: string[],
+): Promise<{ pn: string; coefficient: string }[]> {
+  if (pns.length === 0) return [];
+  return db
+    .select({
+      pn: priceCoefficients.pn,
+      coefficient: priceCoefficients.coefficient,
+    })
+    .from(priceCoefficients)
+    .where(inArray(priceCoefficients.pn, pns));
+}
+
+export async function getFullPriceCoefficientByPn(pn: string): Promise<
+  | {
+      pn: string;
+      coefficient: string;
+      source: CoefficientSource;
+      is_custom: boolean;
+    }
+  | undefined
+> {
+  const [row] = await db
+    .select({
+      pn: priceCoefficients.pn,
+      coefficient: priceCoefficients.coefficient,
+      source: priceCoefficients.source,
+      is_custom: priceCoefficients.is_custom,
+    })
+    .from(priceCoefficients)
+    .where(eq(priceCoefficients.pn, pn));
+  return row;
+}
+
+export async function createPriceCoefficient(data: {
+  pn: string;
+  coefficient: string;
+  source: CoefficientSource;
+  is_custom: boolean;
+  updated_by: string | null;
+}): Promise<{ id: number; pn: string }> {
+  const [row] = await db
+    .insert(priceCoefficients)
+    .values(data)
+    .returning({ id: priceCoefficients.id, pn: priceCoefficients.pn });
+  return row;
+}
+
+export async function updatePriceCoefficientByPn(data: {
+  pn: string;
+  coefficient: string;
+  is_custom: boolean;
+  updated_by: string | null;
+}): Promise<{ pn: string } | undefined> {
+  const [row] = await db
+    .update(priceCoefficients)
+    .set({
+      coefficient: data.coefficient,
+      is_custom: data.is_custom,
+      updated_by: data.updated_by,
+      updated_at: new Date(),
+    })
+    .where(eq(priceCoefficients.pn, data.pn))
+    .returning({ pn: priceCoefficients.pn });
+  return row;
+}
+
+export async function deletePriceCoefficientByPn(
+  pn: string,
+): Promise<{ pn: string } | undefined> {
+  const [row] = await db
+    .delete(priceCoefficients)
+    .where(eq(priceCoefficients.pn, pn))
+    .returning({ pn: priceCoefficients.pn });
+  return row;
+}
+
+export async function insertMissingMaxBomCoefficients(
+  pns: string[],
+  defaultCoefficient: string,
+): Promise<number> {
+  if (pns.length === 0) return 0;
+  const rows = await db
+    .insert(priceCoefficients)
+    .values(
+      pns.map((pn) => ({
+        pn,
+        coefficient: defaultCoefficient,
+        source: "MAXBOM" as const,
+        is_custom: false,
+      })),
+    )
+    .onConflictDoNothing({ target: priceCoefficients.pn })
+    .returning({ pn: priceCoefficients.pn });
+  return rows.length;
 }

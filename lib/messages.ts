@@ -111,6 +111,13 @@ export const MSG = {
     passwordResetFailed: "Impossibile inviare l'email di reset.",
     subBomLoadFailed: "Impossibile caricare la distinta del sotto-assieme.",
     subBomEmpty: "Il sotto-assieme non contiene articoli.",
+    coefficientUpdated: "Coefficiente aggiornato.",
+    coefficientCreated: "Coefficiente creato.",
+    coefficientDeleted: "Coefficiente eliminato.",
+    coefficientReset: "Coefficiente ripristinato al valore predefinito.",
+    coefficientSynced: (n: number) =>
+      `${n} nuovo/i PN MaxBOM aggiunto/i al listino.`,
+    coefficientSyncNone: "Nessun nuovo PN MaxBOM da sincronizzare.",
   },
   bomWarning: {
     title: "Distinta di commessa presente",
@@ -130,5 +137,17 @@ export const MSG = {
       "Attenzione: la combinazione catena portacavi + mensole a muro richiede una revisione manuale da parte dell'ufficio tecnico. La distinta non può essere generata automaticamente per questa configurazione.",
     washBayForm:
       "Revisione ufficio tecnico richiesta: con catena portacavi + mensole a muro i campi non relativi alla catena sono bloccati. Configurare solo la sezione «Catenaria».",
+  },
+  coefficient: {
+    notFound: "Coefficiente non trovato.",
+    adminOnly: "Solo gli amministratori possono gestire i coefficienti.",
+    cannotDeleteMaxbom:
+      "I coefficienti MaxBOM non possono essere eliminati manualmente.",
+    cannotResetManual:
+      "Solo i coefficienti MaxBOM possono essere ripristinati al valore predefinito.",
+    pnRequired: "Codice articolo obbligatorio.",
+    pnAlreadyExists: "Esiste già un coefficiente per questo codice articolo.",
+    invalidCoefficient:
+      "Valore coefficiente non valido (deve essere tra 0 e 5).",
   },
 } as const;

@@ -3,6 +3,7 @@ export * from "./bom-lines";
 export * from "./configurations";
 export * from "./engineering-bom-items";
 export * from "./part-numbers";
+export * from "./price-coefficients";
 export * from "./relations";
 export * from "./user-profiles";
 export * from "./wash-bays";

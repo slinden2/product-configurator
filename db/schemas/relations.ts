@@ -4,6 +4,7 @@ import { bomLines } from "@/db/schemas/bom-lines";
 import { configurations } from "@/db/schemas/configurations";
 import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
 import { partNumbers } from "@/db/schemas/part-numbers";
+import { priceCoefficients } from "@/db/schemas/price-coefficients";
 import { userProfiles } from "@/db/schemas/user-profiles";
 import { washBays } from "@/db/schemas/wash-bays";
 import { waterTanks } from "@/db/schemas/water-tanks";
@@ -60,6 +61,16 @@ export const partNumbersRelations = relations(partNumbers, ({ many }) => ({
   bom_lines_as_parent: many(bomLines, { relationName: "bom_line_parent" }),
   bom_lines_as_child: many(bomLines, { relationName: "bom_line_child" }),
 }));
+
+export const priceCoefficientsRelations = relations(
+  priceCoefficients,
+  ({ one }) => ({
+    updater: one(userProfiles, {
+      fields: [priceCoefficients.updated_by],
+      references: [userProfiles.id],
+    }),
+  }),
+);
 
 export const bomLinesRelations = relations(bomLines, ({ one }) => ({
   parent: one(partNumbers, {

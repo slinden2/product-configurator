@@ -48,9 +48,9 @@ const MainNav = ({ user, role }: MainNavProps) => {
     ...(role === "ADMIN"
       ? [
           {
-            label: "Utenti",
-            href: "/utenti",
-            active: pathname.startsWith("/utenti"),
+            label: "Gestione",
+            href: "/gestione/utenti",
+            active: pathname.startsWith("/gestione"),
           },
         ]
       : []),
