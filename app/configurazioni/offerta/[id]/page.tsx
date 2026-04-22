@@ -19,6 +19,7 @@ import {
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { offerSnapshotItemsSchema } from "@/validation/offer-schema";
 import DiscountInput from "./discount-input";
+import ExportOfferButton from "./export-offer-button";
 import OfferActionButton from "./offer-action-button";
 import OfferView from "./offer-view";
 
@@ -83,6 +84,13 @@ const OffertaView = async (props: OffertaProps) => {
               confId={confId}
               initialDiscount={discountPct}
               disabled={stale}
+            />
+          )}
+          {snapshot && displayData && (
+            <ExportOfferButton
+              data={displayData}
+              user={user}
+              discountPct={discountPct}
             />
           )}
         </div>
