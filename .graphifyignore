@@ -1,0 +1,40 @@
+# .graphifyignore example
+AGENTS.md          # graphify install files — don't extract your own instructions as knowledge
+CLAUDE.md
+GEMINI.md
+.gemini/
+.opencode/
+docs/translations/ # generated content you don't want in the graph
+
+**/playwright/trace/**
+**/playwright-core/**
+**/.playwright/**
+**/.playwright-cli/**
+**/.playwright-mcp/**
+**/.vercel/**
+**/.next/**
+**/supabase/.temp/**
+**/.claude/**
+**/.zed/**
+
+**/node_modules/**
+
+# Ignore large minified or generated trace reports
+**/playwright-report/**
+**/test-results/**
+
+# Graphify output — don't graph the graph
+graphify-out/
+
+# Generated / build artifacts
+next-env.d.ts
+tsconfig.tsbuildinfo
+package-lock.json
+
+# Sensitive env files
+.env.local
+.env.production
+.env*.local
+
+# Static assets
+public/

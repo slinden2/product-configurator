@@ -54,3 +54,6 @@ no-git/
 
 # Supabase
 /supabase/.temp/
+
+# Graphify
+graphify-out
