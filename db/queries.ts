@@ -10,7 +10,6 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { cache } from "react";
 import { db } from "@/db";
 import {
   activityLogs,
@@ -22,6 +21,8 @@ import {
   type NewEngineeringBomItem,
   type NewWashBay,
   type NewWaterTank,
+  type OfferSnapshot,
+  offerSnapshots,
   partNumbers,
   priceCoefficients,
   userProfiles,
@@ -42,6 +43,7 @@ import type {
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
+import type { OfferSnapshotItem } from "@/validation/offer-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
@@ -926,4 +928,88 @@ export async function insertMissingMaxBomCoefficients(
     .onConflictDoNothing({ target: priceCoefficients.pn })
     .returning({ pn: priceCoefficients.pn });
   return rows.length;
+}
+
+// --- Offer Snapshots ---
+
+export type OfferSnapshotWithGenerator = OfferSnapshot & {
+  generator: { id: string; email: string | null } | null;
+};
+
+export async function getOfferSnapshotByConfigurationId(
+  confId: number,
+): Promise<OfferSnapshotWithGenerator | null> {
+  const [row] = await db
+    .select({
+      id: offerSnapshots.id,
+      configuration_id: offerSnapshots.configuration_id,
+      source: offerSnapshots.source,
+      generated_at: offerSnapshots.generated_at,
+      generated_by: offerSnapshots.generated_by,
+      discount_pct: offerSnapshots.discount_pct,
+      items: offerSnapshots.items,
+      total_list_price: offerSnapshots.total_list_price,
+      bom_rules_version: offerSnapshots.bom_rules_version,
+      updated_at: offerSnapshots.updated_at,
+      generator: {
+        id: userProfiles.id,
+        email: userProfiles.email,
+      },
+    })
+    .from(offerSnapshots)
+    .leftJoin(userProfiles, eq(offerSnapshots.generated_by, userProfiles.id))
+    .where(eq(offerSnapshots.configuration_id, confId));
+  return row ?? null;
+}
+
+export async function upsertOfferSnapshot(data: {
+  configuration_id: number;
+  source: "EBOM" | "LIVE";
+  generated_by: string;
+  items: OfferSnapshotItem[];
+  total_list_price: string;
+  bom_rules_version: string;
+}): Promise<OfferSnapshot> {
+  const now = new Date();
+  const { configuration_id, ...fields } = data;
+  const [row] = await db
+    .insert(offerSnapshots)
+    .values({ configuration_id, ...fields, generated_at: now, updated_at: now })
+    .onConflictDoUpdate({
+      target: offerSnapshots.configuration_id,
+      set: { ...fields, generated_at: now, updated_at: now },
+    })
+    .returning();
+  return row;
+}
+
+export async function updateOfferDiscount(
+  confId: number,
+  discount_pct: string,
+): Promise<OfferSnapshot | undefined> {
+  const [row] = await db
+    .update(offerSnapshots)
+    .set({ discount_pct, updated_at: new Date() })
+    .where(eq(offerSnapshots.configuration_id, confId))
+    .returning();
+  return row;
+}
+
+export async function deleteOfferSnapshotByConfigurationId(
+  confId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<void> {
+  await txOrDb
+    .delete(offerSnapshots)
+    .where(eq(offerSnapshots.configuration_id, confId));
+}
+
+export async function getEbomMaxUpdatedAt(
+  confId: number,
+): Promise<Date | null> {
+  const [row] = await db
+    .select({ maxUpdatedAt: max(engineeringBomItems.updated_at) })
+    .from(engineeringBomItems)
+    .where(eq(engineeringBomItems.configuration_id, confId));
+  return row?.maxUpdatedAt ?? null;
 }

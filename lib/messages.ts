@@ -118,6 +118,11 @@ export const MSG = {
     coefficientSynced: (n: number) =>
       `${n} nuovo/i PN MaxBOM aggiunto/i al listino.`,
     coefficientSyncNone: "Nessun nuovo PN MaxBOM da sincronizzare.",
+    offerGenerated: "Offerta generata.",
+    offerRegenerated: "Offerta rigenerata.",
+    offerDiscountSet: "Sconto aggiornato.",
+    offerGenerateError: "Errore durante la generazione dell'offerta.",
+    offerDiscountError: "Errore durante l'aggiornamento dello sconto.",
   },
   bomWarning: {
     title: "Distinta di commessa presente",
@@ -149,5 +154,26 @@ export const MSG = {
     pnAlreadyExists: "Esiste già un coefficiente per questo codice articolo.",
     invalidCoefficient:
       "Valore coefficiente non valido (deve essere tra 0 e 5).",
+  },
+  offer: {
+    unauthorized: "Solo SALES e ADMIN possono gestire l'offerta.",
+    cannotEdit:
+      "Non è possibile modificare l'offerta in questo stato della configurazione.",
+    notFound: "Offerta non trovata.",
+    invalidDiscount:
+      "Sconto non valido (deve essere tra 0% e 40%, multiplo di 0,5%).",
+    generateError: "Errore durante la generazione dell'offerta.",
+    drift: {
+      title: "Distinta aggiornata",
+      liveButEbomExists:
+        "Offerta generata senza distinta validata. L'Ufficio Tecnico ha ora creato una distinta — rigenera per usarla.",
+      ebomChanged:
+        "La distinta è stata modificata dall'Ufficio Tecnico dopo la generazione dell'offerta. Rigenera per aggiornare i prezzi.",
+    },
+    staleness: {
+      title: "Prezzi scaduti",
+      body: (generatedAt: string, expiredDays: number) =>
+        `Prezzi generati il ${generatedAt} — scaduti da ${expiredDays} ${expiredDays === 1 ? "giorno" : "giorni"}. Rigenera l'offerta prima di condividerla con il cliente.`,
+    },
   },
 } as const;

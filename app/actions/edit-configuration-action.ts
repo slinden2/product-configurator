@@ -6,6 +6,7 @@ import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
   deleteAllEngineeringBomItems,
+  deleteOfferSnapshotByConfigurationId,
   getConfigurationWithTanksAndBays,
   getUserData,
   hasEngineeringBom,
@@ -88,10 +89,13 @@ export const editConfigurationAction = async (
         await resetWashBayNonEnergyChainFields(confId, tx);
       }
 
-      // Delete engineering BOM if it exists and BOM-relevant fields changed
-      const ebomExists = await hasEngineeringBom(confId, tx);
-      if (ebomExists && hasBomRelevantChanges(configuration, validation.data)) {
-        await deleteAllEngineeringBomItems(confId, tx);
+      // Delete engineering BOM and offer snapshot if BOM-relevant fields changed
+      if (hasBomRelevantChanges(configuration, validation.data)) {
+        const ebomExists = await hasEngineeringBom(confId, tx);
+        if (ebomExists) {
+          await deleteAllEngineeringBomItems(confId, tx);
+        }
+        await deleteOfferSnapshotByConfigurationId(confId, tx);
       }
     });
 
@@ -103,6 +107,7 @@ export const editConfigurationAction = async (
     });
     revalidatePath(`/configurazioni/modifica/${confId}`);
     revalidatePath(`/configurazioni/bom/${confId}`);
+    revalidatePath(`/configurazioni/offerta/${confId}`);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to edit configuration:", err);

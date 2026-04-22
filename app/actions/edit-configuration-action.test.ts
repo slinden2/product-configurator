@@ -7,6 +7,7 @@ const mockGetConfigurationWithTanksAndBays = vi.fn();
 const mockUpdateConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
+const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockResetWashBayEnergyChainFields = vi.fn();
 const mockResetWashBayNonEnergyChainFields = vi.fn();
 
@@ -18,6 +19,8 @@ vi.mock("@/db/queries", () => ({
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
+  deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
+    mockDeleteOfferSnapshotByConfigurationId(...args),
   resetWashBayEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayEnergyChainFields(...args),
   resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
@@ -142,6 +145,7 @@ describe("editConfigurationAction", () => {
     mockUpdateConfiguration.mockResolvedValue({ id: CONF_ID });
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
+    mockDeleteOfferSnapshotByConfigurationId.mockResolvedValue(undefined);
     mockResetWashBayEnergyChainFields.mockResolvedValue(undefined);
     mockResetWashBayNonEnergyChainFields.mockResolvedValue(undefined);
   });

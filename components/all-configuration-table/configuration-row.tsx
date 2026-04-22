@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Edit, ScrollText, Trash2 } from "lucide-react";
+import { Copy, Edit, Receipt, ScrollText, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import IconButton from "@/components/all-configuration-table/icon-button";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { AllConfigurations, UserData } from "@/db/queries";
+import { canViewBom, canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 
@@ -131,14 +132,26 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
             variant="ghost"
             disabled={!canEdit}
           />
-          <IconButton
-            className="w-8 h-8"
-            Icon={ScrollText}
-            linkTo={`/configurazioni/bom/${configuration.id}`}
-            title="Visualizza distinta"
-            variant="ghost"
-            disabled={false}
-          />
+          {canViewBom(user.role) && (
+            <IconButton
+              className="w-8 h-8"
+              Icon={ScrollText}
+              linkTo={`/configurazioni/bom/${configuration.id}`}
+              title="Visualizza distinta"
+              variant="ghost"
+              disabled={false}
+            />
+          )}
+          {canViewOffer(user.role) && (
+            <IconButton
+              className="w-8 h-8"
+              Icon={Receipt}
+              linkTo={`/configurazioni/offerta/${configuration.id}`}
+              title="Visualizza offerta"
+              variant="ghost"
+              disabled={false}
+            />
+          )}
           <IconButton
             className="w-8 h-8"
             Icon={Copy}

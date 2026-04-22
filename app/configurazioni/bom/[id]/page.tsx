@@ -49,7 +49,7 @@ const BOMView = async (props: BOMViewProps) => {
 
   return (
     <div className="space-y-6">
-      <ConfigNavigationBar confId={confId} activePage="bom" />
+      <ConfigNavigationBar confId={confId} activePage="bom" role={user.role} />
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="inline-block">Distinta</h1>
         <div className="flex flex-wrap items-center gap-2">

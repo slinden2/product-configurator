@@ -2,6 +2,7 @@ export * from "./activity-logs";
 export * from "./bom-lines";
 export * from "./configurations";
 export * from "./engineering-bom-items";
+export * from "./offer-snapshots";
 export * from "./part-numbers";
 export * from "./price-coefficients";
 export * from "./relations";

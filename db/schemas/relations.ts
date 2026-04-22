@@ -3,6 +3,7 @@ import { activityLogs } from "@/db/schemas/activity-logs";
 import { bomLines } from "@/db/schemas/bom-lines";
 import { configurations } from "@/db/schemas/configurations";
 import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
+import { offerSnapshots } from "@/db/schemas/offer-snapshots";
 import { partNumbers } from "@/db/schemas/part-numbers";
 import { priceCoefficients } from "@/db/schemas/price-coefficients";
 import { userProfiles } from "@/db/schemas/user-profiles";
@@ -19,8 +20,23 @@ export const configurationsRelations = relations(
     water_tanks: many(waterTanks),
     wash_bays: many(washBays),
     engineering_bom_items: many(engineeringBomItems),
+    offer_snapshot: one(offerSnapshots, {
+      fields: [configurations.id],
+      references: [offerSnapshots.configuration_id],
+    }),
   }),
 );
+
+export const offerSnapshotsRelations = relations(offerSnapshots, ({ one }) => ({
+  configuration: one(configurations, {
+    fields: [offerSnapshots.configuration_id],
+    references: [configurations.id],
+  }),
+  generator: one(userProfiles, {
+    fields: [offerSnapshots.generated_by],
+    references: [userProfiles.id],
+  }),
+}));
 
 export const engineeringBomItemsRelations = relations(
   engineeringBomItems,

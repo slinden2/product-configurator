@@ -71,7 +71,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
 
   return (
     <div>
-      <ConfigNavigationBar confId={id} activePage="edit" />
+      <ConfigNavigationBar confId={id} activePage="edit" role={user.role} />
       <div className="mb-6 sm:flex sm:gap-2">
         <div className="mb-6 sm:mb-0">
           <h1 className="text-3xl font-bold mb-2">Modifica configurazione</h1>

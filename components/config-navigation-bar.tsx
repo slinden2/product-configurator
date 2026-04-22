@@ -1,28 +1,42 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { canViewBom, canViewOffer } from "@/lib/access";
+import type { Role } from "@/types";
 
 interface ConfigNavigationBarProps {
   confId: number;
-  activePage: "edit" | "bom";
+  activePage: "edit" | "bom" | "offerta";
+  role: Role;
 }
 
-const NAV_ITEMS = [
+const ALL_NAV_ITEMS = [
   {
     key: "edit" as const,
     label: "Configurazione",
     path: (id: number) => `/configurazioni/modifica/${id}`,
+    canView: (_role: Role) => true,
   },
   {
     key: "bom" as const,
     label: "Distinta",
     path: (id: number) => `/configurazioni/bom/${id}`,
+    canView: canViewBom,
+  },
+  {
+    key: "offerta" as const,
+    label: "Offerta",
+    path: (id: number) => `/configurazioni/offerta/${id}`,
+    canView: canViewOffer,
   },
 ];
 
 export default function ConfigNavigationBar({
   confId,
   activePage,
+  role,
 }: ConfigNavigationBarProps) {
+  const visibleItems = ALL_NAV_ITEMS.filter((item) => item.canView(role));
+
   return (
     <nav className="flex items-center justify-between mb-6">
       <Link
@@ -34,7 +48,7 @@ export default function ConfigNavigationBar({
       </Link>
 
       <div className="flex items-center rounded-md border bg-muted p-0.5">
-        {NAV_ITEMS.map((item) => (
+        {visibleItems.map((item) => (
           <Link
             key={item.key}
             href={item.path(confId)}
