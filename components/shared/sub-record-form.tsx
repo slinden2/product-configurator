@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import Fieldset from "@/components/fieldset";
-import BomWarningDialog from "@/components/shared/bom-warning-dialog";
+import SaveWarningDialog from "@/components/shared/save-warning-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +59,7 @@ interface SubRecordFormProps<
   ) => Promise<ActionResult>;
   deleteAction: (parentId: number, id: number) => Promise<ActionResult>;
   hasEngineeringBom?: boolean;
+  hasOfferSnapshot?: boolean;
   // Component to render the specific fields
   FieldsComponent: React.ComponentType;
 }
@@ -84,6 +85,7 @@ const SubRecordForm = <
   editAction,
   deleteAction,
   hasEngineeringBom,
+  hasOfferSnapshot,
   FieldsComponent,
 }: SubRecordFormProps<TData, TFormSchema>) => {
   type FormData = TData;
@@ -93,7 +95,7 @@ const SubRecordForm = <
     false,
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showBomWarning, setShowBomWarning] = useState(false);
+  const [showSaveWarning, setShowSaveWarning] = useState(false);
   const pendingValuesRef = useRef<FormData | null>(null);
   const pendingActionRef = useRef<"save" | "delete" | null>(null);
 
@@ -186,15 +188,15 @@ const SubRecordForm = <
 
   const handleSaveSubmit = useCallback(
     async (values: FormData) => {
-      if (hasEngineeringBom) {
+      if (hasEngineeringBom || hasOfferSnapshot) {
         pendingValuesRef.current = values;
         pendingActionRef.current = "save";
-        setShowBomWarning(true);
+        setShowSaveWarning(true);
         return;
       }
       await executeSave(values);
     },
-    [hasEngineeringBom, executeSave],
+    [hasEngineeringBom, hasOfferSnapshot, executeSave],
   );
 
   const executeDelete = useCallback(async () => {
@@ -237,16 +239,16 @@ const SubRecordForm = <
 
   const handleDeleteConfirm = useCallback(async () => {
     setShowDeleteConfirm(false);
-    if (hasEngineeringBom) {
+    if (hasEngineeringBom || hasOfferSnapshot) {
       pendingActionRef.current = "delete";
-      setShowBomWarning(true);
+      setShowSaveWarning(true);
       return;
     }
     await executeDelete();
-  }, [hasEngineeringBom, executeDelete]);
+  }, [hasEngineeringBom, hasOfferSnapshot, executeDelete]);
 
-  const handleBomWarningConfirm = useCallback(async () => {
-    setShowBomWarning(false);
+  const handleSaveWarningConfirm = useCallback(async () => {
+    setShowSaveWarning(false);
     if (pendingActionRef.current === "save" && pendingValuesRef.current) {
       const values = pendingValuesRef.current;
       pendingValuesRef.current = null;
@@ -331,7 +333,7 @@ const SubRecordForm = <
                   <Button
                     type="submit"
                     disabled={isSaveOrCancelDisabled}
-                    className="gap-1.5 min-w-[100px] sm:min-w-[140px]"
+                    className="gap-1.5 min-w-25 sm:min-w-35"
                   >
                     {isLoading === "submit" ? (
                       <Spinner className="h-4 w-4 text-foreground" />
@@ -365,14 +367,16 @@ const SubRecordForm = <
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <BomWarningDialog
-        open={showBomWarning}
-        onOpenChange={setShowBomWarning}
+      <SaveWarningDialog
+        open={showSaveWarning}
+        onOpenChange={setShowSaveWarning}
         onCancel={() => {
           pendingValuesRef.current = null;
           pendingActionRef.current = null;
         }}
-        onConfirm={handleBomWarningConfirm}
+        onConfirm={handleSaveWarningConfirm}
+        hasEngineeringBom={!!hasEngineeringBom}
+        hasOfferSnapshot={!!hasOfferSnapshot}
       />
     </div>
   );

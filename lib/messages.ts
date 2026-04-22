@@ -124,11 +124,25 @@ export const MSG = {
     offerGenerateError: "Errore durante la generazione dell'offerta.",
     offerDiscountError: "Errore durante l'aggiornamento dello sconto.",
   },
-  bomWarning: {
-    title: "Distinta di commessa presente",
-    description:
-      "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
-    confirm: "Salva e elimina distinta",
+  saveWarning: {
+    ebomOnly: {
+      title: "Distinta di commessa presente",
+      description:
+        "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
+      confirm: "Salva e elimina distinta",
+    },
+    offerOnly: {
+      title: "Offerta presente",
+      description:
+        "Salvando le modifiche alla configurazione, l'offerta verrà eliminata e dovrà essere rigenerata. Continuare?",
+      confirm: "Salva e elimina offerta",
+    },
+    both: {
+      title: "Distinta e offerta presenti",
+      description:
+        "Salvando le modifiche alla configurazione, la distinta di commessa e l'offerta verranno eliminate e dovranno essere rigenerate. Continuare?",
+      confirm: "Salva e elimina",
+    },
   },
   duplicateConfirm: {
     title: "Conferma duplicazione",

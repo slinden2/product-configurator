@@ -603,11 +603,22 @@ export async function hasEngineeringBom(
   confId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) {
-  const result = await txOrDb
-    .select({ count: sql<number>`count(*)::int` })
-    .from(engineeringBomItems)
-    .where(eq(engineeringBomItems.configuration_id, confId));
-  return (result[0]?.count ?? 0) > 0;
+  const row = await txOrDb.query.engineeringBomItems.findFirst({
+    where: eq(engineeringBomItems.configuration_id, confId),
+    columns: { id: true },
+  });
+  return row !== undefined;
+}
+
+export async function hasOfferSnapshot(
+  confId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  const row = await txOrDb.query.offerSnapshots.findFirst({
+    where: eq(offerSnapshots.configuration_id, confId),
+    columns: { id: true },
+  });
+  return row !== undefined;
 }
 
 export async function insertEngineeringBomItems(

@@ -7,6 +7,7 @@ const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
+const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
 
 vi.mock("@/db/queries", () => ({
@@ -15,6 +16,8 @@ vi.mock("@/db/queries", () => ({
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
+  deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
+    mockDeleteOfferSnapshotByConfigurationId(...args),
   touchConfigurationUpdatedAt: (...args: unknown[]) =>
     mockTouchConfigurationUpdatedAt(...args),
   QueryError: class QueryError extends Error {
@@ -97,6 +100,7 @@ describe("handleSubRecordAction", () => {
     mockGetConfiguration.mockResolvedValue(mockConfig());
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
+    mockDeleteOfferSnapshotByConfigurationId.mockResolvedValue(undefined);
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
   });
 
@@ -374,12 +378,23 @@ describe("handleSubRecordAction", () => {
     expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
   });
 
-  test("revalidates BOM path after sub-record mutation", async () => {
+  test("revalidates BOM and offer paths after sub-record mutation", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
     await handleSubRecordAction(insertOptions());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${PARENT_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/offerta/${PARENT_ID}`,
+    );
+  });
+
+  test("always deletes offer snapshot on sub-record mutation", async () => {
+    await handleSubRecordAction(insertOptions());
+    expect(mockDeleteOfferSnapshotByConfigurationId).toHaveBeenCalledWith(
+      PARENT_ID,
+      expect.anything(),
     );
   });
 });
