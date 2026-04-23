@@ -9,7 +9,7 @@ const TAB_ITEMS = [
   { label: "Coefficienti", href: "/gestione/coefficienti" },
 ];
 
-export default function GestioneTabs() {
+export default function ManagementTabs() {
   const pathname = usePathname();
 
   return (

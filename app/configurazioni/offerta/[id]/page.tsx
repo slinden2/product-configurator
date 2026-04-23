@@ -23,11 +23,11 @@ import ExportOfferButton from "./export-offer-button";
 import OfferActionButton from "./offer-action-button";
 import OfferView from "./offer-view";
 
-interface OffertaProps {
+interface OfferPageProps {
   params: Promise<{ id: string }>;
 }
 
-const OffertaView = async (props: OffertaProps) => {
+const OfferPage = async (props: OfferPageProps) => {
   const params = await props.params;
   const confId = parseInt(params.id, 10);
   if (Number.isNaN(confId)) notFound();
@@ -153,4 +153,4 @@ const OffertaView = async (props: OffertaProps) => {
   );
 };
 
-export default OffertaView;
+export default OfferPage;

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Persona
 
-You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator. UI labels are in Italian; maintain this convention in all new code.
+You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator.
+
+**Language convention:** user-facing UI strings are Italian, everything else is English. Italian applies to: JSX prose, `MSG` constants, toast/alert/confirm messages, Zod error messages, tab and `aria-label` strings, and URL route folders under `app/`. English applies to: every other string and name — function/component/type/variable/constant/file/folder names, comments, JSDoc, test descriptions, and internal fields that never surface in the UI (e.g. BOM rule `_description`). Part numbers are catalog codes — leave them as-is.
 
 ## Build & Development Commands
 
@@ -80,7 +82,7 @@ Before finalizing any change, verify:
 2. **Dependent Fields:** If adding or modifying a `SelectField` or `CheckboxField`, are `fieldsToReset` correctly mapped to the Zod schema keys?
 3. **Type Safety:** Does the change respect the existing types in `types/index.ts` without using `any` or loose type casting? Always run `npm run type-check` to ensure no regressions were introduced.
 4. **Data Integrity:** Is `revalidatePath` included in the Server Action to ensure the UI stays in sync with the DB?
-5. **Localization:** Are all new UI labels in Italian?
+5. **Language:** Are all new user-facing strings in Italian, and all code (identifiers, comments, internal non-UI strings like BOM `_description`) in English?
 
 ## Post-Change Verification
 

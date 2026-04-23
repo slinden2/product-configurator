@@ -1,7 +1,7 @@
 import { configRouteGuard } from "@/app/configurazioni/lib/config-route-guard";
 import { canViewOffer } from "@/lib/access";
 
-export default async function OffertaLayout({
+export default async function OfferLayout({
   children,
   params,
 }: {

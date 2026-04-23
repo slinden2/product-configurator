@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import GestioneTabs from "@/components/gestione-tabs";
+import ManagementTabs from "@/components/management-tabs";
 import { getUserData } from "@/db/queries";
 
-export default async function GestioneLayout({
+export default async function ManagementLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ export default async function GestioneLayout({
 
   return (
     <div className="space-y-6">
-      <GestioneTabs />
+      <ManagementTabs />
       {children}
     </div>
   );

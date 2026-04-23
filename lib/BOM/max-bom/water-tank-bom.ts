@@ -155,6 +155,6 @@ export const waterTankBOM: MaxBOMItem<WaterTank>[] = [
     pn: PART_NUMBERS.ELECTRIC_FLOAT_FOR_PURIFIER,
     conditions: [(config) => config.has_electric_float_for_purifier],
     qty: 1,
-    _description: "Galleggiante elettrico per depuratore",
+    _description: "Electric float switch for purifier",
   },
 ];
