@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import AlertBanner from "@/components/shared/alert-banner";
+import DetailsCard from "@/components/shared/details-card";
 import {
   getConfiguration,
   getEbomMaxUpdatedAt,
@@ -18,7 +19,6 @@ import {
 } from "@/lib/offer";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { offerSnapshotItemsSchema } from "@/validation/offer-schema";
-import DiscountInput from "./discount-input";
 import ExportOfferButton from "./export-offer-button";
 import OfferActionButton from "./offer-action-button";
 import OfferView from "./offer-view";
@@ -79,13 +79,6 @@ const OffertaView = async (props: OffertaProps) => {
           {snapshot && editable && (
             <OfferActionButton confId={confId} mode="regenerate" />
           )}
-          {snapshot && editable && (
-            <DiscountInput
-              confId={confId}
-              initialDiscount={discountPct}
-              disabled={stale}
-            />
-          )}
           {snapshot && displayData && (
             <ExportOfferButton
               data={displayData}
@@ -95,6 +88,11 @@ const OffertaView = async (props: OffertaProps) => {
           )}
         </div>
       </div>
+
+      <DetailsCard
+        clientName={configuration.name}
+        description={configuration.description}
+      />
 
       {stale && snapshot && (
         <AlertBanner
@@ -142,7 +140,15 @@ const OffertaView = async (props: OffertaProps) => {
         </div>
       )}
 
-      {displayData && <OfferView data={displayData} />}
+      {displayData && (
+        <OfferView
+          data={displayData}
+          confId={confId}
+          discountPct={discountPct}
+          editable={editable}
+          stale={stale}
+        />
+      )}
     </div>
   );
 };

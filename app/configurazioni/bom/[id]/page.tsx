@@ -5,10 +5,10 @@ import {
   SubRecordSection,
 } from "@/app/configurazioni/bom/[id]/bom-section-cards";
 import ExportButton from "@/app/configurazioni/bom/[id]/export-button";
-import MetaDataTable from "@/app/configurazioni/bom/[id]/meta-data-table";
 import RegenerateButton from "@/app/configurazioni/bom/[id]/regenerate-button";
 import SnapshotButton from "@/app/configurazioni/bom/[id]/snapshot-button";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
+import DetailsCard from "@/components/shared/details-card";
 import { getBOM, getConfiguration, getUserData } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
@@ -60,7 +60,7 @@ const BOMView = async (props: BOMViewProps) => {
         </div>
       </div>
 
-      <MetaDataTable clientName={clientName} description={description || ""} />
+      <DetailsCard clientName={clientName} description={description} />
 
       {hasEbom && ebomCreatedAt && (
         <p className="text-sm text-muted-foreground">

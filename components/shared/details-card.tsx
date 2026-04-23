@@ -1,17 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface MetaDataTableProps {
+interface DetailsCardProps {
   clientName: string;
   description: string;
+  className?: string;
 }
 
-const MetaDataTable = ({ clientName, description }: MetaDataTableProps) => {
+const DetailsCard = ({
+  clientName,
+  description,
+  className,
+}: DetailsCardProps) => {
   return (
-    <Card className="mb-8">
+    <Card className={`mb-8${className ? ` ${className}` : ""}`}>
       <CardHeader>
         <CardTitle className="text-2xl">Dettagli</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="text-sm font-medium text-muted-foreground mb-1">
@@ -31,4 +36,4 @@ const MetaDataTable = ({ clientName, description }: MetaDataTableProps) => {
   );
 };
 
-export default MetaDataTable;
+export default DetailsCard;
