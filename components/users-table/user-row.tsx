@@ -1,13 +1,12 @@
 "use client";
 
 import { History, Mail } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
   changeUserRoleAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
-import { Button } from "@/components/ui/button";
+import IconButton from "@/components/all-configuration-table/icon-button";
 import {
   Select,
   SelectContent,
@@ -88,19 +87,20 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
+          <IconButton
+            Icon={Mail}
             title="Invia email di reset password"
+            variant="ghost"
+            disabled={false}
             onClick={handlePasswordReset}
-          >
-            <Mail className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" title="Vedi attività" asChild>
-            <Link href={`/gestione/utenti/${user.id}`}>
-              <History className="h-4 w-4" />
-            </Link>
-          </Button>
+          />
+          <IconButton
+            Icon={History}
+            title="Vedi attività"
+            variant="ghost"
+            disabled={false}
+            linkTo={`/gestione/utenti/${user.id}`}
+          />
         </div>
       </TableCell>
     </TableRow>

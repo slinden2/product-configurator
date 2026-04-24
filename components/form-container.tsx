@@ -3,7 +3,6 @@
 import { PlusCircle } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigForm from "@/components/config-form";
 import {
   ResponsiveModal,
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useMediaQuery from "@/hooks/use-media-query";
+import { isConfigLocked } from "@/lib/access";
 import type { ConfigurationStatusType, Role } from "@/types";
 import type { UpdateConfigSchema } from "@/validation/config-schema";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
@@ -108,8 +108,7 @@ const FormContainer = ({
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 640px)");
-  const showAddEntityButton =
-    !!confStatus && !!userRole && isEditable(confStatus, userRole);
+  const showAddEntityButton = !isConfigLocked(confStatus, userRole);
 
   useEffect(() => {
     setWaterTanks(initialWaterTanks || []);

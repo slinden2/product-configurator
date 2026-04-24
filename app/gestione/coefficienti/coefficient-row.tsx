@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { PriceCoefficientWithUpdater } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -199,7 +199,7 @@ export default function CoefficientRow({
                     <AlertDialogCancel>Annulla</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className={buttonVariants({ variant: "destructive" })}
                     >
                       Elimina
                     </AlertDialogAction>

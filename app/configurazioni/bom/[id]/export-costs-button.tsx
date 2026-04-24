@@ -1,11 +1,8 @@
 "use client";
 
 import { Share } from "lucide-react";
-import { useTransition } from "react";
-import { toast } from "sonner";
 import { explodeBomToLeavesAction } from "@/app/actions/bom-lines-actions";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { UserData } from "@/db/queries";
 import type { BOMItemWithCost } from "@/lib/BOM";
 import { createExcelFile } from "./create-excel-file";
@@ -19,16 +16,11 @@ interface ExportCostsButtonProps {
   user: NonNullable<UserData>;
 }
 
-const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => {
-  const [isPending, startTransition] = useTransition();
-
-  const handleExportBOM = () => {
-    startTransition(async () => {
+const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => (
+  <AsyncActionButton
+    action={async () => {
       const result = await explodeBomToLeavesAction(exportData);
-      if (!result.success) {
-        toast.error(result.error);
-        return;
-      }
+      if (!result.success) throw new Error(result.error);
       await createExcelFile(
         exportData.generalBOM,
         exportData.waterTankBOMs,
@@ -36,20 +28,14 @@ const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => {
         user,
         result.data,
       );
-    });
-  };
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleExportBOM}
-      disabled={isPending}
-    >
-      {isPending ? <Spinner size="small" /> : <Share />}
-      <span>Esporta costi</span>
-    </Button>
-  );
-};
+    }}
+    icon={<Share />}
+    errorMsg="Errore durante l'esportazione dei costi."
+    variant="outline"
+    size="sm"
+  >
+    Esporta costi
+  </AsyncActionButton>
+);
 
 export default ExportCostsButton;

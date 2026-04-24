@@ -8,7 +8,6 @@ import { type FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 import BrushSection from "@/components/config-form/brush-section";
 import ChemPumpSection from "@/components/config-form/chem-pump-section";
 import GeneralSection from "@/components/config-form/general-section";
@@ -19,10 +18,11 @@ import TouchSection from "@/components/config-form/touch-section";
 import WaterSupplySection from "@/components/config-form/water-supply-section";
 import Fieldset from "@/components/fieldset";
 import SaveWarningDialog from "@/components/shared/save-warning-dialog";
+import { SubmitButton } from "@/components/shared/submit-button";
 import TextareaField from "@/components/textarea-field";
 import { Button } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
-import { Spinner } from "@/components/ui/spinner";
+import { isConfigLocked } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import type { ConfigurationStatusType, Role } from "@/types";
 import {
@@ -66,9 +66,7 @@ const ConfigForm = ({
   const isNewConfiguration = !id && !configuration && !status;
 
   const formIsDisabled =
-    isSubmitting ||
-    (!isNewConfiguration &&
-      (!status || !userRole || !isEditable(status, userRole)));
+    isSubmitting || (!isNewConfiguration && isConfigLocked(status, userRole));
 
   const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
     resolver: zodResolver(configSchema, {
@@ -230,18 +228,13 @@ const ConfigForm = ({
                 >
                   Annulla
                 </Button>
-                <Button
-                  className="flex items-center gap-2"
-                  type="submit"
+                <SubmitButton
+                  isSubmitting={isSubmitting}
+                  icon={<Save />}
                   disabled={formIsDisabled}
                 >
-                  {isSubmitting ? (
-                    <Spinner className="h-4 w-4 text-foreground" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  <span>Salva configurazione</span>
-                </Button>
+                  Salva configurazione
+                </SubmitButton>
               </div>
             </fieldset>
           </FormDisabledContext.Provider>

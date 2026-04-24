@@ -7,9 +7,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type FieldValues, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { isEditable } from "@/app/actions/lib/auth-checks";
 import Fieldset from "@/components/fieldset";
 import SaveWarningDialog from "@/components/shared/save-warning-dialog";
+import { SubmitButton } from "@/components/shared/submit-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
+import { isConfigLocked } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import type { ConfigurationStatusType, Role } from "@/types";
 
@@ -99,8 +100,7 @@ const SubRecordForm = <
   const pendingValuesRef = useRef<FormData | null>(null);
   const pendingActionRef = useRef<"save" | "delete" | null>(null);
 
-  const formIsDisabled =
-    !!isLoading || !userRole || !isEditable(parentStatus, userRole);
+  const formIsDisabled = !!isLoading || isConfigLocked(parentStatus, userRole);
 
   // Zod v4 defaults Input=unknown in ZodType<O>; cast to ZodType<TData, FieldValues> so
   // zodResolver's overload resolves correctly. All Zod object schemas satisfy this at runtime.
@@ -330,18 +330,14 @@ const SubRecordForm = <
                   </Button>
 
                   {/* Save/Add Button */}
-                  <Button
-                    type="submit"
+                  <SubmitButton
+                    isSubmitting={isLoading === "submit"}
+                    icon={<Save />}
                     disabled={isSaveOrCancelDisabled}
-                    className="gap-1.5 min-w-25 sm:min-w-35"
+                    className="min-w-25 sm:min-w-35"
                   >
-                    {isLoading === "submit" ? (
-                      <Spinner className="h-4 w-4 text-foreground" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    <span>{isEditing ? "Salva" : `Aggiungi`}</span>
-                  </Button>
+                    {isEditing ? "Salva" : "Aggiungi"}
+                  </SubmitButton>
                 </div>
               </Fieldset>
             </form>
@@ -360,7 +356,7 @@ const SubRecordForm = <
             <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={buttonVariants({ variant: "destructive" })}
             >
               Elimina
             </AlertDialogAction>

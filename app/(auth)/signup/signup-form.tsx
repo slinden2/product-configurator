@@ -6,9 +6,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { signUp } from "@/app/actions/auth";
 import InputField from "@/components/input-field";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/shared/submit-button";
 import { Form } from "@/components/ui/form";
-import { Spinner } from "@/components/ui/spinner";
 import { type SignupSchema, signupSchema } from "@/validation/auth-schema";
 
 const SignupForm = () => {
@@ -53,13 +52,9 @@ const SignupForm = () => {
           type="password"
           autoComplete="new-password"
         />
-        <Button>
-          {form.formState.isSubmitting ? (
-            <Spinner className="text-primary-foreground" />
-          ) : (
-            "Registra"
-          )}
-        </Button>
+        <SubmitButton isSubmitting={form.formState.isSubmitting}>
+          Registra
+        </SubmitButton>
       </form>
     </Form>
   );

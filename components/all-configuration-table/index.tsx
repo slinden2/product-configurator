@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
-import { Button } from "@/components/ui/button";
+import PaginationControls from "@/components/shared/pagination-controls";
 import {
   Table,
   TableBody,
@@ -43,8 +42,6 @@ const AllConfigurationsTable = async ({
   }
 
   const totalPages = Math.ceil(totalCount / pageSize);
-  const hasPrev = page > 1;
-  const hasNext = page < totalPages;
 
   return (
     <div className="w-full mt-5">
@@ -78,37 +75,11 @@ const AllConfigurationsTable = async ({
           </TableBody>
         </Table>
       </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-4 mt-4">
-          <span className="text-sm text-muted-foreground">
-            Pagina {page} di {totalPages}
-          </span>
-          <div className="flex gap-2">
-            {hasPrev ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/configurazioni?page=${page - 1}`}>
-                  Precedente
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" disabled>
-                Precedente
-              </Button>
-            )}
-            {hasNext ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/configurazioni?page=${page + 1}`}>
-                  Successiva
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" disabled>
-                Successiva
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        buildHref={(p) => `/configurazioni?page=${p}`}
+      />
     </div>
   );
 };

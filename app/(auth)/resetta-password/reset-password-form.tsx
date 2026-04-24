@@ -6,9 +6,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { resetPassword } from "@/app/actions/auth";
 import InputField from "@/components/input-field";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/shared/submit-button";
 import { Form } from "@/components/ui/form";
-import { Spinner } from "@/components/ui/spinner";
 import { MSG } from "@/lib/messages";
 import {
   type NewPasswordSchema,
@@ -52,13 +51,9 @@ const ResetPasswordForm = () => {
           type="password"
           autoComplete="new-password"
         />
-        <Button>
-          {form.formState.isSubmitting ? (
-            <Spinner className="text-primary-foreground" />
-          ) : (
-            "Resetta la password"
-          )}
-        </Button>
+        <SubmitButton isSubmitting={form.formState.isSubmitting}>
+          Resetta la password
+        </SubmitButton>
       </form>
     </Form>
   );

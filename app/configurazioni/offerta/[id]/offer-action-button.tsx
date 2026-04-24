@@ -1,10 +1,8 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { generateOfferAction } from "@/app/actions/offer-actions";
-import { Button } from "@/components/ui/button";
+import { AsyncActionButton } from "@/components/shared/async-action-button";
 import { MSG } from "@/lib/messages";
 
 interface Props {
@@ -13,39 +11,22 @@ interface Props {
 }
 
 export default function OfferActionButton({ confId, mode }: Props) {
-  const [isPending, setIsPending] = useState(false);
   const isRegenerate = mode === "regenerate";
 
-  const handleClick = async () => {
-    setIsPending(true);
-    try {
-      const result = await generateOfferAction(confId);
-      if (result.success) {
-        toast.success(
-          isRegenerate ? MSG.toast.offerRegenerated : MSG.toast.offerGenerated,
-        );
-      } else {
-        toast.error(result.error);
-      }
-    } finally {
-      setIsPending(false);
-    }
-  };
-
   return (
-    <Button
+    <AsyncActionButton
+      action={async () => {
+        const result = await generateOfferAction(confId);
+        if (!result.success) throw new Error(result.error);
+      }}
+      icon={isRegenerate ? <RefreshCw /> : undefined}
+      successMsg={
+        isRegenerate ? MSG.toast.offerRegenerated : MSG.toast.offerGenerated
+      }
       variant={isRegenerate ? "outline" : "default"}
-      onClick={handleClick}
-      disabled={isPending}
+      size="sm"
     >
-      {isRegenerate && <RefreshCw className="h-4 w-4 mr-2" />}
-      {isPending
-        ? isRegenerate
-          ? "Rigenerazione..."
-          : "Generazione..."
-        : isRegenerate
-          ? "Rigenera offerta"
-          : "Genera offerta"}
-    </Button>
+      {isRegenerate ? "Rigenera offerta" : "Genera offerta"}
+    </AsyncActionButton>
   );
 }

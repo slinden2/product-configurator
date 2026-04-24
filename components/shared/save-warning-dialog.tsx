@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
 import { MSG } from "@/lib/messages";
 
 interface SaveWarningDialogProps {
@@ -47,7 +48,7 @@ const SaveWarningDialog = ({
           <AlertDialogCancel onClick={onCancel}>Annulla</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className={buttonVariants({ variant: "destructive" })}
           >
             {messages.confirm}
           </AlertDialogAction>
