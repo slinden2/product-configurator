@@ -17,29 +17,10 @@ export function SubmitButton({
   children,
   ...props
 }: SubmitButtonProps) {
-  if (icon) {
-    return (
-      <Button type="submit" disabled={isSubmitting || disabled} {...props}>
-        {isSubmitting ? (
-          <Spinner
-            size="small"
-            className="text-background dark:text-foreground"
-          />
-        ) : (
-          icon
-        )}
-        <span>{children}</span>
-      </Button>
-    );
-  }
-
   return (
     <Button type="submit" disabled={isSubmitting || disabled} {...props}>
-      {isSubmitting ? (
-        <Spinner className="text-primary-foreground" />
-      ) : (
-        children
-      )}
+      {isSubmitting ? <Spinner size="small" className="text-current" /> : icon}
+      <span>{children}</span>
     </Button>
   );
 }

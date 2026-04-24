@@ -65,7 +65,7 @@ export const ConfirmModal = ({
             className="sm:min-w-25"
           >
             {isConfirming ? (
-              <Spinner className="h-4 w-4 text-current" />
+              <Spinner size="small" className="text-current" />
             ) : (
               confirmText
             )}

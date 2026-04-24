@@ -1,8 +1,8 @@
 import type { LucideProps } from "lucide-react";
-import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 interface IconButtonProps {
   className?: string;
@@ -39,9 +39,7 @@ const IconButton: React.FC<IconButtonProps> = ({
       aria-label={title}
     >
       {isPending ? (
-        <span>
-          <Loader2 className="animate-spin text-current" />
-        </span>
+        <Spinner size="small" className="text-current" />
       ) : isLink ? (
         <Link href={linkTo as string}>
           <Icon aria-hidden="true" className="text-current" />
