@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 interface InfoBannerProps {
   variant?: "warning" | "error";
   children: React.ReactNode;
+  action?: React.ReactNode;
   className?: string;
 }
 
@@ -16,8 +17,24 @@ const variantClasses = {
 const InfoBanner = ({
   variant = "warning",
   children,
+  action,
   className,
 }: InfoBannerProps) => {
+  if (action) {
+    return (
+      <div
+        className={cn(
+          variantClasses[variant],
+          "flex items-center justify-between gap-4",
+          className,
+        )}
+      >
+        <span className="flex items-center gap-2">{children}</span>
+        {action}
+      </div>
+    );
+  }
+
   return <p className={cn(variantClasses[variant], className)}>{children}</p>;
 };
 

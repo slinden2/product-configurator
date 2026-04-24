@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Persona
 
-You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator. UI labels are in Italian; maintain this convention in all new code.
+You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator.
+
+**Language convention:** user-facing UI strings are Italian, everything else is English. Italian applies to: JSX prose, `MSG` constants, toast/alert/confirm messages, Zod error messages, tab and `aria-label` strings, and URL route folders under `app/`. English applies to: every other string and name — function/component/type/variable/constant/file/folder names, comments, JSDoc, test descriptions, and internal fields that never surface in the UI (e.g. BOM rule `_description`). Part numbers are catalog codes — leave them as-is.
 
 ## Build & Development Commands
 
@@ -40,7 +42,7 @@ npm run seed:reset       # Reset and reseed database
 - `db/schemas/` — Drizzle ORM table definitions
 - `db/queries.ts` — Database query functions
 - `db/transformations.ts` — Bridge between Zod validation schemas and DB format
-- `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`
+- `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`. All Zod schemas must be within the `validation/` folder.
 - `types/index.ts` — All enums and shared types (BrushType, WaterType, ConfigurationStatus, etc.)
 - `lib/messages.ts` — Centralized Italian messages (`MSG` constant) for all error/success/toast strings
 - `lib/BOM/` — BOM generation (see `lib/BOM/CLAUDE.md` for domain details)
@@ -80,7 +82,7 @@ Before finalizing any change, verify:
 2. **Dependent Fields:** If adding or modifying a `SelectField` or `CheckboxField`, are `fieldsToReset` correctly mapped to the Zod schema keys?
 3. **Type Safety:** Does the change respect the existing types in `types/index.ts` without using `any` or loose type casting? Always run `npm run type-check` to ensure no regressions were introduced.
 4. **Data Integrity:** Is `revalidatePath` included in the Server Action to ensure the UI stays in sync with the DB?
-5. **Localization:** Are all new UI labels in Italian?
+5. **Language:** Are all new user-facing strings in Italian, and all code (identifiers, comments, internal non-UI strings like BOM `_description`) in English?
 
 ## Post-Change Verification
 
@@ -104,3 +106,13 @@ All GitHub issues (titles, bodies, comments) must be written in **English**, reg
 ## Screenshots
 
 If I ask you to take a look at a screenshot you can find it here: C:\Users\Utente-006\Pictures\Screenshots
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)

@@ -97,7 +97,7 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
             <Mail className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" title="Vedi attività" asChild>
-            <Link href={`/utenti/${user.id}`}>
+            <Link href={`/gestione/utenti/${user.id}`}>
               <History className="h-4 w-4" />
             </Link>
           </Button>

@@ -9,45 +9,45 @@ vi.mock("@/db/queries", () => ({
 
 import type { GeneralBOMConfig } from "@/lib/BOM";
 import { GeneralMaxBOM } from "@/lib/BOM/max-bom";
-import { gruBOM } from "@/lib/BOM/max-bom/gru-bom";
+import { gantryBOM } from "@/lib/BOM/max-bom/gantry-bom";
 import { makeGeneralBOMConfig as makeConfig } from "@/test/bom-test-utils";
 
 const cfg = (brush_qty: number, is_fast = false) =>
   ({ brush_qty, is_fast }) as GeneralBOMConfig;
 
 const included = (config: GeneralBOMConfig) =>
-  gruBOM.filter((item) => item.conditions.every((fn) => fn(config)));
+  gantryBOM.filter((item) => item.conditions.every((fn) => fn(config)));
 
-describe("gruBOM", () => {
-  test("brush_qty=0 → zero-brush GRU + short photocell supports", () => {
+describe("gantryBOM", () => {
+  test("brush_qty=0 → zero-brush gantry + short photocell supports", () => {
     const items = included(cfg(0));
     expect(items).toHaveLength(2);
     expect(items[0].pn).toBe("450.0E.GRU0");
     expect(items[1].pn).toBe("925.00.000");
   });
 
-  test("brush_qty=2 → two-brush GRU + short photocell supports", () => {
+  test("brush_qty=2 → two-brush gantry + short photocell supports", () => {
     const items = included(cfg(2));
     expect(items).toHaveLength(2);
     expect(items[0].pn).toBe("450.0E.GRU2");
     expect(items[1].pn).toBe("925.00.000");
   });
 
-  test("brush_qty=3 → three-brush GRU + short photocell supports", () => {
+  test("brush_qty=3 → three-brush gantry + short photocell supports", () => {
     const items = included(cfg(3));
     expect(items).toHaveLength(2);
     expect(items[0].pn).toBe("450.0E.GRU");
     expect(items[1].pn).toBe("925.00.000");
   });
 
-  test("exactly one GRU item + short photocell supports for valid brush quantities", () => {
+  test("exactly one gantry item + short photocell supports for valid brush quantities", () => {
     for (const qty of [0, 2, 3]) {
       expect(included(cfg(qty))).toHaveLength(2);
     }
   });
 });
 
-describe("gruBOM — SHORT_PHOTOCELL_SUPPORTS", () => {
+describe("gantryBOM — short photocell supports", () => {
   test("non-fast config includes short photocell supports", () => {
     expect(included(cfg(2, false))).toEqual(
       expect.arrayContaining([expect.objectContaining({ pn: "925.00.000" })]),
@@ -60,7 +60,7 @@ describe("gruBOM — SHORT_PHOTOCELL_SUPPORTS", () => {
 });
 
 const pns = (config: GeneralBOMConfig) =>
-  gruBOM
+  gantryBOM
     .filter((item) => item.conditions.every((fn) => fn(config)))
     .map((item) => item.pn);
 
@@ -69,7 +69,7 @@ const PNS = {
   OMZ_BANNER: "450.25.026",
 };
 
-describe("gruBOM — banners", () => {
+describe("gantryBOM — machine banners", () => {
   test("STD machine → STANDARD_BANNER included, OMZ_BANNER excluded", () => {
     const result = pns(makeConfig({ machine_type: "STD" }));
     expect(result).toContain(PNS.STANDARD_BANNER);

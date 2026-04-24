@@ -341,7 +341,23 @@ describe("ConfigurationRow", () => {
       );
     });
 
-    test("BOM button links to /configurazioni/bom/{id} and is always enabled", () => {
+    test("ENGINEER sees BOM button linking to /configurazioni/bom/{id}", () => {
+      renderRow(
+        {
+          id: 42,
+          user: { id: "other-user", email: "o@t.com", initials: "OT" },
+        },
+        { role: "ENGINEER" },
+      );
+
+      const bomLink = screen.getByLabelText("Visualizza distinta");
+      expect(bomLink.closest("a")).toHaveAttribute(
+        "href",
+        "/configurazioni/bom/42",
+      );
+    });
+
+    test("SALES sees offer button linking to /configurazioni/offerta/{id}", () => {
       renderRow(
         {
           id: 42,
@@ -350,11 +366,29 @@ describe("ConfigurationRow", () => {
         { role: "SALES" },
       );
 
-      const bomLink = screen.getByLabelText("Visualizza distinta");
-      expect(bomLink.closest("a")).toHaveAttribute(
+      expect(screen.queryByLabelText("Visualizza distinta")).toBeNull();
+      const offerLink = screen.getByLabelText("Visualizza offerta");
+      expect(offerLink.closest("a")).toHaveAttribute(
         "href",
-        "/configurazioni/bom/42",
+        "/configurazioni/offerta/42",
       );
+    });
+
+    test("ADMIN sees both BOM and offer buttons", () => {
+      renderRow(
+        {
+          id: 42,
+          user: { id: "other-user", email: "o@t.com", initials: "OT" },
+        },
+        { role: "ADMIN" },
+      );
+
+      expect(
+        screen.getByLabelText("Visualizza distinta").closest("a"),
+      ).toHaveAttribute("href", "/configurazioni/bom/42");
+      expect(
+        screen.getByLabelText("Visualizza offerta").closest("a"),
+      ).toHaveAttribute("href", "/configurazioni/offerta/42");
     });
   });
 

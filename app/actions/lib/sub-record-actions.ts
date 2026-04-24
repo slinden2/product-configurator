@@ -8,6 +8,7 @@ import { db } from "@/db";
 import {
   type DatabaseType,
   deleteAllEngineeringBomItems,
+  deleteOfferSnapshotByConfigurationId,
   getConfiguration,
   getUserData,
   hasEngineeringBom,
@@ -179,11 +180,14 @@ export async function handleSubRecordAction<
       if (ebomExists) {
         await deleteAllEngineeringBomItems(parentId, tx);
       }
+      // Always delete offer snapshot — sub-record data feeds BOM pricing
+      await deleteOfferSnapshotByConfigurationId(parentId, tx);
     });
 
     // --- 5. Cache Revalidation ---
     revalidatePath(revalidatePathStr);
     revalidatePath(`/configurazioni/bom/${parentId}`);
+    revalidatePath(`/configurazioni/offerta/${parentId}`);
 
     // --- 6. Return Success ---
     return { success: true as const, data: operationResult };

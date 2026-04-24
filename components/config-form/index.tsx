@@ -18,7 +18,7 @@ import SupplySection from "@/components/config-form/supply-section";
 import TouchSection from "@/components/config-form/touch-section";
 import WaterSupplySection from "@/components/config-form/water-supply-section";
 import Fieldset from "@/components/fieldset";
-import BomWarningDialog from "@/components/shared/bom-warning-dialog";
+import SaveWarningDialog from "@/components/shared/save-warning-dialog";
 import TextareaField from "@/components/textarea-field";
 import { Button } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
@@ -44,6 +44,7 @@ interface ConfigurationFormProps {
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
   hasEngineeringBom?: boolean;
+  hasOfferSnapshot?: boolean;
 }
 
 const ConfigForm = ({
@@ -55,9 +56,10 @@ const ConfigForm = ({
   onDirtyChange,
   onSaved,
   hasEngineeringBom,
+  hasOfferSnapshot,
 }: ConfigurationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [showBomWarning, setShowBomWarning] = useState(false);
+  const [showSaveWarning, setShowSaveWarning] = useState(false);
   const pendingValuesRef = useRef<ConfigSchema | null>(null);
   const router = useRouter();
 
@@ -154,16 +156,20 @@ const ConfigForm = ({
     const onlyExemptFieldsDirty = Object.keys(form.formState.dirtyFields).every(
       (key) => BOM_EXEMPT_FIELDS.has(key as keyof ConfigSchema),
     );
-    if (hasEngineeringBom && id && !onlyExemptFieldsDirty) {
+    if (
+      (hasEngineeringBom || hasOfferSnapshot) &&
+      id &&
+      !onlyExemptFieldsDirty
+    ) {
       pendingValuesRef.current = values;
-      setShowBomWarning(true);
+      setShowSaveWarning(true);
       return;
     }
     await executeSubmit(values);
   }
 
-  function handleBomWarningConfirm() {
-    setShowBomWarning(false);
+  function handleSaveWarningConfirm() {
+    setShowSaveWarning(false);
     if (pendingValuesRef.current) {
       const values = pendingValuesRef.current;
       pendingValuesRef.current = null;
@@ -241,13 +247,15 @@ const ConfigForm = ({
           </FormDisabledContext.Provider>
         </form>
       </Form>
-      <BomWarningDialog
-        open={showBomWarning}
-        onOpenChange={setShowBomWarning}
+      <SaveWarningDialog
+        open={showSaveWarning}
+        onOpenChange={setShowSaveWarning}
         onCancel={() => {
           pendingValuesRef.current = null;
         }}
-        onConfirm={handleBomWarningConfirm}
+        onConfirm={handleSaveWarningConfirm}
+        hasEngineeringBom={!!hasEngineeringBom}
+        hasOfferSnapshot={!!hasOfferSnapshot}
       />
     </div>
   );

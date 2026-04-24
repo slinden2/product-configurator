@@ -21,20 +21,29 @@ import {
   type NewEngineeringBomItem,
   type NewWashBay,
   type NewWaterTank,
+  type OfferSnapshot,
+  offerSnapshots,
   partNumbers,
+  priceCoefficients,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
-import type { ActivityAction, ConfigurationStatusType, Role } from "@/types";
+import type {
+  ActivityAction,
+  CoefficientSource,
+  ConfigurationStatusType,
+  Role,
+} from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
   ConfigSchema,
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
+import type { OfferSnapshotItem } from "@/validation/offer-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
@@ -67,7 +76,7 @@ export class QueryError extends Error {
   }
 }
 
-export async function getUserData() {
+export const getUserData = async () => {
   const supabase = await createClient();
   const { error, data } = await supabase.auth.getUser();
 
@@ -93,7 +102,7 @@ export async function getUserData() {
     role: userProfile.role,
     initials: userProfile.initials,
   };
-}
+};
 
 // Gets all configurations for the user if the role is SALES.
 // For ENGINEER and ADMIN, gets all configurations
@@ -594,11 +603,22 @@ export async function hasEngineeringBom(
   confId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) {
-  const result = await txOrDb
-    .select({ count: sql<number>`count(*)::int` })
-    .from(engineeringBomItems)
-    .where(eq(engineeringBomItems.configuration_id, confId));
-  return (result[0]?.count ?? 0) > 0;
+  const row = await txOrDb.query.engineeringBomItems.findFirst({
+    where: eq(engineeringBomItems.configuration_id, confId),
+    columns: { id: true },
+  });
+  return row !== undefined;
+}
+
+export async function hasOfferSnapshot(
+  confId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  const row = await txOrDb.query.offerSnapshots.findFirst({
+    where: eq(offerSnapshots.configuration_id, confId),
+    columns: { id: true },
+  });
+  return row !== undefined;
 }
 
 export async function insertEngineeringBomItems(
@@ -786,4 +806,221 @@ export async function searchPartNumbers(query: string, limit = 20) {
     limit,
     orderBy: [asc(partNumbers.pn)],
   });
+}
+
+// ── Price coefficients ──────────────────────────────────────────────────────
+
+export type PriceCoefficientWithUpdater = {
+  id: number;
+  pn: string;
+  coefficient: string;
+  source: CoefficientSource;
+  is_custom: boolean;
+  updated_by: string | null;
+  updaterEmail: string | null;
+  updaterInitials: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export async function getAllPriceCoefficients(): Promise<
+  PriceCoefficientWithUpdater[]
+> {
+  return db
+    .select({
+      id: priceCoefficients.id,
+      pn: priceCoefficients.pn,
+      coefficient: priceCoefficients.coefficient,
+      source: priceCoefficients.source,
+      is_custom: priceCoefficients.is_custom,
+      updated_by: priceCoefficients.updated_by,
+      updaterEmail: userProfiles.email,
+      updaterInitials: userProfiles.initials,
+      created_at: priceCoefficients.created_at,
+      updated_at: priceCoefficients.updated_at,
+    })
+    .from(priceCoefficients)
+    .leftJoin(userProfiles, eq(priceCoefficients.updated_by, userProfiles.id))
+    .orderBy(asc(priceCoefficients.pn));
+}
+
+export async function getPriceCoefficientsByArray(
+  pns: string[],
+): Promise<{ pn: string; coefficient: string }[]> {
+  if (pns.length === 0) return [];
+  return db
+    .select({
+      pn: priceCoefficients.pn,
+      coefficient: priceCoefficients.coefficient,
+    })
+    .from(priceCoefficients)
+    .where(inArray(priceCoefficients.pn, pns));
+}
+
+export async function getFullPriceCoefficientByPn(pn: string): Promise<
+  | {
+      pn: string;
+      coefficient: string;
+      source: CoefficientSource;
+      is_custom: boolean;
+    }
+  | undefined
+> {
+  const [row] = await db
+    .select({
+      pn: priceCoefficients.pn,
+      coefficient: priceCoefficients.coefficient,
+      source: priceCoefficients.source,
+      is_custom: priceCoefficients.is_custom,
+    })
+    .from(priceCoefficients)
+    .where(eq(priceCoefficients.pn, pn));
+  return row;
+}
+
+export async function createPriceCoefficient(data: {
+  pn: string;
+  coefficient: string;
+  source: CoefficientSource;
+  is_custom: boolean;
+  updated_by: string | null;
+}): Promise<{ id: number; pn: string }> {
+  const [row] = await db
+    .insert(priceCoefficients)
+    .values(data)
+    .returning({ id: priceCoefficients.id, pn: priceCoefficients.pn });
+  return row;
+}
+
+export async function updatePriceCoefficientByPn(data: {
+  pn: string;
+  coefficient: string;
+  is_custom: boolean;
+  updated_by: string | null;
+}): Promise<{ pn: string } | undefined> {
+  const [row] = await db
+    .update(priceCoefficients)
+    .set({
+      coefficient: data.coefficient,
+      is_custom: data.is_custom,
+      updated_by: data.updated_by,
+      updated_at: new Date(),
+    })
+    .where(eq(priceCoefficients.pn, data.pn))
+    .returning({ pn: priceCoefficients.pn });
+  return row;
+}
+
+export async function deletePriceCoefficientByPn(
+  pn: string,
+): Promise<{ pn: string } | undefined> {
+  const [row] = await db
+    .delete(priceCoefficients)
+    .where(eq(priceCoefficients.pn, pn))
+    .returning({ pn: priceCoefficients.pn });
+  return row;
+}
+
+export async function insertMissingMaxBomCoefficients(
+  pns: string[],
+  defaultCoefficient: string,
+): Promise<number> {
+  if (pns.length === 0) return 0;
+  const rows = await db
+    .insert(priceCoefficients)
+    .values(
+      pns.map((pn) => ({
+        pn,
+        coefficient: defaultCoefficient,
+        source: "MAXBOM" as const,
+        is_custom: false,
+      })),
+    )
+    .onConflictDoNothing({ target: priceCoefficients.pn })
+    .returning({ pn: priceCoefficients.pn });
+  return rows.length;
+}
+
+// --- Offer Snapshots ---
+
+export type OfferSnapshotWithGenerator = OfferSnapshot & {
+  generator: { id: string; email: string | null } | null;
+};
+
+export async function getOfferSnapshotByConfigurationId(
+  confId: number,
+): Promise<OfferSnapshotWithGenerator | null> {
+  const [row] = await db
+    .select({
+      id: offerSnapshots.id,
+      configuration_id: offerSnapshots.configuration_id,
+      source: offerSnapshots.source,
+      generated_at: offerSnapshots.generated_at,
+      generated_by: offerSnapshots.generated_by,
+      discount_pct: offerSnapshots.discount_pct,
+      items: offerSnapshots.items,
+      total_list_price: offerSnapshots.total_list_price,
+      bom_rules_version: offerSnapshots.bom_rules_version,
+      updated_at: offerSnapshots.updated_at,
+      generator: {
+        id: userProfiles.id,
+        email: userProfiles.email,
+      },
+    })
+    .from(offerSnapshots)
+    .leftJoin(userProfiles, eq(offerSnapshots.generated_by, userProfiles.id))
+    .where(eq(offerSnapshots.configuration_id, confId));
+  return row ?? null;
+}
+
+export async function upsertOfferSnapshot(data: {
+  configuration_id: number;
+  source: "EBOM" | "LIVE";
+  generated_by: string;
+  items: OfferSnapshotItem[];
+  total_list_price: string;
+  bom_rules_version: string;
+}): Promise<OfferSnapshot> {
+  const now = new Date();
+  const { configuration_id, ...fields } = data;
+  const [row] = await db
+    .insert(offerSnapshots)
+    .values({ configuration_id, ...fields, generated_at: now, updated_at: now })
+    .onConflictDoUpdate({
+      target: offerSnapshots.configuration_id,
+      set: { ...fields, generated_at: now, updated_at: now },
+    })
+    .returning();
+  return row;
+}
+
+export async function updateOfferDiscount(
+  confId: number,
+  discount_pct: string,
+): Promise<OfferSnapshot | undefined> {
+  const [row] = await db
+    .update(offerSnapshots)
+    .set({ discount_pct, updated_at: new Date() })
+    .where(eq(offerSnapshots.configuration_id, confId))
+    .returning();
+  return row;
+}
+
+export async function deleteOfferSnapshotByConfigurationId(
+  confId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<void> {
+  await txOrDb
+    .delete(offerSnapshots)
+    .where(eq(offerSnapshots.configuration_id, confId));
+}
+
+export async function getEbomMaxUpdatedAt(
+  confId: number,
+): Promise<Date | null> {
+  const [row] = await db
+    .select({ maxUpdatedAt: max(engineeringBomItems.updated_at) })
+    .from(engineeringBomItems)
+    .where(eq(engineeringBomItems.configuration_id, confId));
+  return row?.maxUpdatedAt ?? null;
 }

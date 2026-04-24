@@ -39,6 +39,7 @@ interface ConfigurationFormProps {
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
   hasEngineeringBom?: boolean;
+  hasOfferSnapshot?: boolean;
 }
 
 const TABS_CONFIG = [
@@ -91,6 +92,7 @@ const FormContainer = ({
   initialWaterTanks,
   initialWashBays,
   hasEngineeringBom,
+  hasOfferSnapshot,
 }: ConfigurationFormProps) => {
   const [waterTanks, setWaterTanks] = useState<UpdateWaterTankSchema[]>(
     initialWaterTanks || [],
@@ -232,6 +234,7 @@ const FormContainer = ({
             onDirtyChange={handleDirtyChange}
             onSaved={handleSaved}
             hasEngineeringBom={hasEngineeringBom}
+            hasOfferSnapshot={hasOfferSnapshot}
           />
         </TabsContent>
 
@@ -257,6 +260,7 @@ const FormContainer = ({
                   onDirtyChange={handleDirtyChange}
                   onSaved={handleSaved}
                   hasEngineeringBom={hasEngineeringBom}
+                  hasOfferSnapshot={hasOfferSnapshot}
                 />
               ))
             }
@@ -270,6 +274,7 @@ const FormContainer = ({
                 onDirtyChange={handleDirtyChange}
                 onSaved={handleSaved}
                 hasEngineeringBom={hasEngineeringBom}
+                hasOfferSnapshot={hasOfferSnapshot}
               />
             )}
           />
@@ -308,6 +313,7 @@ const FormContainer = ({
                   onDirtyChange={handleDirtyChange}
                   onSaved={handleSaved}
                   hasEngineeringBom={hasEngineeringBom}
+                  hasOfferSnapshot={hasOfferSnapshot}
                 />
               ))
             }
@@ -323,6 +329,7 @@ const FormContainer = ({
                 onDirtyChange={handleDirtyChange}
                 onSaved={handleSaved}
                 hasEngineeringBom={hasEngineeringBom}
+                hasOfferSnapshot={hasOfferSnapshot}
               />
             )}
           />

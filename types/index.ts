@@ -125,6 +125,14 @@ export const ActivityActions = [
   "PASSWORD_RESET",
   "BOM_GENERATE",
   "BOM_REGENERATE",
+  "COEFFICIENT_CREATE",
+  "COEFFICIENT_UPDATE",
+  "COEFFICIENT_DELETE",
+  "COEFFICIENT_RESET",
+  "COEFFICIENT_SYNC",
+  "OFFER_GENERATE",
+  "OFFER_REGENERATE",
+  "OFFER_DISCOUNT_SET",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -138,7 +146,21 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   PASSWORD_RESET: "Reset password",
   BOM_GENERATE: "Generazione distinta",
   BOM_REGENERATE: "Rigenerazione distinta",
+  COEFFICIENT_CREATE: "Creazione coefficiente",
+  COEFFICIENT_UPDATE: "Modifica coefficiente",
+  COEFFICIENT_DELETE: "Eliminazione coefficiente",
+  COEFFICIENT_RESET: "Ripristino coefficiente",
+  COEFFICIENT_SYNC: "Sincronizzazione coefficienti MaxBOM",
+  OFFER_GENERATE: "Generazione offerta",
+  OFFER_REGENERATE: "Rigenerazione offerta",
+  OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
 };
+
+export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
+export type CoefficientSource = (typeof CoefficientSources)[number];
+
+export const OfferSources = ["EBOM", "LIVE"] as const;
+export type OfferSource = (typeof OfferSources)[number];
 
 export const BomTags = [
   "FRAME",

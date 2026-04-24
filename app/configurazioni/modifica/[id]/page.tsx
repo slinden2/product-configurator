@@ -6,6 +6,7 @@ import {
   getConfigurationWithTanksAndBays,
   getUserData,
   hasEngineeringBom,
+  hasOfferSnapshot,
 } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import {
@@ -67,11 +68,14 @@ const EditConfiguration = async (props: EditConfigProps) => {
       : (raw as unknown as UpdateWashBaySchema);
   });
 
-  const ebomExists = await hasEngineeringBom(id);
+  const [ebomExists, offerExists] = await Promise.all([
+    hasEngineeringBom(id),
+    hasOfferSnapshot(id),
+  ]);
 
   return (
     <div>
-      <ConfigNavigationBar confId={id} activePage="edit" />
+      <ConfigNavigationBar confId={id} activePage="edit" role={user.role} />
       <div className="mb-6 sm:flex sm:gap-2">
         <div className="mb-6 sm:mb-0">
           <h1 className="text-3xl font-bold mb-2">Modifica configurazione</h1>
@@ -95,6 +99,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}
         hasEngineeringBom={ebomExists}
+        hasOfferSnapshot={offerExists}
       />
     </div>
   );

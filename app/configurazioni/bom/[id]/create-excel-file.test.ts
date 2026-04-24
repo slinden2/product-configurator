@@ -292,3 +292,144 @@ describe("Analisi Costi sheet (Pareto)", () => {
     expect(sheet.rowCount).toBe(1);
   });
 });
+
+describe("Analisi Componenti sheet (exploded Pareto)", () => {
+  function getComponentiSheet(wb: ExcelJS.Workbook) {
+    const sheet = wb.getWorksheet("Analisi Componenti");
+    if (!sheet) throw new Error('Worksheet "Analisi Componenti" not found');
+    return sheet;
+  }
+
+  const exploded = (
+    generalBOM: BOM,
+  ): Parameters<typeof buildCostWorkbook>[4] => ({
+    generalBOM,
+    waterTankBOMs: [],
+    washBayBOMs: [],
+  });
+
+  test("sheet is the third tab after Costi and Analisi Costi", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
+    expect(wb.worksheets[0].name).toBe("Costi");
+    expect(wb.worksheets[1].name).toBe("Analisi Costi");
+    expect(wb.worksheets[2].name).toBe("Analisi Componenti");
+  });
+
+  test("sheet is absent when no exploded data is passed", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser());
+    expect(wb.getWorksheet("Analisi Componenti")).toBeUndefined();
+  });
+
+  test("aggregates duplicate PNs across sections into one row", () => {
+    const pn = "LEAF-001";
+    const wb = buildCostWorkbook([], [], [], makeUser(), {
+      generalBOM: [makeCostItem({ pn, qty: 2, cost: 100 })],
+      waterTankBOMs: [[makeCostItem({ pn, qty: 3, cost: 100 })]],
+      washBayBOMs: [],
+    });
+    const sheet = getComponentiSheet(wb);
+    let pnRowCount = 0;
+    let aggregatedQty: number | null = null;
+    sheet.eachRow((row, rowNum) => {
+      if (rowNum === 1) return;
+      if (row.getCell(1).value === pn) {
+        pnRowCount++;
+        aggregatedQty = row.getCell(3).value as number;
+      }
+    });
+    expect(pnRowCount).toBe(1);
+    expect(aggregatedQty).toBe(5);
+  });
+
+  test("excludes zero-cost rows", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeCostItem({ pn: "ZERO-COST", qty: 5, cost: 0 }),
+        makeCostItem({ pn: "OK-PN", qty: 2, cost: 50 }),
+      ]),
+    );
+    const pns = findCellValues(getComponentiSheet(wb));
+    expect(pns).not.toContain("ZERO-COST");
+    expect(pns).toContain("OK-PN");
+  });
+
+  test("sorts rows by total cost descending", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeCostItem({ pn: "LOW-001", qty: 1, cost: 10 }),
+        makeCostItem({ pn: "HIGH-001", qty: 1, cost: 100 }),
+      ]),
+    );
+    const sheet = getComponentiSheet(wb);
+    expect(cellValue(sheet, 2, 1)).toBe("HIGH-001");
+    expect(cellValue(sheet, 3, 1)).toBe("LOW-001");
+  });
+
+  test("writes correct Excel formulas for derived columns", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeCostItem({ pn: "PN-A", qty: 1, cost: 100 }),
+        makeCostItem({ pn: "PN-B", qty: 1, cost: 50 }),
+      ]),
+    );
+    // header=row1, PN-A=row2, PN-B=row3, TOTALE=row4
+    const sheet = getComponentiSheet(wb);
+    expect(cellFormula(sheet, 2, 5)).toBe("C2*D2");
+    expect(cellFormula(sheet, 2, 6)).toBe("E2/$E$4");
+    expect(cellFormula(sheet, 2, 7)).toBe("SUM($E$2:E2)/$E$4");
+  });
+
+  test("TOTALE row is present with SUM formula for total cost", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([makeCostItem({ pn: "PN-X", qty: 2, cost: 50 })]),
+    );
+    // header=row1, PN-X=row2, TOTALE=row3
+    const sheet = getComponentiSheet(wb);
+    expect(cellValue(sheet, 3, 1)).toBe("TOTALE");
+    expect(cellFormula(sheet, 3, 5)).toBe("SUM(E2:E2)");
+  });
+
+  test("highlights vital-few rows (top 80%) with yellow fill", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeCostItem({ pn: "BIG", qty: 1, cost: 900 }),
+        makeCostItem({ pn: "SMALL", qty: 1, cost: 100 }),
+      ]),
+    );
+    const sheet = getComponentiSheet(wb);
+    expect(cellFillArgb(sheet, 2, 1)).toBe("FFF2CC");
+    expect(cellFillArgb(sheet, 3, 1)).not.toBe("FFF2CC");
+  });
+
+  test("header row is frozen", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
+    const sheet = getComponentiSheet(wb);
+    expect(sheet.views[0]).toMatchObject({ state: "frozen", ySplit: 1 });
+  });
+
+  test("empty exploded BOM produces sheet with only header row and no crash", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
+    const sheet = getComponentiSheet(wb);
+    expect(sheet.rowCount).toBe(1);
+  });
+});

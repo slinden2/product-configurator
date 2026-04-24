@@ -4,7 +4,7 @@ import { brushBOM } from "@/lib/BOM/max-bom/brush-bom";
 import { dosingPumpBOM } from "@/lib/BOM/max-bom/dosing-pump-bom";
 import { electricBOM } from "@/lib/BOM/max-bom/electric-bom";
 import { fastBOM } from "@/lib/BOM/max-bom/fast-bom";
-import { gruBOM } from "@/lib/BOM/max-bom/gru-bom";
+import { gantryBOM } from "@/lib/BOM/max-bom/gantry-bom";
 import { hpPumpBOM } from "@/lib/BOM/max-bom/hp-pump-bom";
 import { nozzleBarBOM } from "@/lib/BOM/max-bom/nozzle-bar-bom";
 import { railBOM } from "@/lib/BOM/max-bom/rail-bom";
@@ -31,7 +31,7 @@ export interface MaxBOMItem<T> {
 }
 
 export const GeneralMaxBOM: MaxBOMItem<GeneralBOMConfig>[] = [
-  ...gruBOM.map((item) => ({ ...item, tag: "FRAME" as const })),
+  ...gantryBOM.map((item) => ({ ...item, tag: "FRAME" as const })),
   ...brushBOM.map((item) => ({ ...item, tag: "BRUSHES" as const })),
   ...dosingPumpBOM.map((item) => ({ ...item, tag: "DOSING_PUMPS" as const })),
   ...waterSupplyBOM.map((item) => ({ ...item, tag: "WATER_SUPPLY" as const })),

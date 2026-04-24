@@ -6,6 +6,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatEur(value: number): string {
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value);
+}
+
 export function formatDateDDMMYYYYHHMM(date: Date): string {
   return new Date(date).toLocaleDateString("it-IT", {
     year: "numeric",

@@ -11,24 +11,24 @@ const PART_NUMBERS = {
   OMZ_BANNER: "450.25.026", // TODO Add to Excel
 } as const satisfies Record<string, string>;
 
-export const gruBOM: MaxBOMItem<GeneralBOMConfig>[] = [
+export const gantryBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.ZERO_BRUSHES,
     conditions: [(config) => config.brush_qty === 0],
     qty: 1,
-    _description: "GRU - zero brushes",
+    _description: "Gantry - zero brushes",
   },
   {
     pn: PART_NUMBERS.TWO_BRUSHES,
     conditions: [(config) => config.brush_qty === 2],
     qty: 1,
-    _description: "GRU - two brushes",
+    _description: "Gantry - two brushes",
   },
   {
     pn: PART_NUMBERS.THREE_BRUSHES,
     conditions: [(config) => config.brush_qty === 3],
     qty: 1,
-    _description: "GRU - three brushes",
+    _description: "Gantry - three brushes",
   },
   {
     pn: PART_NUMBERS.SHORT_PHOTOCELL_SUPPORTS,

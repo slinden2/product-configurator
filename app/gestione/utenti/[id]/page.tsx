@@ -2,11 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ActivityLogTable from "@/components/activity-log-table";
-import {
-  getUserActivityLog,
-  getUserData,
-  getUserProfileById,
-} from "@/db/queries";
+import { getUserActivityLog, getUserProfileById } from "@/db/queries";
 
 const PAGE_SIZE = 20;
 
@@ -14,10 +10,6 @@ const UserDetailPage = async (props: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ page?: string }>;
 }) => {
-  const user = await getUserData();
-  if (!user) redirect("/login");
-  if (user.role !== "ADMIN") redirect("/configurazioni");
-
   const { id } = await props.params;
   const { page: pageParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
@@ -27,18 +19,18 @@ const UserDetailPage = async (props: {
     getUserActivityLog(id, page, PAGE_SIZE),
   ]);
 
-  if (!targetUser) redirect("/utenti");
+  if (!targetUser) redirect("/gestione/utenti");
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   if (page > totalPages && totalPages > 0) {
-    redirect(`/utenti/${id}?page=${totalPages}`);
+    redirect(`/gestione/utenti/${id}?page=${totalPages}`);
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link
-          href="/utenti"
+          href="/gestione/utenti"
           className="text-muted-foreground hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />

@@ -2,10 +2,9 @@ import { redirect } from "next/navigation";
 import UsersTable from "@/components/users-table";
 import { getAllUsersWithStats, getUserData } from "@/db/queries";
 
-const UtentiPage = async () => {
+const UsersPage = async () => {
   const user = await getUserData();
   if (!user) redirect("/login");
-  if (user.role !== "ADMIN") redirect("/configurazioni");
 
   const users = await getAllUsersWithStats();
 
@@ -17,4 +16,4 @@ const UtentiPage = async () => {
   );
 };
 
-export default UtentiPage;
+export default UsersPage;

@@ -7,7 +7,7 @@ The system has two BOM modes:
 
 ## Rule Composition
 
-Files under `lib/BOM/max-bom/` (gru, brush, dosing pump, water supply, nozzle bar, supply, rail, electric, fast, HP pump) compose into `GeneralMaxBOM`, `WaterTankMaxBOM`, `WashBayMaxBOM`. Each rule item has `pn`, `conditions` (filter functions), `qty` (static or dynamic), and `_description`.
+Files under `lib/BOM/max-bom/` (gantry, brush, dosing pump, water supply, nozzle bar, supply, rail, electric, fast, HP pump) compose into `GeneralMaxBOM`, `WaterTankMaxBOM`, `WashBayMaxBOM`. Each rule item has `pn`, `conditions` (filter functions), `qty` (static or dynamic), and `_description`.
 
 ## Engineering BOM Lifecycle
 
