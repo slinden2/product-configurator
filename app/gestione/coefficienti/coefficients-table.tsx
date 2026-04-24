@@ -20,7 +20,7 @@ import {
 import type { PriceCoefficientWithUpdater } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import CoefficientEditorDialog from "./coefficient-editor-dialog";
-import CoefficientRow from "./coefficient-row";
+import CoefficientRow, { STATUS_DISPLAY } from "./coefficient-row";
 
 type Filter = "all" | "default" | "custom" | "manual";
 
@@ -110,8 +110,8 @@ export default function CoefficientsTable({
         </InfoBanner>
       )}
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1 order-2 sm:order-1">
           {(Object.keys(FILTER_LABELS) as Filter[]).map((f) => (
             <Button
               key={f}
@@ -123,16 +123,33 @@ export default function CoefficientsTable({
             </Button>
           ))}
         </div>
-        <Button size="sm" onClick={() => setNewDialogOpen(true)}>
+        <Button
+          size="sm"
+          className="order-1 w-full sm:order-2 sm:w-auto"
+          onClick={() => setNewDialogOpen(true)}
+        >
           <Plus className="h-4 w-4 mr-1.5" />
           Nuovo coefficiente personalizzato
         </Button>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Coefficiente predefinito (PN senza riga):{" "}
-        {defaultCoefficient.toFixed(2)}x
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-4">
+          {Object.entries(STATUS_DISPLAY).map(([key, { dot, label }]) => (
+            <span key={key} className="inline-flex items-center gap-1.5">
+              <span
+                className={`h-2 w-2 rounded-full ${dot}`}
+                aria-hidden="true"
+              />
+              {label}
+            </span>
+          ))}
+        </div>
+        <span>
+          Coefficiente predefinito (Codice senza riga):{" "}
+          {defaultCoefficient.toFixed(2)}x
+        </span>
+      </div>
 
       <div className="rounded-md border">
         <Table>
@@ -152,9 +169,6 @@ export default function CoefficientsTable({
                 Prezzo Listino
               </TableHead>
               <TableHead className="uppercase text-xs whitespace-nowrap">
-                Stato
-              </TableHead>
-              <TableHead className="uppercase text-xs whitespace-nowrap">
                 Azioni
               </TableHead>
             </TableRow>
@@ -172,7 +186,7 @@ export default function CoefficientsTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={6}
                   className="text-center text-muted-foreground text-sm"
                 >
                   Nessun coefficiente trovato.

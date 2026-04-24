@@ -27,15 +27,13 @@ import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
 import CoefficientEditorDialog from "./coefficient-editor-dialog";
 
-type BadgeStatus = "predefinito" | "personalizzato" | "manuale";
-const STATUS_BADGE: Record<
-  BadgeStatus,
-  { label: string; variant: "outline" | "default" | "secondary" }
-> = {
-  predefinito: { label: "Predefinito", variant: "outline" },
-  personalizzato: { label: "Personalizzato", variant: "default" },
-  manuale: { label: "Manuale", variant: "secondary" },
-};
+export type StatusKey = "predefinito" | "personalizzato" | "manuale";
+export const STATUS_DISPLAY: Record<StatusKey, { dot: string; label: string }> =
+  {
+    predefinito: { dot: "bg-slate-400", label: "Predefinito" },
+    personalizzato: { dot: "bg-blue-500", label: "Personalizzato" },
+    manuale: { dot: "bg-amber-500", label: "Manuale" },
+  };
 
 interface CoefficientRowProps {
   row: PriceCoefficientWithUpdater;
@@ -54,12 +52,11 @@ export default function CoefficientRow({
   const isMaxBom = row.source === "MAXBOM";
   const isDefault = isMaxBom && !row.is_custom;
 
-  const statusKey: BadgeStatus = isDefault
+  const statusKey: StatusKey = isDefault
     ? "predefinito"
     : isMaxBom
       ? "personalizzato"
       : "manuale";
-  const badge = STATUS_BADGE[statusKey];
 
   const handleEdit = async (coefficient: string) => {
     const result = await updateCoefficientAction({
@@ -122,17 +119,20 @@ export default function CoefficientRow({
           {row.cost ? formatEur(Number(row.cost)) : "—"}
         </TableCell>
         <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
-          {Number(row.coefficient).toFixed(2)}x
+          <span className="inline-flex items-center justify-end gap-2">
+            <span
+              className={`h-2 w-2 rounded-full ${STATUS_DISPLAY[statusKey].dot}`}
+              title={STATUS_DISPLAY[statusKey].label}
+              aria-hidden="true"
+            />
+            <span className="sr-only">{STATUS_DISPLAY[statusKey].label}</span>
+            {Number(row.coefficient).toFixed(2)}x
+          </span>
         </TableCell>
         <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
           {row.cost
             ? formatEur(Number(row.cost) * Number(row.coefficient))
             : "—"}
-        </TableCell>
-        <TableCell>
-          <Badge variant={badge.variant} className="text-xs">
-            {badge.label}
-          </Badge>
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
