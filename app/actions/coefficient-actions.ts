@@ -144,11 +144,14 @@ export async function deleteCoefficientAction(pn: string) {
     if (!existing)
       return { success: false as const, error: MSG.coefficient.notFound };
 
-    if (existing.source === "MAXBOM")
-      return {
-        success: false as const,
-        error: MSG.coefficient.cannotDeleteMaxbom,
-      };
+    if (existing.source === "MAXBOM") {
+      const activeMaxBomPns = collectMaxBomPns();
+      if (activeMaxBomPns.includes(pn))
+        return {
+          success: false as const,
+          error: MSG.coefficient.cannotDeleteMaxbom,
+        };
+    }
 
     const deleted = await deletePriceCoefficientByPn(pn);
     if (!deleted)

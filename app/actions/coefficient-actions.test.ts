@@ -266,7 +266,21 @@ describe("deleteCoefficientAction", () => {
     expect(result.success).toBe(false);
   });
 
-  test("rejects deletion of MAXBOM rows", async () => {
+  test("rejects deletion of active MAXBOM rows", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockResolvedValue({
+      pn: "ITC-A",
+      coefficient: "3.00",
+      source: "MAXBOM",
+      is_custom: false,
+    });
+
+    const result = await deleteCoefficientAction("ITC-A");
+    expect(result.success).toBe(false);
+    expect(mockDeletePriceCoefficientByPn).not.toHaveBeenCalled();
+  });
+
+  test("allows deletion of orphan MAXBOM rows", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockResolvedValue({
       pn: "ITC-001",
@@ -274,10 +288,14 @@ describe("deleteCoefficientAction", () => {
       source: "MAXBOM",
       is_custom: false,
     });
+    mockDeletePriceCoefficientByPn.mockResolvedValue({ pn: "ITC-001" });
 
     const result = await deleteCoefficientAction("ITC-001");
-    expect(result.success).toBe(false);
-    expect(mockDeletePriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(result.success).toBe(true);
+    expect(mockDeletePriceCoefficientByPn).toHaveBeenCalledWith("ITC-001");
+    expect(mockLogActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "COEFFICIENT_DELETE" }),
+    );
   });
 
   test("allows deletion of MANUAL rows", async () => {

@@ -155,7 +155,7 @@ export default function CoefficientRow({
               <Pencil className="h-4 w-4" />
             </Button>
 
-            {isMaxBom && row.is_custom && (
+            {isMaxBom && row.is_custom && !isOrphan && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -187,7 +187,7 @@ export default function CoefficientRow({
               </AlertDialog>
             )}
 
-            {!isMaxBom && (
+            {(!isMaxBom || isOrphan) && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -205,8 +205,9 @@ export default function CoefficientRow({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Elimina coefficiente</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Il coefficiente personalizzato per {row.pn} verrà
-                      eliminato. Continuare?
+                      {isOrphan
+                        ? `Il coefficiente per ${row.pn} (non più in MaxBOM) verrà eliminato. Continuare?`
+                        : `Il coefficiente personalizzato per ${row.pn} verrà eliminato. Continuare?`}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
