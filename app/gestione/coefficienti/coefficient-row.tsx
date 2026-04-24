@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Clock, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -24,7 +24,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { PriceCoefficientWithUpdater } from "@/db/queries";
 import { MSG } from "@/lib/messages";
-import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
+import { formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
 import CoefficientEditorDialog from "./coefficient-editor-dialog";
 
 type BadgeStatus = "predefinito" | "personalizzato" | "manuale";
@@ -110,26 +110,40 @@ export default function CoefficientRow({
             </Badge>
           )}
         </TableCell>
-        <TableCell className="font-mono text-sm">
+        <TableCell className="text-sm">
+          <span
+            className="block max-w-[300px] truncate"
+            title={row.description ?? undefined}
+          >
+            {row.description ?? "—"}
+          </span>
+        </TableCell>
+        <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
+          {row.cost ? formatEur(Number(row.cost)) : "—"}
+        </TableCell>
+        <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
           {Number(row.coefficient).toFixed(2)}x
+        </TableCell>
+        <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
+          {row.cost
+            ? formatEur(Number(row.cost) * Number(row.coefficient))
+            : "—"}
         </TableCell>
         <TableCell>
           <Badge variant={badge.variant} className="text-xs">
             {badge.label}
           </Badge>
         </TableCell>
-        <TableCell className="text-xs text-muted-foreground">
-          {row.updated_by && row.updaterEmail ? (
-            <>
-              {row.updaterInitials ?? row.updaterEmail} ·{" "}
-              {formatDateDDMMYYYYHHMM(row.updated_at)}
-            </>
-          ) : (
-            "—"
-          )}
-        </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
+            {row.updated_by && row.updaterEmail && (
+              <span
+                className="flex h-8 w-8 items-center justify-center text-muted-foreground"
+                title={`${row.updaterInitials ?? row.updaterEmail} · ${formatDateDDMMYYYYHHMM(row.updated_at)}`}
+              >
+                <Clock className="h-4 w-4" />
+              </span>
+            )}
             <Button
               variant="ghost"
               size="icon"

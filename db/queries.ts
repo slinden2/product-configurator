@@ -813,6 +813,8 @@ export async function searchPartNumbers(query: string, limit = 20) {
 export type PriceCoefficientWithUpdater = {
   id: number;
   pn: string;
+  description: string | null;
+  cost: string | null;
   coefficient: string;
   source: CoefficientSource;
   is_custom: boolean;
@@ -830,6 +832,8 @@ export async function getAllPriceCoefficients(): Promise<
     .select({
       id: priceCoefficients.id,
       pn: priceCoefficients.pn,
+      description: partNumbers.description,
+      cost: partNumbers.cost,
       coefficient: priceCoefficients.coefficient,
       source: priceCoefficients.source,
       is_custom: priceCoefficients.is_custom,
@@ -840,6 +844,7 @@ export async function getAllPriceCoefficients(): Promise<
       updated_at: priceCoefficients.updated_at,
     })
     .from(priceCoefficients)
+    .leftJoin(partNumbers, eq(priceCoefficients.pn, partNumbers.pn))
     .leftJoin(userProfiles, eq(priceCoefficients.updated_by, userProfiles.id))
     .orderBy(asc(priceCoefficients.pn));
 }

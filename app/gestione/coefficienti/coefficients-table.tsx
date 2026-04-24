@@ -138,17 +138,25 @@ export default function CoefficientsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              {[
-                "Codice Articolo",
-                "Coefficiente",
-                "Stato",
-                "Ultima Modifica",
-                "Azioni",
-              ].map((h) => (
-                <TableHead key={h} className="uppercase text-xs">
-                  {h}
-                </TableHead>
-              ))}
+              <TableHead className="uppercase text-xs whitespace-nowrap">
+                Codice Articolo
+              </TableHead>
+              <TableHead className="uppercase text-xs">Descrizione</TableHead>
+              <TableHead className="uppercase text-xs whitespace-nowrap text-right">
+                Costo
+              </TableHead>
+              <TableHead className="uppercase text-xs whitespace-nowrap text-right">
+                Coefficiente
+              </TableHead>
+              <TableHead className="uppercase text-xs whitespace-nowrap text-right">
+                Prezzo Listino
+              </TableHead>
+              <TableHead className="uppercase text-xs whitespace-nowrap">
+                Stato
+              </TableHead>
+              <TableHead className="uppercase text-xs whitespace-nowrap">
+                Azioni
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -164,7 +172,7 @@ export default function CoefficientsTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={7}
                   className="text-center text-muted-foreground text-sm"
                 >
                   Nessun coefficiente trovato.
