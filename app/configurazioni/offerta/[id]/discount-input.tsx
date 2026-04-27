@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, useRef, useTransition } from "react";
 import { toast } from "sonner";
 import { setOfferDiscountAction } from "@/app/actions/offer-actions";
 import { Input } from "@/components/ui/input";
@@ -19,15 +19,14 @@ export default function DiscountInput({
   disabled,
 }: Props) {
   const [value, setValue] = useState(initialDiscount.toString());
-  const [isSaving, setIsSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const lastSaved = useRef(initialDiscount);
 
-  const handleBlur = async () => {
+  const handleBlur = () => {
     const numeric = parseFloat(value);
     if (Number.isNaN(numeric) || numeric === lastSaved.current) return;
 
-    setIsSaving(true);
-    try {
+    startTransition(async () => {
       const result = await setOfferDiscountAction(confId, numeric);
       if (result.success) {
         lastSaved.current = numeric;
@@ -36,9 +35,7 @@ export default function DiscountInput({
         toast.error(result.error ?? MSG.toast.offerDiscountError);
         setValue(lastSaved.current.toString());
       }
-    } finally {
-      setIsSaving(false);
-    }
+    });
   };
 
   return (
@@ -55,7 +52,7 @@ export default function DiscountInput({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleBlur}
-        disabled={disabled || isSaving}
+        disabled={disabled || isPending}
         className="w-24"
       />
     </div>
