@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   deleteCoefficientAction,
@@ -47,7 +47,7 @@ export default function CoefficientRow({
   defaultCoefficient,
 }: CoefficientRowProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const isMaxBom = row.source === "MAXBOM";
   const isDefault = isMaxBom && !row.is_custom;
@@ -71,26 +71,26 @@ export default function CoefficientRow({
     }
   };
 
-  const handleReset = async () => {
-    setSaving(true);
-    const result = await resetCoefficientAction(row.pn);
-    setSaving(false);
-    if (result.success) {
-      toast.success(MSG.toast.coefficientReset);
-    } else {
-      toast.error(result.error ?? MSG.db.unknown);
-    }
+  const handleReset = () => {
+    startTransition(async () => {
+      const result = await resetCoefficientAction(row.pn);
+      if (result.success) {
+        toast.success(MSG.toast.coefficientReset);
+      } else {
+        toast.error(result.error ?? MSG.db.unknown);
+      }
+    });
   };
 
-  const handleDelete = async () => {
-    setSaving(true);
-    const result = await deleteCoefficientAction(row.pn);
-    setSaving(false);
-    if (result.success) {
-      toast.success(MSG.toast.coefficientDeleted);
-    } else {
-      toast.error(result.error ?? MSG.db.unknown);
-    }
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteCoefficientAction(row.pn);
+      if (result.success) {
+        toast.success(MSG.toast.coefficientDeleted);
+      } else {
+        toast.error(result.error ?? MSG.db.unknown);
+      }
+    });
   };
 
   return (
@@ -149,7 +149,7 @@ export default function CoefficientRow({
               size="icon"
               title="Modifica coefficiente"
               aria-label="Modifica coefficiente"
-              disabled={saving}
+              disabled={isPending}
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="h-4 w-4" />
@@ -163,7 +163,7 @@ export default function CoefficientRow({
                     size="icon"
                     title={`Ripristina al predefinito (${defaultCoefficient.toFixed(2)}x)`}
                     aria-label={`Ripristina al predefinito (${defaultCoefficient.toFixed(2)}x)`}
-                    disabled={saving}
+                    disabled={isPending}
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -195,7 +195,7 @@ export default function CoefficientRow({
                     size="icon"
                     title="Elimina coefficiente"
                     aria-label="Elimina coefficiente"
-                    disabled={saving}
+                    disabled={isPending}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
