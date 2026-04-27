@@ -25,6 +25,16 @@ export default function OfferActionButton({ confId, mode }: Props) {
       }
       variant={isRegenerate ? "outline" : "default"}
       size="sm"
+      confirm={
+        isRegenerate
+          ? {
+              title: "Rigenerare l'offerta?",
+              description:
+                "L'operazione sovrascriverà lo snapshot dell'offerta esistente. Questa azione non può essere annullata.",
+              confirmLabel: "Rigenera",
+            }
+          : undefined
+      }
     >
       {isRegenerate ? "Rigenera offerta" : "Genera offerta"}
     </AsyncActionButton>

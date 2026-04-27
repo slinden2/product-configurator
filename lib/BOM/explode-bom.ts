@@ -19,7 +19,6 @@ interface TaggedLeaf {
 
 async function explodeAssy(
   pn: string,
-  description: string,
   qty: number,
   leaves: TaggedLeaf[],
   bucket: TaggedLeaf["bucket"],
@@ -62,7 +61,6 @@ async function explodeAssy(
     if (child.pn_type === "ASSY") {
       await explodeAssy(
         child.pn,
-        child.description,
         childQty,
         leaves,
         bucket,
@@ -119,7 +117,6 @@ export async function explodeBomsToLeaves(
     if (pnType === "ASSY") {
       await explodeAssy(
         item.pn,
-        item.description,
         item.qty,
         leaves,
         bucket,

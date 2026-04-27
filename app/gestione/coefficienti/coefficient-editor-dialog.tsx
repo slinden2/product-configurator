@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,7 +34,7 @@ export default function CoefficientEditorDialog({
 }: CoefficientEditorDialogProps) {
   const [coeffValue, setCoeffValue] = useState(initialCoefficient);
   const [pnValue, setPnValue] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (open) {
@@ -43,10 +43,10 @@ export default function CoefficientEditorDialog({
     }
   }, [open, initialCoefficient]);
 
-  const handleSave = async () => {
-    setSaving(true);
-    await onSave(coeffValue, pn === undefined ? pnValue : undefined);
-    setSaving(false);
+  const handleSave = () => {
+    startTransition(async () => {
+      await onSave(coeffValue, pn === undefined ? pnValue : undefined);
+    });
   };
 
   const handleBlur = () => {
@@ -110,11 +110,11 @@ export default function CoefficientEditorDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={saving}
+            disabled={isPending}
           >
             Annulla
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={isPending}>
             Salva
           </Button>
         </DialogFooter>

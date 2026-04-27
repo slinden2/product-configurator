@@ -42,7 +42,7 @@ export async function fillMinimalForm(
   // Supply
   await selectRadixOption(page, "Tipo di alimentazione", supplyType);
   if (supplyType === "Catena portacavi") {
-    await selectRadixOption(page, "Tipo di fissaggio", "Staffa a muro");
+    await selectRadixOption(page, "Tipo di fissaggio", "Linea pali");
   }
   await selectRadixOption(page, "Lato di alimentazione", "Sinistra");
 
