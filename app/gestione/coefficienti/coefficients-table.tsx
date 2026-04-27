@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Plus, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   createCoefficientAction,
@@ -45,7 +45,7 @@ export default function CoefficientsTable({
   defaultCoefficient,
 }: CoefficientsTableProps) {
   const [filter, setFilter] = useState<Filter>("all");
-  const [syncing, setSyncing] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [newDialogOpen, setNewDialogOpen] = useState(false);
 
   const filtered = rows.filter((r) => {
@@ -55,18 +55,20 @@ export default function CoefficientsTable({
     return true;
   });
 
-  const handleSync = async () => {
-    setSyncing(true);
-    const result = await syncMaxBomCoefficientsAction();
-    setSyncing(false);
-    if (result.success) {
-      const n = result.data.inserted;
-      toast.success(
-        n > 0 ? MSG.toast.coefficientSynced(n) : MSG.toast.coefficientSyncNone,
-      );
-    } else {
-      toast.error(result.error ?? MSG.db.unknown);
-    }
+  const handleSync = () => {
+    startTransition(async () => {
+      const result = await syncMaxBomCoefficientsAction();
+      if (result.success) {
+        const n = result.data.inserted;
+        toast.success(
+          n > 0
+            ? MSG.toast.coefficientSynced(n)
+            : MSG.toast.coefficientSyncNone,
+        );
+      } else {
+        toast.error(result.error ?? MSG.db.unknown);
+      }
+    });
   };
 
   const handleNewSave = async (coefficient: string, pn?: string) => {
@@ -98,7 +100,7 @@ export default function CoefficientsTable({
               size="sm"
               variant="outline"
               onClick={handleSync}
-              disabled={syncing}
+              disabled={isPending}
             >
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               Aggiungi al listino
