@@ -2,7 +2,7 @@
 
 import { Copy, Edit, Receipt, ScrollText, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { checkConfigurationValidityAction } from "@/app/actions/check-configuration-validity-action";
 import { deleteConfigurationAction } from "@/app/actions/delete-configuration-action";
@@ -32,72 +32,74 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
   const canDelete = canEdit && isEditable(configuration.status, user.role);
   const canDuplicate = canEdit;
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isDeleting, startDelete] = useTransition();
+  const [isDuplicating, startDuplicate] = useTransition();
   const [isConfirmDuplicateOpen, setIsConfirmDuplicateOpen] = useState(false);
-  const [isCheckingValidity, setIsCheckingValidity] = useState(false);
+  const [isCheckingValidity, startCheck] = useTransition();
   const [hasValidationIssues, setHasValidationIssues] = useState(false);
 
-  const performDelete = useCallback(async () => {
+  const performDelete = useCallback(() => {
     if (!canDelete) return;
 
-    setIsDeleting(true);
-    try {
-      const response = await deleteConfigurationAction(configuration.id);
-      if (!response.success) {
+    startDelete(async () => {
+      try {
+        const response = await deleteConfigurationAction(configuration.id);
+        if (!response.success) {
+          toast.error(MSG.toast.deleteError);
+        } else {
+          toast.success(MSG.toast.configDeleted);
+        }
+      } catch (error) {
         toast.error(MSG.toast.deleteError);
-      } else {
-        toast.success(MSG.toast.configDeleted);
+        console.error("Delete failed:", error);
+      } finally {
+        setIsConfirmDeleteOpen(false);
       }
-    } catch (error) {
-      toast.error(MSG.toast.deleteError);
-      console.error("Delete failed:", error);
-    } finally {
-      setIsDeleting(false);
-      setIsConfirmDeleteOpen(false);
-    }
+    });
   }, [canDelete, configuration.id]);
 
-  const performDuplicate = useCallback(async () => {
+  const performDuplicate = useCallback(() => {
     if (!canDuplicate) return;
-    setIsDuplicating(true);
-    try {
-      const response = await duplicateConfigurationAction(configuration.id);
-      if (!response.success) {
-        toast.error(response.error ?? MSG.toast.duplicateError);
-        return;
+    startDuplicate(async () => {
+      try {
+        const response = await duplicateConfigurationAction(configuration.id);
+        if (!response.success) {
+          toast.error(response.error ?? MSG.toast.duplicateError);
+          return;
+        }
+        toast.success(MSG.toast.configDuplicated);
+        router.push(`/configurazioni/modifica/${response.id}`);
+      } catch (error) {
+        toast.error(MSG.toast.duplicateError);
+        console.error("Duplicate failed:", error);
+      } finally {
+        setIsConfirmDuplicateOpen(false);
       }
-      toast.success(MSG.toast.configDuplicated);
-      router.push(`/configurazioni/modifica/${response.id}`);
-    } catch (error) {
-      toast.error(MSG.toast.duplicateError);
-      console.error("Duplicate failed:", error);
-    } finally {
-      setIsDuplicating(false);
-      setIsConfirmDuplicateOpen(false);
-    }
+    });
   }, [canDuplicate, configuration.id, router]);
 
-  const handleDuplicateClick = useCallback(async () => {
+  const handleDuplicateClick = useCallback(() => {
     if (!canDuplicate) return;
+    // These must run eagerly so the modal opens immediately with cleared state.
     setHasValidationIssues(false);
-    setIsCheckingValidity(true);
     setIsConfirmDuplicateOpen(true);
-    try {
-      const response = await checkConfigurationValidityAction(configuration.id);
-      if (!response.success) {
-        // Advisory check failed — skip the warning but keep the modal open
-        // so the user can still proceed with the duplicate.
-        console.error("Validity check returned error:", response.error);
-        return;
+    startCheck(async () => {
+      try {
+        const response = await checkConfigurationValidityAction(
+          configuration.id,
+        );
+        if (!response.success) {
+          // Advisory check failed — skip the warning but keep the modal open
+          // so the user can still proceed with the duplicate.
+          console.error("Validity check returned error:", response.error);
+          return;
+        }
+        setHasValidationIssues(response.hasValidationIssues);
+      } catch (error) {
+        // Silently ignore — the check is advisory; the duplicate can still proceed.
+        console.error("Validity check failed:", error);
       }
-      setHasValidationIssues(response.hasValidationIssues);
-    } catch (error) {
-      // Silently ignore — the check is advisory; the duplicate can still proceed.
-      console.error("Validity check failed:", error);
-    } finally {
-      setIsCheckingValidity(false);
-    }
+    });
   }, [canDuplicate, configuration.id]);
 
   const handleDeleteClick = () => {
