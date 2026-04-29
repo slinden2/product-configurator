@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcw, Save, Trash2 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { type FieldValues, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -92,15 +92,15 @@ const SubRecordForm = <
   type FormData = TData;
 
   // --- State & Form Hook ---
-  const [isLoading, setIsLoading] = useState<"submit" | "delete" | false>(
-    false,
-  );
+  const [isSubmitting, startSubmit] = useTransition();
+  const [isDeleting, startDelete] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSaveWarning, setShowSaveWarning] = useState(false);
   const pendingValuesRef = useRef<FormData | null>(null);
   const pendingActionRef = useRef<"save" | "delete" | null>(null);
 
-  const formIsDisabled = !!isLoading || isConfigLocked(parentStatus, userRole);
+  const formIsDisabled =
+    isSubmitting || isDeleting || isConfigLocked(parentStatus, userRole);
 
   // Zod v4 defaults Input=unknown in ZodType<O>; cast to ZodType<TData, FieldValues> so
   // zodResolver's overload resolves correctly. All Zod object schemas satisfy this at runtime.
@@ -130,44 +130,43 @@ const SubRecordForm = <
 
   // --- Event Handlers ---
   const executeSave = useCallback(
-    async (values: FormData) => {
-      setIsLoading("submit");
-      try {
-        if (isEditing) {
-          const result = await editAction(parentId, entityData.id, values);
-          if (!result.success) {
-            throw new Error(
-              result.error || MSG.toast.entityUpdateFallback(entityName),
-            );
+    (values: FormData) => {
+      startSubmit(async () => {
+        try {
+          if (isEditing) {
+            const result = await editAction(parentId, entityData.id, values);
+            if (!result.success) {
+              throw new Error(
+                result.error || MSG.toast.entityUpdateFallback(entityName),
+              );
+            }
+            toast.success(MSG.toast.entityUpdated(entityName, entityIndex));
+            reset(values);
+            if (formKey) {
+              onSaved?.(formKey);
+              onDirtyChange?.(formKey, false);
+            }
+          } else {
+            const result = await insertAction(parentId, values);
+            if (!result.success) {
+              throw new Error(
+                result.error || MSG.toast.entityCreateFallback(entityName),
+              );
+            }
+            toast.success(MSG.toast.entityCreated(entityName));
+            reset(entityDefaults);
+            if (formKey) onSaved?.(formKey);
+            onSaveSuccess(entityName);
           }
-          toast.success(MSG.toast.entityUpdated(entityName, entityIndex));
-          reset(values);
-          if (formKey) {
-            onSaved?.(formKey);
-            onDirtyChange?.(formKey, false);
-          }
-        } else {
-          const result = await insertAction(parentId, values);
-          if (!result.success) {
-            throw new Error(
-              result.error || MSG.toast.entityCreateFallback(entityName),
-            );
-          }
-          toast.success(MSG.toast.entityCreated(entityName));
-          reset(entityDefaults);
-          if (formKey) onSaved?.(formKey);
-          onSaveSuccess(entityName);
+        } catch (err) {
+          console.error(`Save ${entityName} Error:`, err);
+          const message =
+            err instanceof Error
+              ? err.message
+              : MSG.toast.entitySaveUnknown(entityName);
+          toast.error(message);
         }
-      } catch (err) {
-        console.error(`Save ${entityName} Error:`, err);
-        const message =
-          err instanceof Error
-            ? err.message
-            : MSG.toast.entitySaveUnknown(entityName);
-        toast.error(message);
-      } finally {
-        setIsLoading(false);
-      }
+      });
     },
     [
       isEditing,
@@ -187,41 +186,41 @@ const SubRecordForm = <
   );
 
   const handleSaveSubmit = useCallback(
-    async (values: FormData) => {
+    (values: FormData) => {
       if (hasEngineeringBom || hasOfferSnapshot) {
         pendingValuesRef.current = values;
         pendingActionRef.current = "save";
         setShowSaveWarning(true);
         return;
       }
-      await executeSave(values);
+      executeSave(values);
     },
     [hasEngineeringBom, hasOfferSnapshot, executeSave],
   );
 
-  const executeDelete = useCallback(async () => {
+  const executeDelete = useCallback(() => {
     if (!isEditing || !onDelete) return;
 
-    setIsLoading("delete");
-    try {
-      const result = await deleteAction(parentId, entityData.id);
-      if (result.success) {
-        toast.success(MSG.toast.entityDeleted(entityName, entityIndex));
-        onDelete(entityData.id);
-      } else {
-        throw new Error(
-          result.error || MSG.toast.entityDeleteFailed(entityName),
-        );
+    startDelete(async () => {
+      try {
+        const result = await deleteAction(parentId, entityData.id);
+        if (result.success) {
+          toast.success(MSG.toast.entityDeleted(entityName, entityIndex));
+          onDelete(entityData.id);
+        } else {
+          throw new Error(
+            result.error || MSG.toast.entityDeleteFailed(entityName),
+          );
+        }
+      } catch (err) {
+        console.error(`Delete ${entityName} Error:`, err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : MSG.toast.entityDeleteUnknown(entityName);
+        toast.error(message);
       }
-    } catch (err) {
-      console.error(`Delete ${entityName} Error:`, err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : MSG.toast.entityDeleteUnknown(entityName);
-      toast.error(message);
-      setIsLoading(false);
-    }
+    });
   }, [
     isEditing,
     parentId,
@@ -237,26 +236,26 @@ const SubRecordForm = <
     setShowDeleteConfirm(true);
   }, [isEditing, onDelete]);
 
-  const handleDeleteConfirm = useCallback(async () => {
+  const handleDeleteConfirm = useCallback(() => {
     setShowDeleteConfirm(false);
     if (hasEngineeringBom || hasOfferSnapshot) {
       pendingActionRef.current = "delete";
       setShowSaveWarning(true);
       return;
     }
-    await executeDelete();
+    executeDelete();
   }, [hasEngineeringBom, hasOfferSnapshot, executeDelete]);
 
-  const handleSaveWarningConfirm = useCallback(async () => {
+  const handleSaveWarningConfirm = useCallback(() => {
     setShowSaveWarning(false);
     if (pendingActionRef.current === "save" && pendingValuesRef.current) {
       const values = pendingValuesRef.current;
       pendingValuesRef.current = null;
       pendingActionRef.current = null;
-      await executeSave(values);
+      executeSave(values);
     } else if (pendingActionRef.current === "delete") {
       pendingActionRef.current = null;
-      await executeDelete();
+      executeDelete();
     }
   }, [executeSave, executeDelete]);
 
@@ -308,7 +307,7 @@ const SubRecordForm = <
                       disabled={isDeleteDisabled}
                       aria-label={`Elimina ${entityName} ${entityIndex}`}
                     >
-                      {isLoading === "delete" ? (
+                      {isDeleting ? (
                         <Spinner className="h-4 w-4" />
                       ) : (
                         <Trash2 className="h-4 w-4" />
@@ -331,7 +330,7 @@ const SubRecordForm = <
 
                   {/* Save/Add Button */}
                   <SubmitButton
-                    isSubmitting={isLoading === "submit"}
+                    isSubmitting={isSubmitting}
                     icon={<Save />}
                     disabled={isSaveOrCancelDisabled}
                     className="min-w-25 sm:min-w-35"

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
@@ -58,7 +58,7 @@ function getValidTransitions(
 }
 
 const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<ConfigStatusSchema>({
     resolver: zodResolver(configStatusSchema),
@@ -67,23 +67,22 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
     },
   });
 
-  const handleSubmit = async (data: ConfigStatusSchema) => {
-    try {
-      setIsLoading(true);
-      const result = await updateConfigStatusAction(confId, data);
-      if (!result.success) {
-        toast.error(result.error);
+  const handleSubmit = (data: ConfigStatusSchema) => {
+    startTransition(async () => {
+      try {
+        const result = await updateConfigStatusAction(confId, data);
+        if (!result.success) {
+          toast.error(result.error);
+          form.setValue("status", initialStatus);
+          return;
+        }
+        toast.success(MSG.toast.statusUpdated);
+      } catch (err) {
+        console.error(err);
+        toast.error(MSG.toast.statusUpdateFailed);
         form.setValue("status", initialStatus);
-        return;
       }
-      toast.success(MSG.toast.statusUpdated);
-    } catch (err) {
-      console.error(err);
-      toast.error(MSG.toast.statusUpdateFailed);
-      form.setValue("status", initialStatus);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const validTargets = getValidTransitions(userRole, initialStatus);
@@ -108,7 +107,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
 
   return (
     <Form {...form}>
-      <fieldset disabled={isLoading}>
+      <fieldset disabled={isPending}>
         <FormField
           control={form.control}
           name="status"
@@ -119,7 +118,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
                 <Loader2
                   className={cn(
                     "ml-2 inline animate-spin h-6 w-6 text-primary absolute left-8",
-                    !isLoading && "hidden",
+                    !isPending && "hidden",
                   )}
                 />
               </FormLabel>
@@ -130,7 +129,7 @@ const StatusForm = ({ confId, initialStatus, userRole }: StatusFormProps) => {
                 }}
                 value={field.value}
               >
-                <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectTrigger className="w-full sm:w-45">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>

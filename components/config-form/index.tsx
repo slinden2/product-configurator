@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { type FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
@@ -58,7 +58,7 @@ const ConfigForm = ({
   hasEngineeringBom,
   hasOfferSnapshot,
 }: ConfigurationFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isPending, startTransition] = useTransition();
   const [showSaveWarning, setShowSaveWarning] = useState(false);
   const pendingValuesRef = useRef<ConfigSchema | null>(null);
   const router = useRouter();
@@ -66,7 +66,7 @@ const ConfigForm = ({
   const isNewConfiguration = !id && !configuration && !status;
 
   const formIsDisabled =
-    isSubmitting || (!isNewConfiguration && isConfigLocked(status, userRole));
+    isPending || (!isNewConfiguration && isConfigLocked(status, userRole));
 
   const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
     resolver: zodResolver(configSchema, {
@@ -95,45 +95,40 @@ const ConfigForm = ({
     }
   }, [form, isNewConfiguration]);
 
-  async function executeSubmit(values: ConfigSchema) {
-    try {
-      setIsSubmitting(true);
-
-      if (id) {
-        if (!configuration || !("user_id" in configuration)) {
-          toast.error(MSG.toast.configIncompleteUpdate);
-          setIsSubmitting(false);
-          return;
-        }
-        const result = await editConfigurationAction(id, values);
-        if (result.success) {
-          toast.success(MSG.toast.configUpdated);
-          form.reset(values);
-          if (formKey) {
-            onSaved?.(formKey);
-            // Explicitly notify the parent that the form is no longer dirty
-            onDirtyChange?.(formKey, false);
+  function executeSubmit(values: ConfigSchema) {
+    startTransition(async () => {
+      try {
+        if (id) {
+          if (!configuration || !("user_id" in configuration)) {
+            toast.error(MSG.toast.configIncompleteUpdate);
+            return;
+          }
+          const result = await editConfigurationAction(id, values);
+          if (result.success) {
+            toast.success(MSG.toast.configUpdated);
+            form.reset(values);
+            if (formKey) {
+              onSaved?.(formKey);
+              onDirtyChange?.(formKey, false);
+            }
+          } else {
+            toast.error(result.error);
           }
         } else {
-          toast.error(result.error);
+          const result = await insertConfigurationAction(values);
+          if (!result.success) {
+            toast.error(result.error);
+            return;
+          }
+          toast.success(MSG.toast.configCreated);
+          router.push(`/configurazioni/modifica/${result.id}`);
         }
-      } else {
-        const result = await insertConfigurationAction(values);
-        if (!result.success) {
-          toast.error(result.error);
-          setIsSubmitting(false);
-          return;
+      } catch (err) {
+        if (err instanceof Error) {
+          toast.error(err.message);
         }
-        toast.success(MSG.toast.configCreated);
-        router.push(`/configurazioni/modifica/${result.id}`);
       }
-      setIsSubmitting(false);
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      }
-      setIsSubmitting(false);
-    }
+    });
   }
 
   function onInvalid(errors: FieldErrors<ConfigInputSchema>) {
@@ -150,7 +145,7 @@ const ConfigForm = ({
     }
   }
 
-  async function onSubmit(values: ConfigSchema) {
+  function onSubmit(values: ConfigSchema) {
     const onlyExemptFieldsDirty = Object.keys(form.formState.dirtyFields).every(
       (key) => BOM_EXEMPT_FIELDS.has(key as keyof ConfigSchema),
     );
@@ -163,7 +158,7 @@ const ConfigForm = ({
       setShowSaveWarning(true);
       return;
     }
-    await executeSubmit(values);
+    executeSubmit(values);
   }
 
   function handleSaveWarningConfirm() {
@@ -229,7 +224,7 @@ const ConfigForm = ({
                   Annulla
                 </Button>
                 <SubmitButton
-                  isSubmitting={isSubmitting}
+                  isSubmitting={isPending}
                   icon={<Save />}
                   disabled={formIsDisabled}
                 >
