@@ -17,6 +17,7 @@ const PART_NUMBERS = {
   WASH_BAY_MANAGEMENT_EXTENSION: "890.10.021",
   SUNSHADE: "450.02.053",
   CLOSING_PLATE: "1100.050.004",
+  ELECTRIC_CABINET_INOX_PLATE: "450.02.026",
   BOX_FOR_TOUCH_ON_DET_CAB: "1100.057.000",
   EXTERNAL_CONSOLE_WALL_ONE_TOUCH: "1100.050.000",
   EXTERNAL_CONSOLE_POST_ONE_TOUCH: "1100.051.000",
@@ -45,6 +46,10 @@ const usesOnboardTouch = (config: GeneralBOMConfig): boolean =>
   (config.touch_qty === 1 &&
     (config.touch_pos === "ON_PANEL" || config.touch_pos === "ON_DET_CAB")) ||
   config.touch_qty === 2;
+
+const usesTouchOnDetCab = (config: GeneralBOMConfig): boolean => {
+  return config.touch_qty === 1 && config.touch_pos === "ON_DET_CAB";
+};
 
 const usesDualJunctionBoxes = (config: GeneralBOMConfig): boolean =>
   uses1ExternalTouch(config) ||
@@ -103,9 +108,7 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.BOX_FOR_TOUCH_ON_DET_CAB,
-    conditions: [
-      (config) => config.touch_qty === 1 && config.touch_pos === "ON_DET_CAB",
-    ],
+    conditions: [usesTouchOnDetCab],
     qty: 1,
     _description: "Box for touch on detergent cabinet",
   },
@@ -117,9 +120,17 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.CLOSING_PLATE,
-    conditions: [uses1ExternalTouch],
+    conditions: [
+      (config) => uses1ExternalTouch(config) || usesTouchOnDetCab(config),
+    ],
     qty: 1,
     _description: "Closing plate",
+  },
+  {
+    pn: PART_NUMBERS.ELECTRIC_CABINET_INOX_PLATE,
+    conditions: [usesDualTouch],
+    qty: 1,
+    _description: "Electric cabinet inox plate",
   },
   {
     pn: PART_NUMBERS.EXTERNAL_CONSOLE_WALL_ONE_TOUCH,
