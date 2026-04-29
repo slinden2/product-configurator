@@ -53,6 +53,7 @@ vi.mock("@/lib/pricing", () => ({
   DEFAULT_COEFFICIENT: 3.0,
 }));
 
+import { DatabaseError } from "pg";
 import {
   createCoefficientAction,
   deleteCoefficientAction,
@@ -60,6 +61,8 @@ import {
   syncMaxBomCoefficientsAction,
   updateCoefficientAction,
 } from "@/app/actions/coefficient-actions";
+import { QueryError } from "@/db/queries";
+import { MSG } from "@/lib/messages";
 
 const adminUser = { id: "admin-uuid", role: "ADMIN" as const, initials: "A" };
 const engineerUser = {
@@ -181,6 +184,46 @@ describe("createCoefficientAction", () => {
     expect(result.success).toBe(false);
     expect(mockCreatePriceCoefficient).not.toHaveBeenCalled();
   });
+
+  test("returns QueryError message on QueryError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new QueryError("Coefficiente non trovato.", 404),
+    );
+    const result = await createCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+      source: "MANUAL",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe("Coefficiente non trovato.");
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+    );
+    const result = await createCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+      source: "MANUAL",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
+  });
+
+  test("returns unknown error message on unexpected error", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(new Error("boom"));
+    const result = await createCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+      source: "MANUAL",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.unknown);
+  });
 });
 
 // ── updateCoefficientAction ──────────────────────────────────────────────────
@@ -255,6 +298,43 @@ describe("updateCoefficientAction", () => {
       }),
     );
   });
+
+  test("returns QueryError message on QueryError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new QueryError("Coefficiente non trovato.", 404),
+    );
+    const result = await updateCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe("Coefficiente non trovato.");
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+    );
+    const result = await updateCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
+  });
+
+  test("returns unknown error message on unexpected error", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(new Error("boom"));
+    const result = await updateCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.unknown);
+  });
 });
 
 // ── deleteCoefficientAction ──────────────────────────────────────────────────
@@ -321,6 +401,34 @@ describe("deleteCoefficientAction", () => {
     const result = await deleteCoefficientAction("ITC-GHOST");
     expect(result.success).toBe(false);
   });
+
+  test("returns QueryError message on QueryError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new QueryError("Coefficiente non trovato.", 404),
+    );
+    const result = await deleteCoefficientAction("ITC-001");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe("Coefficiente non trovato.");
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+    );
+    const result = await deleteCoefficientAction("ITC-001");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
+  });
+
+  test("returns unknown error message on unexpected error", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(new Error("boom"));
+    const result = await deleteCoefficientAction("ITC-001");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.unknown);
+  });
 });
 
 // ── resetCoefficientAction ──────────────────────────────────────────────────
@@ -368,6 +476,34 @@ describe("resetCoefficientAction", () => {
       expect.objectContaining({ action: "COEFFICIENT_RESET" }),
     );
   });
+
+  test("returns QueryError message on QueryError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new QueryError("Coefficiente non trovato.", 404),
+    );
+    const result = await resetCoefficientAction("ITC-001");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe("Coefficiente non trovato.");
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(
+      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+    );
+    const result = await resetCoefficientAction("ITC-001");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
+  });
+
+  test("returns unknown error message on unexpected error", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockRejectedValue(new Error("boom"));
+    const result = await resetCoefficientAction("ITC-001");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.unknown);
+  });
 });
 
 // ── syncMaxBomCoefficientsAction ────────────────────────────────────────────
@@ -413,5 +549,33 @@ describe("syncMaxBomCoefficientsAction", () => {
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.inserted).toBe(0);
     expect(mockLogActivity).not.toHaveBeenCalled();
+  });
+
+  test("returns QueryError message on QueryError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetPriceCoefficientsByArray.mockRejectedValue(
+      new QueryError("Coefficiente non trovato.", 404),
+    );
+    const result = await syncMaxBomCoefficientsAction();
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe("Coefficiente non trovato.");
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetPriceCoefficientsByArray.mockRejectedValue(
+      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+    );
+    const result = await syncMaxBomCoefficientsAction();
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
+  });
+
+  test("returns unknown error message on unexpected error", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetPriceCoefficientsByArray.mockRejectedValue(new Error("boom"));
+    const result = await syncMaxBomCoefficientsAction();
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.unknown);
   });
 });
