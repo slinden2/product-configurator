@@ -1,12 +1,14 @@
 "use client";
 
 import { History, Mail } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   changeUserRoleAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
-import IconButton from "@/components/all-configuration-table/icon-button";
+import { RowActionsMenu } from "@/components/shared/row-actions-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -86,22 +88,18 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
         {user.last_login_at ? formatDateDDMMYYYYHHMM(user.last_login_at) : "—"}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <IconButton
-            Icon={Mail}
-            title="Invia email di reset password"
-            variant="ghost"
-            disabled={false}
-            onClick={handlePasswordReset}
-          />
-          <IconButton
-            Icon={History}
-            title="Vedi attività"
-            variant="ghost"
-            disabled={false}
-            linkTo={`/gestione/utenti/${user.id}`}
-          />
-        </div>
+        <RowActionsMenu>
+          <DropdownMenuItem onSelect={handlePasswordReset}>
+            <Mail />
+            Invia email di reset password
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/gestione/utenti/${user.id}`}>
+              <History />
+              Vedi attività
+            </Link>
+          </DropdownMenuItem>
+        </RowActionsMenu>
       </TableCell>
     </TableRow>
   );

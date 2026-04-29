@@ -1,6 +1,7 @@
 "use client";
 
 import { Copy, Edit, Receipt, ScrollText, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -9,8 +10,12 @@ import { deleteConfigurationAction } from "@/app/actions/delete-configuration-ac
 import { duplicateConfigurationAction } from "@/app/actions/duplicate-configuration-action";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
-import IconButton from "@/components/all-configuration-table/icon-button";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { RowActionsMenu } from "@/components/shared/row-actions-menu";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { AllConfigurations, UserData } from "@/db/queries";
 import { canViewBom, canViewOffer } from "@/lib/access";
@@ -107,6 +112,13 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
     setIsConfirmDeleteOpen(true);
   };
 
+  const editItemContent = (
+    <>
+      <Edit />
+      Modifica configurazione
+    </>
+  );
+
   return (
     <>
       <TableRow>
@@ -125,51 +137,63 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         <TableCell>
           {formatDateDDMMYYYYHHMM(configuration.updated_at)}
         </TableCell>
-        <TableCell className="flex gap-3">
-          <IconButton
-            className="w-8 h-8"
-            Icon={Edit}
-            linkTo={`/configurazioni/modifica/${configuration.id}`}
-            title="Modifica configurazione"
-            variant="ghost"
-            disabled={!canEdit}
-          />
-          {canViewBom(user.role) && (
-            <IconButton
-              className="w-8 h-8"
-              Icon={ScrollText}
-              linkTo={`/configurazioni/bom/${configuration.id}`}
-              title="Visualizza distinta"
-              variant="ghost"
-              disabled={false}
-            />
-          )}
-          {canViewOffer(user.role) && (
-            <IconButton
-              className="w-8 h-8"
-              Icon={Receipt}
-              linkTo={`/configurazioni/offerta/${configuration.id}`}
-              title="Visualizza offerta"
-              variant="ghost"
-              disabled={false}
-            />
-          )}
-          <IconButton
-            className="w-8 h-8"
-            Icon={Copy}
-            title="Duplica configurazione"
-            variant="ghost"
-            disabled={!canDuplicate || isDuplicating || isCheckingValidity}
-            onClick={handleDuplicateClick}
-          />
-          <IconButton
-            className="w-8 h-8 text-red-500 hover:text-red-500"
-            Icon={Trash2}
-            title="Elimina configurazione"
-            variant="ghost"
-            disabled={!canDelete}
-            onClick={handleDeleteClick}
-          />
+        <TableCell>
+          <RowActionsMenu>
+            {canEdit ? (
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/configurazioni/modifica/${configuration.id}`}
+                  aria-label="Modifica configurazione"
+                >
+                  {editItemContent}
+                </Link>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem disabled aria-label="Modifica configurazione">
+                {editItemContent}
+              </DropdownMenuItem>
+            )}
+            {canViewBom(user.role) && (
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/configurazioni/bom/${configuration.id}`}
+                  aria-label="Visualizza distinta"
+                >
+                  <ScrollText />
+                  Visualizza distinta
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {canViewOffer(user.role) && (
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/configurazioni/offerta/${configuration.id}`}
+                  aria-label="Visualizza offerta"
+                >
+                  <Receipt />
+                  Visualizza offerta
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              disabled={!canDuplicate || isDuplicating || isCheckingValidity}
+              onSelect={handleDuplicateClick}
+              aria-label="Duplica configurazione"
+            >
+              <Copy />
+              Duplica configurazione
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              disabled={!canDelete}
+              onSelect={handleDeleteClick}
+              aria-label="Elimina configurazione"
+            >
+              <Trash2 />
+              Elimina configurazione
+            </DropdownMenuItem>
+          </RowActionsMenu>
         </TableCell>
       </TableRow>
 

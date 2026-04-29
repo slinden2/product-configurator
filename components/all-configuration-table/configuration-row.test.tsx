@@ -142,6 +142,10 @@ function renderRow(
   );
 }
 
+async function openActionsMenu() {
+  await userEvent.click(screen.getByRole("button", { name: "Apri azioni" }));
+}
+
 // --- Setup ---
 
 afterEach(cleanup);
@@ -197,52 +201,62 @@ describe("ConfigurationRow", () => {
     });
   });
 
-  describe("canEdit — Edit button (navigation access)", () => {
-    test("ENGINEER user can open any configuration", () => {
+  describe("canEdit — Edit menu item (navigation access)", () => {
+    test("ENGINEER user can open any configuration", async () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
         { id: "user-1", role: "ENGINEER" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Modifica configurazione"),
+        screen.getByRole("menuitem", { name: /Modifica configurazione/ }),
       ).not.toBeDisabled();
     });
 
-    test("ADMIN user can open any configuration", () => {
+    test("ADMIN user can open any configuration", async () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
         { id: "user-1", role: "ADMIN" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Modifica configurazione"),
+        screen.getByRole("menuitem", { name: /Modifica configurazione/ }),
       ).not.toBeDisabled();
     });
 
-    test("SALES owner can open own configuration", () => {
+    test("SALES owner can open own configuration", async () => {
       renderRow(
         { user: { id: "user-1", email: "ext@test.com", initials: "EX" } },
         { id: "user-1", role: "SALES" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Modifica configurazione"),
+        screen.getByRole("menuitem", { name: /Modifica configurazione/ }),
       ).not.toBeDisabled();
     });
 
-    test("SALES non-owner cannot open configuration", () => {
+    test("SALES non-owner cannot open configuration", async () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
         { id: "user-1", role: "SALES" },
       );
 
-      expect(screen.getByLabelText("Modifica configurazione")).toBeDisabled();
+      await openActionsMenu();
+
+      expect(
+        screen.getByRole("menuitem", { name: /Modifica configurazione/ }),
+      ).toHaveAttribute("aria-disabled", "true");
     });
   });
 
-  describe("canDelete — Delete button (requires editable status)", () => {
-    test("ENGINEER user can delete DRAFT configuration", () => {
+  describe("canDelete — Delete menu item (requires editable status)", () => {
+    test("ENGINEER user can delete DRAFT configuration", async () => {
       renderRow(
         {
           status: "DRAFT",
@@ -251,12 +265,14 @@ describe("ConfigurationRow", () => {
         { id: "user-1", role: "ENGINEER" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Elimina configurazione"),
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user can delete SUBMITTED configuration", () => {
+    test("ENGINEER user can delete SUBMITTED configuration", async () => {
       renderRow(
         {
           status: "SUBMITTED",
@@ -265,12 +281,14 @@ describe("ConfigurationRow", () => {
         { id: "user-1", role: "ENGINEER" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Elimina configurazione"),
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user cannot delete APPROVED configuration", () => {
+    test("ENGINEER user cannot delete APPROVED configuration", async () => {
       renderRow(
         {
           status: "APPROVED",
@@ -279,10 +297,14 @@ describe("ConfigurationRow", () => {
         { id: "user-1", role: "ENGINEER" },
       );
 
-      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
+      await openActionsMenu();
+
+      expect(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
-    test("ADMIN user cannot delete CLOSED configuration", () => {
+    test("ADMIN user cannot delete CLOSED configuration", async () => {
       renderRow(
         {
           status: "CLOSED",
@@ -291,10 +313,14 @@ describe("ConfigurationRow", () => {
         { id: "user-1", role: "ADMIN" },
       );
 
-      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
+      await openActionsMenu();
+
+      expect(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES owner can delete own DRAFT configuration", () => {
+    test("SALES owner can delete own DRAFT configuration", async () => {
       renderRow(
         {
           status: "DRAFT",
@@ -303,12 +329,14 @@ describe("ConfigurationRow", () => {
         { id: "user-1", role: "SALES" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Elimina configurazione"),
-      ).not.toBeDisabled();
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      ).not.toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES owner cannot delete own SUBMITTED configuration", () => {
+    test("SALES owner cannot delete own SUBMITTED configuration", async () => {
       renderRow(
         {
           status: "SUBMITTED",
@@ -317,31 +345,43 @@ describe("ConfigurationRow", () => {
         { id: "user-1", role: "SALES" },
       );
 
-      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
+      await openActionsMenu();
+
+      expect(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES non-owner cannot delete", () => {
+    test("SALES non-owner cannot delete", async () => {
       renderRow(
         { user: { id: "other-user", email: "other@test.com", initials: "OT" } },
         { id: "user-1", role: "SALES" },
       );
 
-      expect(screen.getByLabelText("Elimina configurazione")).toBeDisabled();
+      await openActionsMenu();
+
+      expect(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      ).toHaveAttribute("aria-disabled", "true");
     });
   });
 
   describe("Action links", () => {
-    test("Edit button links to /configurazioni/modifica/{id}", () => {
+    test("Edit item links to /configurazioni/modifica/{id}", async () => {
       renderRow({ id: 42 });
 
-      const editLink = screen.getByLabelText("Modifica configurazione");
-      expect(editLink.closest("a")).toHaveAttribute(
+      await openActionsMenu();
+
+      const editItem = screen.getByRole("menuitem", {
+        name: /Modifica configurazione/,
+      });
+      expect(editItem.closest("a")).toHaveAttribute(
         "href",
         "/configurazioni/modifica/42",
       );
     });
 
-    test("ENGINEER sees BOM button linking to /configurazioni/bom/{id}", () => {
+    test("ENGINEER sees BOM item linking to /configurazioni/bom/{id}", async () => {
       renderRow(
         {
           id: 42,
@@ -350,14 +390,18 @@ describe("ConfigurationRow", () => {
         { role: "ENGINEER" },
       );
 
-      const bomLink = screen.getByLabelText("Visualizza distinta");
-      expect(bomLink.closest("a")).toHaveAttribute(
+      await openActionsMenu();
+
+      const bomItem = screen.getByRole("menuitem", {
+        name: /Visualizza distinta/,
+      });
+      expect(bomItem.closest("a")).toHaveAttribute(
         "href",
         "/configurazioni/bom/42",
       );
     });
 
-    test("SALES sees offer button linking to /configurazioni/offerta/{id}", () => {
+    test("SALES sees offer item linking to /configurazioni/offerta/{id}", async () => {
       renderRow(
         {
           id: 42,
@@ -366,15 +410,21 @@ describe("ConfigurationRow", () => {
         { role: "SALES" },
       );
 
-      expect(screen.queryByLabelText("Visualizza distinta")).toBeNull();
-      const offerLink = screen.getByLabelText("Visualizza offerta");
-      expect(offerLink.closest("a")).toHaveAttribute(
+      await openActionsMenu();
+
+      expect(
+        screen.queryByRole("menuitem", { name: /Visualizza distinta/ }),
+      ).toBeNull();
+      const offerItem = screen.getByRole("menuitem", {
+        name: /Visualizza offerta/,
+      });
+      expect(offerItem.closest("a")).toHaveAttribute(
         "href",
         "/configurazioni/offerta/42",
       );
     });
 
-    test("ADMIN sees both BOM and offer buttons", () => {
+    test("ADMIN sees both BOM and offer items", async () => {
       renderRow(
         {
           id: 42,
@@ -383,11 +433,17 @@ describe("ConfigurationRow", () => {
         { role: "ADMIN" },
       );
 
+      await openActionsMenu();
+
       expect(
-        screen.getByLabelText("Visualizza distinta").closest("a"),
+        screen
+          .getByRole("menuitem", { name: /Visualizza distinta/ })
+          .closest("a"),
       ).toHaveAttribute("href", "/configurazioni/bom/42");
       expect(
-        screen.getByLabelText("Visualizza offerta").closest("a"),
+        screen
+          .getByRole("menuitem", { name: /Visualizza offerta/ })
+          .closest("a"),
       ).toHaveAttribute("href", "/configurazioni/offerta/42");
     });
   });
@@ -396,7 +452,10 @@ describe("ConfigurationRow", () => {
     test("clicking delete opens confirmation modal", async () => {
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Elimina configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      );
 
       expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
     });
@@ -404,7 +463,10 @@ describe("ConfigurationRow", () => {
     test("confirming delete calls action with config id only", async () => {
       renderRow({ id: 5 }, { id: "user-abc" });
 
-      await userEvent.click(screen.getByLabelText("Elimina configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      );
       await userEvent.click(screen.getByText("Elimina"));
 
       await waitFor(() => {
@@ -415,7 +477,10 @@ describe("ConfigurationRow", () => {
     test("shows success toast on successful deletion", async () => {
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Elimina configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      );
       await userEvent.click(screen.getByText("Elimina"));
 
       await waitFor(() => {
@@ -430,7 +495,10 @@ describe("ConfigurationRow", () => {
 
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Elimina configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      );
       await userEvent.click(screen.getByText("Elimina"));
 
       await waitFor(() => {
@@ -445,7 +513,10 @@ describe("ConfigurationRow", () => {
 
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Elimina configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
+      );
       await userEvent.click(screen.getByText("Elimina"));
 
       await waitFor(() => {
@@ -458,7 +529,10 @@ describe("ConfigurationRow", () => {
     test("clicking Duplica opens confirmation modal without calling duplicateConfigurationAction", async () => {
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
 
       expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
       expect(mockDuplicateConfiguration).not.toHaveBeenCalled();
@@ -467,7 +541,10 @@ describe("ConfigurationRow", () => {
     test("confirming in the duplicate modal calls duplicateConfigurationAction and redirects", async () => {
       renderRow({ id: 7 });
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
 
       // Wait for the pre-check to finish so the confirm button is re-enabled
       await waitFor(() => {
@@ -496,7 +573,10 @@ describe("ConfigurationRow", () => {
 
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
 
       // The text is always in the DOM (CSS grid animates from 0fr → 1fr);
       // check the grid wrapper's class to confirm it's in the expanded state.
@@ -517,7 +597,10 @@ describe("ConfigurationRow", () => {
 
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
 
       // Modal stays open
       await waitFor(() => {
@@ -537,7 +620,10 @@ describe("ConfigurationRow", () => {
     test("clicking Annulla closes the modal without calling duplicateConfigurationAction", async () => {
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
       expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
 
       await userEvent.click(screen.getByText("Annulla"));
@@ -556,7 +642,10 @@ describe("ConfigurationRow", () => {
 
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
       await waitFor(() => {
         expect(
           screen.getByText(MSG.duplicateConfirm.confirm),
@@ -578,7 +667,10 @@ describe("ConfigurationRow", () => {
 
       renderRow();
 
-      await userEvent.click(screen.getByLabelText("Duplica configurazione"));
+      await openActionsMenu();
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: /Duplica configurazione/ }),
+      );
       await waitFor(() => {
         expect(
           screen.getByText(MSG.duplicateConfirm.confirm),

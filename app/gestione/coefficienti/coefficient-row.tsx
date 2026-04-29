@@ -8,6 +8,7 @@ import {
   resetCoefficientAction,
   updateCoefficientAction,
 } from "@/app/actions/coefficient-actions";
+import { RowActionsMenu } from "@/components/shared/row-actions-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,10 +18,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { PriceCoefficientWithUpdater } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -47,10 +48,14 @@ export default function CoefficientRow({
   defaultCoefficient,
 }: CoefficientRowProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const isMaxBom = row.source === "MAXBOM";
   const isDefault = isMaxBom && !row.is_custom;
+  const canReset = isMaxBom && row.is_custom && !isOrphan;
+  const canDelete = !isMaxBom || isOrphan;
 
   const statusKey: StatusKey = isDefault
     ? "predefinito"
@@ -144,84 +149,34 @@ export default function CoefficientRow({
                 <Clock className="h-4 w-4" />
               </span>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Modifica coefficiente"
-              aria-label="Modifica coefficiente"
-              disabled={isPending}
-              onClick={() => setEditOpen(true)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-
-            {isMaxBom && row.is_custom && !isOrphan && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title={`Ripristina al predefinito (${defaultCoefficient.toFixed(2)}x)`}
-                    aria-label={`Ripristina al predefinito (${defaultCoefficient.toFixed(2)}x)`}
-                    disabled={isPending}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Ripristina coefficiente</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Il coefficiente di {row.pn} verrà ripristinato al valore
-                      predefinito ({defaultCoefficient.toFixed(2)}x).
-                      Continuare?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annulla</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleReset}>
-                      Ripristina
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-
-            {(!isMaxBom || isOrphan) && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title="Elimina coefficiente"
-                    aria-label="Elimina coefficiente"
-                    disabled={isPending}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Elimina coefficiente</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {isOrphan
-                        ? `Il coefficiente per ${row.pn} (non più in MaxBOM) verrà eliminato. Continuare?`
-                        : `Il coefficiente personalizzato per ${row.pn} verrà eliminato. Continuare?`}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annulla</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className={buttonVariants({ variant: "destructive" })}
-                    >
-                      Elimina
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <RowActionsMenu>
+              <DropdownMenuItem
+                disabled={isPending}
+                onSelect={() => setEditOpen(true)}
+              >
+                <Pencil />
+                Modifica coefficiente
+              </DropdownMenuItem>
+              {canReset && (
+                <DropdownMenuItem
+                  disabled={isPending}
+                  onSelect={() => setResetConfirmOpen(true)}
+                >
+                  <RotateCcw />
+                  {`Ripristina al predefinito (${defaultCoefficient.toFixed(2)}x)`}
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  disabled={isPending}
+                  onSelect={() => setDeleteConfirmOpen(true)}
+                >
+                  <Trash2 />
+                  Elimina coefficiente
+                </DropdownMenuItem>
+              )}
+            </RowActionsMenu>
           </div>
         </TableCell>
       </TableRow>
@@ -234,6 +189,53 @@ export default function CoefficientRow({
         initialCoefficient={Number(row.coefficient).toFixed(2)}
         onSave={handleEdit}
       />
+
+      {canReset && (
+        <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Ripristina coefficiente</AlertDialogTitle>
+              <AlertDialogDescription>
+                Il coefficiente di {row.pn} verrà ripristinato al valore
+                predefinito ({defaultCoefficient.toFixed(2)}x). Continuare?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogAction onClick={handleReset}>
+                Ripristina
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {canDelete && (
+        <AlertDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Elimina coefficiente</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isOrphan
+                  ? `Il coefficiente per ${row.pn} (non più in MaxBOM) verrà eliminato. Continuare?`
+                  : `Il coefficiente personalizzato per ${row.pn} verrà eliminato. Continuare?`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className={buttonVariants({ variant: "destructive" })}
+              >
+                Elimina
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }
