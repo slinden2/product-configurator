@@ -53,6 +53,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_30kw_pump: values.has_30kw_pump,
     has_75kw_pump: values.has_75kw_pump,
     has_omz_pump: values.has_omz_pump,
+    has_omz_paint: values.has_omz_paint,
     has_chemical_roof_bar: values.has_chemical_roof_bar,
     has_chassis_wash_plates: values.has_chassis_wash_plates,
 
@@ -79,6 +80,7 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     pump_outlet_1_75kw: values.pump_outlet_1_75kw ?? null,
     pump_outlet_2_75kw: values.pump_outlet_2_75kw ?? null,
     pump_outlet_omz: values.pump_outlet_omz ?? null,
+    total_height: values.total_height ?? null,
     chassis_wash_sensor_type: values.chassis_wash_sensor_type ?? null,
   };
 }
