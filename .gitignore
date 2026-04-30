@@ -57,3 +57,7 @@ no-git/
 
 # Graphify
 graphify-out
+
+# Codex CLI local state
+.codex/sessions/
+.codex/logs/

@@ -71,6 +71,9 @@ const engineerUser = {
   initials: "E",
 };
 
+const createDatabaseError = (message: string) =>
+  new DatabaseError(message, 0, "error");
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockCreatePriceCoefficient.mockResolvedValue({ id: 1, pn: "ITC-001" });
@@ -202,7 +205,7 @@ describe("createCoefficientAction", () => {
   test("returns db error message on DatabaseError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+      createDatabaseError("pg internal error"),
     );
     const result = await createCoefficientAction({
       pn: "ITC-001",
@@ -315,7 +318,7 @@ describe("updateCoefficientAction", () => {
   test("returns db error message on DatabaseError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+      createDatabaseError("pg internal error"),
     );
     const result = await updateCoefficientAction({
       pn: "ITC-001",
@@ -415,7 +418,7 @@ describe("deleteCoefficientAction", () => {
   test("returns db error message on DatabaseError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+      createDatabaseError("pg internal error"),
     );
     const result = await deleteCoefficientAction("ITC-001");
     expect(result.success).toBe(false);
@@ -490,7 +493,7 @@ describe("resetCoefficientAction", () => {
   test("returns db error message on DatabaseError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+      createDatabaseError("pg internal error"),
     );
     const result = await resetCoefficientAction("ITC-001");
     expect(result.success).toBe(false);
@@ -564,7 +567,7 @@ describe("syncMaxBomCoefficientsAction", () => {
   test("returns db error message on DatabaseError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetPriceCoefficientsByArray.mockRejectedValue(
-      new (DatabaseError as unknown as typeof Error)("pg internal error"),
+      createDatabaseError("pg internal error"),
     );
     const result = await syncMaxBomCoefficientsAction();
     expect(result.success).toBe(false);

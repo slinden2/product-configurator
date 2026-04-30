@@ -22,7 +22,9 @@
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "drizzle:push": "npx drizzle-kit push",
-    "drizzle:push:prod": "npx drizzle-kit push --config=drizzle-prod.config.ts"
+    "drizzle:push:prod": "npx drizzle-kit push --config=drizzle-prod.config.ts",
+    "review": "codex review --base origin/main - < .codex/prompts/review.md",
+    "review:uncommitted": "codex review --uncommitted - < .codex/prompts/review.md"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

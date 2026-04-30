@@ -106,6 +106,37 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run drizzle:push` | Push schema to dev database |
 | `npm run erp:sync` | Sync product data from TSE (dev) |
 | `npm run erp:sync:prod` | Sync product data from TSE (prod) |
+| `npm run review` | On-demand Codex code review of committed branch changes |
+| `npm run review:uncommitted` | Codex review including staged, unstaged, and untracked changes |
+
+## Code Review with Codex
+
+`npm run review` runs `codex review --base origin/main` against the current branch and produces a structured **Critical / Important / Nit** report scoped to this project's rules.
+
+Use `npm run review:uncommitted` when you want Codex to include staged, unstaged, and untracked local changes.
+
+### One-time setup (per developer)
+
+```bash
+npm i -g @openai/codex
+```
+
+Authenticate via one of:
+
+```bash
+codex login                      # ChatGPT account (Plus/Pro/Business required)
+# or
+export OPENAI_API_KEY=sk-...     # add to your shell rc for persistence
+```
+
+### Usage
+
+```bash
+npm run review
+npm run review:uncommitted
+```
+
+Findings are advisory — not enforced by CI. Address Critical and Important findings before opening a PR.
 
 ## Project Structure
 
