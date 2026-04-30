@@ -5,7 +5,16 @@ import { BOM, enrichWithCosts } from "@/lib/BOM";
 import { computeLinePrice, DEFAULT_COEFFICIENT } from "@/lib/pricing";
 import type { BomTag, ConfigurationStatusType } from "@/types";
 import { BomTagLabels, BomTags } from "@/types";
-import type { OfferSnapshotItem } from "@/validation/offer-schema";
+import type {
+  OfferLineItem,
+  OfferSnapshotItem,
+  OfferSurchargeItem,
+} from "@/validation/offer-schema";
+
+export type {
+  OfferLineItem,
+  OfferSurchargeItem,
+} from "@/validation/offer-schema";
 
 type OfferCategory = "GENERAL" | "WATER_TANK" | "WASH_BAY";
 
@@ -288,4 +297,12 @@ export function groupItemsForDisplay(
     }));
 
   return { general, waterTanks, washBays, total_list_price, discounted_total };
+}
+
+/** Concatenates surcharge line items after BOM-derived part items. Phase 1 stub for Phase 4 wiring. */
+export function appendSurchargesToOfferItems(
+  items: OfferSnapshotItem[],
+  surcharges: OfferSurchargeItem[],
+): OfferLineItem[] {
+  return [...items, ...surcharges];
 }

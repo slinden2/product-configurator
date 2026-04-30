@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BomTags, OfferSources } from "@/types";
+import { BomTags, OfferSources, SurchargeKinds } from "@/types";
 
 export const offerSnapshotItemSchema = z.object({
   pn: z.string(),
@@ -16,6 +16,29 @@ export const offerSnapshotItemSchema = z.object({
 export type OfferSnapshotItem = z.infer<typeof offerSnapshotItemSchema>;
 
 export const offerSnapshotItemsSchema = z.array(offerSnapshotItemSchema);
+
+export const offerSurchargeItemSchema = z.object({
+  surcharge_kind: z.enum(SurchargeKinds),
+  description: z.string(),
+  qty: z.literal(1),
+  amount: z.number().positive(),
+  line_total: z.number(),
+});
+export type OfferSurchargeItem = z.infer<typeof offerSurchargeItemSchema>;
+
+export const offerLineItemSchema = z.union([
+  offerSurchargeItemSchema,
+  offerSnapshotItemSchema,
+]);
+export type OfferLineItem = z.infer<typeof offerLineItemSchema>;
+
+export const offerLineItemsSchema = z.array(offerLineItemSchema);
+
+export function isSurchargeItem(
+  item: OfferLineItem,
+): item is OfferSurchargeItem {
+  return "surcharge_kind" in item;
+}
 
 export const offerDiscountSchema = z.object({
   discount_pct: z

@@ -195,6 +195,14 @@ export const BomTagLabels: Record<BomTag, string> = {
   MISC: "Varie",
 };
 
+export const SurchargeKinds = ["HEIGHT", "PAINT"] as const;
+export type SurchargeKind = (typeof SurchargeKinds)[number];
+
+export const SurchargeKindLabels: Record<SurchargeKind, string> = {
+  HEIGHT: "Altezza non standard",
+  PAINT: "Verniciatura personalizzata",
+};
+
 export interface SelectOption {
   value: string | number;
   label: string;
