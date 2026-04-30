@@ -136,6 +136,8 @@ export const configurations = pgTable("configurations", {
   has_chassis_wash_plates: boolean().notNull().default(false),
   has_omz_pump: boolean().notNull(),
   pump_outlet_omz: hpPumpOMZOutletTypeEnum("pump_outlet_omz"),
+  has_omz_paint: boolean().notNull().default(false),
+  total_height: integer(),
   has_chemical_roof_bar: boolean().notNull(),
   sales_notes: text().notNull().default(""),
   engineering_notes: text().notNull().default(""),

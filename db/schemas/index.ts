@@ -6,6 +6,7 @@ export * from "./offer-snapshots";
 export * from "./part-numbers";
 export * from "./price-coefficients";
 export * from "./relations";
+export * from "./surcharge-settings";
 export * from "./user-profiles";
 export * from "./wash-bays";
 export * from "./water-tanks";

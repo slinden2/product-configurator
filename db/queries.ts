@@ -25,6 +25,8 @@ import {
   offerSnapshots,
   partNumbers,
   priceCoefficients,
+  type SurchargeSetting,
+  surchargeSettings,
   userProfiles,
   washBays,
   waterTanks,
@@ -36,6 +38,7 @@ import type {
   CoefficientSource,
   ConfigurationStatusType,
   Role,
+  SurchargeKind,
 } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
@@ -1028,4 +1031,22 @@ export async function getEbomMaxUpdatedAt(
     .from(engineeringBomItems)
     .where(eq(engineeringBomItems.configuration_id, confId));
   return row?.maxUpdatedAt ?? null;
+}
+
+export async function getSurchargeSettings(): Promise<SurchargeSetting[]> {
+  return db.query.surchargeSettings.findMany({
+    orderBy: asc(surchargeSettings.kind),
+  });
+}
+
+export async function getSurchargeSettingByKind(
+  kind: SurchargeKind,
+): Promise<SurchargeSetting> {
+  const row = await db.query.surchargeSettings.findFirst({
+    where: eq(surchargeSettings.kind, kind),
+  });
+  if (!row) {
+    throw new QueryError(MSG.surcharge.notFound, 404);
+  }
+  return row;
 }

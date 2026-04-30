@@ -169,6 +169,9 @@ export const MSG = {
     invalidCoefficient:
       "Valore coefficiente non valido (deve essere tra 0 e 5).",
   },
+  surcharge: {
+    notFound: "Maggiorazione non trovata.",
+  },
   offer: {
     unauthorized: "Solo SALES e ADMIN possono gestire l'offerta.",
     cannotEdit:

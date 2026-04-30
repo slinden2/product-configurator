@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   configurations,
+  surchargeSettings,
   userProfiles,
   washBays,
   waterTanks,
@@ -217,10 +218,14 @@ async function seedDb() {
   if (shouldReset) {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
 
+    await db.delete(surchargeSettings);
     await db.delete(waterTanks);
     await db.delete(washBays);
     await db.delete(configurations);
 
+    await db.execute(
+      sql`ALTER SEQUENCE surcharge_settings_id_seq RESTART WITH 1`,
+    );
     await db.execute(sql`ALTER SEQUENCE water_tanks_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE wash_bays_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE configurations_id_seq RESTART WITH 1`);
@@ -273,6 +278,15 @@ async function seedDb() {
       await db.insert(washBays).values(getWashBayComplicated(inserted.id));
     }
   }
+
+  console.log("🌱 Seeding surcharge settings...");
+  await db
+    .insert(surchargeSettings)
+    .values([
+      { kind: "HEIGHT", price: "1500.00" },
+      { kind: "PAINT", price: "1200.00" },
+    ])
+    .onConflictDoNothing({ target: surchargeSettings.kind });
 }
 
 await seedDb();
