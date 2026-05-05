@@ -6,6 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import GeneralSection from "@/components/config-form/general-section";
 import { STANDARD_MACHINE_HEIGHT_MM, WASH_HEIGHT_OFFSET_MM } from "@/types";
+import { selectRadixOption } from "@/test/form-test-utils";
 import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 
 afterEach(cleanup);
@@ -103,5 +104,39 @@ describe("GeneralSection", () => {
     await userEvent.clear(screen.getByLabelText("Altezza totale"));
 
     expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  describe("Verniciatura checkbox", () => {
+    test("is hidden when machine_type is STD", () => {
+      renderGeneralSection({ machine_type: "STD" });
+
+      expect(screen.queryByLabelText("Verniciatura")).not.toBeInTheDocument();
+    });
+
+    test("appears when machine_type is OMZ", () => {
+      renderGeneralSection({ machine_type: "OMZ" });
+
+      expect(screen.getByLabelText("Verniciatura")).toBeInTheDocument();
+    });
+
+    test("checking it sets has_omz_paint to true", async () => {
+      const { getValues } = renderGeneralSection({ machine_type: "OMZ" });
+
+      await userEvent.click(screen.getByLabelText("Verniciatura"));
+
+      expect(getValues().has_omz_paint).toBe(true);
+    });
+
+    test("switching machine_type from OMZ to STD resets has_omz_paint to false", async () => {
+      const { getValues } = renderGeneralSection({
+        machine_type: "OMZ",
+        has_omz_paint: true,
+      });
+
+      await selectRadixOption("Tipo impianto", "Standard");
+
+      expect(getValues().has_omz_paint).toBe(false);
+      expect(screen.queryByLabelText("Verniciatura")).not.toBeInTheDocument();
+    });
   });
 });

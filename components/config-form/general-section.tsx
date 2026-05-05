@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
+import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import InputField from "@/components/input-field";
 import SelectField from "@/components/select-field";
@@ -13,6 +14,9 @@ import { selectFieldOptions } from "@/validation/configuration";
 const GeneralSection = () => {
   const { control } = useFormContext<ConfigSchema>();
   const totalHeight = useWatch<ConfigSchema>({ control, name: "total_height" });
+  const machineType = useWatch<ConfigSchema>({ control, name: "machine_type" });
+  const isOMZ = machineType === "OMZ";
+
   const totalNumber = Number(totalHeight);
   const washHeightDisplay =
     Number.isFinite(totalNumber) && totalNumber > WASH_HEIGHT_OFFSET_MM
@@ -40,7 +44,21 @@ const GeneralSection = () => {
           label="Tipo impianto"
           items={selectFieldOptions.machineTypeOpts}
           dataType="string"
+          fieldsToResetOnValue={[
+            {
+              triggerValue: "OMZ",
+              invertTrigger: true,
+              fieldsToReset: ["has_omz_paint"],
+              resetToValue: false,
+            },
+          ]}
         />
+        {isOMZ && (
+          <CheckboxField<ConfigSchema>
+            name="has_omz_paint"
+            label="Verniciatura"
+          />
+        )}
         <div className="fs-row">
           <div className="fs-item">
             <InputField<ConfigSchema>
