@@ -3,13 +3,17 @@ import { describe, expect, test, vi } from "vitest";
 
 vi.mock("file-saver", () => ({ saveAs: vi.fn() }));
 
+vi.mock("@/lib/offer", () => ({
+  sumSurchargeTotal: (surcharges: { line_total: number }[]) =>
+    surcharges.reduce((sum, s) => sum + s.line_total, 0),
+}));
+
 import type ExcelJS from "exceljs";
 import {
   buildOfferWorkbook,
   type ExportOfferData,
 } from "@/app/configurazioni/offerta/[id]/create-offer-excel-file";
 import type { UserData } from "@/db/queries";
-import type { GroupedOfferData } from "@/lib/offer";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,11 +35,7 @@ function makeItem(pn = "PN-001", qty = 2) {
   };
 }
 
-function makeData(
-  overrides: Partial<
-    GroupedOfferData & { total_list_price: number; discounted_total: number }
-  > = {},
-): ExportOfferData {
+function makeData(overrides: Partial<ExportOfferData> = {}): ExportOfferData {
   return {
     general: [
       {
@@ -47,6 +47,7 @@ function makeData(
     ],
     waterTanks: [],
     washBays: [],
+    surcharges: [],
     total_list_price: 500,
     discounted_total: 500,
     ...overrides,
@@ -106,52 +107,57 @@ describe("summary section — no discount", () => {
     expect(cellValue(sheet, 6, 4)).toBe(50);
   });
 
-  test("row 7 is grand total with gold background", () => {
+  test("row 7 is Maggiorazioni (always present)", () => {
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 7, 1)).toBe("Maggiorazioni");
+    expect(cellValue(sheet, 7, 4)).toBe(0);
+  });
+
+  test("row 8 is grand total with gold background", () => {
     const wb = buildOfferWorkbook(
       makeData({ total_list_price: 500, discounted_total: 500 }),
       makeUser(),
       0,
     );
     const sheet = getSheet(wb);
-    expect(cellValue(sheet, 7, 1)).toBe("TOTALE LISTINO");
-    expect(cellValue(sheet, 7, 4)).toBe(500);
-    expect(cellFillArgb(sheet, 7, 1)).toBe("FFD966");
+    expect(cellValue(sheet, 8, 1)).toBe("TOTALE LISTINO");
+    expect(cellValue(sheet, 8, 4)).toBe(500);
+    expect(cellFillArgb(sheet, 8, 1)).toBe("FFD966");
   });
 
   test("no discount rows when discountPct is 0", () => {
     const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
     const sheet = getSheet(wb);
-    // Row 8 should be part of body (blank or section title), not a discount row
-    const row8val = cellValue(sheet, 8, 1);
-    expect(row8val).not.toBe("TOTALE SCONTATO");
-    // Row 9 should not exist as a summary discount row either
     const row9val = cellValue(sheet, 9, 1);
     expect(row9val).not.toBe("TOTALE SCONTATO");
+    const row10val = cellValue(sheet, 10, 1);
+    expect(row10val).not.toBe("TOTALE SCONTATO");
   });
 });
 
 describe("summary section — with discount", () => {
-  test("row 8 shows discount label with percentage and negative amount", () => {
+  test("row 9 shows discount label with percentage and negative amount", () => {
     const wb = buildOfferWorkbook(
       makeData({ total_list_price: 1000, discounted_total: 900 }),
       makeUser(),
       10,
     );
     const sheet = getSheet(wb);
-    expect(cellValue(sheet, 8, 1)).toBe("Sconto (10%)");
-    expect(cellValue(sheet, 8, 4)).toBe(-100);
+    expect(cellValue(sheet, 9, 1)).toBe("Sconto (10%)");
+    expect(cellValue(sheet, 9, 4)).toBe(-100);
   });
 
-  test("row 9 shows discounted total with gold background", () => {
+  test("row 10 shows discounted total with gold background", () => {
     const wb = buildOfferWorkbook(
       makeData({ total_list_price: 1000, discounted_total: 900 }),
       makeUser(),
       10,
     );
     const sheet = getSheet(wb);
-    expect(cellValue(sheet, 9, 1)).toBe("TOTALE SCONTATO");
-    expect(cellValue(sheet, 9, 4)).toBe(900);
-    expect(cellFillArgb(sheet, 9, 1)).toBe("FFD966");
+    expect(cellValue(sheet, 10, 1)).toBe("TOTALE SCONTATO");
+    expect(cellValue(sheet, 10, 4)).toBe(900);
+    expect(cellFillArgb(sheet, 10, 1)).toBe("FFD966");
   });
 
   test("decimal discount percentage is formatted with comma", () => {
@@ -161,7 +167,7 @@ describe("summary section — with discount", () => {
       10.5,
     );
     const sheet = getSheet(wb);
-    expect(cellValue(sheet, 8, 1)).toBe("Sconto (10,50%)");
+    expect(cellValue(sheet, 9, 1)).toBe("Sconto (10,50%)");
   });
 });
 
@@ -257,6 +263,60 @@ describe("body — water tanks and wash bays", () => {
       }
     });
     expect(subtotalValue).toBe(200);
+  });
+});
+
+describe("body — surcharges", () => {
+  test("surcharge item row sets col 4 to the surcharge amount", () => {
+    const data = makeData({
+      surcharges: [
+        {
+          surcharge_kind: "HEIGHT",
+          description: "Altezza non standard",
+          qty: 1,
+          amount: 1500,
+          line_total: 1500,
+        },
+      ],
+      total_list_price: 2000,
+      discounted_total: 2000,
+    });
+    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const sheet = getSheet(wb);
+
+    let priceValue: ExcelJS.CellValue = "NOT_FOUND";
+    sheet.eachRow((row) => {
+      if (row.getCell(2).value === "Altezza non standard") {
+        priceValue = row.getCell(4).value;
+      }
+    });
+    expect(priceValue).toBe(1500);
+  });
+
+  test("surcharge subtotal row carries the surcharge total", () => {
+    const data = makeData({
+      surcharges: [
+        {
+          surcharge_kind: "PAINT",
+          description: "Verniciatura personalizzata",
+          qty: 1,
+          amount: 1200,
+          line_total: 1200,
+        },
+      ],
+      total_list_price: 1700,
+      discounted_total: 1700,
+    });
+    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const sheet = getSheet(wb);
+
+    let subtotalValue: ExcelJS.CellValue = null;
+    sheet.eachRow((row) => {
+      if (row.getCell(1).value === "Subtotale Maggiorazioni") {
+        subtotalValue = row.getCell(4).value;
+      }
+    });
+    expect(subtotalValue).toBe(1200);
   });
 });
 

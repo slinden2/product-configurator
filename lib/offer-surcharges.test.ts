@@ -5,6 +5,7 @@ import {
   buildAllSurcharges,
   buildHeightSurcharge,
   buildPaintSurcharge,
+  resolveOfferSurcharges,
 } from "@/lib/offer-surcharges";
 import { SurchargeKindLabels } from "@/types";
 import { offerSurchargeItemSchema } from "@/validation/offer-schema";
@@ -94,6 +95,85 @@ describe("buildPaintSurcharge", () => {
   test("schema roundtrip: built item passes offerSurchargeItemSchema.parse", () => {
     const item = buildPaintSurcharge({ hasOmzPaint: true, amount: 1200 });
     expect(() => offerSurchargeItemSchema.parse(item)).not.toThrow();
+  });
+});
+
+describe("resolveOfferSurcharges", () => {
+  const base = {
+    standardHeightMm: 4000,
+    settings: [
+      { kind: "HEIGHT", price: "1500" },
+      { kind: "PAINT", price: "1200" },
+    ],
+  };
+
+  test("returns ok:true with empty surcharges when nothing applies", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      totalHeightMm: 4000,
+      hasOmzPaint: false,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.surcharges).toHaveLength(0);
+  });
+
+  test("returns ok:true with HEIGHT surcharge when height differs", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      totalHeightMm: 5000,
+      hasOmzPaint: false,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.surcharges).toHaveLength(1);
+      expect(result.surcharges[0].surcharge_kind).toBe("HEIGHT");
+    }
+  });
+
+  test("returns ok:true with PAINT surcharge when paint is requested", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      totalHeightMm: null,
+      hasOmzPaint: true,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.surcharges).toHaveLength(1);
+      expect(result.surcharges[0].surcharge_kind).toBe("PAINT");
+    }
+  });
+
+  test("returns ok:false when height surcharge would apply but price is 0", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      settings: [
+        { kind: "HEIGHT", price: "0" },
+        { kind: "PAINT", price: "1200" },
+      ],
+      totalHeightMm: 5000,
+      hasOmzPaint: false,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  test("returns ok:false when paint surcharge would apply but setting is missing", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      settings: [{ kind: "HEIGHT", price: "1500" }],
+      totalHeightMm: 4000,
+      hasOmzPaint: true,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  test("does not fail on missing HEIGHT setting when height matches standard", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      settings: [{ kind: "PAINT", price: "1200" }],
+      totalHeightMm: 4000,
+      hasOmzPaint: false,
+    });
+    expect(result.ok).toBe(true);
   });
 });
 

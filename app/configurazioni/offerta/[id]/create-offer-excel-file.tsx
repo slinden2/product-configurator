@@ -11,10 +11,13 @@ import {
   fillRowWithBorder,
 } from "@/lib/excel/workbook-builder";
 import type { GroupedOfferData } from "@/lib/offer";
+import { sumSurchargeTotal } from "@/lib/offer-surcharges";
+import type { OfferSurchargeItem } from "@/validation/offer-schema";
 
 export type ExportOfferData = GroupedOfferData & {
   total_list_price: number;
   discounted_total: number;
+  surcharges: OfferSurchargeItem[];
 };
 
 export function buildOfferWorkbook(
@@ -36,7 +39,9 @@ export function buildOfferWorkbook(
   sheet.getColumn("list_price").numFmt = EUR_FMT;
 
   const hasDiscount = discountPct > 0;
-  const summaryRowCount = hasDiscount ? 9 : 7;
+  const hasSurcharges = data.surcharges.length > 0;
+  const surchargeTotal = sumSurchargeTotal(data.surcharges);
+  const summaryRowCount = hasDiscount ? 10 : 8;
   for (let i = 0; i < summaryRowCount; i++) {
     sheet.addRow([]);
   }
@@ -115,6 +120,21 @@ export function buildOfferWorkbook(
     }
   }
 
+  if (hasSurcharges) {
+    addSectionTitleRow(sheet, "Maggiorazioni", 4);
+    addColumnHeaders();
+    data.surcharges.forEach((item, i) => {
+      const row = sheet.addRow({
+        pn: "",
+        description: item.description,
+        qty: item.qty,
+        list_price: item.line_total,
+      });
+      fillRowWithBorder(row, 4, i % 2 === 0 ? COLORS.white : COLORS.lightGray);
+    });
+    addSubtotalRow("Subtotale Maggiorazioni", surchargeTotal);
+  }
+
   // ── Summary fill-back ──────────────────────────────────────────────────────
 
   const generalTotal = data.general.reduce((s, g) => s + g.total, 0);
@@ -156,11 +176,12 @@ export function buildOfferWorkbook(
     vertical: "middle",
   };
 
-  // Rows 4–6: section subtotals
+  // Rows 4–N: section subtotals (Maggiorazioni always present, 0 when none)
   const sections = [
     { name: "Distinta generale", total: generalTotal },
     { name: "Serbatoi", total: waterTankTotal },
     { name: "Piste", total: washBayTotal },
+    { name: "Maggiorazioni", total: surchargeTotal },
   ];
   sections.forEach((section, index) => {
     const row = sheet.getRow(r++);

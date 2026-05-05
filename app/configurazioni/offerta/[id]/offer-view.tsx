@@ -11,7 +11,10 @@ import {
 } from "@/components/ui/table";
 import type { GroupedOfferData, GroupedOfferSection } from "@/lib/offer";
 import { formatEur } from "@/lib/utils";
-import type { OfferSnapshotItem } from "@/validation/offer-schema";
+import type {
+  OfferBomLineItem,
+  OfferSurchargeItem,
+} from "@/validation/offer-schema";
 import DiscountInput from "./discount-input";
 
 interface Props {
@@ -19,6 +22,7 @@ interface Props {
     total_list_price: number;
     discounted_total: number;
   };
+  surcharges: OfferSurchargeItem[];
   confId: number;
   discountPct: number;
   editable: boolean;
@@ -37,7 +41,7 @@ function OfferTableHeader() {
   );
 }
 
-function ItemRows({ items }: { items: OfferSnapshotItem[] }) {
+function ItemRows({ items }: { items: OfferBomLineItem[] }) {
   return (
     <>
       {items.map((item) => (
@@ -112,8 +116,35 @@ function SectionOfferTable({ section }: { section: GroupedOfferSection }) {
   );
 }
 
+function SurchargesCard({ surcharges }: { surcharges: OfferSurchargeItem[] }) {
+  if (surcharges.length === 0) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">Maggiorazioni</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {surcharges.map((item) => (
+            <div
+              key={item.surcharge_kind}
+              className="flex justify-between text-sm"
+            >
+              <span>{item.description}</span>
+              <span className="tabular-nums font-semibold">
+                {formatEur(item.amount)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function OfferView({
   data,
+  surcharges,
   confId,
   discountPct,
   editable,
@@ -164,6 +195,8 @@ export default function OfferView({
         sections={data.washBays}
         itemLabel="Pista"
       />
+
+      <SurchargesCard surcharges={surcharges} />
 
       {/* Riepilogo */}
       <Card>

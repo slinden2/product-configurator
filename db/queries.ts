@@ -46,7 +46,7 @@ import type {
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
-import type { OfferSnapshotItem } from "@/validation/offer-schema";
+import type { OfferLineItem } from "@/validation/offer-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
@@ -985,7 +985,7 @@ export async function upsertOfferSnapshot(data: {
   configuration_id: number;
   source: "EBOM" | "LIVE";
   generated_by: string;
-  items: OfferSnapshotItem[];
+  items: OfferLineItem[];
   total_list_price: string;
   bom_rules_version: string;
 }): Promise<OfferSnapshot> {

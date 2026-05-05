@@ -13,12 +13,11 @@ import {
 import { MSG } from "@/lib/messages";
 import {
   detectEbomDrift,
-  groupItemsForDisplay,
   isOfferStale,
   OFFER_STALENESS_DAYS,
+  prepareOfferDisplayData,
 } from "@/lib/offer";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import { offerSnapshotItemsSchema } from "@/validation/offer-schema";
 import ExportOfferButton from "./export-offer-button";
 import OfferActionButton from "./offer-action-button";
 import OfferView from "./offer-view";
@@ -53,14 +52,10 @@ const OfferPage = async (props: OfferPageProps) => {
       ) - OFFER_STALENESS_DAYS
     : 0;
 
-  const parsedItems = snapshot
-    ? offerSnapshotItemsSchema.safeParse(snapshot.items)
-    : null;
-  const items = parsedItems?.success ? parsedItems.data : [];
-
   const discountPct = snapshot ? Number(snapshot.discount_pct) : 0;
-  const displayData =
-    items.length > 0 ? groupItemsForDisplay(items, discountPct) : null;
+  const { displayData, surcharges } = snapshot
+    ? prepareOfferDisplayData(snapshot.items, discountPct)
+    : { displayData: null, surcharges: [] };
 
   return (
     <div className="space-y-6">
@@ -81,7 +76,7 @@ const OfferPage = async (props: OfferPageProps) => {
           )}
           {snapshot && displayData && (
             <ExportOfferButton
-              data={displayData}
+              data={{ ...displayData, surcharges }}
               user={user}
               discountPct={discountPct}
             />
@@ -143,6 +138,7 @@ const OfferPage = async (props: OfferPageProps) => {
       {displayData && (
         <OfferView
           data={displayData}
+          surcharges={surcharges}
           confId={confId}
           discountPct={discountPct}
           editable={editable}

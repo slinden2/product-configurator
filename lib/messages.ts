@@ -171,6 +171,8 @@ export const MSG = {
   },
   surcharge: {
     notFound: "Maggiorazione non trovata.",
+    priceNotConfigured:
+      "Il prezzo di una o più maggiorazioni non è configurato. Contattare un amministratore.",
   },
   offer: {
     unauthorized: "Solo SALES e ADMIN possono gestire l'offerta.",

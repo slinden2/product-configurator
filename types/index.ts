@@ -195,6 +195,8 @@ export const BomTagLabels: Record<BomTag, string> = {
   MISC: "Varie",
 };
 
+export const STANDARD_MACHINE_HEIGHT_MM = 5506;
+
 export const SurchargeKinds = ["HEIGHT", "PAINT"] as const;
 export type SurchargeKind = (typeof SurchargeKinds)[number];
 

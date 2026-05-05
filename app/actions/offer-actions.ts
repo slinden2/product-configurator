@@ -7,6 +7,7 @@ import {
   getConfigurationWithTanksAndBays,
   getEngineeringBomItems,
   getOfferSnapshotByConfigurationId,
+  getSurchargeSettings,
   getUserData,
   logActivity,
   QueryError,
@@ -16,10 +17,14 @@ import {
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { MSG } from "@/lib/messages";
 import {
+  appendSurchargesToOfferItems,
   buildOfferItemsFromEbom,
   buildOfferItemsFromLive,
   computeOfferTotals,
+  sumSurchargeTotal,
 } from "@/lib/offer";
+import { resolveOfferSurcharges } from "@/lib/offer-surcharges";
+import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import { offerDiscountSchema } from "@/validation/offer-schema";
 
 function revalidateOfferPaths(confId: number) {
@@ -57,19 +62,37 @@ export async function generateOfferAction(confId: number) {
   const { user, configuration } = auth;
 
   try {
-    const [existingSnapshot, ebomRows] = await Promise.all([
+    const [existingSnapshot, ebomRows, surchargeSettings] = await Promise.all([
       getOfferSnapshotByConfigurationId(confId),
       getEngineeringBomItems(confId),
+      getSurchargeSettings(),
     ]);
 
     const isRegenerate = existingSnapshot !== null;
     const hasEbom = ebomRows.length > 0;
 
-    const items = hasEbom
+    const bomItems = hasEbom
       ? await buildOfferItemsFromEbom(ebomRows)
       : await buildOfferItemsFromLive(configuration);
 
-    const { total_list_price } = computeOfferTotals(items, 0);
+    const surchargeResult = resolveOfferSurcharges({
+      totalHeightMm: configuration.total_height,
+      standardHeightMm: STANDARD_MACHINE_HEIGHT_MM,
+      hasOmzPaint: configuration.has_omz_paint,
+      settings: surchargeSettings,
+    });
+    if (!surchargeResult.ok) {
+      return {
+        success: false as const,
+        error: MSG.surcharge.priceNotConfigured,
+      };
+    }
+    const { surcharges } = surchargeResult;
+
+    const items = appendSurchargesToOfferItems(bomItems, surcharges);
+
+    const { total_list_price: bomTotal } = computeOfferTotals(bomItems, 0);
+    const total_list_price = bomTotal + sumSurchargeTotal(surcharges);
 
     await upsertOfferSnapshot({
       configuration_id: confId,

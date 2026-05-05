@@ -30,7 +30,7 @@ export default function OfferActionButton({ confId, mode }: Props) {
           ? {
               title: "Rigenerare l'offerta?",
               description:
-                "L'operazione sovrascriverà lo snapshot dell'offerta esistente. Questa azione non può essere annullata.",
+                "L'operazione sovrascriverà l'offerta salvata esistente. Questa azione non può essere annullata.",
               confirmLabel: "Rigenera",
             }
           : undefined
