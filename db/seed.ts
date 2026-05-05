@@ -7,6 +7,7 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
+import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import { transformConfigToDbInsert } from "./transformations";
@@ -57,7 +58,7 @@ const configurationSimple: ConfigSchema = {
   has_omz_pump: false,
   pump_outlet_omz: undefined,
   has_omz_paint: false,
-  total_height: undefined,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_chassis_wash_plates: false,
@@ -117,7 +118,7 @@ const configurationComplicated: ConfigSchema = {
   has_omz_pump: true,
   pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
   has_omz_paint: true,
-  total_height: undefined,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: true,
   chassis_wash_sensor_type: "SINGLE_POST",
   has_chassis_wash_plates: false,
@@ -204,7 +205,7 @@ const configurationFast: ConfigSchema = {
   has_omz_pump: false,
   pump_outlet_omz: undefined,
   has_omz_paint: false,
-  total_height: undefined,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_chassis_wash_plates: false,

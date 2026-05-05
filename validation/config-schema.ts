@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import { brushSchema } from "@/validation/configuration/brush-schema";
 import { chemPumpSchema } from "@/validation/configuration/chem-pump-schema";
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
@@ -163,7 +164,7 @@ export const configDefaults: ConfigSchema = {
   has_omz_pump: false,
   pump_outlet_omz: undefined,
   has_omz_paint: false,
-  total_height: undefined,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_chassis_wash_plates: false,

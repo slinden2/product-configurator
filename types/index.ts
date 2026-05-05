@@ -196,6 +196,7 @@ export const BomTagLabels: Record<BomTag, string> = {
 };
 
 export const STANDARD_MACHINE_HEIGHT_MM = 5506;
+export const WASH_HEIGHT_OFFSET_MM = 1294;
 
 export const SurchargeKinds = ["HEIGHT", "PAINT"] as const;
 export type SurchargeKind = (typeof SurchargeKinds)[number];

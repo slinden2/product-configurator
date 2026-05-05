@@ -8,10 +8,10 @@ import type { BomTag, ConfigurationStatusType } from "@/types";
 import { BomTagLabels, BomTags } from "@/types";
 import {
   isSurchargeItem,
-  offerLineItemsSchema,
   type OfferBomLineItem,
   type OfferLineItem,
   type OfferSurchargeItem,
+  offerLineItemsSchema,
 } from "@/validation/offer-schema";
 
 export type {
