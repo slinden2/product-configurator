@@ -118,6 +118,7 @@ export const MSG = {
     coefficientSynced: (n: number) =>
       `${n} nuovo/i PN MaxBOM aggiunto/i al listino.`,
     coefficientSyncNone: "Nessun nuovo PN MaxBOM da sincronizzare.",
+    surchargeUpdated: "Maggiorazione aggiornata.",
     offerGenerated: "Offerta generata.",
     offerRegenerated: "Offerta rigenerata.",
     offerDiscountSet: "Sconto aggiornato.",
@@ -173,6 +174,7 @@ export const MSG = {
     notFound: "Maggiorazione non trovata.",
     priceNotConfigured:
       "Il prezzo di una o più maggiorazioni non è configurato. Contattare un amministratore.",
+    adminOnly: "Solo gli amministratori possono gestire le maggiorazioni.",
   },
   offer: {
     unauthorized: "Solo SALES e ADMIN possono gestire l'offerta.",

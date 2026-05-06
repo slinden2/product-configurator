@@ -133,6 +133,7 @@ export const ActivityActions = [
   "OFFER_GENERATE",
   "OFFER_REGENERATE",
   "OFFER_DISCOUNT_SET",
+  "SURCHARGE_UPDATE",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -154,6 +155,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_GENERATE: "Generazione offerta",
   OFFER_REGENERATE: "Rigenerazione offerta",
   OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
+  SURCHARGE_UPDATE: "Modifica maggiorazione",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;

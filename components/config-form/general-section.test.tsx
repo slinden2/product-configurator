@@ -5,8 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import GeneralSection from "@/components/config-form/general-section";
-import { STANDARD_MACHINE_HEIGHT_MM, WASH_HEIGHT_OFFSET_MM } from "@/types";
 import { selectRadixOption } from "@/test/form-test-utils";
+import { STANDARD_MACHINE_HEIGHT_MM, WASH_HEIGHT_OFFSET_MM } from "@/types";
 import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
 
 afterEach(cleanup);
