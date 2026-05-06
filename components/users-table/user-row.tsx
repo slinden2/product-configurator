@@ -2,11 +2,13 @@
 
 import { History, Mail } from "lucide-react";
 import Link from "next/link";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   changeUserRoleAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { RowActionsMenu } from "@/components/shared/row-actions-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
@@ -37,6 +39,8 @@ const RoleLabels: Record<Role, string> = {
 
 const UserRow = ({ user, currentUserId }: UserRowProps) => {
   const isCurrentUser = user.id === currentUserId;
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleRoleChange = async (newRole: string) => {
     const result = await changeUserRoleAction({ userId: user.id, newRole });
@@ -47,61 +51,86 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
     }
   };
 
-  const handlePasswordReset = async () => {
-    const result = await sendPasswordResetAction({ userId: user.id });
-    if (result.success) {
-      toast.success(MSG.toast.passwordResetSent);
-    } else {
-      toast.error(result.error ?? MSG.toast.passwordResetFailed);
-    }
+  const handlePasswordReset = () => {
+    startTransition(async () => {
+      const result = await sendPasswordResetAction({ userId: user.id });
+      if (result.success) {
+        toast.success(MSG.toast.passwordResetSent);
+      } else {
+        toast.error(result.error ?? MSG.toast.passwordResetFailed);
+      }
+      setResetConfirmOpen(false);
+    });
   };
 
   return (
-    <TableRow>
-      <TableCell className="text-sm">{user.email}</TableCell>
-      <TableCell>
-        {isCurrentUser || user.role === "ADMIN" ? (
-          <span className="text-sm text-muted-foreground">
-            {RoleLabels[user.role]}
-          </span>
-        ) : (
-          <Select defaultValue={user.role} onValueChange={handleRoleChange}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ASSIGNABLE_ROLES.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {RoleLabels[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </TableCell>
-      <TableCell className="text-sm">{user.initials ?? "—"}</TableCell>
-      <TableCell className="text-sm">{user.configCount}</TableCell>
-      <TableCell className="text-sm text-muted-foreground">
-        {user.lastActivity ? formatDateDDMMYYYYHHMM(user.lastActivity) : "—"}
-      </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
-        {user.last_login_at ? formatDateDDMMYYYYHHMM(user.last_login_at) : "—"}
-      </TableCell>
-      <TableCell>
-        <RowActionsMenu>
-          <DropdownMenuItem onSelect={handlePasswordReset}>
-            <Mail />
-            Invia email di reset password
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href={`/gestione/utenti/${user.id}`}>
-              <History />
-              Vedi attività
-            </Link>
-          </DropdownMenuItem>
-        </RowActionsMenu>
-      </TableCell>
-    </TableRow>
+    <>
+      <TableRow>
+        <TableCell className="text-sm">{user.email}</TableCell>
+        <TableCell>
+          {isCurrentUser || user.role === "ADMIN" ? (
+            <span className="text-sm text-muted-foreground">
+              {RoleLabels[user.role]}
+            </span>
+          ) : (
+            <Select defaultValue={user.role} onValueChange={handleRoleChange}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ASSIGNABLE_ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {RoleLabels[role]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </TableCell>
+        <TableCell className="text-sm">{user.initials ?? "—"}</TableCell>
+        <TableCell className="text-sm">{user.configCount}</TableCell>
+        <TableCell className="text-sm text-muted-foreground">
+          {user.lastActivity ? formatDateDDMMYYYYHHMM(user.lastActivity) : "—"}
+        </TableCell>
+        <TableCell className="text-sm text-muted-foreground">
+          {user.last_login_at
+            ? formatDateDDMMYYYYHHMM(user.last_login_at)
+            : "—"}
+        </TableCell>
+        <TableCell>
+          <RowActionsMenu>
+            <DropdownMenuItem
+              disabled={isPending}
+              onSelect={() => setResetConfirmOpen(true)}
+            >
+              <Mail />
+              Invia email di reset password
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/gestione/utenti/${user.id}`}>
+                <History />
+                Vedi attività
+              </Link>
+            </DropdownMenuItem>
+          </RowActionsMenu>
+        </TableCell>
+      </TableRow>
+      <ConfirmModal
+        isOpen={resetConfirmOpen}
+        onOpenChange={setResetConfirmOpen}
+        title={MSG.passwordResetConfirm.title}
+        description={
+          <>
+            {MSG.passwordResetConfirm.body} Destinatario:{" "}
+            <span className="font-semibold">{user.email}</span>.
+          </>
+        }
+        confirmText={MSG.passwordResetConfirm.confirm}
+        confirmVariant="default"
+        onConfirm={handlePasswordReset}
+        isConfirming={isPending}
+      />
+    </>
   );
 };
 

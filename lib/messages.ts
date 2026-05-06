@@ -152,6 +152,11 @@ export const MSG = {
       "Attenzione: questa configurazione contiene valori non più validi secondo le regole attuali. Dopo la duplicazione dovrai correggere i campi evidenziati prima di salvare.",
     confirm: "Duplica",
   },
+  passwordResetConfirm: {
+    title: "Conferma invio email di reset password",
+    body: "Verrà inviata un'email di reset password all'utente. Continuare?",
+    confirm: "Invia email",
+  },
   energyChainWall: {
     supplySection:
       "Attenzione: la combinazione catena portacavi + mensole a muro richiede una revisione manuale da parte dell'ufficio tecnico. La distinta non può essere generata automaticamente per questa configurazione.",
