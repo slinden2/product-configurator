@@ -323,6 +323,13 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
   });
+
+  test("does not revalidate when audit log insert fails (BOM_GENERATE rolls back)", async () => {
+    mockInsertActivityLog.mockRejectedValue(new Error("audit failure"));
+    const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
 });
 
 describe("regenerateEngineeringBomAction", () => {

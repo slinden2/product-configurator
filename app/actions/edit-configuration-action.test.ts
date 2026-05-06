@@ -445,4 +445,12 @@ describe("editConfigurationAction", () => {
     expect(result.success).toBe(true);
     expect(mockResetWashBayNonEnergyChainFields).not.toHaveBeenCalled();
   });
+
+  test("does not revalidate when audit log insert fails (CONFIG_EDIT rolls back)", async () => {
+    mockInsertActivityLog.mockRejectedValue(new Error("audit failure"));
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result.success).toBe(false);
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
 });

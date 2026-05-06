@@ -113,6 +113,9 @@ export async function sendPasswordResetAction(formData: unknown) {
       return { success: false as const, error: MSG.auth.genericError };
     }
 
+    // Best-effort: the Supabase email side effect cannot be rolled back by a
+    // DB transaction, so audit failure must not surface as an error to the
+    // operator after the email has already been dispatched.
     await logActivity({
       userId: user.id,
       action: "PASSWORD_RESET",
