@@ -3,14 +3,11 @@
 import { Share } from "lucide-react";
 import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { UserData } from "@/db/queries";
-import type { GroupedOfferData } from "@/lib/offer";
+import type { ExportOfferData } from "./create-offer-excel-file";
 import { createOfferExcelFile } from "./create-offer-excel-file";
 
 interface ExportOfferButtonProps {
-  data: GroupedOfferData & {
-    total_list_price: number;
-    discounted_total: number;
-  };
+  data: ExportOfferData;
   user: NonNullable<UserData>;
   discountPct: number;
 }

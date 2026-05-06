@@ -70,6 +70,8 @@ export function makeValidConfig(
     has_chassis_wash_plates: false,
     has_omz_pump: false,
     pump_outlet_omz: undefined,
+    has_omz_paint: false,
+    total_height: undefined,
     has_chemical_roof_bar: false,
     touch_qty: 1,
     touch_pos: "EXTERNAL",

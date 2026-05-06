@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { configSchema } from "@/validation/config-schema";
+import {
+  configSchema,
+  hasBomRelevantChanges,
+} from "@/validation/config-schema";
 
 // A minimal valid configuration that satisfies all sub-schemas
 const validBase = {
@@ -47,6 +50,8 @@ const validBase = {
   pump_outlet_2_30kw: undefined,
   has_omz_pump: false,
   pump_outlet_omz: undefined,
+  has_omz_paint: false,
+  total_height: undefined,
   has_chemical_roof_bar: false,
   // Touch
   touch_qty: 1,
@@ -233,5 +238,25 @@ describe("configSchema", () => {
       };
       expect(() => configSchema.parse(data)).not.toThrow();
     });
+  });
+});
+
+describe("hasBomRelevantChanges — new fields are BOM-exempt", () => {
+  const base: Record<string, unknown> = { ...validBase };
+
+  test("returns false when only total_height changes", () => {
+    expect(hasBomRelevantChanges(base, { ...base, total_height: 5000 })).toBe(
+      false,
+    );
+  });
+
+  test("returns false when only has_omz_paint changes", () => {
+    expect(hasBomRelevantChanges(base, { ...base, has_omz_paint: true })).toBe(
+      false,
+    );
+  });
+
+  test("returns true when a BOM-relevant field changes", () => {
+    expect(hasBomRelevantChanges(base, { ...base, brush_qty: 3 })).toBe(true);
   });
 });

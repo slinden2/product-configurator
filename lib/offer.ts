@@ -2,10 +2,22 @@ import { getPriceCoefficientsByArray } from "@/db/queries";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import type { OfferSnapshot } from "@/db/schemas/offer-snapshots";
 import { BOM, enrichWithCosts } from "@/lib/BOM";
+import { sumSurchargeTotal } from "@/lib/offer-surcharges";
 import { computeLinePrice, DEFAULT_COEFFICIENT } from "@/lib/pricing";
 import type { BomTag, ConfigurationStatusType } from "@/types";
 import { BomTagLabels, BomTags } from "@/types";
-import type { OfferSnapshotItem } from "@/validation/offer-schema";
+import {
+  isSurchargeItem,
+  type OfferBomLineItem,
+  type OfferLineItem,
+  type OfferSurchargeItem,
+  offerLineItemsSchema,
+} from "@/validation/offer-schema";
+
+export type {
+  OfferLineItem,
+  OfferSurchargeItem,
+} from "@/validation/offer-schema";
 
 type OfferCategory = "GENERAL" | "WATER_TANK" | "WASH_BAY";
 
@@ -29,13 +41,13 @@ export interface GroupedOfferRow {
   tag: BomTag;
   label: string;
   total: number;
-  items: OfferSnapshotItem[];
+  items: OfferBomLineItem[];
 }
 
 export interface GroupedOfferSection {
   index: number;
   total: number;
-  items: OfferSnapshotItem[];
+  items: OfferBomLineItem[];
 }
 
 export interface GroupedOfferData {
@@ -94,7 +106,7 @@ function toOfferItem(
   category_index: number,
   costMap: Map<string, number>,
   coeffMap: Map<string, number>,
-): OfferSnapshotItem {
+): OfferBomLineItem {
   const cost = costMap.get(row.pn) ?? 0;
   const coefficient = coeffMap.get(row.pn) ?? DEFAULT_COEFFICIENT;
   return {
@@ -113,7 +125,7 @@ function toOfferItem(
 /** Builds offer items from an engineering BOM snapshot. Excludes soft-deleted rows. */
 export async function buildOfferItemsFromEbom(
   ebomRows: EbomRow[],
-): Promise<OfferSnapshotItem[]> {
+): Promise<OfferBomLineItem[]> {
   const active = ebomRows.filter((r) => !r.is_deleted);
   if (active.length === 0) return [];
 
@@ -133,7 +145,7 @@ export async function buildOfferItemsFromEbom(
 /** Builds offer items from live BOM rules. */
 export async function buildOfferItemsFromLive(
   configuration: ConfigurationWithWaterTanksAndWashBays,
-): Promise<OfferSnapshotItem[]> {
+): Promise<OfferBomLineItem[]> {
   const bom = BOM.init(configuration);
   const { generalBOM, waterTankBOMs, washBayBOMs } =
     await bom.buildCompleteBOM();
@@ -176,9 +188,9 @@ export async function buildOfferItemsFromLive(
   );
 }
 
-/** Computes section totals, grand total and discounted total from snapshot items. */
+/** Computes section totals, grand total and discounted total from BOM offer line items. */
 export function computeOfferTotals(
-  items: OfferSnapshotItem[],
+  items: OfferBomLineItem[],
   discount_pct: number,
 ): OfferTotals {
   const general: Partial<Record<BomTag, number>> = {};
@@ -222,15 +234,15 @@ export function computeOfferTotals(
 
 /** Groups items for the offer view display with per-line detail. Single pass over items. */
 export function groupItemsForDisplay(
-  items: OfferSnapshotItem[],
+  items: OfferBomLineItem[],
   discount_pct: number,
 ): GroupedOfferData & { total_list_price: number; discounted_total: number } {
   const generalTotals: Partial<Record<BomTag, number>> = {};
   const waterTankTotals = new Map<number, number>();
   const washBayTotals = new Map<number, number>();
-  const generalItemsByTag = new Map<BomTag, OfferSnapshotItem[]>();
-  const waterTankItemsByIndex = new Map<number, OfferSnapshotItem[]>();
-  const washBayItemsByIndex = new Map<number, OfferSnapshotItem[]>();
+  const generalItemsByTag = new Map<BomTag, OfferBomLineItem[]>();
+  const waterTankItemsByIndex = new Map<number, OfferBomLineItem[]>();
+  const washBayItemsByIndex = new Map<number, OfferBomLineItem[]>();
   let total_list_price = 0;
 
   for (const item of items) {
@@ -288,4 +300,53 @@ export function groupItemsForDisplay(
     }));
 
   return { general, waterTanks, washBays, total_list_price, discounted_total };
+}
+
+/** Concatenates surcharge line items after BOM-derived part items. Phase 1 stub for Phase 4 wiring. */
+export function appendSurchargesToOfferItems(
+  items: OfferBomLineItem[],
+  surcharges: OfferSurchargeItem[],
+): OfferLineItem[] {
+  return [...items, ...surcharges];
+}
+
+export { sumSurchargeTotal } from "@/lib/offer-surcharges";
+
+/**
+ * Parses raw snapshot items JSON, splits BOM vs surcharge items, groups BOM items
+ * for display, and adjusts totals to include surcharges. Single entry point for
+ * all offer display/export consumers.
+ */
+export function prepareOfferDisplayData(
+  rawItems: unknown,
+  discountPct: number,
+): {
+  displayData:
+    | (GroupedOfferData & {
+        total_list_price: number;
+        discounted_total: number;
+      })
+    | null;
+  surcharges: OfferSurchargeItem[];
+} {
+  const parsed = offerLineItemsSchema.safeParse(rawItems);
+  const allItems = parsed.success ? parsed.data : [];
+  const bomItems = allItems.filter(
+    (item): item is OfferBomLineItem => !isSurchargeItem(item),
+  );
+  const surcharges = allItems.filter(isSurchargeItem);
+
+  if (bomItems.length === 0) return { displayData: null, surcharges };
+
+  const grouped = groupItemsForDisplay(bomItems, discountPct);
+  const surchargeTotal = sumSurchargeTotal(surcharges);
+  const totalListPrice = grouped.total_list_price + surchargeTotal;
+  return {
+    displayData: {
+      ...grouped,
+      total_list_price: totalListPrice,
+      discounted_total: totalListPrice * (1 - discountPct / 100),
+    },
+    surcharges,
+  };
 }

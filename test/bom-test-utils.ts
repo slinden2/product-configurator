@@ -63,6 +63,8 @@ export function makeGeneralBOMConfig(
     has_chassis_wash_plates: false,
     has_omz_pump: false,
     pump_outlet_omz: null,
+    has_omz_paint: false,
+    total_height: null,
     has_chemical_roof_bar: false,
     has_shelf_extension: false,
     sales_notes: "",

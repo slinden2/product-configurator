@@ -133,6 +133,7 @@ export const ActivityActions = [
   "OFFER_GENERATE",
   "OFFER_REGENERATE",
   "OFFER_DISCOUNT_SET",
+  "SURCHARGE_UPDATE",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -154,6 +155,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_GENERATE: "Generazione offerta",
   OFFER_REGENERATE: "Rigenerazione offerta",
   OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
+  SURCHARGE_UPDATE: "Modifica maggiorazione",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
@@ -193,6 +195,17 @@ export const BomTagLabels: Record<BomTag, string> = {
   SUPPLY: "Alimentazione portale",
   WATER_SUPPLY: "Alimentazione acqua",
   MISC: "Varie",
+};
+
+export const STANDARD_MACHINE_HEIGHT_MM = 5506;
+export const WASH_HEIGHT_OFFSET_MM = 1294;
+
+export const SurchargeKinds = ["HEIGHT", "PAINT"] as const;
+export type SurchargeKind = (typeof SurchargeKinds)[number];
+
+export const SurchargeKindLabels: Record<SurchargeKind, string> = {
+  HEIGHT: "Altezza non standard",
+  PAINT: "Verniciatura personalizzata",
 };
 
 export interface SelectOption {

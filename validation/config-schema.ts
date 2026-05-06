@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import { brushSchema } from "@/validation/configuration/brush-schema";
 import { chemPumpSchema } from "@/validation/configuration/chem-pump-schema";
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
@@ -6,7 +7,7 @@ import { railSchema } from "@/validation/configuration/rail-schema";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
 import { touchSchema } from "@/validation/configuration/touch-schema";
 import { waterSupplySchema } from "@/validation/configuration/water-supply-schema";
-import { MachineTypeEnum } from "./configuration/general-schema";
+import { generalSchema, MachineTypeEnum } from "./configuration/general-schema";
 
 export const baseSchema = z.object({
   name: z.string().min(3, "Il nome è obbligatorio (min. 3 caratteri)."),
@@ -24,6 +25,7 @@ export const configSchema = baseSchema
   .and(railSchema)
   .and(hpPumpSchema)
   .and(touchSchema)
+  .and(generalSchema)
   .superRefine((data, ctx) => {
     // Limit rail length to 25 if energy chain is selected
     if (
@@ -93,6 +95,8 @@ export const BOM_EXEMPT_FIELDS = new Set<keyof ConfigSchema>([
   "description",
   "sales_notes",
   "engineering_notes",
+  "total_height",
+  "has_omz_paint",
 ]);
 
 export function hasBomRelevantChanges(
@@ -159,6 +163,8 @@ export const configDefaults: ConfigSchema = {
   pump_outlet_2_75kw: undefined,
   has_omz_pump: false,
   pump_outlet_omz: undefined,
+  has_omz_paint: false,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_chassis_wash_plates: false,

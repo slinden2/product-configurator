@@ -2,10 +2,12 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   configurations,
+  surchargeSettings,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
+import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import { transformConfigToDbInsert } from "./transformations";
@@ -55,6 +57,8 @@ const configurationSimple: ConfigSchema = {
   pump_outlet_2_75kw: undefined,
   has_omz_pump: false,
   pump_outlet_omz: undefined,
+  has_omz_paint: false,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_chassis_wash_plates: false,
@@ -113,6 +117,8 @@ const configurationComplicated: ConfigSchema = {
   pump_outlet_2_75kw: undefined,
   has_omz_pump: true,
   pump_outlet_omz: "HP_ROOF_BAR_SPINNERS",
+  has_omz_paint: true,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: true,
   chassis_wash_sensor_type: "SINGLE_POST",
   has_chassis_wash_plates: false,
@@ -198,6 +204,8 @@ const configurationFast: ConfigSchema = {
   pump_outlet_2_75kw: undefined,
   has_omz_pump: false,
   pump_outlet_omz: undefined,
+  has_omz_paint: false,
+  total_height: STANDARD_MACHINE_HEIGHT_MM,
   has_chemical_roof_bar: false,
   chassis_wash_sensor_type: undefined,
   has_chassis_wash_plates: false,
@@ -217,10 +225,14 @@ async function seedDb() {
   if (shouldReset) {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
 
+    await db.delete(surchargeSettings);
     await db.delete(waterTanks);
     await db.delete(washBays);
     await db.delete(configurations);
 
+    await db.execute(
+      sql`ALTER SEQUENCE surcharge_settings_id_seq RESTART WITH 1`,
+    );
     await db.execute(sql`ALTER SEQUENCE water_tanks_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE wash_bays_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE configurations_id_seq RESTART WITH 1`);
@@ -273,6 +285,15 @@ async function seedDb() {
       await db.insert(washBays).values(getWashBayComplicated(inserted.id));
     }
   }
+
+  console.log("🌱 Seeding surcharge settings...");
+  await db
+    .insert(surchargeSettings)
+    .values([
+      { kind: "HEIGHT", price: "1500.00" },
+      { kind: "PAINT", price: "1200.00" },
+    ])
+    .onConflictDoNothing({ target: surchargeSettings.kind });
 }
 
 await seedDb();

@@ -25,6 +25,8 @@ import {
   offerSnapshots,
   partNumbers,
   priceCoefficients,
+  type SurchargeSetting,
+  surchargeSettings,
   userProfiles,
   washBays,
   waterTanks,
@@ -36,6 +38,7 @@ import type {
   CoefficientSource,
   ConfigurationStatusType,
   Role,
+  SurchargeKind,
 } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
@@ -43,7 +46,7 @@ import type {
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
-import type { OfferSnapshotItem } from "@/validation/offer-schema";
+import type { OfferLineItem } from "@/validation/offer-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
@@ -776,21 +779,30 @@ export async function getUserActivityLog(
   return { data, totalCount: Number(countResult[0].count) };
 }
 
-export async function logActivity(params: {
+type ActivityLogParams = {
   userId: string;
   action: ActivityAction;
   targetEntity: string;
   targetId: string;
   metadata?: Record<string, unknown>;
-}) {
+};
+
+export async function insertActivityLog(
+  params: ActivityLogParams,
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  await txOrDb.insert(activityLogs).values({
+    user_id: params.userId,
+    action: params.action,
+    target_entity: params.targetEntity,
+    target_id: params.targetId,
+    metadata: params.metadata ?? null,
+  });
+}
+
+export async function logActivity(params: ActivityLogParams) {
   try {
-    await db.insert(activityLogs).values({
-      user_id: params.userId,
-      action: params.action,
-      target_entity: params.targetEntity,
-      target_id: params.targetId,
-      metadata: params.metadata ?? null,
-    });
+    await insertActivityLog(params);
   } catch (err) {
     console.error("[logActivity] Failed to log activity:", err);
   }
@@ -982,7 +994,7 @@ export async function upsertOfferSnapshot(data: {
   configuration_id: number;
   source: "EBOM" | "LIVE";
   generated_by: string;
-  items: OfferSnapshotItem[];
+  items: OfferLineItem[];
   total_list_price: string;
   bom_rules_version: string;
 }): Promise<OfferSnapshot> {
@@ -1028,4 +1040,61 @@ export async function getEbomMaxUpdatedAt(
     .from(engineeringBomItems)
     .where(eq(engineeringBomItems.configuration_id, confId));
   return row?.maxUpdatedAt ?? null;
+}
+
+export async function getSurchargeSettings(): Promise<SurchargeSetting[]> {
+  return db.query.surchargeSettings.findMany({
+    orderBy: asc(surchargeSettings.kind),
+  });
+}
+
+export async function getSurchargeSettingByKind(
+  kind: SurchargeKind,
+): Promise<SurchargeSetting> {
+  const row = await db.query.surchargeSettings.findFirst({
+    where: eq(surchargeSettings.kind, kind),
+  });
+  if (!row) {
+    throw new QueryError(MSG.surcharge.notFound, 404);
+  }
+  return row;
+}
+
+/**
+ * Updates a surcharge price and writes the audit log in a single transaction.
+ * Both writes succeed or both roll back — the audit entry cannot be silently
+ * skipped even if the activity_action enum is stale on the DB side.
+ */
+export async function updateSurchargeSettingWithAudit(data: {
+  kind: SurchargeKind;
+  price: string;
+  updated_by: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ price: surchargeSettings.price })
+      .from(surchargeSettings)
+      .where(eq(surchargeSettings.kind, data.kind));
+
+    if (!existing) throw new QueryError(MSG.surcharge.notFound, 404);
+
+    const [row] = await tx
+      .update(surchargeSettings)
+      .set({ price: data.price, updated_by: data.updated_by })
+      .where(eq(surchargeSettings.kind, data.kind))
+      .returning({ kind: surchargeSettings.kind });
+
+    if (!row) throw new QueryError(MSG.surcharge.notFound, 404);
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "SURCHARGE_UPDATE",
+        targetEntity: "surcharge_setting",
+        targetId: data.kind,
+        metadata: { old_value: existing.price, new_value: data.price },
+      },
+      tx,
+    );
+  });
 }

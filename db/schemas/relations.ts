@@ -6,6 +6,7 @@ import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
 import { offerSnapshots } from "@/db/schemas/offer-snapshots";
 import { partNumbers } from "@/db/schemas/part-numbers";
 import { priceCoefficients } from "@/db/schemas/price-coefficients";
+import { surchargeSettings } from "@/db/schemas/surcharge-settings";
 import { userProfiles } from "@/db/schemas/user-profiles";
 import { washBays } from "@/db/schemas/wash-bays";
 import { waterTanks } from "@/db/schemas/water-tanks";
@@ -100,3 +101,13 @@ export const bomLinesRelations = relations(bomLines, ({ one }) => ({
     relationName: "bom_line_child",
   }),
 }));
+
+export const surchargeSettingsRelations = relations(
+  surchargeSettings,
+  ({ one }) => ({
+    updater: one(userProfiles, {
+      fields: [surchargeSettings.updated_by],
+      references: [userProfiles.id],
+    }),
+  }),
+);

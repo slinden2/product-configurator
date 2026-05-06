@@ -25,6 +25,7 @@ interface InputFieldProps<TFieldValues extends FieldValues = FieldValues>
   placeholder?: string;
   type?: React.HTMLInputTypeAttribute;
   disabled?: boolean;
+  suffix?: string;
 }
 
 const InputField = <TFieldValues extends FieldValues = FieldValues>({
@@ -33,6 +34,7 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
   placeholder,
   type = "text",
   disabled,
+  suffix,
   ...inputProps
 }: InputFieldProps<TFieldValues>) => {
   const { control } = useFormContext<TFieldValues>();
@@ -45,17 +47,36 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
-            <FormControl>
-              <Input
-                type={type}
-                placeholder={placeholder}
-                className="bg-background"
-                disabled={disabled}
-                {...field}
-                {...inputProps}
-                value={field.value ?? ""}
-              />
-            </FormControl>
+            {suffix ? (
+              <div className="relative">
+                <FormControl>
+                  <Input
+                    type={type}
+                    placeholder={placeholder}
+                    className="bg-background pr-10"
+                    disabled={disabled}
+                    {...field}
+                    {...inputProps}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+                  {suffix}
+                </span>
+              </div>
+            ) : (
+              <FormControl>
+                <Input
+                  type={type}
+                  placeholder={placeholder}
+                  className="bg-background"
+                  disabled={disabled}
+                  {...field}
+                  {...inputProps}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+            )}
             <FormMessage />
           </FormItem>
         );

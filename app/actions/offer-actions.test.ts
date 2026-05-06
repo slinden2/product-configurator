@@ -7,6 +7,7 @@ const mockGetUserData = vi.fn();
 const mockGetConfigurationWithTanksAndBays = vi.fn();
 const mockGetOfferSnapshotByConfigurationId = vi.fn();
 const mockGetEngineeringBomItems = vi.fn();
+const mockGetSurchargeSettings = vi.fn();
 const mockUpsertOfferSnapshot = vi.fn();
 const mockUpdateOfferDiscount = vi.fn();
 const mockLogActivity = vi.fn();
@@ -19,6 +20,8 @@ vi.mock("@/db/queries", () => ({
     mockGetOfferSnapshotByConfigurationId(...args),
   getEngineeringBomItems: (...args: unknown[]) =>
     mockGetEngineeringBomItems(...args),
+  getSurchargeSettings: (...args: unknown[]) =>
+    mockGetSurchargeSettings(...args),
   getEbomMaxUpdatedAt: vi.fn().mockResolvedValue(null),
   upsertOfferSnapshot: (...args: unknown[]) => mockUpsertOfferSnapshot(...args),
   updateOfferDiscount: (...args: unknown[]) => mockUpdateOfferDiscount(...args),
@@ -55,6 +58,12 @@ vi.mock("@/lib/offer", () => ({
   computeOfferTotals: vi
     .fn()
     .mockReturnValue({ total_list_price: 1000, discounted_total: 1000 }),
+  appendSurchargesToOfferItems: vi.fn().mockReturnValue([]),
+  sumSurchargeTotal: vi.fn().mockReturnValue(0),
+}));
+
+vi.mock("@/lib/offer-surcharges", () => ({
+  resolveOfferSurcharges: vi.fn().mockReturnValue({ ok: true, surcharges: [] }),
 }));
 
 import {
@@ -81,6 +90,7 @@ describe("generateOfferAction", () => {
     vi.clearAllMocks();
     mockGetEngineeringBomItems.mockResolvedValue([]);
     mockGetOfferSnapshotByConfigurationId.mockResolvedValue(null);
+    mockGetSurchargeSettings.mockResolvedValue([]);
     mockUpsertOfferSnapshot.mockResolvedValue({ id: 1 });
     mockLogActivity.mockResolvedValue(undefined);
   });

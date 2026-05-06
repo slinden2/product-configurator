@@ -21,6 +21,7 @@ vi.mock("@/lib/BOM", () => ({
 }));
 
 import {
+  appendSurchargesToOfferItems,
   buildOfferItemsFromEbom,
   buildOfferItemsFromLive,
   computeOfferTotals,
@@ -425,5 +426,40 @@ describe("groupItemsForDisplay", () => {
     const result = groupItemsForDisplay(items, 20);
     expect(result.total_list_price).toBe(1000);
     expect(result.discounted_total).toBe(800);
+  });
+});
+
+describe("appendSurchargesToOfferItems", () => {
+  const partItem = {
+    pn: "A",
+    description: "a",
+    qty: 1,
+    coefficient: 3,
+    list_price: 1000,
+    line_total: 1000,
+    tag: "FRAME" as const,
+    category: "GENERAL" as const,
+    category_index: 0,
+  };
+
+  const surchargeItem = {
+    surcharge_kind: "HEIGHT" as const,
+    description: "Altezza non standard",
+    qty: 1 as const,
+    amount: 500,
+    line_total: 500,
+  };
+
+  test("returns items unchanged as OfferLineItem[] when surcharges is empty", () => {
+    const result = appendSurchargesToOfferItems([partItem], []);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(partItem);
+  });
+
+  test("concatenates surcharges after part items in order", () => {
+    const result = appendSurchargesToOfferItems([partItem], [surchargeItem]);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual(partItem);
+    expect(result[1]).toEqual(surchargeItem);
   });
 });
