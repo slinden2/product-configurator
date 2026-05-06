@@ -9,8 +9,8 @@ const mockGetOfferSnapshotByConfigurationId = vi.fn();
 const mockGetEngineeringBomItems = vi.fn();
 const mockGetSurchargeSettings = vi.fn();
 const mockUpsertOfferSnapshot = vi.fn();
-const mockUpdateOfferDiscount = vi.fn();
-const mockLogActivity = vi.fn();
+const mockUpdateOfferDiscountWithAudit = vi.fn();
+const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -24,9 +24,10 @@ vi.mock("@/db/queries", () => ({
     mockGetSurchargeSettings(...args),
   getEbomMaxUpdatedAt: vi.fn().mockResolvedValue(null),
   upsertOfferSnapshot: (...args: unknown[]) => mockUpsertOfferSnapshot(...args),
-  updateOfferDiscount: (...args: unknown[]) => mockUpdateOfferDiscount(...args),
+  updateOfferDiscountWithAudit: (...args: unknown[]) =>
+    mockUpdateOfferDiscountWithAudit(...args),
   deleteOfferSnapshotByConfigurationId: vi.fn(),
-  logActivity: (...args: unknown[]) => mockLogActivity(...args),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -34,6 +35,14 @@ vi.mock("@/db/queries", () => ({
       this.name = "QueryError";
       this.errorCode = errorCode;
     }
+  },
+}));
+
+vi.mock("@/db", () => ({
+  db: {
+    transaction: vi.fn((cb: (tx: object) => unknown) =>
+      cb({ __isFakeTx: true }),
+    ),
   },
 }));
 
@@ -66,6 +75,7 @@ vi.mock("@/lib/offer-surcharges", () => ({
   resolveOfferSurcharges: vi.fn().mockReturnValue({ ok: true, surcharges: [] }),
 }));
 
+import { revalidatePath } from "next/cache";
 import {
   generateOfferAction,
   setOfferDiscountAction,
@@ -92,7 +102,7 @@ describe("generateOfferAction", () => {
     mockGetOfferSnapshotByConfigurationId.mockResolvedValue(null);
     mockGetSurchargeSettings.mockResolvedValue([]);
     mockUpsertOfferSnapshot.mockResolvedValue({ id: 1 });
-    mockLogActivity.mockResolvedValue(undefined);
+    mockInsertActivityLog.mockResolvedValue(undefined);
   });
 
   test("returns error when user not authenticated", async () => {
@@ -161,15 +171,16 @@ describe("generateOfferAction", () => {
     expect(result.success).toBe(true);
   });
 
-  test("logs OFFER_GENERATE for new snapshot", async () => {
+  test("logs OFFER_GENERATE for new snapshot inside transaction", async () => {
     mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
       makeConfig("DRAFT", "user-1"),
     );
     mockGetOfferSnapshotByConfigurationId.mockResolvedValue(null);
     await generateOfferAction(CONF_ID);
-    expect(mockLogActivity).toHaveBeenCalledWith(
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
       expect.objectContaining({ action: "OFFER_GENERATE" }),
+      expect.anything(),
     );
   });
 
@@ -180,8 +191,9 @@ describe("generateOfferAction", () => {
     );
     mockGetOfferSnapshotByConfigurationId.mockResolvedValue({ id: 99 });
     await generateOfferAction(CONF_ID);
-    expect(mockLogActivity).toHaveBeenCalledWith(
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
       expect.objectContaining({ action: "OFFER_REGENERATE" }),
+      expect.anything(),
     );
   });
 
@@ -196,6 +208,7 @@ describe("generateOfferAction", () => {
     await generateOfferAction(CONF_ID);
     expect(mockUpsertOfferSnapshot).toHaveBeenCalledWith(
       expect.objectContaining({ source: "EBOM" }),
+      expect.anything(),
     );
   });
 
@@ -208,7 +221,20 @@ describe("generateOfferAction", () => {
     await generateOfferAction(CONF_ID);
     expect(mockUpsertOfferSnapshot).toHaveBeenCalledWith(
       expect.objectContaining({ source: "LIVE" }),
+      expect.anything(),
     );
+  });
+
+  test("does not revalidate when transaction fails", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
+    );
+    mockUpsertOfferSnapshot.mockRejectedValue(new Error("audit failure"));
+
+    const result = await generateOfferAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 
@@ -217,8 +243,7 @@ describe("generateOfferAction", () => {
 describe("setOfferDiscountAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUpdateOfferDiscount.mockResolvedValue({ id: 1 });
-    mockLogActivity.mockResolvedValue(undefined);
+    mockUpdateOfferDiscountWithAudit.mockResolvedValue(undefined);
   });
 
   test("returns error when user not authenticated", async () => {
@@ -295,7 +320,7 @@ describe("setOfferDiscountAction", () => {
     expect(result.success).toBe(false);
   });
 
-  test("logs OFFER_DISCOUNT_SET with previous and new pct", async () => {
+  test("calls updateOfferDiscountWithAudit with correct args", async () => {
     mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
       makeConfig("DRAFT", "user-1"),
@@ -305,11 +330,28 @@ describe("setOfferDiscountAction", () => {
       discount_pct: "10.00",
     });
     await setOfferDiscountAction(CONF_ID, 12.5);
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "OFFER_DISCOUNT_SET",
-        metadata: expect.objectContaining({ new_pct: 12.5 }),
-      }),
+    expect(mockUpdateOfferDiscountWithAudit).toHaveBeenCalledWith({
+      confId: CONF_ID,
+      discount_pct: "12.50",
+      updated_by: "user-1",
+    });
+  });
+
+  test("does not revalidate when helper rejects (audit failure rolls back)", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
     );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue({
+      id: 1,
+      discount_pct: "10.00",
+    });
+    mockUpdateOfferDiscountWithAudit.mockRejectedValue(
+      new Error("audit failure"),
+    );
+
+    const result = await setOfferDiscountAction(CONF_ID, 12.5);
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

@@ -3,15 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { db } from "@/db";
 import {
   getConfigurationWithTanksAndBays,
   getEngineeringBomItems,
   getOfferSnapshotByConfigurationId,
   getSurchargeSettings,
   getUserData,
-  logActivity,
+  insertActivityLog,
   QueryError,
-  updateOfferDiscount,
+  updateOfferDiscountWithAudit,
   upsertOfferSnapshot,
 } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
@@ -94,21 +95,32 @@ export async function generateOfferAction(confId: number) {
     const { total_list_price: bomTotal } = computeOfferTotals(bomItems, 0);
     const total_list_price = bomTotal + sumSurchargeTotal(surcharges);
 
-    await upsertOfferSnapshot({
-      configuration_id: confId,
-      source: hasEbom ? "EBOM" : "LIVE",
-      generated_by: user.id,
-      items,
-      total_list_price: total_list_price.toFixed(2),
-      bom_rules_version: BOM_RULES_VERSION,
-    });
-
-    await logActivity({
-      userId: user.id,
-      action: isRegenerate ? "OFFER_REGENERATE" : "OFFER_GENERATE",
-      targetEntity: "offer_snapshot",
-      targetId: confId.toString(),
-      metadata: { source: hasEbom ? "EBOM" : "LIVE" },
+    const source = hasEbom ? ("EBOM" as const) : ("LIVE" as const);
+    const action = isRegenerate
+      ? ("OFFER_REGENERATE" as const)
+      : ("OFFER_GENERATE" as const);
+    await db.transaction(async (tx) => {
+      await upsertOfferSnapshot(
+        {
+          configuration_id: confId,
+          source,
+          generated_by: user.id,
+          items,
+          total_list_price: total_list_price.toFixed(2),
+          bom_rules_version: BOM_RULES_VERSION,
+        },
+        tx,
+      );
+      await insertActivityLog(
+        {
+          userId: user.id,
+          action,
+          targetEntity: "offer_snapshot",
+          targetId: confId.toString(),
+          metadata: { source },
+        },
+        tx,
+      );
     });
 
     revalidateOfferPaths(confId);
@@ -143,18 +155,10 @@ export async function setOfferDiscountAction(
       return { success: false as const, error: MSG.offer.notFound };
     }
 
-    const previousPct = existing.discount_pct;
-    await updateOfferDiscount(confId, parsed.data.discount_pct.toFixed(2));
-
-    await logActivity({
-      userId: user.id,
-      action: "OFFER_DISCOUNT_SET",
-      targetEntity: "offer_snapshot",
-      targetId: confId.toString(),
-      metadata: {
-        previous_pct: previousPct,
-        new_pct: parsed.data.discount_pct,
-      },
+    await updateOfferDiscountWithAudit({
+      confId,
+      discount_pct: parsed.data.discount_pct.toFixed(2),
+      updated_by: user.id,
     });
 
     revalidateOfferPaths(confId);

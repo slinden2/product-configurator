@@ -1122,17 +1122,20 @@ export async function getOfferSnapshotByConfigurationId(
   return row ?? null;
 }
 
-export async function upsertOfferSnapshot(data: {
-  configuration_id: number;
-  source: "EBOM" | "LIVE";
-  generated_by: string;
-  items: OfferLineItem[];
-  total_list_price: string;
-  bom_rules_version: string;
-}): Promise<OfferSnapshot> {
+export async function upsertOfferSnapshot(
+  data: {
+    configuration_id: number;
+    source: "EBOM" | "LIVE";
+    generated_by: string;
+    items: OfferLineItem[];
+    total_list_price: string;
+    bom_rules_version: string;
+  },
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<OfferSnapshot> {
   const now = new Date();
   const { configuration_id, ...fields } = data;
-  const [row] = await db
+  const [row] = await txOrDb
     .insert(offerSnapshots)
     .values({ configuration_id, ...fields, generated_at: now, updated_at: now })
     .onConflictDoUpdate({
@@ -1153,6 +1156,40 @@ export async function updateOfferDiscount(
     .where(eq(offerSnapshots.configuration_id, confId))
     .returning();
   return row;
+}
+
+export async function updateOfferDiscountWithAudit(data: {
+  confId: number;
+  discount_pct: string;
+  updated_by: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ discount_pct: offerSnapshots.discount_pct })
+      .from(offerSnapshots)
+      .where(eq(offerSnapshots.configuration_id, data.confId));
+
+    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
+
+    await tx
+      .update(offerSnapshots)
+      .set({ discount_pct: data.discount_pct, updated_at: new Date() })
+      .where(eq(offerSnapshots.configuration_id, data.confId));
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "OFFER_DISCOUNT_SET",
+        targetEntity: "offer_snapshot",
+        targetId: data.confId.toString(),
+        metadata: {
+          previous_pct: existing.discount_pct,
+          new_pct: data.discount_pct,
+        },
+      },
+      tx,
+    );
+  });
 }
 
 export async function deleteOfferSnapshotByConfigurationId(
@@ -1225,6 +1262,37 @@ export async function updateSurchargeSettingWithAudit(data: {
         targetEntity: "surcharge_setting",
         targetId: data.kind,
         metadata: { old_value: existing.price, new_value: data.price },
+      },
+      tx,
+    );
+  });
+}
+
+export async function changeUserRoleWithAudit(data: {
+  userId: string;
+  newRole: Role;
+  changedBy: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [targetRow] = await tx
+      .select({ id: userProfiles.id, role: userProfiles.role })
+      .from(userProfiles)
+      .where(eq(userProfiles.id, data.userId));
+
+    if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+
+    await tx
+      .update(userProfiles)
+      .set({ role: data.newRole })
+      .where(eq(userProfiles.id, data.userId));
+
+    await insertActivityLog(
+      {
+        userId: data.changedBy,
+        action: "ROLE_CHANGE",
+        targetEntity: "user_profile",
+        targetId: data.userId,
+        metadata: { from_role: targetRow.role, to_role: data.newRole },
       },
       tx,
     );

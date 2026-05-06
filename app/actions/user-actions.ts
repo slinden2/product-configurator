@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { DatabaseError } from "pg";
 import { db } from "@/db";
-import { getUserData, logActivity, QueryError } from "@/db/queries";
+import {
+  changeUserRoleWithAudit,
+  getUserData,
+  logActivity,
+  QueryError,
+} from "@/db/queries";
 import { userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { createClient } from "@/utils/supabase/server";
@@ -49,17 +54,10 @@ export async function changeUserRoleAction(formData: unknown) {
   }
 
   try {
-    await db
-      .update(userProfiles)
-      .set({ role: newRole })
-      .where(eq(userProfiles.id, userId));
-
-    await logActivity({
-      userId: user.id,
-      action: "ROLE_CHANGE",
-      targetEntity: "user_profile",
-      targetId: userId,
-      metadata: { from_role: targetUser.role, to_role: newRole },
+    await changeUserRoleWithAudit({
+      userId,
+      newRole,
+      changedBy: user.id,
     });
 
     revalidatePath("/gestione/utenti");
