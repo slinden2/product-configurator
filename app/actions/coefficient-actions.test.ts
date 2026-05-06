@@ -6,11 +6,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 const mockGetUserData = vi.fn();
 const mockGetFullPriceCoefficientByPn = vi.fn();
 const mockGetPriceCoefficientsByArray = vi.fn();
-const mockCreatePriceCoefficient = vi.fn();
-const mockUpdatePriceCoefficientByPn = vi.fn();
-const mockDeletePriceCoefficientByPn = vi.fn();
+const mockCreatePriceCoefficientWithAudit = vi.fn();
+const mockUpdatePriceCoefficientByPnWithAudit = vi.fn();
+const mockDeletePriceCoefficientByPnWithAudit = vi.fn();
+const mockResetPriceCoefficientWithAudit = vi.fn();
 const mockInsertMissingMaxBomCoefficients = vi.fn();
-const mockLogActivity = vi.fn();
+const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -18,15 +19,17 @@ vi.mock("@/db/queries", () => ({
     mockGetFullPriceCoefficientByPn(...args),
   getPriceCoefficientsByArray: (...args: unknown[]) =>
     mockGetPriceCoefficientsByArray(...args),
-  createPriceCoefficient: (...args: unknown[]) =>
-    mockCreatePriceCoefficient(...args),
-  updatePriceCoefficientByPn: (...args: unknown[]) =>
-    mockUpdatePriceCoefficientByPn(...args),
-  deletePriceCoefficientByPn: (...args: unknown[]) =>
-    mockDeletePriceCoefficientByPn(...args),
+  createPriceCoefficientWithAudit: (...args: unknown[]) =>
+    mockCreatePriceCoefficientWithAudit(...args),
+  updatePriceCoefficientByPnWithAudit: (...args: unknown[]) =>
+    mockUpdatePriceCoefficientByPnWithAudit(...args),
+  deletePriceCoefficientByPnWithAudit: (...args: unknown[]) =>
+    mockDeletePriceCoefficientByPnWithAudit(...args),
+  resetPriceCoefficientWithAudit: (...args: unknown[]) =>
+    mockResetPriceCoefficientWithAudit(...args),
   insertMissingMaxBomCoefficients: (...args: unknown[]) =>
     mockInsertMissingMaxBomCoefficients(...args),
-  logActivity: (...args: unknown[]) => mockLogActivity(...args),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -34,6 +37,14 @@ vi.mock("@/db/queries", () => ({
       this.name = "QueryError";
       this.errorCode = errorCode;
     }
+  },
+}));
+
+vi.mock("@/db", () => ({
+  db: {
+    transaction: vi.fn((cb: (tx: object) => unknown) =>
+      cb({ __isFakeTx: true }),
+    ),
   },
 }));
 
@@ -53,6 +64,7 @@ vi.mock("@/lib/pricing", () => ({
   DEFAULT_COEFFICIENT: 3.0,
 }));
 
+import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import {
   createCoefficientAction,
@@ -76,10 +88,15 @@ const createDatabaseError = (message: string) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockCreatePriceCoefficient.mockResolvedValue({ id: 1, pn: "ITC-001" });
-  mockUpdatePriceCoefficientByPn.mockResolvedValue({ pn: "ITC-001" });
-  mockDeletePriceCoefficientByPn.mockResolvedValue({ pn: "ITC-001" });
+  mockCreatePriceCoefficientWithAudit.mockResolvedValue({
+    id: 1,
+    pn: "ITC-001",
+  });
+  mockUpdatePriceCoefficientByPnWithAudit.mockResolvedValue(undefined);
+  mockDeletePriceCoefficientByPnWithAudit.mockResolvedValue(undefined);
+  mockResetPriceCoefficientWithAudit.mockResolvedValue(undefined);
   mockInsertMissingMaxBomCoefficients.mockResolvedValue(2);
+  mockInsertActivityLog.mockResolvedValue(undefined);
 });
 
 // ── createCoefficientAction ──────────────────────────────────────────────────
@@ -125,7 +142,7 @@ describe("createCoefficientAction", () => {
     expect(result.success).toBe(false);
   });
 
-  test("creates new coefficient and logs COEFFICIENT_CREATE", async () => {
+  test("calls createPriceCoefficientWithAudit with correct args", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockResolvedValue(undefined);
 
@@ -136,18 +153,16 @@ describe("createCoefficientAction", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(mockCreatePriceCoefficient).toHaveBeenCalledWith(
+    expect(mockCreatePriceCoefficientWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         pn: "ITC-001",
         coefficient: "2.50",
         source: "MANUAL",
         is_custom: true,
+        updated_by: adminUser.id,
       }),
     );
-    expect(mockUpdatePriceCoefficientByPn).not.toHaveBeenCalled();
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "COEFFICIENT_CREATE" }),
-    );
+    expect(mockUpdatePriceCoefficientByPnWithAudit).not.toHaveBeenCalled();
   });
 
   test("rejects when PN already exists as MAXBOM", async () => {
@@ -166,7 +181,7 @@ describe("createCoefficientAction", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(mockCreatePriceCoefficient).not.toHaveBeenCalled();
+    expect(mockCreatePriceCoefficientWithAudit).not.toHaveBeenCalled();
   });
 
   test("rejects when PN already exists as MANUAL", async () => {
@@ -185,7 +200,22 @@ describe("createCoefficientAction", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(mockCreatePriceCoefficient).not.toHaveBeenCalled();
+    expect(mockCreatePriceCoefficientWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("does not revalidate when helper rejects", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockResolvedValue(undefined);
+    mockCreatePriceCoefficientWithAudit.mockRejectedValue(
+      new QueryError("Coefficiente non trovato.", 404),
+    );
+    const result = await createCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.5,
+      source: "MANUAL",
+    });
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("returns QueryError message on QueryError", async () => {
@@ -268,10 +298,10 @@ describe("updateCoefficientAction", () => {
       coefficient: 2.5,
     });
     expect(result.success).toBe(false);
-    expect(mockUpdatePriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockUpdatePriceCoefficientByPnWithAudit).not.toHaveBeenCalled();
   });
 
-  test("updates existing coefficient and logs COEFFICIENT_UPDATE", async () => {
+  test("calls updatePriceCoefficientByPnWithAudit with correct args", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockResolvedValue({
       pn: "ITC-001",
@@ -286,20 +316,33 @@ describe("updateCoefficientAction", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(mockUpdatePriceCoefficientByPn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pn: "ITC-001",
-        coefficient: "2.00",
-        is_custom: true,
-      }),
+    expect(mockUpdatePriceCoefficientByPnWithAudit).toHaveBeenCalledWith({
+      pn: "ITC-001",
+      coefficient: "2.00",
+      updated_by: adminUser.id,
+    });
+    expect(mockCreatePriceCoefficientWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("does not revalidate when helper rejects (audit failure rolls back)", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockGetFullPriceCoefficientByPn.mockResolvedValue({
+      pn: "ITC-001",
+      coefficient: "3.00",
+      source: "MAXBOM",
+      is_custom: false,
+    });
+    mockUpdatePriceCoefficientByPnWithAudit.mockRejectedValue(
+      new QueryError("audit failure", 500),
     );
-    expect(mockCreatePriceCoefficient).not.toHaveBeenCalled();
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "COEFFICIENT_UPDATE",
-        metadata: expect.objectContaining({ old_value: "3.00" }),
-      }),
-    );
+
+    const result = await updateCoefficientAction({
+      pn: "ITC-001",
+      coefficient: 2.0,
+    });
+
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("returns QueryError message on QueryError", async () => {
@@ -360,7 +403,7 @@ describe("deleteCoefficientAction", () => {
 
     const result = await deleteCoefficientAction("ITC-A");
     expect(result.success).toBe(false);
-    expect(mockDeletePriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockDeletePriceCoefficientByPnWithAudit).not.toHaveBeenCalled();
   });
 
   test("allows deletion of orphan MAXBOM rows", async () => {
@@ -371,14 +414,13 @@ describe("deleteCoefficientAction", () => {
       source: "MAXBOM",
       is_custom: false,
     });
-    mockDeletePriceCoefficientByPn.mockResolvedValue({ pn: "ITC-001" });
 
     const result = await deleteCoefficientAction("ITC-001");
     expect(result.success).toBe(true);
-    expect(mockDeletePriceCoefficientByPn).toHaveBeenCalledWith("ITC-001");
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "COEFFICIENT_DELETE" }),
-    );
+    expect(mockDeletePriceCoefficientByPnWithAudit).toHaveBeenCalledWith({
+      pn: "ITC-001",
+      updated_by: adminUser.id,
+    });
   });
 
   test("allows deletion of MANUAL rows", async () => {
@@ -392,10 +434,10 @@ describe("deleteCoefficientAction", () => {
 
     const result = await deleteCoefficientAction("ITC-CUSTOM");
     expect(result.success).toBe(true);
-    expect(mockDeletePriceCoefficientByPn).toHaveBeenCalledWith("ITC-CUSTOM");
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "COEFFICIENT_DELETE" }),
-    );
+    expect(mockDeletePriceCoefficientByPnWithAudit).toHaveBeenCalledWith({
+      pn: "ITC-CUSTOM",
+      updated_by: adminUser.id,
+    });
   });
 
   test("returns notFound when row missing", async () => {
@@ -454,10 +496,10 @@ describe("resetCoefficientAction", () => {
 
     const result = await resetCoefficientAction("ITC-CUSTOM");
     expect(result.success).toBe(false);
-    expect(mockUpdatePriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockResetPriceCoefficientWithAudit).not.toHaveBeenCalled();
   });
 
-  test("resets MAXBOM row to default and flips is_custom to false", async () => {
+  test("calls resetPriceCoefficientWithAudit with correct args", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockResolvedValue({
       pn: "ITC-001",
@@ -468,16 +510,11 @@ describe("resetCoefficientAction", () => {
 
     const result = await resetCoefficientAction("ITC-001");
     expect(result.success).toBe(true);
-    expect(mockUpdatePriceCoefficientByPn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pn: "ITC-001",
-        coefficient: "3.00",
-        is_custom: false,
-      }),
-    );
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "COEFFICIENT_RESET" }),
-    );
+    expect(mockResetPriceCoefficientWithAudit).toHaveBeenCalledWith({
+      pn: "ITC-001",
+      defaultCoefficient: "3.00",
+      updated_by: adminUser.id,
+    });
   });
 
   test("returns QueryError message on QueryError", async () => {
@@ -518,7 +555,7 @@ describe("syncMaxBomCoefficientsAction", () => {
     expect(result.success).toBe(false);
   });
 
-  test("inserts only missing MaxBOM PNs", async () => {
+  test("inserts only missing MaxBOM PNs and logs activity inside transaction", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     // ITC-A and ITC-B already exist; ITC-C is missing
     mockGetPriceCoefficientsByArray.mockResolvedValue([
@@ -533,9 +570,14 @@ describe("syncMaxBomCoefficientsAction", () => {
     expect(mockInsertMissingMaxBomCoefficients).toHaveBeenCalledWith(
       ["ITC-C"],
       "3.00",
+      expect.anything(),
     );
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "COEFFICIENT_SYNC" }),
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "COEFFICIENT_SYNC",
+        metadata: expect.objectContaining({ inserted: 1, pns: ["ITC-C"] }),
+      }),
+      expect.anything(),
     );
   });
 
@@ -551,7 +593,7 @@ describe("syncMaxBomCoefficientsAction", () => {
     const result = await syncMaxBomCoefficientsAction();
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.inserted).toBe(0);
-    expect(mockLogActivity).not.toHaveBeenCalled();
+    expect(mockInsertActivityLog).not.toHaveBeenCalled();
   });
 
   test("returns QueryError message on QueryError", async () => {

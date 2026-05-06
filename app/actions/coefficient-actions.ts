@@ -2,16 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
+import { db } from "@/db";
 import {
-  createPriceCoefficient,
-  deletePriceCoefficientByPn,
+  createPriceCoefficientWithAudit,
+  deletePriceCoefficientByPnWithAudit,
   getFullPriceCoefficientByPn,
   getPriceCoefficientsByArray,
   getUserData,
+  insertActivityLog,
   insertMissingMaxBomCoefficients,
-  logActivity,
   QueryError,
-  updatePriceCoefficientByPn,
+  resetPriceCoefficientWithAudit,
+  updatePriceCoefficientByPnWithAudit,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { collectMaxBomPns, DEFAULT_COEFFICIENT } from "@/lib/pricing";
@@ -60,20 +62,12 @@ export async function createCoefficientAction(formData: {
       };
     }
 
-    await createPriceCoefficient({
+    await createPriceCoefficientWithAudit({
       pn,
       coefficient,
       source,
       is_custom: true,
       updated_by: auth.user.id,
-    });
-
-    await logActivity({
-      userId: auth.user.id,
-      action: "COEFFICIENT_CREATE",
-      targetEntity: "price_coefficient",
-      targetId: pn,
-      metadata: { old_value: null, new_value: coefficient },
     });
 
     revalidatePath(REVALIDATE_PATH);
@@ -109,19 +103,10 @@ export async function updateCoefficientAction(formData: {
     if (!existing)
       return { success: false as const, error: MSG.coefficient.notFound };
 
-    await updatePriceCoefficientByPn({
+    await updatePriceCoefficientByPnWithAudit({
       pn,
       coefficient,
-      is_custom: true,
       updated_by: auth.user.id,
-    });
-
-    await logActivity({
-      userId: auth.user.id,
-      action: "COEFFICIENT_UPDATE",
-      targetEntity: "price_coefficient",
-      targetId: pn,
-      metadata: { old_value: existing.coefficient, new_value: coefficient },
     });
 
     revalidatePath(REVALIDATE_PATH);
@@ -153,16 +138,9 @@ export async function deleteCoefficientAction(pn: string) {
         };
     }
 
-    const deleted = await deletePriceCoefficientByPn(pn);
-    if (!deleted)
-      return { success: false as const, error: MSG.coefficient.notFound };
-
-    await logActivity({
-      userId: auth.user.id,
-      action: "COEFFICIENT_DELETE",
-      targetEntity: "price_coefficient",
-      targetId: pn,
-      metadata: { old_value: existing.coefficient },
+    await deletePriceCoefficientByPnWithAudit({
+      pn,
+      updated_by: auth.user.id,
     });
 
     revalidatePath(REVALIDATE_PATH);
@@ -191,21 +169,10 @@ export async function resetCoefficientAction(pn: string) {
         error: MSG.coefficient.cannotResetManual,
       };
 
-    const oldValue = existing.coefficient;
-
-    await updatePriceCoefficientByPn({
+    await resetPriceCoefficientWithAudit({
       pn,
-      coefficient: DEFAULT_COEFFICIENT_DB,
-      is_custom: false,
+      defaultCoefficient: DEFAULT_COEFFICIENT_DB,
       updated_by: auth.user.id,
-    });
-
-    await logActivity({
-      userId: auth.user.id,
-      action: "COEFFICIENT_RESET",
-      targetEntity: "price_coefficient",
-      targetId: pn,
-      metadata: { old_value: oldValue, new_value: DEFAULT_COEFFICIENT_DB },
     });
 
     revalidatePath(REVALIDATE_PATH);
@@ -229,20 +196,26 @@ export async function syncMaxBomCoefficientsAction() {
     const existingSet = new Set(existing.map((r) => r.pn));
     const missing = maxBomPns.filter((pn) => !existingSet.has(pn));
 
-    const inserted = await insertMissingMaxBomCoefficients(
-      missing,
-      DEFAULT_COEFFICIENT_DB,
-    );
-
-    if (inserted > 0) {
-      await logActivity({
-        userId: auth.user.id,
-        action: "COEFFICIENT_SYNC",
-        targetEntity: "price_coefficient",
-        targetId: "MAXBOM",
-        metadata: { inserted, pns: missing.slice(0, 20) },
-      });
-    }
+    let inserted = 0;
+    await db.transaction(async (tx) => {
+      inserted = await insertMissingMaxBomCoefficients(
+        missing,
+        DEFAULT_COEFFICIENT_DB,
+        tx,
+      );
+      if (inserted > 0) {
+        await insertActivityLog(
+          {
+            userId: auth.user.id,
+            action: "COEFFICIENT_SYNC",
+            targetEntity: "price_coefficient",
+            targetId: "MAXBOM",
+            metadata: { inserted, pns: missing.slice(0, 20) },
+          },
+          tx,
+        );
+      }
+    });
 
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const, data: { inserted } };
