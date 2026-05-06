@@ -8,6 +8,7 @@ const mockHasEngineeringBom = vi.fn();
 const mockGetPartNumbersByArray = vi.fn();
 const mockInsertEngineeringBomItems = vi.fn();
 const mockSearchPartNumbers = vi.fn();
+const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -19,7 +20,7 @@ vi.mock("@/db/queries", () => ({
   insertEngineeringBomItems: (...args: unknown[]) =>
     mockInsertEngineeringBomItems(...args),
   searchPartNumbers: (...args: unknown[]) => mockSearchPartNumbers(...args),
-  logActivity: vi.fn(),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -159,6 +160,7 @@ function setupDefaultMocks() {
     { pn: "PN-004" },
   ]);
   mockInsertEngineeringBomItems.mockResolvedValue(undefined);
+  mockInsertActivityLog.mockResolvedValue(undefined);
   mockBuildCompleteBOM.mockResolvedValue({
     generalBOM: MOCK_GENERAL_BOM,
     waterTankBOMs: MOCK_TANK_BOMS,
@@ -376,6 +378,13 @@ describe("regenerateEngineeringBomAction", () => {
     const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
+  });
+
+  test("does not revalidate when audit log insert fails (BOM_REGENERATE rolls back)", async () => {
+    mockInsertActivityLog.mockRejectedValue(new Error("audit failure"));
+    const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 

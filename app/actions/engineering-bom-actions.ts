@@ -10,8 +10,8 @@ import {
   getPartNumbersByArray,
   getUserData,
   hasEngineeringBom,
+  insertActivityLog,
   insertEngineeringBomItems,
-  logActivity,
   QueryError,
   searchPartNumbers,
 } from "@/db/queries";
@@ -155,12 +155,18 @@ export async function snapshotEngineeringBomAction(confId: number) {
 
   try {
     const items = await prepareBomItems(auth.configuration);
-    await insertEngineeringBomItems(items);
-    await logActivity({
-      userId: auth.user.id,
-      action: "BOM_GENERATE",
-      targetEntity: "configuration",
-      targetId: confId.toString(),
+    await db.transaction(async (tx) => {
+      await insertEngineeringBomItems(items, tx);
+      await insertActivityLog(
+        {
+          userId: auth.user.id,
+          action: "BOM_GENERATE",
+          targetEntity: "configuration",
+          targetId: confId.toString(),
+          metadata: { items_count: items.length },
+        },
+        tx,
+      );
     });
 
     revalidatePath(`/configurazioni/bom/${confId}`);
@@ -192,12 +198,16 @@ export async function regenerateEngineeringBomAction(confId: number) {
       if (items.length > 0) {
         await tx.insert(engineeringBomItems).values(items);
       }
-    });
-    await logActivity({
-      userId: auth.user.id,
-      action: "BOM_REGENERATE",
-      targetEntity: "configuration",
-      targetId: confId.toString(),
+      await insertActivityLog(
+        {
+          userId: auth.user.id,
+          action: "BOM_REGENERATE",
+          targetEntity: "configuration",
+          targetId: confId.toString(),
+          metadata: { items_count: items.length },
+        },
+        tx,
+      );
     });
 
     revalidatePath(`/configurazioni/bom/${confId}`);
