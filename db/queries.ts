@@ -276,8 +276,11 @@ export const duplicateConfigurationRecord = async (
   });
 };
 
-export const deleteConfiguration = async (id: number) => {
-  await db.delete(configurations).where(eq(configurations.id, id));
+export const deleteConfiguration = async (
+  id: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) => {
+  await txOrDb.delete(configurations).where(eq(configurations.id, id));
 };
 
 export const updateConfiguration = async (
@@ -347,6 +350,7 @@ export const updateConfigStatus = async (
   confId: number,
   user: NonNullable<UserData>,
   statusData: ConfigStatusSchema,
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const configuration = await getConfiguration(confId);
 
@@ -394,7 +398,9 @@ export const updateConfigStatus = async (
     }
   }
 
-  const [response] = await db
+  const fromStatus = configuration.status;
+
+  const [response] = await txOrDb
     .update(configurations)
     .set({ status: statusData.status })
     .where(eq(configurations.id, confId))
@@ -404,7 +410,7 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.updateNotFoundOrUnauthorized, 404);
   }
 
-  return response;
+  return { id: response.id, fromStatus };
 };
 
 export const insertWaterTank = async (
@@ -626,9 +632,10 @@ export async function hasOfferSnapshot(
 
 export async function insertEngineeringBomItems(
   items: NewEngineeringBomItem[],
+  txOrDb: DatabaseType | TransactionType = db,
 ) {
   if (items.length === 0) return;
-  await db.insert(engineeringBomItems).values(items);
+  await txOrDb.insert(engineeringBomItems).values(items);
 }
 
 /**

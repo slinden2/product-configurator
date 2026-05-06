@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { db } from "@/db";
 import {
   deleteConfiguration,
   getConfiguration,
   getUserData,
-  logActivity,
+  insertActivityLog,
   QueryError,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -39,12 +40,18 @@ export const deleteConfigurationAction = async (id: number) => {
   }
 
   try {
-    await deleteConfiguration(id);
-    await logActivity({
-      userId: user.id,
-      action: "CONFIG_DELETE",
-      targetEntity: "configuration",
-      targetId: id.toString(),
+    await db.transaction(async (tx) => {
+      await deleteConfiguration(id, tx);
+      await insertActivityLog(
+        {
+          userId: user.id,
+          action: "CONFIG_DELETE",
+          targetEntity: "configuration",
+          targetId: id.toString(),
+          metadata: { name: configuration.name, status: configuration.status },
+        },
+        tx,
+      );
     });
     revalidatePath("/configurazioni");
     revalidatePath("/");

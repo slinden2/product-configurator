@@ -10,6 +10,7 @@ const mockDeleteAllEngineeringBomItems = vi.fn();
 const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockResetWashBayEnergyChainFields = vi.fn();
 const mockResetWashBayNonEnergyChainFields = vi.fn();
+const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -25,7 +26,7 @@ vi.mock("@/db/queries", () => ({
     mockResetWashBayEnergyChainFields(...args),
   resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayNonEnergyChainFields(...args),
-  logActivity: vi.fn(),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -148,12 +149,21 @@ describe("editConfigurationAction", () => {
     mockDeleteOfferSnapshotByConfigurationId.mockResolvedValue(undefined);
     mockResetWashBayEnergyChainFields.mockResolvedValue(undefined);
     mockResetWashBayNonEnergyChainFields.mockResolvedValue(undefined);
+    mockInsertActivityLog.mockResolvedValue(undefined);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
     expect(mockUpdateConfiguration).toHaveBeenCalledTimes(1);
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "CONFIG_EDIT",
+        targetEntity: "configuration",
+        targetId: CONF_ID.toString(),
+      }),
+      mockTx,
+    );
   });
 
   test("returns validation error for invalid form data", async () => {

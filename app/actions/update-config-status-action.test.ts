@@ -4,13 +4,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockGetUserData = vi.fn();
 const mockUpdateConfigStatus = vi.fn();
-const mockGetConfiguration = vi.fn();
+const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   updateConfigStatus: (...args: unknown[]) => mockUpdateConfigStatus(...args),
-  getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
-  logActivity: vi.fn(),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -18,6 +17,15 @@ vi.mock("@/db/queries", () => ({
       this.name = "QueryError";
       this.errorCode = errorCode;
     }
+  },
+}));
+
+const mockTx = {};
+vi.mock("@/db", () => ({
+  db: {
+    transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) =>
+      cb(mockTx),
+    ),
   },
 }));
 
@@ -52,8 +60,11 @@ describe("updateConfigStatusAction", () => {
       role: "ENGINEER",
       initials: "TU",
     });
-    mockGetConfiguration.mockResolvedValue({ id: CONF_ID, status: "DRAFT" });
-    mockUpdateConfigStatus.mockResolvedValue({ id: CONF_ID });
+    mockUpdateConfigStatus.mockResolvedValue({
+      id: CONF_ID,
+      fromStatus: "DRAFT",
+    });
+    mockInsertActivityLog.mockResolvedValue(undefined);
   });
 
   test("returns success with config id on valid status update", async () => {
@@ -65,6 +76,16 @@ describe("updateConfigStatusAction", () => {
       CONF_ID,
       { id: "user-1", role: "ENGINEER", initials: "TU" },
       { status: "SUBMITTED" },
+      mockTx,
+    );
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "CONFIG_STATUS_CHANGE",
+        targetEntity: "configuration",
+        targetId: CONF_ID.toString(),
+        metadata: { from: "DRAFT", to: "SUBMITTED" },
+      }),
+      mockTx,
     );
   });
 
@@ -139,5 +160,17 @@ describe("updateConfigStatusAction", () => {
       status: "SUBMITTED",
     });
     expect(result).toEqual({ success: false, error: MSG.db.unknown });
+  });
+
+  test("does not revalidate when audit log insert fails (CONFIG_STATUS_CHANGE rolls back)", async () => {
+    mockInsertActivityLog.mockRejectedValue(
+      new QueryError("audit failure", 500),
+    );
+    const result = await updateConfigStatusAction(CONF_ID, {
+      status: "SUBMITTED",
+    });
+    expect(result.success).toBe(false);
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

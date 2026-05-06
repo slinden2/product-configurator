@@ -10,7 +10,7 @@ import {
   getConfigurationWithTanksAndBays,
   getUserData,
   hasEngineeringBom,
-  logActivity,
+  insertActivityLog,
   QueryError,
   resetWashBayEnergyChainFields,
   resetWashBayNonEnergyChainFields,
@@ -97,13 +97,16 @@ export const editConfigurationAction = async (
         }
         await deleteOfferSnapshotByConfigurationId(confId, tx);
       }
-    });
 
-    await logActivity({
-      userId: user.id,
-      action: "CONFIG_EDIT",
-      targetEntity: "configuration",
-      targetId: confId.toString(),
+      await insertActivityLog(
+        {
+          userId: user.id,
+          action: "CONFIG_EDIT",
+          targetEntity: "configuration",
+          targetId: confId.toString(),
+        },
+        tx,
+      );
     });
     revalidatePath(`/configurazioni/modifica/${confId}`);
     revalidatePath(`/configurazioni/bom/${confId}`);

@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
+import { db } from "@/db";
 import {
-  getConfiguration,
   getUserData,
-  logActivity,
+  insertActivityLog,
   QueryError,
   updateConfigStatus,
 } from "@/db/queries";
@@ -32,18 +32,27 @@ export const updateConfigStatusAction = async (
   }
 
   try {
-    const currentConf = await getConfiguration(confId);
-    const fromStatus = currentConf?.status;
-    const updatedConf = await updateConfigStatus(confId, user, validation.data);
-    await logActivity({
-      userId: user.id,
-      action: "CONFIG_STATUS_CHANGE",
-      targetEntity: "configuration",
-      targetId: confId.toString(),
-      metadata: { from: fromStatus, to: validation.data.status },
+    const { id: updatedId } = await db.transaction(async (tx) => {
+      const result = await updateConfigStatus(
+        confId,
+        user,
+        validation.data,
+        tx,
+      );
+      await insertActivityLog(
+        {
+          userId: user.id,
+          action: "CONFIG_STATUS_CHANGE",
+          targetEntity: "configuration",
+          targetId: confId.toString(),
+          metadata: { from: result.fromStatus, to: validation.data.status },
+        },
+        tx,
+      );
+      return result;
     });
-    revalidatePath(`/configurazioni/modifica/${updatedConf.id}`);
-    return { success: true as const, id: updatedConf.id };
+    revalidatePath(`/configurazioni/modifica/${updatedId}`);
+    return { success: true as const, id: updatedId };
   } catch (err) {
     console.error("Failed to update configuration status:", err);
     if (err instanceof QueryError) {
