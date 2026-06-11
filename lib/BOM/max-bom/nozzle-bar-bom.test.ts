@@ -58,6 +58,7 @@ const PNS = {
   FITTINGS_FOR_WAX_PUMP_INOX: "450.36.076IN",
   FITTINGS_FOR_RINSE_WITHOUT_PREWASH_INOX: "450.36.077IN",
   FITTINGS_FOR_DOUBLE_SUPPLY_INOX: "450.36.078IN",
+  CHASSIS_WASH_DETERGENT_BAR: "1100.024.140",
 };
 
 describe("nozzleBarBOM — rinse arch/bars", () => {
@@ -533,5 +534,18 @@ describe("nozzleBarBOM — tags", () => {
     nozzleBarBOM.forEach((item) => {
       expect(item.tag).toBeDefined();
     });
+  });
+});
+
+describe("nozzleBarBOM — chassis wash detergent bar", () => {
+  test("has_chassis_wash_detergent_pump → underground detergent bar group included (qty=1)", () => {
+    const config = makeConfig({ has_chassis_wash_detergent_pump: true });
+    expect(pns(config)).toContain(PNS.CHASSIS_WASH_DETERGENT_BAR);
+    expect(qty(config, PNS.CHASSIS_WASH_DETERGENT_BAR)).toBe(1);
+  });
+
+  test("!has_chassis_wash_detergent_pump → underground detergent bar group not included", () => {
+    const config = makeConfig({ has_chassis_wash_detergent_pump: false });
+    expect(pns(config)).not.toContain(PNS.CHASSIS_WASH_DETERGENT_BAR);
   });
 });

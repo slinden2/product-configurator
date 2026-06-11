@@ -35,6 +35,7 @@ const PART_NUMBERS = {
   FITTINGS_FOR_RINSE_WITHOUT_PREWASH_INOX: "450.36.077IN",
   FITTINGS_FOR_DOUBLE_SUPPLY: "450.36.078",
   FITTINGS_FOR_DOUBLE_SUPPLY_INOX: "450.36.078IN",
+  CHASSIS_WASH_DETERGENT_BAR: "1100.024.140",
 } as const satisfies Record<string, string>;
 
 const hasHpRoofBar = (config: GeneralBOMConfig): boolean =>
@@ -452,5 +453,14 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     qty: 1,
     _description: "Fittings for double supply",
     tag: "RINSE_BARS",
+  },
+
+  // Chassis wash detergent
+  {
+    pn: PART_NUMBERS.CHASSIS_WASH_DETERGENT_BAR,
+    conditions: [(config) => config.has_chassis_wash_detergent_pump],
+    qty: 1,
+    _description: "Underground detergent bar group for dosing pump",
+    tag: "MISC",
   },
 ];

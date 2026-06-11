@@ -44,6 +44,8 @@ export function makeValidConfig(
     has_foam: false,
     has_acid_pump: false,
     acid_pump_pos: undefined,
+    has_chassis_wash_detergent_pump: false,
+    has_chassis_wash_detergent_manual_antifreeze: false,
     has_shampoo_pump: false,
     has_wax_pump: false,
     water_1_type: "NETWORK",

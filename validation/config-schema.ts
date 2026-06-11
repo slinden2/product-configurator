@@ -3,6 +3,7 @@ import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import { brushSchema } from "@/validation/configuration/brush-schema";
 import { chemPumpSchema } from "@/validation/configuration/chem-pump-schema";
 import { hpPumpSchema } from "@/validation/configuration/hp-pump-schema";
+import { miscSchema } from "@/validation/configuration/misc-schema";
 import { railSchema } from "@/validation/configuration/rail-schema";
 import { supplyTypeSchema } from "@/validation/configuration/supply-type-schema";
 import { touchSchema } from "@/validation/configuration/touch-schema";
@@ -26,6 +27,7 @@ export const configSchema = baseSchema
   .and(hpPumpSchema)
   .and(touchSchema)
   .and(generalSchema)
+  .and(miscSchema)
   .superRefine((data, ctx) => {
     // Limit rail length to 25 if energy chain is selected
     if (
@@ -70,6 +72,19 @@ export const configSchema = baseSchema
         code: "custom",
         message:
           "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
+      });
+    }
+    // Manual antifreeze for the chassis-wash detergent pump requires both the
+    // pump itself and the global antifreeze option
+    if (
+      data.has_chassis_wash_detergent_manual_antifreeze &&
+      (!data.has_chassis_wash_detergent_pump || !data.has_antifreeze)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "L'antigelo manuale richiede la pompa detergente lavachassis e lo scarico invernale.",
+        path: ["has_chassis_wash_detergent_manual_antifreeze"],
       });
     }
   });
@@ -177,4 +192,7 @@ export const configDefaults: ConfigSchema = {
   touch_qty: undefined,
   touch_pos: undefined,
   touch_fixing_type: undefined,
+  // --- Misc Section ---
+  has_chassis_wash_detergent_pump: false,
+  has_chassis_wash_detergent_manual_antifreeze: false,
 };

@@ -12,6 +12,7 @@ import BrushSection from "@/components/config-form/brush-section";
 import ChemPumpSection from "@/components/config-form/chem-pump-section";
 import GeneralSection from "@/components/config-form/general-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
+import MiscSection from "@/components/config-form/misc-section";
 import RailSection from "@/components/config-form/rail-section";
 import SupplySection from "@/components/config-form/supply-section";
 import TouchSection from "@/components/config-form/touch-section";
@@ -187,6 +188,7 @@ const ConfigForm = ({
               <RailSection />
               <TouchSection />
               <HPPumpSection />
+              <MiscSection />
               <Fieldset
                 title="Note"
                 description="Note aggiuntive per la vendita e l'ufficio tecnico"

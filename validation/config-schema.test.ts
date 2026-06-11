@@ -21,6 +21,8 @@ const validBase = {
   has_foam: false,
   has_acid_pump: false,
   acid_pump_pos: undefined,
+  has_chassis_wash_detergent_pump: false,
+  has_chassis_wash_detergent_manual_antifreeze: false,
   has_shampoo_pump: false,
   has_wax_pump: false,
   // Water supply
@@ -237,6 +239,58 @@ describe("configSchema", () => {
         has_shampoo_pump: true,
       };
       expect(() => configSchema.parse(data)).not.toThrow();
+    });
+  });
+
+  describe("Chassis wash detergent manual antifreeze rule", () => {
+    test("should pass when pump, antifreeze and manual antifreeze are all enabled", () => {
+      const data = {
+        ...validBase,
+        has_chassis_wash_detergent_pump: true,
+        has_antifreeze: true,
+        has_chassis_wash_detergent_manual_antifreeze: true,
+      };
+      expect(() => configSchema.parse(data)).not.toThrow();
+    });
+
+    test("should pass when only the pump is enabled", () => {
+      const data = {
+        ...validBase,
+        has_chassis_wash_detergent_pump: true,
+      };
+      expect(() => configSchema.parse(data)).not.toThrow();
+    });
+
+    test("should fail when manual antifreeze is set without the pump", () => {
+      const data = {
+        ...validBase,
+        has_antifreeze: true,
+        has_chassis_wash_detergent_manual_antifreeze: true,
+      };
+      expect(() => configSchema.parse(data)).toThrow(
+        "L'antigelo manuale richiede la pompa detergente lavachassis e lo scarico invernale.",
+      );
+    });
+
+    test("should fail when manual antifreeze is set without global antifreeze", () => {
+      const data = {
+        ...validBase,
+        has_chassis_wash_detergent_pump: true,
+        has_chassis_wash_detergent_manual_antifreeze: true,
+      };
+      expect(() => configSchema.parse(data)).toThrow(
+        "L'antigelo manuale richiede la pompa detergente lavachassis e lo scarico invernale.",
+      );
+    });
+
+    test("should fail when manual antifreeze is set without both prerequisites", () => {
+      const data = {
+        ...validBase,
+        has_chassis_wash_detergent_manual_antifreeze: true,
+      };
+      expect(() => configSchema.parse(data)).toThrow(
+        "L'antigelo manuale richiede la pompa detergente lavachassis e lo scarico invernale.",
+      );
     });
   });
 });

@@ -96,6 +96,10 @@ export const configurations = pgTable("configurations", {
   has_foam: boolean().notNull(),
   has_acid_pump: boolean().notNull(),
   acid_pump_pos: chemPumpPosEnum("acid_pump_pos"),
+  has_chassis_wash_detergent_pump: boolean().notNull().default(false),
+  has_chassis_wash_detergent_manual_antifreeze: boolean()
+    .notNull()
+    .default(false),
   water_1_type: waterTypeEnum("water_1_type"),
   water_1_pump: water1PumpTypeEnum("water_1_pump_type"),
   inv_pump_outlet_dosatron_qty: integer(),

@@ -11,12 +11,21 @@ const PART_NUMBERS = {
   ACID_PUMP_WITH_ALARM: "450.03.028",
   DOSATRON_NO_ANTIFREEZE: "1100.061.004",
   DOSATRON_WITH_ANTIFREEZE: "1100.061.001",
-  DOSATRON_WITH_MANUAL_ANTIFREEZE: "1100.061.003", // TODO Not in BOM
+  DOSATRON_WITH_MANUAL_ANTIFREEZE: "1100.061.003",
   DOSATRON_ACID_NO_ANTIFREEZE: "1100.061.006",
   DOSATRON_ACID_WITH_ANTIFREEZE: "1100.061.005",
   FLOAT_SWITCH_FOR_DOSATRON: "1100.061.002",
   FOAM_KIT: "852.00.000",
 } as const satisfies Record<string, string>;
+
+const hasChemicalWashBayPump = (config: GeneralBOMConfig): boolean =>
+  config.has_chemical_pump && config.chemical_pump_pos === "WASH_BAY";
+
+// Chassis-wash detergent Dosatron with automatic antifreeze (the manual
+// variant is selected via has_chassis_wash_detergent_manual_antifreeze)
+const hasChassisWashAutoAntifreezePump = (config: GeneralBOMConfig): boolean =>
+  config.has_chassis_wash_detergent_pump &&
+  !config.has_chassis_wash_detergent_manual_antifreeze;
 
 export const dosingPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
@@ -87,22 +96,38 @@ export const dosingPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.DOSATRON_NO_ANTIFREEZE,
     conditions: [
-      (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === "WASH_BAY",
+      (config) =>
+        hasChemicalWashBayPump(config) ||
+        config.has_chassis_wash_detergent_pump,
       (config) => !config.has_antifreeze,
     ],
-    qty: (config) => config.chemical_qty || 0,
+    qty: (config) =>
+      (hasChemicalWashBayPump(config) ? config.chemical_qty || 0 : 0) +
+      (config.has_chassis_wash_detergent_pump ? 1 : 0),
     _description: "Dosatron, no antifreeze",
   },
   {
     pn: PART_NUMBERS.DOSATRON_WITH_ANTIFREEZE,
     conditions: [
-      (config) => config.has_chemical_pump,
-      (config) => config.chemical_pump_pos === "WASH_BAY",
+      (config) =>
+        hasChemicalWashBayPump(config) ||
+        hasChassisWashAutoAntifreezePump(config),
       (config) => config.has_antifreeze,
     ],
-    qty: (config) => config.chemical_qty || 0,
+    qty: (config) =>
+      (hasChemicalWashBayPump(config) ? config.chemical_qty || 0 : 0) +
+      (hasChassisWashAutoAntifreezePump(config) ? 1 : 0),
     _description: "Dosatron, with antifreeze",
+  },
+  {
+    pn: PART_NUMBERS.DOSATRON_WITH_MANUAL_ANTIFREEZE,
+    conditions: [
+      (config) => config.has_chassis_wash_detergent_pump,
+      (config) => config.has_antifreeze,
+      (config) => config.has_chassis_wash_detergent_manual_antifreeze,
+    ],
+    qty: 1,
+    _description: "Dosatron, with manual antifreeze (chassis wash detergent)",
   },
   {
     pn: PART_NUMBERS.DOSATRON_ACID_NO_ANTIFREEZE,

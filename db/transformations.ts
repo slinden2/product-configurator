@@ -31,6 +31,9 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
     has_chemical_pump: values.has_chemical_pump,
     has_foam: values.has_foam,
     has_acid_pump: values.has_acid_pump,
+    has_chassis_wash_detergent_pump: values.has_chassis_wash_detergent_pump,
+    has_chassis_wash_detergent_manual_antifreeze:
+      values.has_chassis_wash_detergent_manual_antifreeze,
     has_antifreeze: values.has_antifreeze,
     has_filter_backwash: values.has_filter_backwash,
     supply_type: values.supply_type as

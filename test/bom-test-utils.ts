@@ -25,6 +25,8 @@ export function makeGeneralBOMConfig(
     has_foam: false,
     has_acid_pump: false,
     acid_pump_pos: null,
+    has_chassis_wash_detergent_pump: false,
+    has_chassis_wash_detergent_manual_antifreeze: false,
     water_1_type: "NETWORK",
     water_1_pump: null,
     inv_pump_outlet_dosatron_qty: null,

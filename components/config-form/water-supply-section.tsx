@@ -154,6 +154,12 @@ const WaterSupplySection = () => {
           <CheckboxField<ConfigSchema>
             name="has_antifreeze"
             label="Scarico invernale"
+            fieldsToResetOnUncheck={[
+              {
+                fieldsToReset: ["has_chassis_wash_detergent_manual_antifreeze"],
+                resetToValue: false,
+              },
+            ]}
           />
         </div>
       </div>

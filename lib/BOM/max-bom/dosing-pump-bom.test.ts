@@ -34,6 +34,7 @@ const PNS = {
   ACID_PUMP_WITH_ALARM: "450.03.028",
   DOSATRON_NO_ANTIFREEZE: "1100.061.004",
   DOSATRON_WITH_ANTIFREEZE: "1100.061.001",
+  DOSATRON_WITH_MANUAL_ANTIFREEZE: "1100.061.003",
   DOSATRON_ACID_NO_ANTIFREEZE: "1100.061.006",
   DOSATRON_ACID_WITH_ANTIFREEZE: "1100.061.005",
   FLOAT_SWITCH_FOR_DOSATRON: "1100.061.002",
@@ -219,5 +220,156 @@ describe("dosingPumpBOM — foam kit", () => {
   test("!has_chemical_pump + has_foam → foam kit not included", () => {
     const config = makeConfig({ has_chemical_pump: false, has_foam: true });
     expect(pns(config)).not.toContain(PNS.FOAM_KIT);
+  });
+});
+
+describe("dosingPumpBOM — chassis wash detergent dosatron", () => {
+  const DOSATRON_VARIANTS = [
+    PNS.DOSATRON_NO_ANTIFREEZE,
+    PNS.DOSATRON_WITH_ANTIFREEZE,
+    PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE,
+  ];
+
+  test("pump off, !has_antifreeze, manual=false → no dosatron emitted", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: false,
+      has_antifreeze: false,
+      has_chassis_wash_detergent_manual_antifreeze: false,
+    });
+    for (const pn of DOSATRON_VARIANTS) {
+      expect(pns(config)).not.toContain(pn);
+    }
+  });
+
+  test("pump off, !has_antifreeze, manual=true (schema-invalid) → no dosatron emitted", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: false,
+      has_antifreeze: false,
+      has_chassis_wash_detergent_manual_antifreeze: true,
+    });
+    for (const pn of DOSATRON_VARIANTS) {
+      expect(pns(config)).not.toContain(pn);
+    }
+  });
+
+  test("pump off, has_antifreeze, manual=false → no dosatron emitted", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: false,
+      has_antifreeze: true,
+      has_chassis_wash_detergent_manual_antifreeze: false,
+    });
+    for (const pn of DOSATRON_VARIANTS) {
+      expect(pns(config)).not.toContain(pn);
+    }
+  });
+
+  test("pump off, has_antifreeze, manual=true (schema-invalid) → no dosatron emitted", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: false,
+      has_antifreeze: true,
+      has_chassis_wash_detergent_manual_antifreeze: true,
+    });
+    for (const pn of DOSATRON_VARIANTS) {
+      expect(pns(config)).not.toContain(pn);
+    }
+  });
+
+  test("pump on, !has_antifreeze, manual=false → dosatron no antifreeze (qty=1)", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: false,
+      has_chassis_wash_detergent_manual_antifreeze: false,
+    });
+    expect(pns(config)).toContain(PNS.DOSATRON_NO_ANTIFREEZE);
+    expect(qty(config, PNS.DOSATRON_NO_ANTIFREEZE)).toBe(1);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_WITH_ANTIFREEZE);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE);
+  });
+
+  test("pump on, !has_antifreeze, manual=true (schema-invalid) → dosatron no antifreeze", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: false,
+      has_chassis_wash_detergent_manual_antifreeze: true,
+    });
+    expect(pns(config)).toContain(PNS.DOSATRON_NO_ANTIFREEZE);
+    expect(qty(config, PNS.DOSATRON_NO_ANTIFREEZE)).toBe(1);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_WITH_ANTIFREEZE);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE);
+  });
+
+  test("pump on, has_antifreeze, manual=false → dosatron with antifreeze (qty=1)", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: true,
+      has_chassis_wash_detergent_manual_antifreeze: false,
+    });
+    expect(pns(config)).toContain(PNS.DOSATRON_WITH_ANTIFREEZE);
+    expect(qty(config, PNS.DOSATRON_WITH_ANTIFREEZE)).toBe(1);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_NO_ANTIFREEZE);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE);
+  });
+
+  test("pump on, has_antifreeze, manual=true → dosatron with manual antifreeze (qty=1)", () => {
+    const config = makeConfig({
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: true,
+      has_chassis_wash_detergent_manual_antifreeze: true,
+    });
+    expect(pns(config)).toContain(PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE);
+    expect(qty(config, PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE)).toBe(1);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_NO_ANTIFREEZE);
+    expect(pns(config)).not.toContain(PNS.DOSATRON_WITH_ANTIFREEZE);
+  });
+});
+
+describe("dosingPumpBOM — chassis wash detergent + chemical WASH_BAY combined quantities", () => {
+  test("chemical WASH_BAY (qty=2) + chassis pump, !has_antifreeze → combined qty 3", () => {
+    const config = makeConfig({
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 2,
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: false,
+    });
+    expect(qty(config, PNS.DOSATRON_NO_ANTIFREEZE)).toBe(3);
+  });
+
+  test("chemical WASH_BAY (qty=1) + chassis pump, has_antifreeze, manual=false → combined qty 2", () => {
+    const config = makeConfig({
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: true,
+      has_chassis_wash_detergent_manual_antifreeze: false,
+    });
+    expect(qty(config, PNS.DOSATRON_WITH_ANTIFREEZE)).toBe(2);
+  });
+
+  test("chemical WASH_BAY (qty=1) + chassis pump, has_antifreeze, manual=true → split rows", () => {
+    const config = makeConfig({
+      has_chemical_pump: true,
+      chemical_pump_pos: "WASH_BAY",
+      chemical_qty: 1,
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: true,
+      has_chassis_wash_detergent_manual_antifreeze: true,
+    });
+    // Chemical pump keeps its automatic-antifreeze dosatron
+    expect(qty(config, PNS.DOSATRON_WITH_ANTIFREEZE)).toBe(1);
+    // Chassis wash detergent gets the manual-antifreeze variant
+    expect(qty(config, PNS.DOSATRON_WITH_MANUAL_ANTIFREEZE)).toBe(1);
+  });
+
+  test("chassis pump only (chemical ONBOARD) → chemical does not contribute to dosatron qty", () => {
+    const config = makeConfig({
+      has_chemical_pump: true,
+      chemical_pump_pos: "ONBOARD",
+      chemical_qty: 2,
+      has_chassis_wash_detergent_pump: true,
+      has_antifreeze: false,
+    });
+    expect(qty(config, PNS.DOSATRON_NO_ANTIFREEZE)).toBe(1);
   });
 });
