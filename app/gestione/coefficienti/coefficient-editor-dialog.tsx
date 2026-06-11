@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import PartNumberCombobox from "@/components/shared/part-number-combobox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { PartNumber } from "@/db/schemas";
 
 const STEP = 0.05;
 
@@ -19,7 +21,7 @@ interface CoefficientEditorDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   initialCoefficient: string;
-  /** When undefined the dialog shows a PN text input (create mode). */
+  /** When undefined the dialog shows a PN search combobox (create mode). */
   pn?: string;
   onSave: (coefficient: string, pn?: string) => Promise<void>;
 }
@@ -33,19 +35,22 @@ export default function CoefficientEditorDialog({
   onSave,
 }: CoefficientEditorDialogProps) {
   const [coeffValue, setCoeffValue] = useState(initialCoefficient);
-  const [pnValue, setPnValue] = useState("");
+  const [selectedPn, setSelectedPn] = useState<PartNumber | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (open) {
       setCoeffValue(initialCoefficient);
-      setPnValue("");
+      setSelectedPn(null);
     }
   }, [open, initialCoefficient]);
 
   const handleSave = () => {
     startTransition(async () => {
-      await onSave(coeffValue, pn === undefined ? pnValue : undefined);
+      await onSave(
+        coeffValue,
+        pn === undefined ? (selectedPn?.pn ?? "") : undefined,
+      );
     });
   };
 
@@ -83,11 +88,10 @@ export default function CoefficientEditorDialog({
           {isCreateMode && (
             <div className="space-y-1.5">
               <Label htmlFor="coeff-dialog-pn">Codice Articolo</Label>
-              <Input
+              <PartNumberCombobox
                 id="coeff-dialog-pn"
-                placeholder="es. ITC-12345"
-                value={pnValue}
-                onChange={(e) => setPnValue(e.target.value)}
+                selectedPn={selectedPn}
+                onSelect={setSelectedPn}
               />
             </div>
           )}
