@@ -42,13 +42,15 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const handleRoleChange = async (newRole: string) => {
-    const result = await changeUserRoleAction({ userId: user.id, newRole });
-    if (result.success) {
-      toast.success(MSG.toast.roleUpdated);
-    } else {
-      toast.error(result.error ?? MSG.toast.roleUpdateFailed);
-    }
+  const handleRoleChange = (newRole: string) => {
+    startTransition(async () => {
+      const result = await changeUserRoleAction({ userId: user.id, newRole });
+      if (result.success) {
+        toast.success(MSG.toast.roleUpdated);
+      } else {
+        toast.error(result.error ?? MSG.toast.roleUpdateFailed);
+      }
+    });
   };
 
   const handlePasswordReset = () => {
@@ -73,7 +75,11 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
               {RoleLabels[user.role]}
             </span>
           ) : (
-            <Select defaultValue={user.role} onValueChange={handleRoleChange}>
+            <Select
+              defaultValue={user.role}
+              disabled={isPending}
+              onValueChange={handleRoleChange}
+            >
               <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
