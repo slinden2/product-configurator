@@ -9,6 +9,7 @@ const mockGetPartNumbersByArray = vi.fn();
 const mockInsertEngineeringBomItems = vi.fn();
 const mockSearchPartNumbers = vi.fn();
 const mockInsertActivityLog = vi.fn();
+const mockLogActivity = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -21,6 +22,7 @@ vi.mock("@/db/queries", () => ({
     mockInsertEngineeringBomItems(...args),
   searchPartNumbers: (...args: unknown[]) => mockSearchPartNumbers(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
+  logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -44,31 +46,29 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-// Mock the db module for direct drizzle calls (insert, update, query, transaction)
-const mockReturning = vi.fn();
-const mockWhere = vi.fn((): unknown => ({ returning: mockReturning }));
-const mockSet = vi.fn(() => ({ where: mockWhere }));
-const mockValues = vi.fn((): Promise<void> => Promise.resolve());
+// Mock the db module for direct drizzle calls (insert, transaction)
+const mockInsertReturning = vi.fn();
+const mockValues = vi.fn((): unknown => ({ returning: mockInsertReturning }));
 const mockInsert = vi.fn((_table: unknown) => ({ values: mockValues }));
-const mockUpdate = vi.fn((_table: unknown) => ({ set: mockSet }));
-const mockFindFirst = vi.fn();
 const mockTxDelete = vi.fn(() => ({
   where: vi.fn().mockResolvedValue(undefined),
 }));
 const mockTxInsert = vi.fn(() => ({
   values: vi.fn().mockResolvedValue(undefined),
 }));
+const mockTxSelectWhere = vi.fn();
+const mockTxSelect = vi.fn(() => ({
+  from: vi.fn(() => ({ where: mockTxSelectWhere })),
+}));
+const mockTxUpdateReturning = vi.fn();
+const mockTxUpdateWhere = vi.fn(() => ({ returning: mockTxUpdateReturning }));
+const mockTxUpdateSet = vi.fn(() => ({ where: mockTxUpdateWhere }));
+const mockTxUpdate = vi.fn(() => ({ set: mockTxUpdateSet }));
 const mockTransaction = vi.fn();
 
 vi.mock("@/db", () => ({
   db: {
     insert: (table: unknown) => mockInsert(table),
-    update: (table: unknown) => mockUpdate(table),
-    query: {
-      engineeringBomItems: {
-        findFirst: (opts: unknown) => mockFindFirst(opts),
-      },
-    },
     transaction: (fn: unknown) => mockTransaction(fn),
   },
 }));
@@ -161,17 +161,23 @@ function setupDefaultMocks() {
   ]);
   mockInsertEngineeringBomItems.mockResolvedValue(undefined);
   mockInsertActivityLog.mockResolvedValue(undefined);
+  mockLogActivity.mockResolvedValue(undefined);
+  mockInsertReturning.mockResolvedValue([{ id: ITEM_ID }]);
   mockBuildCompleteBOM.mockResolvedValue({
     generalBOM: MOCK_GENERAL_BOM,
     waterTankBOMs: MOCK_TANK_BOMS,
     washBayBOMs: MOCK_BAY_BOMS,
   });
   mockSearchPartNumbers.mockResolvedValue([]);
+  mockTxSelectWhere.mockResolvedValue([{ qty: 2, is_deleted: false }]);
+  mockTxUpdateReturning.mockResolvedValue([{ id: ITEM_ID }]);
   mockTransaction.mockImplementation(
     async (fn: (tx: unknown) => Promise<void>) => {
       await fn({
         delete: mockTxDelete,
         insert: mockTxInsert,
+        select: mockTxSelect,
+        update: mockTxUpdate,
       });
     },
   );
@@ -482,13 +488,36 @@ describe("addEngineeringBomItemAction", () => {
   });
 
   test("returns specific DB error message on insert failure", async () => {
-    mockValues.mockRejectedValueOnce(new Error("Unique constraint"));
+    mockInsertReturning.mockRejectedValueOnce(new Error("Unique constraint"));
     const result: ActionResult = await addEngineeringBomItemAction(
       CONF_ID,
       validFormData,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe("Errore sconosciuto.");
+  });
+
+  test("logs BOM_ITEM_ADD via tolerant logActivity on success", async () => {
+    await addEngineeringBomItemAction(CONF_ID, validFormData);
+    expect(mockLogActivity).toHaveBeenCalledWith({
+      userId: "engineer-user",
+      action: "BOM_ITEM_ADD",
+      targetEntity: "engineering_bom_item",
+      targetId: ITEM_ID.toString(),
+      metadata: {
+        configuration_id: CONF_ID,
+        pn: "PN-NEW",
+        qty: 5,
+        category: "GENERAL",
+        category_index: 0,
+      },
+    });
+  });
+
+  test("does not log when insert fails", async () => {
+    mockInsertReturning.mockRejectedValueOnce(new Error("DB down"));
+    await addEngineeringBomItemAction(CONF_ID, validFormData);
+    expect(mockLogActivity).not.toHaveBeenCalled();
   });
 
   test("returns auth error for SALES user", async () => {
@@ -507,13 +536,38 @@ describe("updateEngineeringBomItemQtyAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupDefaultMocks();
-    mockReturning.mockResolvedValue([{ id: ITEM_ID }]);
   });
 
   test("succeeds with valid qty", async () => {
     const result = await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
     expect(result.success).toBe(true);
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    expect(mockTxUpdateSet).toHaveBeenCalledWith({ qty: 3 });
+  });
+
+  test("logs BOM_ITEM_QTY_UPDATE with old/new qty inside the transaction", async () => {
+    await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      {
+        userId: "engineer-user",
+        action: "BOM_ITEM_QTY_UPDATE",
+        targetEntity: "engineering_bom_item",
+        targetId: ITEM_ID.toString(),
+        metadata: { configuration_id: CONF_ID, old_qty: 2, new_qty: 3 },
+      },
+      expect.anything(),
+    );
+  });
+
+  test("does not revalidate when audit log insert fails (qty update rolls back)", async () => {
+    mockInsertActivityLog.mockRejectedValue(new Error("audit failure"));
+    const result: ActionResult = await updateEngineeringBomItemQtyAction(
+      CONF_ID,
+      ITEM_ID,
+      3,
+    );
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("revalidates BOM path on success", async () => {
@@ -531,7 +585,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.invalidQty);
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockTransaction).not.toHaveBeenCalled();
   });
 
   test("rejects negative qty", async () => {
@@ -555,7 +609,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
   });
 
   test("returns error when item not found", async () => {
-    mockReturning.mockResolvedValue([]);
+    mockTxSelectWhere.mockResolvedValue([]);
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       999,
@@ -563,10 +617,11 @@ describe("updateEngineeringBomItemQtyAction", () => {
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.rowNotFound);
+    expect(mockTxUpdate).not.toHaveBeenCalled();
   });
 
   test("returns generic error on DB failure", async () => {
-    mockReturning.mockRejectedValue(new Error("DB error"));
+    mockTxUpdateReturning.mockRejectedValue(new Error("DB error"));
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
       ITEM_ID,
@@ -600,22 +655,49 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupDefaultMocks();
-    mockFindFirst.mockResolvedValue({ is_deleted: false });
-    mockWhere.mockResolvedValue(undefined as never);
   });
 
   test("toggles is_deleted from false to true", async () => {
-    mockFindFirst.mockResolvedValue({ is_deleted: false });
+    mockTxSelectWhere.mockResolvedValue([{ is_deleted: false }]);
     const result = await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(result.success).toBe(true);
-    expect(mockSet).toHaveBeenCalledWith({ is_deleted: true });
+    expect(mockTxUpdateSet).toHaveBeenCalledWith({ is_deleted: true });
   });
 
   test("toggles is_deleted from true to false (restore)", async () => {
-    mockFindFirst.mockResolvedValue({ is_deleted: true });
+    mockTxSelectWhere.mockResolvedValue([{ is_deleted: true }]);
     const result = await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(result.success).toBe(true);
-    expect(mockSet).toHaveBeenCalledWith({ is_deleted: false });
+    expect(mockTxUpdateSet).toHaveBeenCalledWith({ is_deleted: false });
+  });
+
+  test("logs BOM_ITEM_TOGGLE_DELETE with old/new state inside the transaction", async () => {
+    mockTxSelectWhere.mockResolvedValue([{ is_deleted: false }]);
+    await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      {
+        userId: "engineer-user",
+        action: "BOM_ITEM_TOGGLE_DELETE",
+        targetEntity: "engineering_bom_item",
+        targetId: ITEM_ID.toString(),
+        metadata: {
+          configuration_id: CONF_ID,
+          old_is_deleted: false,
+          new_is_deleted: true,
+        },
+      },
+      expect.anything(),
+    );
+  });
+
+  test("does not revalidate when audit log insert fails (toggle rolls back)", async () => {
+    mockInsertActivityLog.mockRejectedValue(new Error("audit failure"));
+    const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
+      CONF_ID,
+      ITEM_ID,
+    );
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("revalidates BOM path on success", async () => {
@@ -626,17 +708,18 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
   });
 
   test("returns error when item not found", async () => {
-    mockFindFirst.mockResolvedValue(null);
+    mockTxSelectWhere.mockResolvedValue([]);
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,
       999,
     );
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.bom.rowNotFound);
+    expect(mockTxUpdate).not.toHaveBeenCalled();
   });
 
   test("returns generic error on DB failure", async () => {
-    mockFindFirst.mockRejectedValue(new Error("DB error"));
+    mockTxSelectWhere.mockRejectedValue(new Error("DB error"));
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,
       ITEM_ID,

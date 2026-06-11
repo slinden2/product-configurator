@@ -12,6 +12,7 @@ import {
   hasEngineeringBom,
   insertActivityLog,
   insertEngineeringBomItems,
+  logActivity,
   QueryError,
   searchPartNumbers,
 } from "@/db/queries";
@@ -247,25 +248,36 @@ export async function addEngineeringBomItemAction(
   try {
     // 3. Atomic Insert with SQL Subquery
     // This removes the need for a separate "findMany" query to get the max order
-    await db.insert(engineeringBomItems).values({
-      configuration_id: confId,
-      category,
-      category_index,
-      pn,
-      description,
-      qty,
-      original_qty: null,
-      is_deleted: false,
-      is_added: true,
-      is_custom: is_custom ?? false,
-      tag: tag ?? null,
-      sort_order: sql`(
+    const [inserted] = await db
+      .insert(engineeringBomItems)
+      .values({
+        configuration_id: confId,
+        category,
+        category_index,
+        pn,
+        description,
+        qty,
+        original_qty: null,
+        is_deleted: false,
+        is_added: true,
+        is_custom: is_custom ?? false,
+        tag: tag ?? null,
+        sort_order: sql`(
         SELECT COALESCE(MAX(${engineeringBomItems.sort_order}), -1) + 1
         FROM ${engineeringBomItems}
         WHERE ${engineeringBomItems.configuration_id} = ${confId}
         AND ${engineeringBomItems.category} = ${category}
         AND ${engineeringBomItems.category_index} = ${category_index}
       )`,
+      })
+      .returning({ id: engineeringBomItems.id });
+
+    await logActivity({
+      userId: auth.user.id,
+      action: "BOM_ITEM_ADD",
+      targetEntity: "engineering_bom_item",
+      targetId: inserted.id.toString(),
+      metadata: { configuration_id: confId, pn, qty, category, category_index },
     });
 
     // 4. Cache Invalidation
@@ -301,23 +313,47 @@ export async function updateEngineeringBomItemQtyAction(
   }
 
   try {
-    const [updated] = await db
-      .update(engineeringBomItems)
-      .set({ qty })
-      .where(
-        and(
-          eq(engineeringBomItems.id, itemId),
-          eq(engineeringBomItems.configuration_id, confId),
-        ),
-      )
-      .returning({ id: engineeringBomItems.id });
+    await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ qty: engineeringBomItems.qty })
+        .from(engineeringBomItems)
+        .where(
+          and(
+            eq(engineeringBomItems.id, itemId),
+            eq(engineeringBomItems.configuration_id, confId),
+          ),
+        );
 
-    if (!updated) {
-      return {
-        success: false as const,
-        error: MSG.bom.rowNotFound,
-      };
-    }
+      if (!existing) throw new QueryError(MSG.bom.rowNotFound, 404);
+
+      const [updated] = await tx
+        .update(engineeringBomItems)
+        .set({ qty })
+        .where(
+          and(
+            eq(engineeringBomItems.id, itemId),
+            eq(engineeringBomItems.configuration_id, confId),
+          ),
+        )
+        .returning({ id: engineeringBomItems.id });
+
+      if (!updated) throw new QueryError(MSG.bom.rowNotFound, 404);
+
+      await insertActivityLog(
+        {
+          userId: auth.user.id,
+          action: "BOM_ITEM_QTY_UPDATE",
+          targetEntity: "engineering_bom_item",
+          targetId: itemId.toString(),
+          metadata: {
+            configuration_id: confId,
+            old_qty: existing.qty,
+            new_qty: qty,
+          },
+        },
+        tx,
+      );
+    });
 
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
@@ -343,25 +379,47 @@ export async function toggleDeleteEngineeringBomItemAction(
   }
 
   try {
-    const item = await db.query.engineeringBomItems.findFirst({
-      where: and(
-        eq(engineeringBomItems.id, itemId),
-        eq(engineeringBomItems.configuration_id, confId),
-      ),
-      columns: { is_deleted: true },
+    await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ is_deleted: engineeringBomItems.is_deleted })
+        .from(engineeringBomItems)
+        .where(
+          and(
+            eq(engineeringBomItems.id, itemId),
+            eq(engineeringBomItems.configuration_id, confId),
+          ),
+        );
+
+      if (!existing) throw new QueryError(MSG.bom.rowNotFound, 404);
+
+      const [updated] = await tx
+        .update(engineeringBomItems)
+        .set({ is_deleted: !existing.is_deleted })
+        .where(
+          and(
+            eq(engineeringBomItems.id, itemId),
+            eq(engineeringBomItems.configuration_id, confId),
+          ),
+        )
+        .returning({ id: engineeringBomItems.id });
+
+      if (!updated) throw new QueryError(MSG.bom.rowNotFound, 404);
+
+      await insertActivityLog(
+        {
+          userId: auth.user.id,
+          action: "BOM_ITEM_TOGGLE_DELETE",
+          targetEntity: "engineering_bom_item",
+          targetId: itemId.toString(),
+          metadata: {
+            configuration_id: confId,
+            old_is_deleted: existing.is_deleted,
+            new_is_deleted: !existing.is_deleted,
+          },
+        },
+        tx,
+      );
     });
-
-    if (!item) {
-      return {
-        success: false as const,
-        error: MSG.bom.rowNotFound,
-      };
-    }
-
-    await db
-      .update(engineeringBomItems)
-      .set({ is_deleted: !item.is_deleted })
-      .where(eq(engineeringBomItems.id, itemId));
 
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
