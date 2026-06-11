@@ -8,19 +8,9 @@ import {
   resetCoefficientAction,
   updateCoefficientAction,
 } from "@/app/actions/coefficient-actions";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { RowActionsMenu } from "@/components/shared/row-actions-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { PriceCoefficientWithUpdater } from "@/db/queries";
@@ -84,6 +74,7 @@ export default function CoefficientRow({
       } else {
         toast.error(result.error ?? MSG.db.unknown);
       }
+      setResetConfirmOpen(false);
     });
   };
 
@@ -95,6 +86,7 @@ export default function CoefficientRow({
       } else {
         toast.error(result.error ?? MSG.db.unknown);
       }
+      setDeleteConfirmOpen(false);
     });
   };
 
@@ -191,50 +183,32 @@ export default function CoefficientRow({
       />
 
       {canReset && (
-        <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Ripristina coefficiente</AlertDialogTitle>
-              <AlertDialogDescription>
-                Il coefficiente di {row.pn} verrà ripristinato al valore
-                predefinito ({defaultCoefficient.toFixed(2)}x). Continuare?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Annulla</AlertDialogCancel>
-              <AlertDialogAction onClick={handleReset}>
-                Ripristina
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmModal
+          isOpen={resetConfirmOpen}
+          onOpenChange={setResetConfirmOpen}
+          title="Ripristina coefficiente"
+          description={`Il coefficiente di ${row.pn} verrà ripristinato al valore predefinito (${defaultCoefficient.toFixed(2)}x). Continuare?`}
+          confirmText="Ripristina"
+          confirmVariant="default"
+          onConfirm={handleReset}
+          isConfirming={isPending}
+        />
       )}
 
       {canDelete && (
-        <AlertDialog
-          open={deleteConfirmOpen}
+        <ConfirmModal
+          isOpen={deleteConfirmOpen}
           onOpenChange={setDeleteConfirmOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Elimina coefficiente</AlertDialogTitle>
-              <AlertDialogDescription>
-                {isOrphan
-                  ? `Il coefficiente per ${row.pn} (non più in MaxBOM) verrà eliminato. Continuare?`
-                  : `Il coefficiente personalizzato per ${row.pn} verrà eliminato. Continuare?`}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Annulla</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className={buttonVariants({ variant: "destructive" })}
-              >
-                Elimina
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          title="Elimina coefficiente"
+          description={
+            isOrphan
+              ? `Il coefficiente per ${row.pn} (non più in MaxBOM) verrà eliminato. Continuare?`
+              : `Il coefficiente personalizzato per ${row.pn} verrà eliminato. Continuare?`
+          }
+          confirmText="Elimina"
+          onConfirm={handleDelete}
+          isConfirming={isPending}
+        />
       )}
     </>
   );
