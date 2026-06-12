@@ -13,6 +13,11 @@ export function formatEur(value: number): string {
   }).format(value);
 }
 
+/** Formats a discount percentage for Italian labels: 10 → "10", 10.5 → "10,50". */
+export function formatDiscountPctLabel(pct: number): string {
+  return pct % 1 === 0 ? `${pct}` : pct.toFixed(2).replace(".", ",");
+}
+
 export function formatDateDDMMYYYYHHMM(date: Date): string {
   return new Date(date).toLocaleDateString("it-IT", {
     year: "numeric",

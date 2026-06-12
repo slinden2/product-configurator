@@ -19,6 +19,7 @@ import {
 } from "@/lib/offer";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import ExportOfferButton from "./export-offer-button";
+import ExportOfferPdfButton from "./export-offer-pdf-button";
 import OfferActionButton from "./offer-action-button";
 import OfferView from "./offer-view";
 
@@ -57,6 +58,9 @@ const OfferPage = async (props: OfferPageProps) => {
     ? prepareOfferDisplayData(snapshot.items, discountPct)
     : { displayData: null, surcharges: [] };
 
+  const sourceLabel =
+    snapshot?.source === "EBOM" ? "distinta di commessa" : "calcolo automatico";
+
   return (
     <div className="space-y-6">
       <ConfigNavigationBar
@@ -75,11 +79,24 @@ const OfferPage = async (props: OfferPageProps) => {
             <OfferActionButton confId={confId} mode="regenerate" />
           )}
           {snapshot && displayData && (
-            <ExportOfferButton
-              data={{ ...displayData, surcharges }}
-              user={user}
-              discountPct={discountPct}
-            />
+            <>
+              <ExportOfferButton
+                data={{ ...displayData, surcharges }}
+                user={user}
+                discountPct={discountPct}
+              />
+              <ExportOfferPdfButton
+                data={{ ...displayData, surcharges }}
+                meta={{
+                  confId,
+                  clientName: configuration.name,
+                  generatedAt: formatDateDDMMYYYYHHMM(snapshot.generated_at),
+                  generatorEmail: snapshot.generator?.email ?? null,
+                  sourceLabel,
+                }}
+                discountPct={discountPct}
+              />
+            </>
           )}
         </div>
       </div>
@@ -127,10 +144,7 @@ const OfferPage = async (props: OfferPageProps) => {
           <p>
             Offerta generata il {formatDateDDMMYYYYHHMM(snapshot.generated_at)}
             {snapshot.generator?.email && <> da {snapshot.generator.email}</>} —
-            fonte:{" "}
-            {snapshot.source === "EBOM"
-              ? "distinta di commessa"
-              : "calcolo automatico"}
+            fonte: {sourceLabel}
           </p>
         </div>
       )}

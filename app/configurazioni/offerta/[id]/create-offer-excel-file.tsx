@@ -12,6 +12,7 @@ import {
 } from "@/lib/excel/workbook-builder";
 import type { GroupedOfferData } from "@/lib/offer";
 import { sumSurchargeTotal } from "@/lib/offer-surcharges";
+import { formatDiscountPctLabel } from "@/lib/utils";
 import type { OfferSurchargeItem } from "@/validation/offer-schema";
 
 export type ExportOfferData = GroupedOfferData & {
@@ -200,10 +201,7 @@ export function buildOfferWorkbook(
   if (hasDiscount) {
     const discountAmount =
       Math.round((data.total_list_price - data.discounted_total) * 100) / 100;
-    const pctLabel =
-      discountPct % 1 === 0
-        ? `${discountPct}`
-        : discountPct.toFixed(2).replace(".", ",");
+    const pctLabel = formatDiscountPctLabel(discountPct);
 
     const discountRow = sheet.getRow(r++);
     discountRow.getCell(1).value = `Sconto (${pctLabel}%)`;
