@@ -11,26 +11,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { SurchargeKind } from "@/types";
-import { SurchargeKindLabels } from "@/types";
 
 const STEP = 50;
 
-interface SurchargeEditorDialogProps {
+interface PriceEditorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  kind: SurchargeKind;
+  /** Full dialog title, e.g. "Modifica prezzo — Altezza non standard". */
+  title: string;
   initialPrice: string;
   onSave: (price: string) => Promise<void>;
 }
 
-export default function SurchargeEditorDialog({
+export default function PriceEditorDialog({
   open,
   onOpenChange,
-  kind,
+  title,
   initialPrice,
   onSave,
-}: SurchargeEditorDialogProps) {
+}: PriceEditorDialogProps) {
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [isPending, startTransition] = useTransition();
 
@@ -48,14 +47,14 @@ export default function SurchargeEditorDialog({
 
   const handleBlur = () => {
     const n = parseFloat(priceValue);
-    if (!Number.isNaN(n) && n > 0) setPriceValue(n.toFixed(2));
+    if (!Number.isNaN(n) && n >= 0) setPriceValue(n.toFixed(2));
   };
 
   const stepValue = (direction: 1 | -1) => {
     const n = parseFloat(priceValue);
     if (Number.isNaN(n)) return;
     const next = Math.round((n + direction * STEP) * 100) / 100;
-    if (next >= STEP) setPriceValue(next.toFixed(2));
+    if (next >= 0) setPriceValue(next.toFixed(2));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -72,14 +71,12 @@ export default function SurchargeEditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            Modifica prezzo — {SurchargeKindLabels[kind]}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-1.5">
-          <Label htmlFor="surcharge-dialog-price">Prezzo (€)</Label>
+          <Label htmlFor="price-dialog-price">Prezzo (€)</Label>
           <Input
-            id="surcharge-dialog-price"
+            id="price-dialog-price"
             type="text"
             inputMode="decimal"
             value={priceValue}

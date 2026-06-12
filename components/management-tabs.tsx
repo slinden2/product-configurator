@@ -8,6 +8,7 @@ const TAB_ITEMS = [
   { label: "Utenti", href: "/gestione/utenti" },
   { label: "Coefficienti", href: "/gestione/coefficienti" },
   { label: "Maggiorazioni", href: "/gestione/maggiorazioni" },
+  { label: "Installazione", href: "/gestione/installazione" },
 ];
 
 export default function ManagementTabs() {

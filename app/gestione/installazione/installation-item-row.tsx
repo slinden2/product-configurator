@@ -3,31 +3,31 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { updateSurchargeSettingAction } from "@/app/actions/surcharge-actions";
+import { updateInstallationItemSettingAction } from "@/app/actions/installation-actions";
 import PriceEditorDialog from "@/components/shared/price-editor-dialog";
 import { RowActionsMenu } from "@/components/shared/row-actions-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
-import type { SurchargeSetting } from "@/db/schemas/surcharge-settings";
+import type { InstallationItemSetting } from "@/db/schemas/installation-item-settings";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
-import type { SurchargeKind } from "@/types";
-import { SurchargeKindLabels } from "@/types";
+import type { InstallationItemKind } from "@/types";
+import { InstallationItemKindLabels } from "@/types";
 
-interface SurchargeRowProps {
-  row: SurchargeSetting;
+interface InstallationItemRowProps {
+  row: InstallationItemSetting;
 }
 
-export default function SurchargeRow({ row }: SurchargeRowProps) {
+export default function InstallationItemRow({ row }: InstallationItemRowProps) {
   const [editOpen, setEditOpen] = useState(false);
 
   const handleEdit = async (price: string) => {
-    const result = await updateSurchargeSettingAction({
-      kind: row.kind as SurchargeKind,
+    const result = await updateInstallationItemSettingAction({
+      kind: row.kind as InstallationItemKind,
       price,
     });
     if (result.success) {
-      toast.success(MSG.toast.surchargeUpdated);
+      toast.success(MSG.toast.installationItemUpdated);
       setEditOpen(false);
     } else {
       toast.error(result.error ?? MSG.db.unknown);
@@ -38,7 +38,7 @@ export default function SurchargeRow({ row }: SurchargeRowProps) {
     <>
       <TableRow>
         <TableCell className="text-sm">
-          {SurchargeKindLabels[row.kind as SurchargeKind]}
+          {InstallationItemKindLabels[row.kind as InstallationItemKind]}
         </TableCell>
         <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
           {formatEur(Number(row.price))}
@@ -59,7 +59,7 @@ export default function SurchargeRow({ row }: SurchargeRowProps) {
       <PriceEditorDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        title={`Modifica prezzo — ${SurchargeKindLabels[row.kind as SurchargeKind]}`}
+        title={`Modifica prezzo — ${InstallationItemKindLabels[row.kind as InstallationItemKind]}`}
         initialPrice={Number(row.price).toFixed(2)}
         onSave={handleEdit}
       />
