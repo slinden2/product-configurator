@@ -17,6 +17,8 @@ import {
   type ConfigurationWithWaterTanksAndWashBays,
   configurations,
   engineeringBomItems,
+  type InstallationItemSetting,
+  installationItemSettings,
   type NewConfiguration,
   type NewEngineeringBomItem,
   type NewWashBay,
@@ -37,8 +39,10 @@ import type {
   ActivityAction,
   CoefficientSource,
   ConfigurationStatusType,
+  InstallationItemKind,
   Role,
   SurchargeKind,
+  TransportMode,
 } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
@@ -46,7 +50,10 @@ import type {
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
-import type { OfferLineItem } from "@/validation/offer-schema";
+import type {
+  OfferInstallationItem,
+  OfferLineItem,
+} from "@/validation/offer-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
@@ -1119,6 +1126,11 @@ export async function getOfferSnapshotByConfigurationId(
       items: offerSnapshots.items,
       total_list_price: offerSnapshots.total_list_price,
       bom_rules_version: offerSnapshots.bom_rules_version,
+      show_net_total_only: offerSnapshots.show_net_total_only,
+      transport_amount: offerSnapshots.transport_amount,
+      transport_mode: offerSnapshots.transport_mode,
+      installation_mode: offerSnapshots.installation_mode,
+      installation_items: offerSnapshots.installation_items,
       updated_at: offerSnapshots.updated_at,
       generator: {
         id: userProfiles.id,
@@ -1139,14 +1151,23 @@ export async function upsertOfferSnapshot(
     items: OfferLineItem[];
     total_list_price: string;
     bom_rules_version: string;
+    installation_items: OfferInstallationItem[];
   },
   txOrDb: DatabaseType | TransactionType = db,
 ): Promise<OfferSnapshot> {
   const now = new Date();
-  const { configuration_id, ...fields } = data;
+  // installation_items seeds defaults on first insert only: like discount_pct,
+  // offer-level settings survive regeneration.
+  const { configuration_id, installation_items, ...fields } = data;
   const [row] = await txOrDb
     .insert(offerSnapshots)
-    .values({ configuration_id, ...fields, generated_at: now, updated_at: now })
+    .values({
+      configuration_id,
+      ...fields,
+      installation_items,
+      generated_at: now,
+      updated_at: now,
+    })
     .onConflictDoUpdate({
       target: offerSnapshots.configuration_id,
       set: { ...fields, generated_at: now, updated_at: now },
@@ -1195,6 +1216,51 @@ export async function updateOfferDiscountWithAudit(data: {
           previous_pct: existing.discount_pct,
           new_pct: data.discount_pct,
         },
+      },
+      tx,
+    );
+  });
+}
+
+export type OfferSnapshotSettingsUpdate = {
+  show_net_total_only: boolean;
+  transport_amount: string;
+  transport_mode: TransportMode;
+  installation_mode: TransportMode;
+  installation_items: OfferInstallationItem[];
+};
+
+export async function updateOfferSettingsWithAudit(data: {
+  confId: number;
+  settings: OfferSnapshotSettingsUpdate;
+  updated_by: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        show_net_total_only: offerSnapshots.show_net_total_only,
+        transport_amount: offerSnapshots.transport_amount,
+        transport_mode: offerSnapshots.transport_mode,
+        installation_mode: offerSnapshots.installation_mode,
+        installation_items: offerSnapshots.installation_items,
+      })
+      .from(offerSnapshots)
+      .where(eq(offerSnapshots.configuration_id, data.confId));
+
+    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
+
+    await tx
+      .update(offerSnapshots)
+      .set({ ...data.settings, updated_at: new Date() })
+      .where(eq(offerSnapshots.configuration_id, data.confId));
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "OFFER_SETTINGS_SET",
+        targetEntity: "offer_snapshot",
+        targetId: data.confId.toString(),
+        metadata: { old_value: existing, new_value: data.settings },
       },
       tx,
     );
@@ -1269,6 +1335,52 @@ export async function updateSurchargeSettingWithAudit(data: {
         userId: data.updated_by,
         action: "SURCHARGE_UPDATE",
         targetEntity: "surcharge_setting",
+        targetId: data.kind,
+        metadata: { old_value: existing.price, new_value: data.price },
+      },
+      tx,
+    );
+  });
+}
+
+export async function getInstallationItemSettings(): Promise<
+  InstallationItemSetting[]
+> {
+  return db.query.installationItemSettings.findMany({
+    orderBy: asc(installationItemSettings.kind),
+  });
+}
+
+/**
+ * Updates an installation item default price and writes the audit log in a
+ * single transaction, mirroring updateSurchargeSettingWithAudit.
+ */
+export async function updateInstallationItemSettingWithAudit(data: {
+  kind: InstallationItemKind;
+  price: string;
+  updated_by: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ price: installationItemSettings.price })
+      .from(installationItemSettings)
+      .where(eq(installationItemSettings.kind, data.kind));
+
+    if (!existing) throw new QueryError(MSG.installation.notFound, 404);
+
+    const [row] = await tx
+      .update(installationItemSettings)
+      .set({ price: data.price, updated_by: data.updated_by })
+      .where(eq(installationItemSettings.kind, data.kind))
+      .returning({ kind: installationItemSettings.kind });
+
+    if (!row) throw new QueryError(MSG.installation.notFound, 404);
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "INSTALLATION_ITEM_UPDATE",
+        targetEntity: "installation_item_setting",
         targetId: data.kind,
         metadata: { old_value: existing.price, new_value: data.price },
       },

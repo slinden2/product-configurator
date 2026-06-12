@@ -119,11 +119,15 @@ export const MSG = {
       `${n} nuovo/i PN MaxBOM aggiunto/i al listino.`,
     coefficientSyncNone: "Nessun nuovo PN MaxBOM da sincronizzare.",
     surchargeUpdated: "Maggiorazione aggiornata.",
+    installationItemUpdated: "Costo di installazione aggiornato.",
     offerGenerated: "Offerta generata.",
     offerRegenerated: "Offerta rigenerata.",
     offerDiscountSet: "Sconto aggiornato.",
     offerGenerateError: "Errore durante la generazione dell'offerta.",
     offerDiscountError: "Errore durante l'aggiornamento dello sconto.",
+    offerSettingsSet: "Impostazioni offerta aggiornate.",
+    offerSettingsError:
+      "Errore durante l'aggiornamento delle impostazioni offerta.",
   },
   saveWarning: {
     ebomOnly: {
@@ -181,6 +185,11 @@ export const MSG = {
       "Il prezzo di una o più maggiorazioni non è configurato. Contattare un amministratore.",
     adminOnly: "Solo gli amministratori possono gestire le maggiorazioni.",
   },
+  installation: {
+    notFound: "Voce di installazione non trovata.",
+    adminOnly:
+      "Solo gli amministratori possono gestire i costi di installazione.",
+  },
   offer: {
     unauthorized: "Solo SALES e ADMIN possono gestire l'offerta.",
     cannotEdit:
@@ -188,6 +197,7 @@ export const MSG = {
     notFound: "Offerta non trovata.",
     invalidDiscount:
       "Sconto non valido (deve essere tra 0% e 40%, multiplo di 0,5%).",
+    invalidSettings: "Impostazioni offerta non valide.",
     generateError: "Errore durante la generazione dell'offerta.",
     drift: {
       title: "Distinta aggiornata",

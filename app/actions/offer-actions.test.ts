@@ -8,8 +8,10 @@ const mockGetConfigurationWithTanksAndBays = vi.fn();
 const mockGetOfferSnapshotByConfigurationId = vi.fn();
 const mockGetEngineeringBomItems = vi.fn();
 const mockGetSurchargeSettings = vi.fn();
+const mockGetInstallationItemSettings = vi.fn();
 const mockUpsertOfferSnapshot = vi.fn();
 const mockUpdateOfferDiscountWithAudit = vi.fn();
+const mockUpdateOfferSettingsWithAudit = vi.fn();
 const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
@@ -22,10 +24,14 @@ vi.mock("@/db/queries", () => ({
     mockGetEngineeringBomItems(...args),
   getSurchargeSettings: (...args: unknown[]) =>
     mockGetSurchargeSettings(...args),
+  getInstallationItemSettings: (...args: unknown[]) =>
+    mockGetInstallationItemSettings(...args),
   getEbomMaxUpdatedAt: vi.fn().mockResolvedValue(null),
   upsertOfferSnapshot: (...args: unknown[]) => mockUpsertOfferSnapshot(...args),
   updateOfferDiscountWithAudit: (...args: unknown[]) =>
     mockUpdateOfferDiscountWithAudit(...args),
+  updateOfferSettingsWithAudit: (...args: unknown[]) =>
+    mockUpdateOfferSettingsWithAudit(...args),
   deleteOfferSnapshotByConfigurationId: vi.fn(),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
@@ -79,7 +85,9 @@ import { revalidatePath } from "next/cache";
 import {
   generateOfferAction,
   setOfferDiscountAction,
+  setOfferSettingsAction,
 } from "@/app/actions/offer-actions";
+import type { OfferSettings } from "@/validation/offer-schema";
 
 // --- Helpers ---
 
@@ -101,6 +109,7 @@ describe("generateOfferAction", () => {
     mockGetEngineeringBomItems.mockResolvedValue([]);
     mockGetOfferSnapshotByConfigurationId.mockResolvedValue(null);
     mockGetSurchargeSettings.mockResolvedValue([]);
+    mockGetInstallationItemSettings.mockResolvedValue([]);
     mockUpsertOfferSnapshot.mockResolvedValue({ id: 1 });
     mockInsertActivityLog.mockResolvedValue(undefined);
   });
@@ -236,6 +245,26 @@ describe("generateOfferAction", () => {
     expect(result.success).toBe(false);
     expect(revalidatePath).not.toHaveBeenCalled();
   });
+
+  test("passes installation defaults from settings to the snapshot", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
+    );
+    mockGetInstallationItemSettings.mockResolvedValue([
+      { kind: "BASE_SYSTEM", price: "2500.00" },
+    ]);
+    await generateOfferAction(CONF_ID);
+    expect(mockUpsertOfferSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        installation_items: [
+          { kind: "BASE_SYSTEM", amount: 2500, included: false },
+          { kind: "HP_ROOF_BAR", amount: 0, included: false },
+        ],
+      }),
+      expect.anything(),
+    );
+  });
 });
 
 // --- setOfferDiscountAction ---
@@ -351,6 +380,140 @@ describe("setOfferDiscountAction", () => {
     );
 
     const result = await setOfferDiscountAction(CONF_ID, 12.5);
+    expect(result.success).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+// --- setOfferSettingsAction ---
+
+function makeOfferSettings(
+  overrides: Partial<OfferSettings> = {},
+): OfferSettings {
+  return {
+    show_net_total_only: false,
+    transport_amount: 0,
+    transport_mode: "TBD",
+    installation_mode: "TBD",
+    installation_items: [
+      { kind: "BASE_SYSTEM", amount: 0, included: false },
+      { kind: "HP_ROOF_BAR", amount: 0, included: false },
+    ],
+    ...overrides,
+  };
+}
+
+describe("setOfferSettingsAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdateOfferSettingsWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("returns error when user not authenticated", async () => {
+    mockGetUserData.mockResolvedValue(null);
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
+    expect(result.success).toBe(false);
+  });
+
+  test("returns error for ENGINEER role", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("ENGINEER"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
+    );
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/SALES|ADMIN/);
+  });
+
+  test("SALES cannot set settings on another user's config", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-other"),
+    );
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
+    expect(result.success).toBe(false);
+  });
+
+  test("returns error when configuration is APPROVED", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("APPROVED", "user-1"),
+    );
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects negative transport amount", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    const result = await setOfferSettingsAction(
+      CONF_ID,
+      makeOfferSettings({ transport_amount: -10 }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects duplicate installation item kinds", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    const result = await setOfferSettingsAction(
+      CONF_ID,
+      makeOfferSettings({
+        installation_items: [
+          { kind: "BASE_SYSTEM", amount: 100, included: true },
+          { kind: "BASE_SYSTEM", amount: 200, included: false },
+        ],
+      }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  test("returns error when offer snapshot not found", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
+    );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue(null);
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("non trovata");
+  });
+
+  test("calls updateOfferSettingsWithAudit with stringified transport amount", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
+    );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue({ id: 1 });
+    const settings = makeOfferSettings({
+      transport_amount: 350.5,
+      transport_mode: "INCLUDED",
+      installation_mode: "INCLUDED",
+    });
+    const result = await setOfferSettingsAction(CONF_ID, settings);
+    expect(result.success).toBe(true);
+    expect(mockUpdateOfferSettingsWithAudit).toHaveBeenCalledWith({
+      confId: CONF_ID,
+      settings: {
+        show_net_total_only: false,
+        transport_amount: "350.50",
+        transport_mode: "INCLUDED",
+        installation_mode: "INCLUDED",
+        installation_items: settings.installation_items,
+      },
+      updated_by: "user-1",
+    });
+  });
+
+  test("does not revalidate when helper rejects (audit failure rolls back)", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("DRAFT", "user-1"),
+    );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue({ id: 1 });
+    mockUpdateOfferSettingsWithAudit.mockRejectedValue(
+      new Error("audit failure"),
+    );
+
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
     expect(result.success).toBe(false);
     expect(revalidatePath).not.toHaveBeenCalled();
   });

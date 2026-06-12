@@ -7,12 +7,14 @@ import { db } from "@/db";
 import {
   getConfigurationWithTanksAndBays,
   getEngineeringBomItems,
+  getInstallationItemSettings,
   getOfferSnapshotByConfigurationId,
   getSurchargeSettings,
   getUserData,
   insertActivityLog,
   QueryError,
   updateOfferDiscountWithAudit,
+  updateOfferSettingsWithAudit,
   upsertOfferSnapshot,
 } from "@/db/queries";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
@@ -24,9 +26,14 @@ import {
   computeOfferTotals,
   sumSurchargeTotal,
 } from "@/lib/offer";
+import { buildDefaultInstallationItems } from "@/lib/offer-installation";
 import { resolveOfferSurcharges } from "@/lib/offer-surcharges";
 import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
-import { offerDiscountSchema } from "@/validation/offer-schema";
+import {
+  type OfferSettings,
+  offerDiscountSchema,
+  offerSettingsSchema,
+} from "@/validation/offer-schema";
 
 function revalidateOfferPaths(confId: number) {
   revalidatePath(`/configurazioni/offerta/${confId}`);
@@ -63,11 +70,13 @@ export async function generateOfferAction(confId: number) {
   const { user, configuration } = auth;
 
   try {
-    const [existingSnapshot, ebomRows, surchargeSettings] = await Promise.all([
-      getOfferSnapshotByConfigurationId(confId),
-      getEngineeringBomItems(confId),
-      getSurchargeSettings(),
-    ]);
+    const [existingSnapshot, ebomRows, surchargeSettings, installationRows] =
+      await Promise.all([
+        getOfferSnapshotByConfigurationId(confId),
+        getEngineeringBomItems(confId),
+        getSurchargeSettings(),
+        getInstallationItemSettings(),
+      ]);
 
     const isRegenerate = existingSnapshot !== null;
     const hasEbom = ebomRows.length > 0;
@@ -108,6 +117,7 @@ export async function generateOfferAction(confId: number) {
           items,
           total_list_price: total_list_price.toFixed(2),
           bom_rules_version: BOM_RULES_VERSION,
+          installation_items: buildDefaultInstallationItems(installationRows),
         },
         tx,
       );
@@ -158,6 +168,48 @@ export async function setOfferDiscountAction(
     await updateOfferDiscountWithAudit({
       confId,
       discount_pct: parsed.data.discount_pct.toFixed(2),
+      updated_by: user.id,
+    });
+
+    revalidateOfferPaths(confId);
+    return { success: true as const };
+  } catch (err) {
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: MSG.db.error };
+    }
+    return { success: false as const, error: MSG.db.unknown };
+  }
+}
+
+export async function setOfferSettingsAction(
+  confId: number,
+  settings: OfferSettings,
+) {
+  const parsed = offerSettingsSchema.safeParse(settings);
+  if (!parsed.success) {
+    return {
+      success: false as const,
+      error: parsed.error.issues[0]?.message ?? MSG.offer.invalidSettings,
+    };
+  }
+
+  const auth = await authorizeOfferAction(confId);
+  if (!auth.success) return auth;
+  const { user } = auth;
+
+  try {
+    const existing = await getOfferSnapshotByConfigurationId(confId);
+    if (!existing) {
+      return { success: false as const, error: MSG.offer.notFound };
+    }
+
+    const { transport_amount, ...rest } = parsed.data;
+    await updateOfferSettingsWithAudit({
+      confId,
+      settings: { ...rest, transport_amount: transport_amount.toFixed(2) },
       updated_by: user.id,
     });
 

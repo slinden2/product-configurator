@@ -136,7 +136,9 @@ export const ActivityActions = [
   "OFFER_GENERATE",
   "OFFER_REGENERATE",
   "OFFER_DISCOUNT_SET",
+  "OFFER_SETTINGS_SET",
   "SURCHARGE_UPDATE",
+  "INSTALLATION_ITEM_UPDATE",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -161,7 +163,9 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_GENERATE: "Generazione offerta",
   OFFER_REGENERATE: "Rigenerazione offerta",
   OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
+  OFFER_SETTINGS_SET: "Impostazione opzioni offerta",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
+  INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
@@ -213,6 +217,31 @@ export const SurchargeKindLabels: Record<SurchargeKind, string> = {
   HEIGHT: "Altezza non standard",
   PAINT: "Verniciatura personalizzata",
 };
+
+export const TransportModes = ["INCLUDED", "SEPARATE", "TBD"] as const;
+export type TransportMode = (typeof TransportModes)[number];
+
+export const TransportModeLabels: Record<TransportMode, string> = {
+  INCLUDED: "Compreso",
+  SEPARATE: "A parte",
+  TBD: "Da definire",
+};
+
+// Installation shares the transport mode values; INCLUDED uses the feminine form.
+export const InstallationModeLabels: Record<TransportMode, string> = {
+  INCLUDED: "Compresa",
+  SEPARATE: "A parte",
+  TBD: "Da definire",
+};
+
+export const InstallationItemKinds = ["BASE_SYSTEM", "HP_ROOF_BAR"] as const;
+export type InstallationItemKind = (typeof InstallationItemKinds)[number];
+
+export const InstallationItemKindLabels: Record<InstallationItemKind, string> =
+  {
+    BASE_SYSTEM: "Impianto di base",
+    HP_ROOF_BAR: "Barra oscillante",
+  };
 
 export interface SelectOption {
   value: string | number;

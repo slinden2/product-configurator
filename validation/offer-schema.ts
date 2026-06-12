@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { BomTags, OfferSources, SurchargeKinds } from "@/types";
+import {
+  BomTags,
+  InstallationItemKinds,
+  OfferSources,
+  SurchargeKinds,
+  TransportModes,
+} from "@/types";
 
 export const offerBomLineItemSchema = z.object({
   pn: z.string(),
@@ -49,5 +55,30 @@ export const offerDiscountSchema = z.object({
 });
 
 export type OfferDiscount = z.infer<typeof offerDiscountSchema>;
+
+export const offerInstallationItemSchema = z.object({
+  kind: z.enum(InstallationItemKinds),
+  amount: z.number().min(0, "L'importo non può essere negativo."),
+  included: z.boolean(),
+});
+export type OfferInstallationItem = z.infer<typeof offerInstallationItemSchema>;
+
+export const offerInstallationItemsSchema = z.array(
+  offerInstallationItemSchema,
+);
+
+export const offerSettingsSchema = z.object({
+  show_net_total_only: z.boolean(),
+  transport_amount: z
+    .number()
+    .min(0, "L'importo del trasporto non può essere negativo."),
+  transport_mode: z.enum(TransportModes),
+  installation_mode: z.enum(TransportModes),
+  installation_items: offerInstallationItemsSchema.refine(
+    (items) => new Set(items.map((i) => i.kind)).size === items.length,
+    { message: "Voci di installazione duplicate." },
+  ),
+});
+export type OfferSettings = z.infer<typeof offerSettingsSchema>;
 
 export const offerSourceSchema = z.enum(OfferSources);

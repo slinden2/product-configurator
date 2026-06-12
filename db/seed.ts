@@ -2,12 +2,13 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   configurations,
+  installationItemSettings,
   surchargeSettings,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
-import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
+import { InstallationItemKinds, STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import { transformConfigToDbInsert } from "./transformations";
@@ -232,12 +233,16 @@ async function seedDb() {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
 
     await db.delete(surchargeSettings);
+    await db.delete(installationItemSettings);
     await db.delete(waterTanks);
     await db.delete(washBays);
     await db.delete(configurations);
 
     await db.execute(
       sql`ALTER SEQUENCE surcharge_settings_id_seq RESTART WITH 1`,
+    );
+    await db.execute(
+      sql`ALTER SEQUENCE installation_item_settings_id_seq RESTART WITH 1`,
     );
     await db.execute(sql`ALTER SEQUENCE water_tanks_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE wash_bays_id_seq RESTART WITH 1`);
@@ -300,6 +305,13 @@ async function seedDb() {
       { kind: "PAINT", price: "1200.00" },
     ])
     .onConflictDoNothing({ target: surchargeSettings.kind });
+
+  console.log("🌱 Seeding installation item settings...");
+  // Real default prices are set by admins via /gestione/installazione.
+  await db
+    .insert(installationItemSettings)
+    .values(InstallationItemKinds.map((kind) => ({ kind, price: "0.00" })))
+    .onConflictDoNothing({ target: installationItemSettings.kind });
 }
 
 await seedDb();

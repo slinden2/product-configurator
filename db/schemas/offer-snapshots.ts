@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   jsonb,
   numeric,
@@ -10,9 +11,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { configurations } from "@/db/schemas/configurations";
 import { userProfiles } from "@/db/schemas/user-profiles";
-import { OfferSources } from "@/types";
+import { OfferSources, TransportModes } from "@/types";
 
 export const offerSourceEnum = pgEnum("offer_source", OfferSources);
+export const transportModeEnum = pgEnum("transport_mode", TransportModes);
+export const installationModeEnum = pgEnum("installation_mode", TransportModes);
 
 export type OfferSnapshot = typeof offerSnapshots.$inferSelect;
 export type NewOfferSnapshot = typeof offerSnapshots.$inferInsert;
@@ -39,6 +42,15 @@ export const offerSnapshots = pgTable("offer_snapshots", {
     scale: 2,
   }).notNull(),
   bom_rules_version: varchar("bom_rules_version", { length: 20 }).notNull(),
+  show_net_total_only: boolean("show_net_total_only").notNull().default(false),
+  transport_amount: numeric("transport_amount", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  transport_mode: transportModeEnum("transport_mode").notNull().default("TBD"),
+  installation_mode: installationModeEnum("installation_mode")
+    .notNull()
+    .default("TBD"),
+  installation_items: jsonb("installation_items").notNull().default([]),
   updated_at: timestamp("updated_at", { mode: "date", precision: 3 })
     .notNull()
     .defaultNow()
