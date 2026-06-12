@@ -20,6 +20,11 @@ export const partNumbers = pgTable("part_numbers", {
   cost: numeric({ precision: 10, scale: 2 }).default("0").notNull(),
   pn_type: pnTypeEnum("pn_type").notNull(),
   is_phantom: boolean().notNull(),
+  // Subcontract-treated part (e.g. zinc-plating): BOM explosion stops here,
+  // its cost already includes the external treatment phase
+  is_subcontract: boolean().notNull().default(false),
+  family: varchar({ length: 255 }),
+  sub_family: varchar({ length: 255 }),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()
     .defaultNow(),

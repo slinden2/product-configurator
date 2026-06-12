@@ -32,6 +32,9 @@ export interface DBData {
   pn_type: 1 | 2;
   is_phantom: 0 | 1;
   cost: number | null;
+  is_subcontract: 0 | 1;
+  family: string | null;
+  sub_family: string | null;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
@@ -42,7 +45,10 @@ function isDBDataArray(array: any[]): array is DBData[] {
       typeof item.description === "string" &&
       (item.pn_type === 1 || item.pn_type === 2) &&
       (item.is_phantom === 0 || item.is_phantom === 1) &&
-      (typeof item.cost === "number" || item.cost === null),
+      (typeof item.cost === "number" || item.cost === null) &&
+      (item.is_subcontract === 0 || item.is_subcontract === 1) &&
+      (typeof item.family === "string" || item.family === null) &&
+      (typeof item.sub_family === "string" || item.sub_family === null),
   );
 }
 

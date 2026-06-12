@@ -30,7 +30,10 @@ function isPartNumberArray(array: any): array is NewPartNumber[] {
       typeof item.description === "string" &&
       pnTypeEnum.enumValues.includes(item.pn_type) &&
       (item.is_phantom === false || item.is_phantom === true) &&
-      typeof item.cost === "string",
+      typeof item.cost === "string" &&
+      (item.is_subcontract === false || item.is_subcontract === true) &&
+      (item.family === null || typeof item.family === "string") &&
+      (item.sub_family === null || typeof item.sub_family === "string"),
   );
 }
 
@@ -52,6 +55,9 @@ export async function batchUpsertPartNumbers() {
     cost: String(obj.cost ?? 0),
     pn_type: mapPnType(Number(obj.pn_type)),
     is_phantom: Boolean(obj.is_phantom),
+    is_subcontract: Boolean(obj.is_subcontract),
+    family: obj.family?.trim() || null,
+    sub_family: obj.sub_family?.trim() || null,
   }));
 
   if (!isPartNumberArray(cleanPartNumbers)) {
@@ -71,6 +77,9 @@ export async function batchUpsertPartNumbers() {
           cost: sql`excluded.cost`,
           pn_type: sql`excluded.pn_type`,
           is_phantom: sql`excluded.is_phantom`,
+          is_subcontract: sql`excluded.is_subcontract`,
+          family: sql`excluded.family`,
+          sub_family: sql`excluded.sub_family`,
         },
       });
   }
