@@ -34,10 +34,11 @@ function makePartChild(pn: string, qty: number) {
     sort_order: 1,
     pn_type: "PART" as const,
     is_phantom: false,
+    is_subcontract: false,
   };
 }
 
-function makeAssyChild(pn: string, qty: number) {
+function makeAssyChild(pn: string, qty: number, is_subcontract = false) {
   return {
     pn,
     description: `Desc ${pn}`,
@@ -45,6 +46,7 @@ function makeAssyChild(pn: string, qty: number) {
     sort_order: 1,
     pn_type: "ASSY" as const,
     is_phantom: false,
+    is_subcontract,
   };
 }
 
@@ -220,6 +222,73 @@ describe("explodeBomsToLeaves", () => {
     expect(result.generalBOM).toHaveLength(1);
     expect(result.waterTankBOMs).toHaveLength(1);
     expect(result.washBayBOMs).toHaveLength(1);
+  });
+
+  test("subcontract ASSY child becomes a leaf instead of being exploded", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "ASSY-TOP", pn_type: "ASSY", is_subcontract: false, cost: "0" },
+    ]);
+    // clearAllMocks does not drop once-queues leaked by earlier tests (e.g. depth cap)
+    mockGetAssemblyChildren.mockReset();
+    mockGetAssemblyChildren.mockResolvedValueOnce([
+      makeAssyChild("TREATED-PART", 2, true),
+      makePartChild("PART-A", 1),
+    ]);
+
+    await explodeBomsToLeaves({
+      generalBOM: [makeCostItem("ASSY-TOP", 3)],
+      waterTankBOMs: [],
+      washBayBOMs: [],
+    });
+
+    // Only ASSY-TOP is exploded; TREATED-PART is never queried for children
+    expect(mockGetAssemblyChildren).toHaveBeenCalledTimes(1);
+    expect(mockGetAssemblyChildren).toHaveBeenCalledWith("ASSY-TOP");
+    const [generalLeaves] = mockEnrichWithCosts.mock.calls[0];
+    const treated = generalLeaves.find(
+      (l: { pn: string }) => l.pn === "TREATED-PART",
+    );
+    expect(treated).toBeDefined();
+    expect(treated.qty).toBe(6); // 3 * 2
+  });
+
+  test("top-level subcontract ASSY passes through as a leaf without calling getAssemblyChildren", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "TREATED-TOP", pn_type: "ASSY", is_subcontract: true, cost: "50" },
+    ]);
+
+    await explodeBomsToLeaves({
+      generalBOM: [makeCostItem("TREATED-TOP", 2)],
+      waterTankBOMs: [],
+      washBayBOMs: [],
+    });
+
+    expect(mockGetAssemblyChildren).not.toHaveBeenCalled();
+    const [generalLeaves] = mockEnrichWithCosts.mock.calls[0];
+    expect(generalLeaves).toHaveLength(1);
+    expect(generalLeaves[0].pn).toBe("TREATED-TOP");
+    expect(generalLeaves[0].qty).toBe(2);
+  });
+
+  test("subcontract leaf with cost 0 emits a console.warn", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "TREATED-TOP", pn_type: "ASSY", is_subcontract: true, cost: "0" },
+    ]);
+    mockEnrichWithCosts.mockImplementation(async (items: { pn: string }[]) =>
+      items.map((i) => ({ ...i, cost: 0 })),
+    );
+
+    await explodeBomsToLeaves({
+      generalBOM: [makeCostItem("TREATED-TOP", 1)],
+      waterTankBOMs: [],
+      washBayBOMs: [],
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("subcontract leaf with cost 0: TREATED-TOP"),
+    );
+    warnSpy.mockRestore();
   });
 
   test("same ASSY appearing twice in BOM produces two exploded leaf groups (aggregation is downstream)", async () => {

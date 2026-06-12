@@ -31,6 +31,11 @@ export interface BOMItemWithCost extends BOMItemWithDescription {
   cost: number;
 }
 
+export interface BOMItemWithCostAndFamily extends BOMItemWithCost {
+  family: string | null;
+  sub_family: string | null;
+}
+
 export type WithSupplyData = Pick<
   Configuration,
   "supply_side" | "supply_type" | "supply_fixing_type"
@@ -40,20 +45,33 @@ export type WithSupplyData = Pick<
 
 export type GeneralBOMConfig = Configuration & { has_shelf_extension: boolean };
 
-/** Enrich BOM items with cost data from the DB. Shared by BOM class and bom-helpers. */
+/** Enrich BOM items with cost and family data from the DB. Shared by BOM class and bom-helpers. */
 export async function enrichWithCosts<T extends { pn: string }>(
   items: T[],
-): Promise<(T & { cost: number })[]> {
+): Promise<
+  (T & { cost: number; family: string | null; sub_family: string | null })[]
+> {
   const uniquePns = [...new Set(items.map((i) => i.pn))];
-  if (uniquePns.length === 0) return items.map((i) => ({ ...i, cost: 0 }));
+  if (uniquePns.length === 0)
+    return items.map((i) => ({
+      ...i,
+      cost: 0,
+      family: null,
+      sub_family: null,
+    }));
 
   const pnData = await getPartNumbersByArray(uniquePns);
-  const costMap = new Map(pnData.map((p) => [p.pn, Number(p.cost) || 0]));
+  const partMap = new Map(pnData.map((p) => [p.pn, p]));
 
-  return items.map((item) => ({
-    ...item,
-    cost: costMap.get(item.pn) ?? 0,
-  }));
+  return items.map((item) => {
+    const part = partMap.get(item.pn);
+    return {
+      ...item,
+      cost: Number(part?.cost) || 0,
+      family: part?.family ?? null,
+      sub_family: part?.sub_family ?? null,
+    };
+  });
 }
 
 export class BOM {

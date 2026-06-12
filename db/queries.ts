@@ -584,6 +584,7 @@ export async function getAssemblyChildren(parentPn: string) {
           description: true,
           pn_type: true,
           is_phantom: true,
+          is_subcontract: true,
         },
       },
     },
@@ -599,6 +600,7 @@ export async function getAssemblyChildren(parentPn: string) {
         sort_order: r.sort_order,
         pn_type: r.child.pn_type,
         is_phantom: r.child.is_phantom,
+        is_subcontract: r.child.is_subcontract,
       },
     ];
   });

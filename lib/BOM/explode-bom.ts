@@ -3,7 +3,11 @@ import {
   getAssemblyChildren,
   getPartNumbersByArray,
 } from "@/db/queries";
-import { type BOMItemWithCost, enrichWithCosts } from "@/lib/BOM";
+import {
+  type BOMItemWithCost,
+  type BOMItemWithCostAndFamily,
+  enrichWithCosts,
+} from "@/lib/BOM";
 import type { BomTag } from "@/types";
 
 const MAX_EXPLOSION_DEPTH = 10;
@@ -27,6 +31,7 @@ async function explodeAssy(
   childrenCache: Map<string, AssemblyChild[]>,
   depth: number,
   visited: Set<string>,
+  subcontractLeafPns: Set<string>,
 ): Promise<void> {
   if (depth >= MAX_EXPLOSION_DEPTH) {
     console.warn(
@@ -58,7 +63,10 @@ async function explodeAssy(
   nextVisited.add(pn);
   for (const child of children) {
     const childQty = qty * child.qty;
-    if (child.pn_type === "ASSY") {
+    // Subcontract-treated parts are leaves: their cost roll-up already
+    // includes the external treatment phase, so recursing to the raw
+    // untreated part underneath would understate the true cost
+    if (child.pn_type === "ASSY" && !child.is_subcontract) {
       await explodeAssy(
         child.pn,
         childQty,
@@ -69,8 +77,10 @@ async function explodeAssy(
         childrenCache,
         depth + 1,
         nextVisited,
+        subcontractLeafPns,
       );
     } else {
+      if (child.is_subcontract) subcontractLeafPns.add(child.pn);
       leaves.push({
         bucket,
         bucketIndex,
@@ -89,9 +99,15 @@ type ExplodedBOMs = {
   washBayBOMs: BOMItemWithCost[][];
 };
 
+type ExplodedLeafBOMs = {
+  generalBOM: BOMItemWithCostAndFamily[];
+  waterTankBOMs: BOMItemWithCostAndFamily[][];
+  washBayBOMs: BOMItemWithCostAndFamily[][];
+};
+
 export async function explodeBomsToLeaves(
   data: ExplodedBOMs,
-): Promise<ExplodedBOMs> {
+): Promise<ExplodedLeafBOMs> {
   const { generalBOM, waterTankBOMs, washBayBOMs } = data;
 
   // Seed type cache for all top-level PNs to avoid unnecessary ASSY queries
@@ -103,18 +119,19 @@ export async function explodeBomsToLeaves(
     ]),
   ];
   const topLevelPnData = await getPartNumbersByArray(allTopLevelPns);
-  const typeCache = new Map(topLevelPnData.map((p) => [p.pn, p.pn_type]));
+  const partCache = new Map(topLevelPnData.map((p) => [p.pn, p]));
 
   const childrenCache = new Map<string, AssemblyChild[]>();
   const leaves: TaggedLeaf[] = [];
+  const subcontractLeafPns = new Set<string>();
 
   const processRow = async (
     item: BOMItemWithCost,
     bucket: TaggedLeaf["bucket"],
     bucketIndex: number,
   ) => {
-    const pnType = typeCache.get(item.pn);
-    if (pnType === "ASSY") {
+    const part = partCache.get(item.pn);
+    if (part?.pn_type === "ASSY" && !part.is_subcontract) {
       await explodeAssy(
         item.pn,
         item.qty,
@@ -125,8 +142,10 @@ export async function explodeBomsToLeaves(
         childrenCache,
         0,
         new Set(),
+        subcontractLeafPns,
       );
     } else {
+      if (part?.is_subcontract) subcontractLeafPns.add(item.pn);
       leaves.push({
         bucket,
         bucketIndex,
@@ -193,6 +212,23 @@ export async function explodeBomsToLeaves(
       Promise.all(waterTankLeaves.map(enrichWithCosts)),
       Promise.all(washBayLeaves.map(enrichWithCosts)),
     ]);
+
+  // A subcontract leaf with cost 0 means calcolo costi was never run for it:
+  // the sheet would show 0, which is worse than the understated raw cost
+  const zeroCostSubcontractPns = new Set(
+    [
+      ...enrichedGeneral,
+      ...enrichedWaterTanks.flat(),
+      ...enrichedWashBays.flat(),
+    ]
+      .filter((l) => subcontractLeafPns.has(l.pn) && l.cost === 0)
+      .map((l) => l.pn),
+  );
+  for (const pn of zeroCostSubcontractPns) {
+    console.warn(
+      `[explode-bom] subcontract leaf with cost 0: ${pn} — calcolo costi missing, cost understated in Analisi Componenti`,
+    );
+  }
 
   return {
     generalBOM: enrichedGeneral,
