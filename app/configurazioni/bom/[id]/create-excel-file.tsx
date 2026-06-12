@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import type { UserData } from "@/db/queries";
-import type { BOMItemWithCost } from "@/lib/BOM";
+import type { BOMItemWithCost, BOMItemWithCostAndFamily } from "@/lib/BOM";
 import { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 import {
   addColumnHeaderRow,
@@ -16,11 +16,12 @@ import {
 import { type BomTag, BomTagLabels } from "@/types";
 
 export type BOM = BOMItemWithCost[];
+export type ExplodedLeaves = BOMItemWithCostAndFamily[];
 
 export type ExplodedBOM = {
-  generalBOM: BOM;
-  waterTankBOMs: BOM[];
-  washBayBOMs: BOM[];
+  generalBOM: ExplodedLeaves;
+  waterTankBOMs: ExplodedLeaves[];
+  washBayBOMs: ExplodedLeaves[];
 };
 
 export function buildCostWorkbook(
@@ -268,6 +269,12 @@ export function buildCostWorkbook(
       exploded.waterTankBOMs,
       exploded.washBayBOMs,
     );
+    buildAnalisiFamiglieSheet(
+      workbook,
+      exploded.generalBOM,
+      exploded.waterTankBOMs,
+      exploded.washBayBOMs,
+    );
   }
   return workbook;
 }
@@ -302,6 +309,20 @@ interface AggregatedRow {
   highlight: boolean;
 }
 
+/** Flag rows belonging to the cumulative top 80% of total cost (rows must be sorted descending). */
+function applyParetoHighlight<T extends { total: number }>(
+  rows: T[],
+): (T & { highlight: boolean })[] {
+  const grandTotal = rows.reduce((s, r) => s + r.total, 0);
+  let prevCumulative = 0;
+  return rows.map((r) => {
+    const highlight =
+      grandTotal > 0 && prevCumulative / grandTotal < PARETO_THRESHOLD;
+    prevCumulative += r.total;
+    return { ...r, highlight };
+  });
+}
+
 function aggregateAndLabel(items: BOM): AggregatedRow[] {
   const byPn = new Map<
     string,
@@ -326,14 +347,41 @@ function aggregateAndLabel(items: BOM): AggregatedRow[] {
     .filter((r) => r.total > 0)
     .sort((a, b) => b.total - a.total);
 
-  const grandTotal = rows.reduce((s, r) => s + r.total, 0);
-  let prevCumulative = 0;
-  return rows.map((r) => {
-    const highlight =
-      grandTotal > 0 && prevCumulative / grandTotal < PARETO_THRESHOLD;
-    prevCumulative += r.total;
-    return { ...r, highlight };
-  });
+  return applyParetoHighlight(rows);
+}
+
+const NO_FAMILY_LABEL = "N/A";
+
+interface FamilyAggregatedRow {
+  family: string;
+  subFamily: string;
+  total: number;
+  highlight: boolean;
+}
+
+function aggregateByFamily(items: ExplodedLeaves): FamilyAggregatedRow[] {
+  const byGroup = new Map<
+    string,
+    { family: string; subFamily: string; total: number }
+  >();
+  for (const item of items) {
+    const family = item.family ?? NO_FAMILY_LABEL;
+    const subFamily = item.sub_family ?? NO_FAMILY_LABEL;
+    const key = `${family}\u0000${subFamily}`;
+    const total = item.cost * item.qty;
+    const existing = byGroup.get(key);
+    if (existing) {
+      existing.total += total;
+    } else {
+      byGroup.set(key, { family, subFamily, total });
+    }
+  }
+
+  const rows = Array.from(byGroup.values())
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  return applyParetoHighlight(rows);
 }
 
 function applyAnalysisRowStyle(
@@ -368,6 +416,22 @@ function applyAnalysisTotalRowStyle(row: ExcelJS.Row) {
   });
 }
 
+/** Add the bold, centered, frozen header row shared by all analysis sheets. */
+function addAnalysisHeaderRow(sheet: ExcelJS.Worksheet, labels: string[]) {
+  const headerRow = sheet.addRow(labels);
+  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.font = { bold: true };
+    cell.alignment = { horizontal: "center" };
+    cell.border = THIN_BORDER;
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.lightGray },
+    };
+  });
+  sheet.views = [{ state: "frozen", ySplit: 1 }];
+}
+
 function buildAnalysisSheet(
   workbook: ExcelJS.Workbook,
   sheetName: string,
@@ -390,7 +454,7 @@ function buildAnalysisSheet(
   sheet.getColumn("pct").numFmt = "0.00%";
   sheet.getColumn("cum_pct").numFmt = "0.00%";
 
-  const headerRow = sheet.addRow([
+  addAnalysisHeaderRow(sheet, [
     "Codice",
     "Descrizione",
     "Qta",
@@ -399,18 +463,6 @@ function buildAnalysisSheet(
     "% Totale",
     "% Cumulativo",
   ]);
-  headerRow.eachCell({ includeEmpty: true }, (cell) => {
-    cell.font = { bold: true };
-    cell.alignment = { horizontal: "center" };
-    cell.border = THIN_BORDER;
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: COLORS.lightGray },
-    };
-  });
-
-  sheet.views = [{ state: "frozen", ySplit: 1 }];
 
   if (rows.length === 0) return;
 
@@ -482,4 +534,77 @@ function buildAnalisiComponentiSheet(
     ...washBayBOMs.flat(),
   ]);
   buildAnalysisSheet(workbook, "Analisi Componenti", rows);
+}
+
+function buildAnalisiFamiglieSheet(
+  workbook: ExcelJS.Workbook,
+  generalBOM: ExplodedLeaves,
+  waterTankBOMs: ExplodedLeaves[],
+  washBayBOMs: ExplodedLeaves[],
+) {
+  const rows = aggregateByFamily([
+    ...generalBOM,
+    ...waterTankBOMs.flat(),
+    ...washBayBOMs.flat(),
+  ]);
+
+  const sheet = workbook.addWorksheet("Analisi Famiglie");
+
+  sheet.columns = [
+    { key: "family", width: 40 },
+    { key: "sub_family", width: 40 },
+    { key: "total_cost", width: 13 },
+    { key: "pct", width: 11 },
+    { key: "cum_pct", width: 13 },
+  ];
+  sheet.getColumn("total_cost").numFmt = EUR_FMT;
+  sheet.getColumn("pct").numFmt = "0.00%";
+  sheet.getColumn("cum_pct").numFmt = "0.00%";
+
+  addAnalysisHeaderRow(sheet, [
+    "Famiglia",
+    "Sottofamiglia",
+    "Costo Tot.",
+    "% Totale",
+    "% Cumulativo",
+  ]);
+
+  if (rows.length === 0) return;
+
+  const firstDataRow = sheet.rowCount + 1;
+  rows.forEach((r, i) => {
+    const row = sheet.addRow({
+      family: r.family,
+      sub_family: r.subFamily,
+      // Static value: group total cannot be derived from a single qty × unit cost
+      total_cost: r.total,
+      pct: undefined,
+      cum_pct: undefined,
+    });
+    applyAnalysisRowStyle(row, r.highlight, i);
+  });
+  const lastDataRow = sheet.rowCount;
+  const totalRowNum = lastDataRow + 1;
+
+  for (let i = 0; i < rows.length; i++) {
+    const rNum = firstDataRow + i;
+    sheet.getCell(`D${rNum}`).value = {
+      formula: `C${rNum}/$C$${totalRowNum}`,
+    };
+    sheet.getCell(`E${rNum}`).value = {
+      formula: `SUM($C$${firstDataRow}:C${rNum})/$C$${totalRowNum}`,
+    };
+  }
+
+  const totalRow = sheet.addRow({
+    family: "TOTALE",
+    sub_family: undefined,
+    total_cost: { formula: `SUM(C${firstDataRow}:C${lastDataRow})` },
+    pct: 1,
+    cum_pct: 1,
+  });
+  applyAnalysisTotalRowStyle(totalRow);
+  totalRow.getCell("total_cost").numFmt = EUR_FMT;
+  totalRow.getCell("pct").numFmt = "0.00%";
+  totalRow.getCell("cum_pct").numFmt = "0.00%";
 }

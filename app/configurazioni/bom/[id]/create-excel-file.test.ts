@@ -6,6 +6,7 @@ import type ExcelJS from "exceljs";
 import {
   type BOM,
   buildCostWorkbook,
+  type ExplodedLeaves,
 } from "@/app/configurazioni/bom/[id]/create-excel-file";
 import type { UserData } from "@/db/queries";
 
@@ -18,6 +19,17 @@ function makeCostItem(overrides: Partial<BOM[number]> = {}): BOM[number] {
     _description: "internal desc",
     description: "Part description",
     cost: 10,
+    ...overrides,
+  };
+}
+
+function makeLeafItem(
+  overrides: Partial<ExplodedLeaves[number]> = {},
+): ExplodedLeaves[number] {
+  return {
+    ...makeCostItem(),
+    family: null,
+    sub_family: null,
     ...overrides,
   };
 }
@@ -301,7 +313,7 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
   }
 
   const exploded = (
-    generalBOM: BOM,
+    generalBOM: ExplodedLeaves,
   ): Parameters<typeof buildCostWorkbook>[4] => ({
     generalBOM,
     waterTankBOMs: [],
@@ -323,8 +335,8 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
   test("aggregates duplicate PNs across sections into one row", () => {
     const pn = "LEAF-001";
     const wb = buildCostWorkbook([], [], [], makeUser(), {
-      generalBOM: [makeCostItem({ pn, qty: 2, cost: 100 })],
-      waterTankBOMs: [[makeCostItem({ pn, qty: 3, cost: 100 })]],
+      generalBOM: [makeLeafItem({ pn, qty: 2, cost: 100 })],
+      waterTankBOMs: [[makeLeafItem({ pn, qty: 3, cost: 100 })]],
       washBayBOMs: [],
     });
     const sheet = getComponentiSheet(wb);
@@ -348,8 +360,8 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
       [],
       makeUser(),
       exploded([
-        makeCostItem({ pn: "ZERO-COST", qty: 5, cost: 0 }),
-        makeCostItem({ pn: "OK-PN", qty: 2, cost: 50 }),
+        makeLeafItem({ pn: "ZERO-COST", qty: 5, cost: 0 }),
+        makeLeafItem({ pn: "OK-PN", qty: 2, cost: 50 }),
       ]),
     );
     const pns = findCellValues(getComponentiSheet(wb));
@@ -364,8 +376,8 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
       [],
       makeUser(),
       exploded([
-        makeCostItem({ pn: "LOW-001", qty: 1, cost: 10 }),
-        makeCostItem({ pn: "HIGH-001", qty: 1, cost: 100 }),
+        makeLeafItem({ pn: "LOW-001", qty: 1, cost: 10 }),
+        makeLeafItem({ pn: "HIGH-001", qty: 1, cost: 100 }),
       ]),
     );
     const sheet = getComponentiSheet(wb);
@@ -380,8 +392,8 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
       [],
       makeUser(),
       exploded([
-        makeCostItem({ pn: "PN-A", qty: 1, cost: 100 }),
-        makeCostItem({ pn: "PN-B", qty: 1, cost: 50 }),
+        makeLeafItem({ pn: "PN-A", qty: 1, cost: 100 }),
+        makeLeafItem({ pn: "PN-B", qty: 1, cost: 50 }),
       ]),
     );
     // header=row1, PN-A=row2, PN-B=row3, TOTALE=row4
@@ -397,7 +409,7 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
       [],
       [],
       makeUser(),
-      exploded([makeCostItem({ pn: "PN-X", qty: 2, cost: 50 })]),
+      exploded([makeLeafItem({ pn: "PN-X", qty: 2, cost: 50 })]),
     );
     // header=row1, PN-X=row2, TOTALE=row3
     const sheet = getComponentiSheet(wb);
@@ -412,8 +424,8 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
       [],
       makeUser(),
       exploded([
-        makeCostItem({ pn: "BIG", qty: 1, cost: 900 }),
-        makeCostItem({ pn: "SMALL", qty: 1, cost: 100 }),
+        makeLeafItem({ pn: "BIG", qty: 1, cost: 900 }),
+        makeLeafItem({ pn: "SMALL", qty: 1, cost: 100 }),
       ]),
     );
     const sheet = getComponentiSheet(wb);
@@ -430,6 +442,183 @@ describe("Analisi Componenti sheet (exploded Pareto)", () => {
   test("empty exploded BOM produces sheet with only header row and no crash", () => {
     const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
     const sheet = getComponentiSheet(wb);
+    expect(sheet.rowCount).toBe(1);
+  });
+});
+
+describe("Analisi Famiglie sheet (family Pareto)", () => {
+  function getFamiglieSheet(wb: ExcelJS.Workbook) {
+    const sheet = wb.getWorksheet("Analisi Famiglie");
+    if (!sheet) throw new Error('Worksheet "Analisi Famiglie" not found');
+    return sheet;
+  }
+
+  const exploded = (
+    generalBOM: ExplodedLeaves,
+  ): Parameters<typeof buildCostWorkbook>[4] => ({
+    generalBOM,
+    waterTankBOMs: [],
+    washBayBOMs: [],
+  });
+
+  test("sheet is the fourth tab after Analisi Componenti", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
+    expect(wb.worksheets[3].name).toBe("Analisi Famiglie");
+  });
+
+  test("sheet is absent when no exploded data is passed", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser());
+    expect(wb.getWorksheet("Analisi Famiglie")).toBeUndefined();
+  });
+
+  test("groups leaves by family and sub-family, summing total cost across sections", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), {
+      generalBOM: [
+        makeLeafItem({
+          pn: "A",
+          qty: 2,
+          cost: 100,
+          family: "Motori",
+          sub_family: "Elettrici",
+        }),
+      ],
+      waterTankBOMs: [
+        [
+          makeLeafItem({
+            pn: "B",
+            qty: 1,
+            cost: 50,
+            family: "Motori",
+            sub_family: "Elettrici",
+          }),
+        ],
+      ],
+      washBayBOMs: [],
+    });
+    const sheet = getFamiglieSheet(wb);
+    // header=row1, single group row=row2, TOTALE=row3
+    expect(cellValue(sheet, 2, 1)).toBe("Motori");
+    expect(cellValue(sheet, 2, 2)).toBe("Elettrici");
+    expect(cellValue(sheet, 2, 3)).toBe(250); // 2*100 + 1*50
+    expect(cellValue(sheet, 3, 1)).toBe("TOTALE");
+  });
+
+  test("same family with different sub-families produces separate rows", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeLeafItem({
+          pn: "A",
+          cost: 100,
+          family: "Motori",
+          sub_family: "Elettrici",
+        }),
+        makeLeafItem({
+          pn: "B",
+          cost: 50,
+          family: "Motori",
+          sub_family: "Idraulici",
+        }),
+      ]),
+    );
+    const sheet = getFamiglieSheet(wb);
+    expect(cellValue(sheet, 2, 2)).toBe("Elettrici");
+    expect(cellValue(sheet, 3, 2)).toBe("Idraulici");
+  });
+
+  test("leaves without family fall into the N/A group", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeLeafItem({ pn: "A", cost: 100, family: null, sub_family: null }),
+      ]),
+    );
+    const sheet = getFamiglieSheet(wb);
+    expect(cellValue(sheet, 2, 1)).toBe("N/A");
+    expect(cellValue(sheet, 2, 2)).toBe("N/A");
+  });
+
+  test("sorts groups by total cost descending", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeLeafItem({ pn: "A", cost: 10, family: "Piccola" }),
+        makeLeafItem({ pn: "B", cost: 100, family: "Grande" }),
+      ]),
+    );
+    const sheet = getFamiglieSheet(wb);
+    expect(cellValue(sheet, 2, 1)).toBe("Grande");
+    expect(cellValue(sheet, 3, 1)).toBe("Piccola");
+  });
+
+  test("excludes zero-cost groups", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeLeafItem({ pn: "A", cost: 0, family: "Zero" }),
+        makeLeafItem({ pn: "B", cost: 100, family: "Ok" }),
+      ]),
+    );
+    const values = findCellValues(getFamiglieSheet(wb));
+    expect(values).not.toContain("Zero");
+    expect(values).toContain("Ok");
+  });
+
+  test("writes percentage formulas and TOTALE SUM formula", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeLeafItem({ pn: "A", cost: 100, family: "F1" }),
+        makeLeafItem({ pn: "B", cost: 50, family: "F2" }),
+      ]),
+    );
+    // header=row1, F1=row2, F2=row3, TOTALE=row4
+    const sheet = getFamiglieSheet(wb);
+    expect(cellFormula(sheet, 2, 4)).toBe("C2/$C$4");
+    expect(cellFormula(sheet, 2, 5)).toBe("SUM($C$2:C2)/$C$4");
+    expect(cellFormula(sheet, 4, 3)).toBe("SUM(C2:C3)");
+  });
+
+  test("highlights vital-few groups (top 80%) with yellow fill", () => {
+    const wb = buildCostWorkbook(
+      [],
+      [],
+      [],
+      makeUser(),
+      exploded([
+        makeLeafItem({ pn: "A", cost: 900, family: "Grande" }),
+        makeLeafItem({ pn: "B", cost: 100, family: "Piccola" }),
+      ]),
+    );
+    const sheet = getFamiglieSheet(wb);
+    expect(cellFillArgb(sheet, 2, 1)).toBe("FFF2CC");
+    expect(cellFillArgb(sheet, 3, 1)).not.toBe("FFF2CC");
+  });
+
+  test("header row is frozen", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
+    const sheet = getFamiglieSheet(wb);
+    expect(sheet.views[0]).toMatchObject({ state: "frozen", ySplit: 1 });
+  });
+
+  test("empty exploded BOM produces sheet with only header row and no crash", () => {
+    const wb = buildCostWorkbook([], [], [], makeUser(), exploded([]));
+    const sheet = getFamiglieSheet(wb);
     expect(sheet.rowCount).toBe(1);
   });
 });
