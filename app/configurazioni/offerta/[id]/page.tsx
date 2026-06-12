@@ -17,6 +17,10 @@ import {
   OFFER_STALENESS_DAYS,
   prepareOfferDisplayData,
 } from "@/lib/offer";
+import {
+  DEFAULT_OFFER_SETTINGS,
+  parseOfferSettings,
+} from "@/lib/offer-settings";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import ExportOfferButton from "./export-offer-button";
 import ExportOfferPdfButton from "./export-offer-pdf-button";
@@ -54,6 +58,9 @@ const OfferPage = async (props: OfferPageProps) => {
     : 0;
 
   const discountPct = snapshot ? Number(snapshot.discount_pct) : 0;
+  const settings = snapshot
+    ? parseOfferSettings(snapshot)
+    : DEFAULT_OFFER_SETTINGS;
   const { displayData, surcharges } = snapshot
     ? prepareOfferDisplayData(snapshot.items, discountPct)
     : { displayData: null, surcharges: [] };
@@ -84,6 +91,7 @@ const OfferPage = async (props: OfferPageProps) => {
                 data={{ ...displayData, surcharges }}
                 user={user}
                 discountPct={discountPct}
+                settings={settings}
               />
               <ExportOfferPdfButton
                 data={{ ...displayData, surcharges }}
@@ -95,6 +103,7 @@ const OfferPage = async (props: OfferPageProps) => {
                   sourceLabel,
                 }}
                 discountPct={discountPct}
+                settings={settings}
               />
             </>
           )}
@@ -155,6 +164,7 @@ const OfferPage = async (props: OfferPageProps) => {
           surcharges={surcharges}
           confId={confId}
           discountPct={discountPct}
+          settings={settings}
           editable={editable}
           stale={stale}
         />

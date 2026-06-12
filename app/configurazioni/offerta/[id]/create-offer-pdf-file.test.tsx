@@ -9,9 +9,23 @@ import {
   OfferPdfDocument,
   type OfferPdfMeta,
 } from "@/app/configurazioni/offerta/[id]/create-offer-pdf-file";
+import type { OfferSnapshotSettings } from "@/lib/offer-settings";
 import { formatEur } from "@/lib/utils";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+function makeSettings(
+  overrides: Partial<OfferSnapshotSettings> = {},
+): OfferSnapshotSettings {
+  return {
+    show_net_total_only: false,
+    transport_amount: 0,
+    transport_mode: "TBD",
+    installation_mode: "TBD",
+    installation_items: [],
+    ...overrides,
+  };
+}
 
 function makeMeta(overrides: Partial<OfferPdfMeta> = {}): OfferPdfMeta {
   return {
@@ -89,9 +103,10 @@ function renderText(
   data: ExportOfferData,
   discountPct = 0,
   meta = makeMeta(),
+  settings = makeSettings(),
 ): string {
   const out: string[] = [];
-  collectText(OfferPdfDocument({ data, meta, discountPct }), out);
+  collectText(OfferPdfDocument({ data, meta, discountPct, settings }), out);
   return out.join("");
 }
 
@@ -328,8 +343,142 @@ describe("PDF rendering", () => {
         })}
         meta={makeMeta()}
         discountPct={10}
+        settings={makeSettings({
+          transport_mode: "INCLUDED",
+          transport_amount: 250,
+          installation_mode: "INCLUDED",
+          installation_items: [
+            { kind: "BASE_SYSTEM", amount: 1000, included: true },
+          ],
+        })}
       />,
     );
     expect(buffer.subarray(0, 5).toString()).toBe("%PDF-");
+  });
+});
+
+// ── Offer settings: transport, installation, net total ───────────────────────
+
+describe("summary — transport row", () => {
+  test("TBD mode shows 'da definire' and no net total row", () => {
+    const text = renderText(
+      makeData(),
+      0,
+      makeMeta(),
+      makeSettings({ transport_mode: "TBD", transport_amount: 300 }),
+    );
+    expect(text).toContain("Trasporto: da definire");
+    expect(text).not.toContain(formatEur(300));
+    expect(text).not.toContain("TOTALE NETTO");
+  });
+
+  test("SEPARATE mode shows the amount but does not add it to the total", () => {
+    const text = renderText(
+      makeData(),
+      0,
+      makeMeta(),
+      makeSettings({ transport_mode: "SEPARATE", transport_amount: 300 }),
+    );
+    expect(text).toContain("Trasporto a parte");
+    expect(text).toContain(formatEur(300));
+    expect(text).not.toContain("TOTALE NETTO");
+  });
+
+  test("INCLUDED mode hides the amount and adds it to the net total", () => {
+    const text = renderText(
+      makeData(),
+      0,
+      makeMeta(),
+      makeSettings({ transport_mode: "INCLUDED", transport_amount: 300 }),
+    );
+    expect(text).toContain("Trasporto compreso");
+    expect(text).not.toContain(formatEur(300));
+    expect(text).toContain("TOTALE NETTO");
+    expect(text).toContain(formatEur(800));
+  });
+});
+
+describe("summary — installation row", () => {
+  const items = [
+    { kind: "BASE_SYSTEM" as const, amount: 1000, included: true },
+    { kind: "HP_ROOF_BAR" as const, amount: 777, included: false },
+  ];
+
+  test("INCLUDED mode hides the amount and adds it to the net total", () => {
+    const text = renderText(
+      makeData(),
+      0,
+      makeMeta(),
+      makeSettings({
+        installation_mode: "INCLUDED",
+        installation_items: items,
+      }),
+    );
+    expect(text).toContain("Installazione compresa");
+    expect(text).not.toContain(formatEur(1000));
+    // Sub-item breakdown is never shown to the customer.
+    expect(text).not.toContain("Impianto di base");
+    expect(text).not.toContain(formatEur(777));
+    expect(text).toContain("TOTALE NETTO");
+    expect(text).toContain(formatEur(1500));
+  });
+
+  test("SEPARATE mode shows the included items total without adding it", () => {
+    const text = renderText(
+      makeData(),
+      0,
+      makeMeta(),
+      makeSettings({
+        installation_mode: "SEPARATE",
+        installation_items: items,
+      }),
+    );
+    expect(text).toContain("Installazione a parte");
+    expect(text).toContain(formatEur(1000));
+    expect(text).not.toContain("TOTALE NETTO");
+  });
+
+  test("TBD mode excludes installation even when items are flagged", () => {
+    const text = renderText(
+      makeData(),
+      0,
+      makeMeta(),
+      makeSettings({ installation_mode: "TBD", installation_items: items }),
+    );
+    expect(text).toContain("Installazione: da definire");
+    expect(text).not.toContain(formatEur(1000));
+    expect(text).not.toContain("TOTALE NETTO");
+  });
+});
+
+describe("net-total-only mode", () => {
+  test("hides section rows, list total, discount and per-line prices", () => {
+    const data = makeData({
+      surcharges: [
+        {
+          surcharge_kind: "HEIGHT",
+          description: "Altezza non standard",
+          qty: 1,
+          amount: 1500,
+          line_total: 1500,
+        },
+      ],
+      total_list_price: 2000,
+      discounted_total: 1800,
+    });
+    const text = renderText(
+      data,
+      10,
+      makeMeta(),
+      makeSettings({ show_net_total_only: true }),
+    );
+    expect(text).not.toContain("TOTALE LISTINO");
+    expect(text).not.toContain("Sconto (");
+    expect(text).not.toContain("TOTALE SCONTATO");
+    expect(text).not.toContain("Prezzo Listino");
+    expect(text).not.toContain("Subtotale");
+    expect(text).not.toContain(formatEur(1500));
+    expect(text).toContain("TOTALE NETTO");
+    expect(text).toContain(formatEur(1800));
   });
 });

@@ -9,6 +9,8 @@ import {
 import { saveAs } from "file-saver";
 import ItecoLogo from "@/components/pdf/iteco-logo";
 import { COLORS } from "@/lib/excel/workbook-builder";
+import type { OfferSnapshotSettings } from "@/lib/offer-settings";
+import { computeOfferSummaryExtras } from "@/lib/offer-settings";
 import { sumSurchargeTotal } from "@/lib/offer-surcharges";
 import { formatDiscountPctLabel, formatEur } from "@/lib/utils";
 import type { ExportOfferData } from "./create-offer-excel-file";
@@ -86,6 +88,8 @@ const styles = StyleSheet.create({
   },
   colPn: { width: "16%" },
   colDescription: { width: "54%" },
+  /** Description width when the price column is hidden (net-total-only mode). */
+  colDescriptionWide: { width: "76%" },
   colQty: { width: "8%", textAlign: "right" },
   colPrice: { width: "22%", textAlign: "right" },
   summaryLabel: { width: "78%" },
@@ -116,23 +120,37 @@ const rowBg = (index: number) => ({
   backgroundColor: hex(index % 2 === 0 ? COLORS.white : COLORS.lightGray),
 });
 
-const ColumnHeaderRow = () => (
+const ColumnHeaderRow = ({ netOnly }: { netOnly: boolean }) => (
   <View style={[styles.row, styles.headerRow]} wrap={false}>
     <Text style={styles.colPn}>Codice</Text>
-    <Text style={styles.colDescription}>Descrizione</Text>
+    <Text style={netOnly ? styles.colDescriptionWide : styles.colDescription}>
+      Descrizione
+    </Text>
     <Text style={styles.colQty}>Qta</Text>
-    <Text style={styles.colPrice}>Prezzo Listino</Text>
+    {!netOnly && <Text style={styles.colPrice}>Prezzo Listino</Text>}
   </View>
 );
 
-const ItemRow = ({ item, index }: { item: PdfRowItem; index: number }) => (
+const ItemRow = ({
+  item,
+  index,
+  netOnly,
+}: {
+  item: PdfRowItem;
+  index: number;
+  netOnly: boolean;
+}) => (
   <View style={[styles.row, rowBg(index)]} wrap={false}>
     <Text style={styles.colPn}>{item.pn}</Text>
-    <Text style={styles.colDescription}>{item.description}</Text>
-    <Text style={styles.colQty}>{item.qty}</Text>
-    <Text style={styles.colPrice}>
-      {item.price === null ? "" : formatEur(item.price)}
+    <Text style={netOnly ? styles.colDescriptionWide : styles.colDescription}>
+      {item.description}
     </Text>
+    <Text style={styles.colQty}>{item.qty}</Text>
+    {!netOnly && (
+      <Text style={styles.colPrice}>
+        {item.price === null ? "" : formatEur(item.price)}
+      </Text>
+    )}
   </View>
 );
 
@@ -154,21 +172,23 @@ const SubSection = ({
   items,
   subtotalLabel,
   total,
+  netOnly,
 }: {
   title: string;
   items: PdfRowItem[];
   subtotalLabel: string;
   total: number;
+  netOnly: boolean;
 }) => (
   <View>
     <Text style={styles.subSectionTitle} minPresenceAhead={40}>
       {title}
     </Text>
-    <ColumnHeaderRow />
+    <ColumnHeaderRow netOnly={netOnly} />
     {items.map((item, i) => (
-      <ItemRow key={item.pn} item={item} index={i} />
+      <ItemRow key={item.pn} item={item} index={i} netOnly={netOnly} />
     ))}
-    <SubtotalRow label={subtotalLabel} total={total} />
+    {!netOnly && <SubtotalRow label={subtotalLabel} total={total} />}
   </View>
 );
 
@@ -183,12 +203,15 @@ const SummaryRow = ({
   style,
 }: {
   label: string;
-  total: number;
+  /** null renders the label only (e.g. "Trasporto compreso"). */
+  total: number | null;
   style: PdfStyle;
 }) => (
   <View style={[styles.row, style]} wrap={false}>
     <Text style={styles.summaryLabel}>{label}</Text>
-    <Text style={styles.colPrice}>{formatEur(total)}</Text>
+    <Text style={styles.colPrice}>
+      {total === null ? "" : formatEur(total)}
+    </Text>
   </View>
 );
 
@@ -207,17 +230,22 @@ interface OfferPdfDocumentProps {
   data: ExportOfferData;
   meta: OfferPdfMeta;
   discountPct: number;
+  settings: OfferSnapshotSettings;
 }
 
 export const OfferPdfDocument = ({
   data,
   meta,
   discountPct,
+  settings,
 }: OfferPdfDocumentProps) => {
   const hasDiscount = discountPct > 0;
+  const netOnly = settings.show_net_total_only;
   const surchargeTotal = sumSurchargeTotal(data.surcharges);
   const discountAmount =
     Math.round((data.total_list_price - data.discounted_total) * 100) / 100;
+  const extras = computeOfferSummaryExtras(settings, data.discounted_total);
+  const showNetTotalRow = netOnly || extras.hasNetAdjustments;
 
   const summarySections = [
     {
@@ -254,36 +282,57 @@ export const OfferPdfDocument = ({
         </View>
 
         <SectionTitle title="Riepilogo offerta" />
-        <View style={[styles.row, styles.headerRow]} wrap={false}>
-          <Text style={styles.summaryLabel}>Sezione</Text>
-          <Text style={styles.colPrice}>Prezzo Listino</Text>
-        </View>
-        {summarySections.map((section, i) => (
-          <SummaryRow
-            key={section.name}
-            label={section.name}
-            total={section.total}
-            style={rowBg(i)}
-          />
-        ))}
-        <SummaryRow
-          label="TOTALE LISTINO"
-          total={data.total_list_price}
-          style={styles.grandTotalRow}
-        />
-        {hasDiscount && (
+        {!netOnly && (
           <>
+            <View style={[styles.row, styles.headerRow]} wrap={false}>
+              <Text style={styles.summaryLabel}>Sezione</Text>
+              <Text style={styles.colPrice}>Prezzo Listino</Text>
+            </View>
+            {summarySections.map((section, i) => (
+              <SummaryRow
+                key={section.name}
+                label={section.name}
+                total={section.total}
+                style={rowBg(i)}
+              />
+            ))}
             <SummaryRow
-              label={`Sconto (${formatDiscountPctLabel(discountPct)}%)`}
-              total={-discountAmount}
-              style={styles.subtotalRow}
-            />
-            <SummaryRow
-              label="TOTALE SCONTATO"
-              total={data.discounted_total}
+              label="TOTALE LISTINO"
+              total={data.total_list_price}
               style={styles.grandTotalRow}
             />
+            {hasDiscount && (
+              <>
+                <SummaryRow
+                  label={`Sconto (${formatDiscountPctLabel(discountPct)}%)`}
+                  total={-discountAmount}
+                  style={styles.subtotalRow}
+                />
+                <SummaryRow
+                  label="TOTALE SCONTATO"
+                  total={data.discounted_total}
+                  style={styles.grandTotalRow}
+                />
+              </>
+            )}
           </>
+        )}
+        <SummaryRow
+          label={extras.transportRow.label}
+          total={extras.transportRow.amount}
+          style={styles.subtotalRow}
+        />
+        <SummaryRow
+          label={extras.installationRow.label}
+          total={extras.installationRow.amount}
+          style={styles.subtotalRow}
+        />
+        {showNetTotalRow && (
+          <SummaryRow
+            label="TOTALE NETTO"
+            total={extras.net_total}
+            style={styles.grandTotalRow}
+          />
         )}
 
         {data.general.length > 0 && (
@@ -296,6 +345,7 @@ export const OfferPdfDocument = ({
                 items={group.items.map(toRowItem)}
                 subtotalLabel={`Subtotale ${group.label}`}
                 total={group.total}
+                netOnly={netOnly}
               />
             ))}
           </View>
@@ -311,6 +361,7 @@ export const OfferPdfDocument = ({
                 items={section.items.map(toRowItem)}
                 subtotalLabel={`Subtotale Serbatoio ${section.index + 1}`}
                 total={section.total}
+                netOnly={netOnly}
               />
             ))}
           </View>
@@ -326,6 +377,7 @@ export const OfferPdfDocument = ({
                 items={section.items.map(toRowItem)}
                 subtotalLabel={`Subtotale Pista ${section.index + 1}`}
                 total={section.total}
+                netOnly={netOnly}
               />
             ))}
           </View>
@@ -334,7 +386,7 @@ export const OfferPdfDocument = ({
         {data.surcharges.length > 0 && (
           <View>
             <SectionTitle title="Maggiorazioni" />
-            <ColumnHeaderRow />
+            <ColumnHeaderRow netOnly={netOnly} />
             {data.surcharges.map((item, i) => (
               <ItemRow
                 key={item.surcharge_kind}
@@ -345,12 +397,15 @@ export const OfferPdfDocument = ({
                   price: item.line_total,
                 }}
                 index={i}
+                netOnly={netOnly}
               />
             ))}
-            <SubtotalRow
-              label="Subtotale Maggiorazioni"
-              total={surchargeTotal}
-            />
+            {!netOnly && (
+              <SubtotalRow
+                label="Subtotale Maggiorazioni"
+                total={surchargeTotal}
+              />
+            )}
           </View>
         )}
 
@@ -371,9 +426,15 @@ export async function createOfferPdfFile(
   data: ExportOfferData,
   meta: OfferPdfMeta,
   discountPct: number,
+  settings: OfferSnapshotSettings,
 ): Promise<void> {
   const blob = await pdf(
-    <OfferPdfDocument data={data} meta={meta} discountPct={discountPct} />,
+    <OfferPdfDocument
+      data={data}
+      meta={meta}
+      discountPct={discountPct}
+      settings={settings}
+    />,
   ).toBlob();
   const date = new Date().toISOString().slice(0, 10);
   saveAs(blob, `Offerta_${meta.confId}_${date}.pdf`);

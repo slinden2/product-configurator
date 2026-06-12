@@ -10,12 +10,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { GroupedOfferData, GroupedOfferSection } from "@/lib/offer";
+import type { OfferSnapshotSettings } from "@/lib/offer-settings";
+import { computeOfferSummaryExtras } from "@/lib/offer-settings";
 import { formatEur } from "@/lib/utils";
 import type {
   OfferBomLineItem,
   OfferSurchargeItem,
 } from "@/validation/offer-schema";
-import DiscountInput from "./discount-input";
+import OfferSettingsCard from "./offer-settings-card";
 
 interface Props {
   data: GroupedOfferData & {
@@ -25,6 +27,7 @@ interface Props {
   surcharges: OfferSurchargeItem[];
   confId: number;
   discountPct: number;
+  settings: OfferSnapshotSettings;
   editable: boolean;
   stale: boolean;
 }
@@ -65,10 +68,12 @@ function OfferSectionGroup({
   title,
   sections,
   itemLabel,
+  showPrices,
 }: {
   title: string;
   sections: GroupedOfferSection[];
   itemLabel: string;
+  showPrices: boolean;
 }) {
   if (sections.length === 0) return null;
   return (
@@ -84,7 +89,7 @@ function OfferSectionGroup({
             key={section.index}
             title={`${itemLabel} ${section.index + 1}`}
           >
-            <SectionOfferTable section={section} />
+            <SectionOfferTable section={section} showPrices={showPrices} />
           </BOMCard>
         ))}
       </CardContent>
@@ -92,31 +97,45 @@ function OfferSectionGroup({
   );
 }
 
-function SectionOfferTable({ section }: { section: GroupedOfferSection }) {
+function SectionOfferTable({
+  section,
+  showPrices,
+}: {
+  section: GroupedOfferSection;
+  showPrices: boolean;
+}) {
   return (
     <Table>
       <OfferTableHeader />
       <TableBody>
         <ItemRows items={section.items} />
       </TableBody>
-      <TableFooter className="bg-transparent">
-        <TableRow className="hover:bg-transparent">
-          <TableCell
-            colSpan={2}
-            className="py-2 px-0 text-muted-foreground font-medium"
-          >
-            Totale
-          </TableCell>
-          <TableCell className="py-2 pl-0 pr-4 text-right font-semibold tabular-nums">
-            {formatEur(section.total)}
-          </TableCell>
-        </TableRow>
-      </TableFooter>
+      {showPrices && (
+        <TableFooter className="bg-transparent">
+          <TableRow className="hover:bg-transparent">
+            <TableCell
+              colSpan={2}
+              className="py-2 px-0 text-muted-foreground font-medium"
+            >
+              Totale
+            </TableCell>
+            <TableCell className="py-2 pl-0 pr-4 text-right font-semibold tabular-nums">
+              {formatEur(section.total)}
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 }
 
-function SurchargesCard({ surcharges }: { surcharges: OfferSurchargeItem[] }) {
+function SurchargesCard({
+  surcharges,
+  showPrices,
+}: {
+  surcharges: OfferSurchargeItem[];
+  showPrices: boolean;
+}) {
   if (surcharges.length === 0) return null;
   return (
     <Card>
@@ -131,9 +150,11 @@ function SurchargesCard({ surcharges }: { surcharges: OfferSurchargeItem[] }) {
               className="flex justify-between text-sm"
             >
               <span>{item.description}</span>
-              <span className="tabular-nums font-semibold">
-                {formatEur(item.amount)}
-              </span>
+              {showPrices && (
+                <span className="tabular-nums font-semibold">
+                  {formatEur(item.amount)}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -147,9 +168,13 @@ export default function OfferView({
   surcharges,
   confId,
   discountPct,
+  settings,
   editable,
   stale,
 }: Props) {
+  const showPrices = !settings.show_net_total_only;
+  const extras = computeOfferSummaryExtras(settings, data.discounted_total);
+
   return (
     <div className="space-y-6">
       {/* Gantry */}
@@ -168,17 +193,19 @@ export default function OfferView({
                   </TableCell>
                 </TableRow>
                 <ItemRows items={group.items} />
-                <TableRow className="border-b hover:bg-transparent">
-                  <TableCell
-                    colSpan={2}
-                    className="py-2 px-0 text-right text-sm text-muted-foreground font-medium"
-                  >
-                    Subtotale {group.label}
-                  </TableCell>
-                  <TableCell className="py-2 pl-0 pr-4 text-right font-semibold tabular-nums">
-                    {formatEur(group.total)}
-                  </TableCell>
-                </TableRow>
+                {showPrices && (
+                  <TableRow className="border-b hover:bg-transparent">
+                    <TableCell
+                      colSpan={2}
+                      className="py-2 px-0 text-right text-sm text-muted-foreground font-medium"
+                    >
+                      Subtotale {group.label}
+                    </TableCell>
+                    <TableCell className="py-2 pl-0 pr-4 text-right font-semibold tabular-nums">
+                      {formatEur(group.total)}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             ))}
           </Table>
@@ -189,48 +216,81 @@ export default function OfferView({
         title="Serbatoi"
         sections={data.waterTanks}
         itemLabel="Serbatoio"
+        showPrices={showPrices}
       />
       <OfferSectionGroup
         title="Piste"
         sections={data.washBays}
         itemLabel="Pista"
+        showPrices={showPrices}
       />
 
-      <SurchargesCard surcharges={surcharges} />
+      <SurchargesCard surcharges={surcharges} showPrices={showPrices} />
+
+      {editable && (
+        <OfferSettingsCard
+          confId={confId}
+          initialDiscount={discountPct}
+          initialSettings={settings}
+          disabled={stale}
+        />
+      )}
 
       {/* Riepilogo */}
       <Card>
         <CardHeader>
           <CardTitle>Riepilogo</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {editable && (
-            <DiscountInput
-              confId={confId}
-              initialDiscount={discountPct}
-              disabled={stale}
-            />
-          )}
-          <div className="border-t pt-4 space-y-2">
-            <div className="flex justify-between text-base font-semibold">
-              <span>Totale listino</span>
-              <span className="tabular-nums">
-                {formatEur(data.total_list_price)}
-              </span>
-            </div>
-            {discountPct > 0 && (
-              <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
-                <span>Sconto {discountPct}%</span>
-                <span className="tabular-nums">
-                  -{formatEur(data.total_list_price - data.discounted_total)}
-                </span>
-              </div>
+        <CardContent>
+          <div className="space-y-2">
+            {showPrices && (
+              <>
+                <div className="flex justify-between text-base font-semibold">
+                  <span>Totale listino</span>
+                  <span className="tabular-nums">
+                    {formatEur(data.total_list_price)}
+                  </span>
+                </div>
+                {discountPct > 0 && (
+                  <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+                    <span>Sconto {discountPct}%</span>
+                    <span className="tabular-nums">
+                      -
+                      {formatEur(data.total_list_price - data.discounted_total)}
+                    </span>
+                  </div>
+                )}
+                {data.discounted_total !== data.total_list_price && (
+                  <div className="flex justify-between text-base font-bold text-green-600 dark:text-green-400">
+                    <span>Totale scontato</span>
+                    <span className="tabular-nums">
+                      {formatEur(data.discounted_total)}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
-            {data.discounted_total !== data.total_list_price && (
+            <div className="flex justify-between text-sm">
+              <span>{extras.transportRow.label}</span>
+              {extras.transportRow.amount !== null && (
+                <span className="tabular-nums font-semibold">
+                  {formatEur(extras.transportRow.amount)}
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>{extras.installationRow.label}</span>
+              {extras.installationRow.amount !== null && (
+                <span className="tabular-nums font-semibold">
+                  {formatEur(extras.installationRow.amount)}
+                </span>
+              )}
+            </div>
+            {(!showPrices || extras.hasNetAdjustments) && (
               <div className="flex justify-between text-base font-bold text-green-600 dark:text-green-400">
-                <span>Totale scontato</span>
+                <span>Totale netto</span>
                 <span className="tabular-nums">
-                  {formatEur(data.discounted_total)}
+                  {formatEur(extras.net_total)}
                 </span>
               </div>
             )}

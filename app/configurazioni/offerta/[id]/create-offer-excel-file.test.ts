@@ -14,11 +14,25 @@ import {
   type ExportOfferData,
 } from "@/app/configurazioni/offerta/[id]/create-offer-excel-file";
 import type { UserData } from "@/db/queries";
+import type { OfferSnapshotSettings } from "@/lib/offer-settings";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeUser(): NonNullable<UserData> {
   return { id: "user-1", role: "SALES", initials: "SL" };
+}
+
+function makeSettings(
+  overrides: Partial<OfferSnapshotSettings> = {},
+): OfferSnapshotSettings {
+  return {
+    show_net_total_only: false,
+    transport_amount: 0,
+    transport_mode: "TBD",
+    installation_mode: "TBD",
+    installation_items: [],
+    ...overrides,
+  };
 }
 
 function makeItem(pn = "PN-001", qty = 2) {
@@ -75,13 +89,13 @@ function cellFillArgb(sheet: ExcelJS.Worksheet, row: number, col: number) {
 
 describe("summary section — no discount", () => {
   test("row 1 is the title", () => {
-    const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 1, 1)).toBe("Riepilogo offerta");
   });
 
   test("row 3 has section/price headers", () => {
-    const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 3, 1)).toBe("Sezione");
     expect(cellValue(sheet, 3, 4)).toBe("Prezzo Listino");
@@ -97,7 +111,7 @@ describe("summary section — no discount", () => {
       total_list_price: 500,
       discounted_total: 500,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 4, 1)).toBe("Distinta generale");
     expect(cellValue(sheet, 4, 4)).toBe(300);
@@ -108,7 +122,7 @@ describe("summary section — no discount", () => {
   });
 
   test("row 7 is Maggiorazioni (always present)", () => {
-    const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 7, 1)).toBe("Maggiorazioni");
     expect(cellValue(sheet, 7, 4)).toBe(0);
@@ -119,6 +133,7 @@ describe("summary section — no discount", () => {
       makeData({ total_list_price: 500, discounted_total: 500 }),
       makeUser(),
       0,
+      makeSettings(),
     );
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 8, 1)).toBe("TOTALE LISTINO");
@@ -127,7 +142,7 @@ describe("summary section — no discount", () => {
   });
 
   test("no discount rows when discountPct is 0", () => {
-    const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
     const row9val = cellValue(sheet, 9, 1);
     expect(row9val).not.toBe("TOTALE SCONTATO");
@@ -142,6 +157,7 @@ describe("summary section — with discount", () => {
       makeData({ total_list_price: 1000, discounted_total: 900 }),
       makeUser(),
       10,
+      makeSettings(),
     );
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 9, 1)).toBe("Sconto (10%)");
@@ -153,6 +169,7 @@ describe("summary section — with discount", () => {
       makeData({ total_list_price: 1000, discounted_total: 900 }),
       makeUser(),
       10,
+      makeSettings(),
     );
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 10, 1)).toBe("TOTALE SCONTATO");
@@ -165,6 +182,7 @@ describe("summary section — with discount", () => {
       makeData({ total_list_price: 1000, discounted_total: 895 }),
       makeUser(),
       10.5,
+      makeSettings(),
     );
     const sheet = getSheet(wb);
     expect(cellValue(sheet, 9, 1)).toBe("Sconto (10,50%)");
@@ -187,7 +205,7 @@ describe("body — general section", () => {
       total_list_price: 250,
       discounted_total: 250,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     // Find the subtotal row by looking for its label in col 1
@@ -213,7 +231,7 @@ describe("body — general section", () => {
       total_list_price: 100,
       discounted_total: 100,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let itemRowPriceValue: ExcelJS.CellValue = "NOT_FOUND";
@@ -234,7 +252,7 @@ describe("body — water tanks and wash bays", () => {
       total_list_price: 400,
       discounted_total: 400,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let subtotalValue: ExcelJS.CellValue = null;
@@ -253,7 +271,7 @@ describe("body — water tanks and wash bays", () => {
       total_list_price: 200,
       discounted_total: 200,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let subtotalValue: ExcelJS.CellValue = null;
@@ -281,7 +299,7 @@ describe("body — surcharges", () => {
       total_list_price: 2000,
       discounted_total: 2000,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let priceValue: ExcelJS.CellValue = "NOT_FOUND";
@@ -307,7 +325,7 @@ describe("body — surcharges", () => {
       total_list_price: 1700,
       discounted_total: 1700,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let subtotalValue: ExcelJS.CellValue = null;
@@ -331,7 +349,7 @@ describe("empty section guards", () => {
       total_list_price: 0,
       discounted_total: 0,
     });
-    const wb = buildOfferWorkbook(data, makeUser(), 0);
+    const wb = buildOfferWorkbook(data, makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let bodyTitleFound = false;
@@ -346,7 +364,7 @@ describe("empty section guards", () => {
   });
 
   test("serbatoi body section title is absent when waterTanks is empty", () => {
-    const wb = buildOfferWorkbook(makeData(), makeUser(), 0);
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0, makeSettings());
     const sheet = getSheet(wb);
 
     let bodyTitleFound = false;
@@ -358,5 +376,191 @@ describe("empty section guards", () => {
       }
     });
     expect(bodyTitleFound).toBe(false);
+  });
+});
+
+// ── Offer settings: transport, installation, net total ───────────────────────
+
+function findRowByLabel(sheet: ExcelJS.Worksheet, label: string) {
+  let found: ExcelJS.Row | null = null;
+  sheet.eachRow((row) => {
+    if (row.getCell(1).value === label) found = row;
+  });
+  return found as ExcelJS.Row | null;
+}
+
+describe("summary — transport row", () => {
+  test("TBD mode shows 'da definire' without amount and no net total row", () => {
+    const wb = buildOfferWorkbook(
+      makeData(),
+      makeUser(),
+      0,
+      makeSettings({ transport_mode: "TBD", transport_amount: 300 }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 9, 1)).toBe("Trasporto: da definire");
+    expect(cellValue(sheet, 9, 4)).toBeNull();
+    expect(findRowByLabel(sheet, "TOTALE NETTO")).toBeNull();
+  });
+
+  test("SEPARATE mode shows the amount but does not add it to the total", () => {
+    const wb = buildOfferWorkbook(
+      makeData(),
+      makeUser(),
+      0,
+      makeSettings({ transport_mode: "SEPARATE", transport_amount: 300 }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 9, 1)).toBe("Trasporto a parte");
+    expect(cellValue(sheet, 9, 4)).toBe(300);
+    expect(findRowByLabel(sheet, "TOTALE NETTO")).toBeNull();
+  });
+
+  test("INCLUDED mode hides the amount and adds it to the net total", () => {
+    const wb = buildOfferWorkbook(
+      makeData(),
+      makeUser(),
+      0,
+      makeSettings({ transport_mode: "INCLUDED", transport_amount: 300 }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 9, 1)).toBe("Trasporto compreso");
+    expect(cellValue(sheet, 9, 4)).toBeNull();
+    expect(cellValue(sheet, 10, 1)).toBe("Installazione: da definire");
+    expect(cellValue(sheet, 11, 1)).toBe("TOTALE NETTO");
+    expect(cellValue(sheet, 11, 4)).toBe(800);
+  });
+
+  test("transport row comes after the discount rows", () => {
+    const wb = buildOfferWorkbook(
+      makeData({ total_list_price: 1000, discounted_total: 900 }),
+      makeUser(),
+      10,
+      makeSettings({ transport_mode: "INCLUDED", transport_amount: 100 }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 10, 1)).toBe("TOTALE SCONTATO");
+    expect(cellValue(sheet, 11, 1)).toBe("Trasporto compreso");
+    expect(cellValue(sheet, 12, 1)).toBe("Installazione: da definire");
+    expect(cellValue(sheet, 13, 1)).toBe("TOTALE NETTO");
+    expect(cellValue(sheet, 13, 4)).toBe(1000);
+  });
+});
+
+describe("summary — installation row", () => {
+  const items = [
+    { kind: "BASE_SYSTEM" as const, amount: 1000, included: true },
+    { kind: "HP_ROOF_BAR" as const, amount: 500, included: false },
+  ];
+
+  test("INCLUDED mode hides the amount and adds it to the net total", () => {
+    const wb = buildOfferWorkbook(
+      makeData(),
+      makeUser(),
+      0,
+      makeSettings({
+        installation_mode: "INCLUDED",
+        installation_items: items,
+      }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 10, 1)).toBe("Installazione compresa");
+    expect(cellValue(sheet, 10, 4)).toBeNull();
+    expect(cellValue(sheet, 11, 1)).toBe("TOTALE NETTO");
+    expect(cellValue(sheet, 11, 4)).toBe(1500);
+  });
+
+  test("SEPARATE mode shows the included items total without adding it", () => {
+    const wb = buildOfferWorkbook(
+      makeData(),
+      makeUser(),
+      0,
+      makeSettings({
+        installation_mode: "SEPARATE",
+        installation_items: items,
+      }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 10, 1)).toBe("Installazione a parte");
+    expect(cellValue(sheet, 10, 4)).toBe(1000);
+    expect(findRowByLabel(sheet, "TOTALE NETTO")).toBeNull();
+  });
+
+  test("TBD mode excludes installation even when items are flagged", () => {
+    const wb = buildOfferWorkbook(
+      makeData(),
+      makeUser(),
+      0,
+      makeSettings({ installation_mode: "TBD", installation_items: items }),
+    );
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 10, 1)).toBe("Installazione: da definire");
+    expect(cellValue(sheet, 10, 4)).toBeNull();
+    expect(findRowByLabel(sheet, "TOTALE NETTO")).toBeNull();
+  });
+});
+
+describe("net-total-only mode", () => {
+  const netOnlySettings = makeSettings({
+    show_net_total_only: true,
+    transport_mode: "INCLUDED",
+    transport_amount: 200,
+  });
+
+  test("summary shows only transport, installation and the net total", () => {
+    const wb = buildOfferWorkbook(makeData(), makeUser(), 0, netOnlySettings);
+    const sheet = getSheet(wb);
+    expect(cellValue(sheet, 1, 1)).toBe("Riepilogo offerta");
+    expect(cellValue(sheet, 3, 1)).toBe("Trasporto compreso");
+    expect(cellValue(sheet, 4, 1)).toBe("Installazione: da definire");
+    expect(cellValue(sheet, 5, 1)).toBe("TOTALE NETTO");
+    expect(cellValue(sheet, 5, 4)).toBe(700);
+    expect(findRowByLabel(sheet, "Sezione")).toBeNull();
+    expect(findRowByLabel(sheet, "TOTALE LISTINO")).toBeNull();
+  });
+
+  test("hides the discount rows even when a discount is set", () => {
+    const wb = buildOfferWorkbook(
+      makeData({ total_list_price: 1000, discounted_total: 900 }),
+      makeUser(),
+      10,
+      makeSettings({ show_net_total_only: true }),
+    );
+    const sheet = getSheet(wb);
+    expect(findRowByLabel(sheet, "Sconto (10%)")).toBeNull();
+    expect(findRowByLabel(sheet, "TOTALE SCONTATO")).toBeNull();
+    expect(cellValue(sheet, 5, 1)).toBe("TOTALE NETTO");
+    expect(cellValue(sheet, 5, 4)).toBe(900);
+  });
+
+  test("item tables drop the price column and subtotal rows", () => {
+    const data = makeData({
+      surcharges: [
+        {
+          surcharge_kind: "HEIGHT",
+          description: "Altezza non standard",
+          qty: 1,
+          amount: 1500,
+          line_total: 1500,
+        },
+      ],
+      total_list_price: 2000,
+      discounted_total: 2000,
+    });
+    const wb = buildOfferWorkbook(data, makeUser(), 0, netOnlySettings);
+    const sheet = getSheet(wb);
+
+    let priceHeaderFound = false;
+    let surchargePrice: ExcelJS.CellValue = "NOT_FOUND";
+    sheet.eachRow((row) => {
+      if (row.getCell(4).value === "Prezzo Listino") priceHeaderFound = true;
+      if (row.getCell(2).value === "Altezza non standard") {
+        surchargePrice = row.getCell(4).value;
+      }
+    });
+    expect(priceHeaderFound).toBe(false);
+    expect(surchargePrice).toBeNull();
+    expect(findRowByLabel(sheet, "Subtotale Struttura")).toBeNull();
+    expect(findRowByLabel(sheet, "Subtotale Maggiorazioni")).toBeNull();
   });
 });
