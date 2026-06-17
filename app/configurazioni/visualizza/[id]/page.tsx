@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import { getUserData } from "@/db/queries";
 import ConfigView from "./config-view";
+import ExportConfigPdfButton from "./export-config-pdf-button";
 
 interface ViewConfigProps {
   params: Promise<{ id: string }>;
@@ -39,6 +40,13 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <StatusForm confId={id} initialStatus={status} userRole={user.role} />
+          <ExportConfigPdfButton
+            confId={id}
+            configuration={configuration}
+            waterTanks={waterTanks}
+            washBays={washBays}
+            generatorEmail={null}
+          />
           {editable && (
             <Button asChild>
               <Link href={`/configurazioni/modifica/${id}`}>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeValidConfig } from "@/test/form-test-utils";
+import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import {
   buildConfigViewModel,
   buildWashBayViewSection,
@@ -17,7 +18,7 @@ const findSection = (sections: ViewSection[], title: string): ViewSection => {
 const allRows = (section: ViewSection) => section.groups.flatMap((g) => g.rows);
 const hasLabel = (section: ViewSection, label: string) =>
   allRows(section).some((r) => r.label === label);
-const valueOf = (section: ViewSection, label: string) =>
+const rowValue = (section: ViewSection, label: string) =>
   allRows(section).find((r) => r.label === label)?.value;
 
 describe("buildConfigViewModel", () => {
@@ -42,7 +43,7 @@ describe("buildConfigViewModel", () => {
       makeValidConfig({ machine_type: "OMZ" }),
     );
     const general = findSection(sections, "Informazioni generali");
-    expect(valueOf(general, CONFIG_FIELD_LABELS.machine_type)).toBe("OMZ");
+    expect(rowValue(general, CONFIG_FIELD_LABELS.machine_type)).toBe("OMZ");
   });
 
   it("shows the OMZ paint row only for OMZ machines", () => {
@@ -81,7 +82,7 @@ describe("buildConfigViewModel", () => {
       "Varie",
     );
     expect(
-      valueOf(misc, CONFIG_FIELD_LABELS.has_chassis_wash_detergent_pump),
+      rowValue(misc, CONFIG_FIELD_LABELS.has_chassis_wash_detergent_pump),
     ).toBe("Sì");
   });
 });
@@ -107,7 +108,7 @@ describe("buildWaterTankViewSection", () => {
 
 describe("buildWashBayViewSection", () => {
   it("adds the energy-chain group only for a gantry on an energy-chain supply", () => {
-    const base = {
+    const base: WashBaySchema = {
       hp_lance_qty: 0,
       det_lance_qty: 0,
       hose_reel_hp_with_post_qty: 0,
