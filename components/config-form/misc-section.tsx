@@ -1,6 +1,8 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
+import { showManualAntifreeze } from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 
 const MiscSection = () => {
@@ -11,6 +13,11 @@ const MiscSection = () => {
   });
   const hasAntifreezeWatch = useWatch({ control, name: "has_antifreeze" });
 
+  const showManualAntifreezeField = showManualAntifreeze({
+    has_chassis_wash_detergent_pump: hasChassisWashDetergentPumpWatch,
+    has_antifreeze: hasAntifreezeWatch,
+  });
+
   return (
     <Fieldset
       title="Varie"
@@ -20,7 +27,7 @@ const MiscSection = () => {
         <div>
           <CheckboxField<ConfigSchema>
             name="has_chassis_wash_detergent_pump"
-            label="Lavachassis con detergente"
+            label={CONFIG_FIELD_LABELS.has_chassis_wash_detergent_pump}
             description="Tramite Dosatron in sala tecnica"
             fieldsToResetOnUncheck={[
               {
@@ -29,11 +36,13 @@ const MiscSection = () => {
               },
             ]}
           />
-          {hasChassisWashDetergentPumpWatch && hasAntifreezeWatch && (
+          {showManualAntifreezeField && (
             <div className="mt-3">
               <CheckboxField<ConfigSchema>
                 name="has_chassis_wash_detergent_manual_antifreeze"
-                label="Antigelo manuale"
+                label={
+                  CONFIG_FIELD_LABELS.has_chassis_wash_detergent_manual_antifreeze
+                }
               />
             </div>
           )}

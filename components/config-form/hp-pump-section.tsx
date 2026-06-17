@@ -3,10 +3,14 @@ import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import {
+  showChassisWashSensor as showChassisWashSensorRule,
+  showChemicalRoofBar as showChemicalRoofBarRule,
+} from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
-import { hasAnyChassisWashOutlet } from "@/validation/configuration/hp-pump-schema";
 
 const HPPumpSection = () => {
   const { control, setValue } = useFormContext<ConfigSchema>();
@@ -22,11 +26,11 @@ const HPPumpSection = () => {
   const pumpOutlet1_75kw = useWatch({ control, name: "pump_outlet_1_75kw" });
   const pumpOutlet2_75kw = useWatch({ control, name: "pump_outlet_2_75kw" });
 
-  const showChemicalRoofBar =
-    omzPumpOutletWatch === zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR ||
-    omzPumpOutletWatch === zodEnums.OMZPumpOutletEnum.enum.HP_ROOF_BAR_SPINNERS;
+  const showChemicalRoofBar = showChemicalRoofBarRule({
+    pump_outlet_omz: omzPumpOutletWatch,
+  });
 
-  const showChassisWashSensor = hasAnyChassisWashOutlet({
+  const showChassisWashSensor = showChassisWashSensorRule({
     pump_outlet_1_15kw: pumpOutlet1_15kw,
     pump_outlet_2_15kw: pumpOutlet2_15kw,
     pump_outlet_1_30kw: pumpOutlet1_30kw,
@@ -52,7 +56,7 @@ const HPPumpSection = () => {
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_75kw_pump"
-              label="Pompa 7.5kW"
+              label={CONFIG_FIELD_LABELS.has_75kw_pump}
               fieldsToResetOnUncheck={[
                 {
                   fieldsToReset: ["pump_outlet_1_75kw", "pump_outlet_2_75kw"],
@@ -64,7 +68,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_1_75kw"
               dataType="string"
-              label="Uscita 1"
+              label={CONFIG_FIELD_LABELS.pump_outlet_1_75kw}
               disabled={!has75kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet75kwTypes)}
             />
@@ -73,7 +77,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_2_75kw"
               dataType="string"
-              label="Uscita 2"
+              label={CONFIG_FIELD_LABELS.pump_outlet_2_75kw}
               disabled={!has75kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet75kwTypes)}
             />
@@ -84,7 +88,7 @@ const HPPumpSection = () => {
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_15kw_pump"
-              label="Pompa 15kW"
+              label={CONFIG_FIELD_LABELS.has_15kw_pump}
               fieldsToResetOnUncheck={[
                 {
                   fieldsToReset: ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
@@ -100,7 +104,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_1_15kw"
               dataType="string"
-              label="Uscita 1"
+              label={CONFIG_FIELD_LABELS.pump_outlet_1_15kw}
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
@@ -108,7 +112,7 @@ const HPPumpSection = () => {
               <div className="md:mt-2">
                 <CheckboxField<ConfigSchema>
                   name="has_15kw_pump_softstart"
-                  label="Con softstart"
+                  label={CONFIG_FIELD_LABELS.has_15kw_pump_softstart}
                 />
               </div>
             )}
@@ -117,7 +121,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_2_15kw"
               dataType="string"
-              label="Uscita 2"
+              label={CONFIG_FIELD_LABELS.pump_outlet_2_15kw}
               disabled={!has15kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
             />
@@ -128,7 +132,7 @@ const HPPumpSection = () => {
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_30kw_pump"
-              label="Pompa 30kW"
+              label={CONFIG_FIELD_LABELS.has_30kw_pump}
               fieldsToResetOnUncheck={[
                 {
                   fieldsToReset: ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
@@ -140,7 +144,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_1_30kw"
               dataType="string"
-              label="Uscita 1"
+              label={CONFIG_FIELD_LABELS.pump_outlet_1_30kw}
               disabled={!has30kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
             />
@@ -149,7 +153,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_2_30kw"
               dataType="string"
-              label="Uscita 2"
+              label={CONFIG_FIELD_LABELS.pump_outlet_2_30kw}
               disabled={!has30kwPumpWatch}
               items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
             />
@@ -160,7 +164,7 @@ const HPPumpSection = () => {
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_omz_pump"
-              label="Pompa OMZ"
+              label={CONFIG_FIELD_LABELS.has_omz_pump}
               fieldsToResetOnUncheck={[
                 {
                   fieldsToReset: ["pump_outlet_omz"],
@@ -177,7 +181,7 @@ const HPPumpSection = () => {
             <SelectField<ConfigSchema>
               name="pump_outlet_omz"
               dataType="string"
-              label="Uscita 1"
+              label={CONFIG_FIELD_LABELS.pump_outlet_omz}
               disabled={!hasOMZPumpWatch}
               items={selectFieldOptions.omzPumpOutletTypes}
               fieldsToResetOnValue={[
@@ -195,7 +199,7 @@ const HPPumpSection = () => {
             >
               <CheckboxField<ConfigSchema>
                 name="has_chemical_roof_bar"
-                label="Con barra di prelavaggio"
+                label={CONFIG_FIELD_LABELS.has_chemical_roof_bar}
               />
             </div>
           </div>
@@ -211,7 +215,7 @@ const HPPumpSection = () => {
                 <SelectField<ConfigSchema>
                   name="chassis_wash_sensor_type"
                   dataType="string"
-                  label="Sensore ultrasuoni lavachassis"
+                  label={CONFIG_FIELD_LABELS.chassis_wash_sensor_type}
                   items={withNoSelection(
                     selectFieldOptions.chassisWashSensorTypeOpts,
                   )}
@@ -221,7 +225,7 @@ const HPPumpSection = () => {
                 <div className="md:pt-8">
                   <CheckboxField<ConfigSchema>
                     name="has_chassis_wash_plates"
-                    label="Piastre lavachassis"
+                    label={CONFIG_FIELD_LABELS.has_chassis_wash_plates}
                   />
                 </div>
               </div>

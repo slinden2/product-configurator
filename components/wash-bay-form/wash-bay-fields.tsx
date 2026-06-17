@@ -3,6 +3,12 @@ import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
 import InfoBanner from "@/components/shared/info-banner";
+import {
+  isWashBayEcWall,
+  showWashBayEnergyChainFields,
+  washBayHasHpSource,
+} from "@/lib/configuration/display-rules";
+import { WASH_BAY_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { MSG } from "@/lib/messages";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
@@ -39,11 +45,12 @@ const WashBayFields = ({
     name: "hose_reel_hp_det_with_post_qty",
   });
 
-  const hasHpSource =
-    hpLanceQty > 0 ||
-    hoseReelHpWithPost > 0 ||
-    hoseReelHpWithoutPost > 0 ||
-    hoseReelHpDet > 0;
+  const hasHpSource = washBayHasHpSource({
+    hp_lance_qty: hpLanceQty,
+    hose_reel_hp_with_post_qty: hoseReelHpWithPost,
+    hose_reel_hp_without_post_qty: hoseReelHpWithoutPost,
+    hose_reel_hp_det_with_post_qty: hoseReelHpDet,
+  });
 
   useEffect(() => {
     if (!hasHpSource) {
@@ -54,8 +61,11 @@ const WashBayFields = ({
     }
   }, [hasHpSource, setValue]);
 
-  const showEnergyChainFields = hasGantryWatch && supplyType === "ENERGY_CHAIN";
-  const isEcWall = supplyType === "ENERGY_CHAIN" && supplyFixingType === "WALL";
+  const showEnergyChainFields = showWashBayEnergyChainFields(
+    { has_gantry: hasGantryWatch },
+    supplyType,
+  );
+  const isEcWall = isWashBayEcWall(supplyType, supplyFixingType);
 
   return (
     <div className="fs-content">
@@ -69,7 +79,7 @@ const WashBayFields = ({
           <SelectField<WashBaySchema>
             name="hp_lance_qty"
             dataType="number"
-            label="Linea trolley HP"
+            label={WASH_BAY_FIELD_LABELS.hp_lance_qty}
             disabled={isEcWall}
             items={getNumericSelectOptions([0, 2])}
           />
@@ -78,7 +88,7 @@ const WashBayFields = ({
           <SelectField<WashBaySchema>
             name="det_lance_qty"
             dataType="number"
-            label="Linea trolley detergente"
+            label={WASH_BAY_FIELD_LABELS.det_lance_qty}
             disabled={isEcWall}
             items={getNumericSelectOptions([0, 2])}
           />
@@ -89,7 +99,7 @@ const WashBayFields = ({
           <SelectField<WashBaySchema>
             name="pressure_washer_type"
             dataType="string"
-            label="Tipo idropulitrice"
+            label={WASH_BAY_FIELD_LABELS.pressure_washer_type}
             disabled={isEcWall}
             items={withNoSelection(selectFieldOptions.pressureWasherOpts)}
             fieldsToResetOnValue={[
@@ -104,7 +114,7 @@ const WashBayFields = ({
           <SelectField<WashBaySchema>
             name="pressure_washer_qty"
             dataType="number"
-            label="Numero idropulitrici"
+            label={WASH_BAY_FIELD_LABELS.pressure_washer_qty}
             disabled={isEcWall || !pressureWashTypeWatch}
             items={getNumericSelectOptions([1, 2, 3])}
           />
@@ -114,7 +124,7 @@ const WashBayFields = ({
         <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="has_gantry"
-            label="Pista con portale"
+            label={WASH_BAY_FIELD_LABELS.has_gantry}
             fieldsToResetOnUncheck={[
               {
                 fieldsToReset: [
@@ -137,21 +147,21 @@ const WashBayFields = ({
         <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="is_first_bay"
-            label="Prima pista"
+            label={WASH_BAY_FIELD_LABELS.is_first_bay}
             disabled={isEcWall}
           />
         </div>
         <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="has_bay_dividers"
-            label="Con pannellature"
+            label={WASH_BAY_FIELD_LABELS.has_bay_dividers}
             disabled={isEcWall}
           />
         </div>
         <div className="fs-item">
           <CheckboxField<WashBaySchema>
             name="has_weeping_lances"
-            label="Pistole perdenti"
+            label={WASH_BAY_FIELD_LABELS.has_weeping_lances}
             description="Solo per linee HP"
             disabled={isEcWall || !hasHpSource}
           />
@@ -164,7 +174,7 @@ const WashBayFields = ({
             <SelectField<WashBaySchema>
               name="hose_reel_hp_with_post_qty"
               dataType="number"
-              label="HP con palo"
+              label={WASH_BAY_FIELD_LABELS.hose_reel_hp_with_post_qty}
               disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
@@ -173,7 +183,7 @@ const WashBayFields = ({
             <SelectField<WashBaySchema>
               name="hose_reel_hp_without_post_qty"
               dataType="number"
-              label="HP senza palo"
+              label={WASH_BAY_FIELD_LABELS.hose_reel_hp_without_post_qty}
               disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
@@ -184,7 +194,7 @@ const WashBayFields = ({
             <SelectField<WashBaySchema>
               name="hose_reel_det_with_post_qty"
               dataType="number"
-              label="Detergente con palo"
+              label={WASH_BAY_FIELD_LABELS.hose_reel_det_with_post_qty}
               disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
@@ -193,7 +203,7 @@ const WashBayFields = ({
             <SelectField<WashBaySchema>
               name="hose_reel_det_without_post_qty"
               dataType="number"
-              label="Detergente senza palo"
+              label={WASH_BAY_FIELD_LABELS.hose_reel_det_without_post_qty}
               disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
@@ -204,7 +214,7 @@ const WashBayFields = ({
             <SelectField<WashBaySchema>
               name="hose_reel_hp_det_with_post_qty"
               dataType="number"
-              label="HP+Detergente con palo"
+              label={WASH_BAY_FIELD_LABELS.hose_reel_hp_det_with_post_qty}
               disabled={isEcWall}
               items={getNumericSelectOptions([0, 1, 2])}
             />
@@ -219,14 +229,14 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="energy_chain_width"
                 dataType="string"
-                label="Larghezza catena"
+                label={WASH_BAY_FIELD_LABELS.energy_chain_width}
                 items={selectFieldOptions.cableChainWidths}
               />
             </div>
             <div className="fs-item">
               <CheckboxField<WashBaySchema>
                 name="has_shelf_extension"
-                label="Con prolunga per mensola alim."
+                label={WASH_BAY_FIELD_LABELS.has_shelf_extension}
               />
             </div>
           </div>
@@ -238,7 +248,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_signal_cable_qty"
                 dataType="number"
-                label="Cavo segnali 12G1"
+                label={WASH_BAY_FIELD_LABELS.ec_signal_cable_qty}
                 items={getNumericSelectOptions([1, 2, 3])}
               />
             </div>
@@ -246,7 +256,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_profinet_cable_qty"
                 dataType="number"
-                label="Cavo Profinet"
+                label={WASH_BAY_FIELD_LABELS.ec_profinet_cable_qty}
                 items={getNumericSelectOptions([0, 1, 2])}
               />
             </div>
@@ -254,7 +264,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_water_1_tube_qty"
                 dataType="number"
-                label={'Tubo acqua 1"'}
+                label={WASH_BAY_FIELD_LABELS.ec_water_1_tube_qty}
                 items={getNumericSelectOptions([1, 2])}
               />
             </div>
@@ -264,7 +274,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_water_34_tube_qty"
                 dataType="number"
-                label={'Tubo acqua 3/4"'}
+                label={WASH_BAY_FIELD_LABELS.ec_water_34_tube_qty}
                 items={getNumericSelectOptions([0, 1, 2])}
               />
             </div>
@@ -272,7 +282,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_r1_1_tube_qty"
                 dataType="number"
-                label={'Tubo R1 1"'}
+                label={WASH_BAY_FIELD_LABELS.ec_r1_1_tube_qty}
                 items={getNumericSelectOptions([0, 1, 2])}
               />
             </div>
@@ -280,7 +290,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_r2_1_tube_qty"
                 dataType="number"
-                label={'Tubo R2 1"'}
+                label={WASH_BAY_FIELD_LABELS.ec_r2_1_tube_qty}
                 items={getNumericSelectOptions([0, 1, 2])}
               />
             </div>
@@ -290,7 +300,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_r2_34_inox_tube_qty"
                 dataType="number"
-                label={'Tubo R2 3/4" INOX'}
+                label={WASH_BAY_FIELD_LABELS.ec_r2_34_inox_tube_qty}
                 items={getNumericSelectOptions([0, 1, 2, 3])}
               />
             </div>
@@ -298,7 +308,7 @@ const WashBayFields = ({
               <SelectField<WashBaySchema>
                 name="ec_air_tube_qty"
                 dataType="number"
-                label="Tubo aria 8x17"
+                label={WASH_BAY_FIELD_LABELS.ec_air_tube_qty}
                 items={getNumericSelectOptions([0, 1])}
               />
             </div>

@@ -1,13 +1,18 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import { hasBrushes } from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
 
 const BrushSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const brushNumWatch = useWatch<ConfigSchema>({ control, name: "brush_qty" });
-  const isDisabled = brushNumWatch === undefined || brushNumWatch === 0;
+  const brushNumWatch = useWatch<ConfigSchema, "brush_qty">({
+    control,
+    name: "brush_qty",
+  });
+  const isDisabled = !hasBrushes({ brush_qty: brushNumWatch });
 
   return (
     <Fieldset
@@ -20,7 +25,7 @@ const BrushSection = () => {
             <SelectField<ConfigSchema>
               name="brush_qty"
               dataType="number"
-              label="Numero di spazzole"
+              label={CONFIG_FIELD_LABELS.brush_qty}
               items={selectFieldOptions.brushNums}
               fieldsToResetOnValue={[
                 {
@@ -47,7 +52,7 @@ const BrushSection = () => {
             <SelectField<ConfigSchema>
               name="brush_type"
               dataType="string"
-              label="Tipo di setole"
+              label={CONFIG_FIELD_LABELS.brush_type}
               disabled={isDisabled}
               items={selectFieldOptions.brushTypes}
             />
@@ -56,7 +61,7 @@ const BrushSection = () => {
             <SelectField<ConfigSchema>
               name="brush_color"
               dataType="string"
-              label="Colore di setole"
+              label={CONFIG_FIELD_LABELS.brush_color}
               disabled={isDisabled}
               items={selectFieldOptions.brushColors}
             />

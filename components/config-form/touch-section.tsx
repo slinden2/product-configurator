@@ -3,6 +3,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import { showCardQty as showCardQtyRule } from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 
@@ -13,14 +15,19 @@ const TouchSection = () => {
   const hasItecowebWatch = useWatch({ control, name: "has_itecoweb" });
   const hasCardReaderWatch = useWatch({ control, name: "has_card_reader" });
 
+  const showCardQty = showCardQtyRule({
+    has_itecoweb: hasItecowebWatch,
+    has_card_reader: hasCardReaderWatch,
+  });
+
   // Cross-field condition: reset card_qty only when BOTH itecoweb AND card_reader
   // are unchecked. This can't be expressed via single-field fieldsToResetOnUncheck
   // because each checkbox alone shouldn't reset card_qty while the other is checked.
   useEffect(() => {
-    if (!hasItecowebWatch && !hasCardReaderWatch) {
+    if (!showCardQty) {
       setValue("card_qty", 0, { shouldDirty: true });
     }
-  }, [hasItecowebWatch, hasCardReaderWatch, setValue]);
+  }, [showCardQty, setValue]);
 
   return (
     <Fieldset
@@ -33,7 +40,7 @@ const TouchSection = () => {
             <SelectField<ConfigSchema>
               name="touch_qty"
               dataType="number"
-              label="Numero di pannelli"
+              label={CONFIG_FIELD_LABELS.touch_qty}
               description="Per l'opzione gestione piste occorrono due pannelli"
               items={selectFieldOptions.touchQtyOpts}
               fieldsToResetOnValue={[
@@ -52,7 +59,7 @@ const TouchSection = () => {
             <SelectField<ConfigSchema>
               name="touch_pos"
               dataType="string"
-              label="Posizione touch"
+              label={CONFIG_FIELD_LABELS.touch_pos}
               disabled={touchQtyWatch !== 1}
               items={selectFieldOptions.touchPositionOpts}
               fieldsToResetOnValue={[
@@ -71,7 +78,7 @@ const TouchSection = () => {
             <SelectField<ConfigSchema>
               name="touch_fixing_type"
               dataType="string"
-              label="Fissaggio touch esterno"
+              label={CONFIG_FIELD_LABELS.touch_fixing_type}
               disabled={touchQtyWatch !== 2 && touchPosWatch !== "EXTERNAL"}
               items={selectFieldOptions.touchFixingTypeOpts}
             />
@@ -81,7 +88,7 @@ const TouchSection = () => {
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_itecoweb"
-              label="Itecoweb"
+              label={CONFIG_FIELD_LABELS.has_itecoweb}
               description={
                 <>
                   <span className="mb-1 block">Comprensivo di:</span>
@@ -97,14 +104,14 @@ const TouchSection = () => {
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="has_card_reader"
-              label="Lettore schede"
+              label={CONFIG_FIELD_LABELS.has_card_reader}
               description="Senza Itecoweb"
             />
           </div>
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
               name="is_fast"
-              label="Portale fast"
+              label={CONFIG_FIELD_LABELS.is_fast}
               description={
                 <>
                   <span className="mb-1 block">Comprensivo di:</span>
@@ -123,19 +130,19 @@ const TouchSection = () => {
             <SelectField<ConfigSchema>
               name="emergency_stop_qty"
               dataType="number"
-              label="Fungo di emergenza esterno"
+              label={CONFIG_FIELD_LABELS.emergency_stop_qty}
               description="Posto sui montanti anteriori"
               items={selectFieldOptions.emergencyStopQtyOpts}
             />
           </div>
         </div>
-        {(hasItecowebWatch || hasCardReaderWatch) && (
+        {showCardQty && (
           <div className="fs-row">
             <div className="fs-item w-1/2 md:w-1/3">
               <SelectField<ConfigSchema>
                 name="card_qty"
                 dataType="number"
-                label="Numero di schede"
+                label={CONFIG_FIELD_LABELS.card_qty}
                 description="Numero di schede disponibili per la selezione dei programmi"
                 items={selectFieldOptions.cardQtyOpts}
               />
