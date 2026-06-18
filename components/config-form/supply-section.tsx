@@ -11,7 +11,11 @@ import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { MSG } from "@/lib/messages";
 import { withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
-import { selectFieldOptions, zodEnums } from "@/validation/configuration";
+import {
+  getSupplyFixingOptions,
+  selectFieldOptions,
+  zodEnums,
+} from "@/validation/configuration";
 
 const SupplySection = () => {
   const { control } = useFormContext<ConfigSchema>();
@@ -65,12 +69,9 @@ const SupplySection = () => {
               dataType="string"
               label={CONFIG_FIELD_LABELS.supply_fixing_type}
               items={
-                supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.ENERGY_CHAIN
-                  ? selectFieldOptions.supplyFixingTypesEnergyChain
-                  : supplyTypeWatch ===
-                      zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF
-                    ? withNoSelection(selectFieldOptions.supplyFixingTypes)
-                    : selectFieldOptions.supplyFixingTypes
+                supplyTypeWatch === zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF
+                  ? withNoSelection(getSupplyFixingOptions(supplyTypeWatch))
+                  : getSupplyFixingOptions(supplyTypeWatch)
               }
               fieldsToResetOnValue={[
                 {

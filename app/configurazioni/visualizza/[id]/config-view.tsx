@@ -1,8 +1,5 @@
-import {
-  buildConfigViewModel,
-  buildWashBayViewSection,
-  buildWaterTankViewSection,
-} from "@/lib/configuration/build-config-view-model";
+import { Fragment } from "react";
+import { buildCompleteConfigViewSections } from "@/lib/configuration/build-config-view-model";
 import type { UpdateConfigSchema } from "@/validation/config-schema";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
 import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
@@ -20,37 +17,24 @@ const ConfigView = ({
   waterTanks,
   washBays,
 }: ConfigViewProps) => {
-  const sections = buildConfigViewModel(configuration);
-  const tankSections = waterTanks.map((tank, i) =>
-    buildWaterTankViewSection(tank, i + 1),
-  );
-  const baySections = washBays.map((bay, i) =>
-    buildWashBayViewSection(bay, i + 1, configuration.supply_type),
+  const groups = buildCompleteConfigViewSections(
+    configuration,
+    waterTanks,
+    washBays,
   );
 
   return (
     <div className="space-y-6">
-      {sections.map((section) => (
-        <ViewSectionCard key={section.title} section={section} />
+      {groups.map((group) => (
+        <Fragment key={group.title ?? "config"}>
+          {group.title && (
+            <h2 className="pt-4 text-xl font-semibold">{group.title}</h2>
+          )}
+          {group.sections.map((section) => (
+            <ViewSectionCard key={section.title} section={section} />
+          ))}
+        </Fragment>
       ))}
-
-      {tankSections.length > 0 && (
-        <>
-          <h2 className="pt-4 text-xl font-semibold">Serbatoi</h2>
-          {tankSections.map((section) => (
-            <ViewSectionCard key={section.title} section={section} />
-          ))}
-        </>
-      )}
-
-      {baySections.length > 0 && (
-        <>
-          <h2 className="pt-4 text-xl font-semibold">Piste</h2>
-          {baySections.map((section) => (
-            <ViewSectionCard key={section.title} section={section} />
-          ))}
-        </>
-      )}
     </div>
   );
 };

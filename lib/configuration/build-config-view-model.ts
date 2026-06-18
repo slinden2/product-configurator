@@ -1,5 +1,8 @@
 import type { ConfigSchema } from "@/validation/config-schema";
-import { selectFieldOptions } from "@/validation/configuration";
+import {
+  getSupplyFixingOptions,
+  selectFieldOptions,
+} from "@/validation/configuration";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 import type { WaterTankSchema } from "@/validation/water-tank-schema";
 import {
@@ -54,6 +57,17 @@ export interface ViewGroup {
 export interface ViewSection {
   title: string;
   groups: ViewGroup[];
+}
+
+/**
+ * A run of view sections optionally introduced by a heading (e.g. the water
+ * tanks under "Serbatoi"). Lets the HTML view and the PDF iterate the exact
+ * same top-level structure — including the group headings — from one source.
+ */
+export interface ViewSectionGroup {
+  /** Heading shown above the sections, or null for the top-level config spec. */
+  title: string | null;
+  sections: ViewSection[];
 }
 
 const o = selectFieldOptions;
@@ -174,13 +188,7 @@ export function buildConfigViewModel(c: ConfigSchema): ViewSection[] {
     row(CONFIG_FIELD_LABELS.has_antifreeze, formatBoolean(c.has_antifreeze)),
   );
 
-  // Energy-chain configs reuse the same fixing enum values but with different
-  // labels (POST = "Linea pali", WALL = "Mensole a muro"), mirroring the form's
-  // per-supply-type option set. Pick the matching labels so the view/PDF agree.
-  const supplyFixingOptions =
-    c.supply_type === "ENERGY_CHAIN"
-      ? o.supplyFixingTypesEnergyChain
-      : o.supplyFixingTypes;
+  const supplyFixingOptions = getSupplyFixingOptions(c.supply_type);
   const supplyRows: ViewRow[] = [
     row(
       CONFIG_FIELD_LABELS.supply_type,
@@ -519,4 +527,31 @@ export function buildWashBayViewSection(
   }
 
   return { title: `Pista ${index}`, groups };
+}
+
+/**
+ * Complete top-level structure for a configuration's read-only surfaces: the
+ * spec sections followed by the (optional) "Serbatoi" and "Piste" groups.
+ * The HTML view and the PDF both render from this so their section ordering and
+ * group headings stay identical. Empty sub-record groups are omitted.
+ */
+export function buildCompleteConfigViewSections(
+  configuration: ConfigSchema,
+  waterTanks: WaterTankSchema[],
+  washBays: WashBaySchema[],
+): ViewSectionGroup[] {
+  const tankSections = waterTanks.map((tank, i) =>
+    buildWaterTankViewSection(tank, i + 1),
+  );
+  const baySections = washBays.map((bay, i) =>
+    buildWashBayViewSection(bay, i + 1, configuration.supply_type),
+  );
+
+  const groups: ViewSectionGroup[] = [
+    { title: null, sections: buildConfigViewModel(configuration) },
+    { title: "Serbatoi", sections: tankSections },
+    { title: "Piste", sections: baySections },
+  ];
+
+  return groups.filter((group) => group.sections.length > 0);
 }

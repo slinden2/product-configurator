@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import { getConfigurationWithTanksAndBays, type UserData } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import type { ConfigurationStatusType } from "@/types";
@@ -41,27 +42,16 @@ export async function loadValidatedConfiguration(
 
   const { water_tanks, wash_bays, ...configuration } = configurationData;
 
-  const transformedConfiguration = transformDbNullToUndefined(configuration);
-  const parsedConfig = updateConfigSchema.safeParse(transformedConfiguration);
-  const validatedConfiguration: UpdateConfigSchema = parsedConfig.success
-    ? parsedConfig.data
-    : (transformedConfiguration as unknown as UpdateConfigSchema);
-
-  const waterTanks: UpdateWaterTankSchema[] = water_tanks.map((wt) => {
-    const raw = transformDbNullToUndefined(wt);
-    const parsed = updateWaterTankSchema.safeParse(raw);
-    return parsed.success
-      ? parsed.data
-      : (raw as unknown as UpdateWaterTankSchema);
-  });
-
-  const washBays: UpdateWashBaySchema[] = wash_bays.map((wb) => {
-    const raw = transformDbNullToUndefined(wb);
-    const parsed = updateWashBaySchema.safeParse(raw);
-    return parsed.success
-      ? parsed.data
-      : (raw as unknown as UpdateWashBaySchema);
-  });
+  const validatedConfiguration = parseOrRaw(
+    updateConfigSchema,
+    transformDbNullToUndefined(configuration),
+  );
+  const waterTanks = water_tanks.map((wt) =>
+    parseOrRaw(updateWaterTankSchema, transformDbNullToUndefined(wt)),
+  );
+  const washBays = wash_bays.map((wb) =>
+    parseOrRaw(updateWashBaySchema, transformDbNullToUndefined(wb)),
+  );
 
   return {
     configuration: validatedConfiguration,
@@ -69,4 +59,15 @@ export async function loadValidatedConfiguration(
     waterTanks,
     washBays,
   };
+}
+
+/**
+ * Parses `raw` with `schema`, falling back to the raw value (cast to the schema
+ * type) when validation fails. This makes the fallback policy explicit and
+ * single-source: stale enum values / removed fields are surfaced as-is rather
+ * than crashing the page.
+ */
+function parseOrRaw<T>(schema: z.ZodType<T>, raw: unknown): T {
+  const result = schema.safeParse(raw);
+  return result.success ? result.data : (raw as T);
 }

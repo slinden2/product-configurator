@@ -48,6 +48,19 @@ export const supplyFixingTypesEnergyChain: SelectOption[] =
     "Mensole a muro",
   ]);
 
+/**
+ * Fixing-type options for the given supply type. Energy-chain supplies reuse
+ * the same enum values (POST/WALL) but with different labels, so the form and
+ * the read-only view/PDF must both resolve labels through this single source.
+ * Callers that need a deselect option still wrap the result in `withNoSelection`.
+ */
+export const getSupplyFixingOptions = (
+  supplyType: string | undefined,
+): SelectOption[] =>
+  supplyType === SupplyTypeEnum.enum.ENERGY_CHAIN
+    ? supplyFixingTypesEnergyChain
+    : supplyFixingTypes;
+
 export const SupplySideEnum = z.enum(SupplySides, {
   message: genericRequiredMessage,
 });

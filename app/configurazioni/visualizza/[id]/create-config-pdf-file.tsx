@@ -9,9 +9,7 @@ import {
 import { saveAs } from "file-saver";
 import ItecoLogo from "@/components/pdf/iteco-logo";
 import {
-  buildConfigViewModel,
-  buildWashBayViewSection,
-  buildWaterTankViewSection,
+  buildCompleteConfigViewSections,
   type ViewSection,
 } from "@/lib/configuration/build-config-view-model";
 import { COLORS } from "@/lib/excel/workbook-builder";
@@ -142,12 +140,10 @@ export const ConfigPdfDocument = ({
   washBays,
   meta,
 }: ConfigPdfDocumentProps) => {
-  const sections = buildConfigViewModel(configuration);
-  const tankSections = waterTanks.map((tank, i) =>
-    buildWaterTankViewSection(tank, i + 1),
-  );
-  const baySections = washBays.map((bay, i) =>
-    buildWashBayViewSection(bay, i + 1, configuration.supply_type),
+  const groups = buildCompleteConfigViewSections(
+    configuration,
+    waterTanks,
+    washBays,
   );
 
   const generatedLine = `Generato il ${meta.generatedAt}${
@@ -167,31 +163,18 @@ export const ConfigPdfDocument = ({
           <ItecoLogo width={120} />
         </View>
 
-        {sections.map((section) => (
-          <SectionBlock key={section.title} section={section} />
+        {groups.map((group) => (
+          <View key={group.title ?? "config"}>
+            {group.title && (
+              <Text style={styles.groupTitle} minPresenceAhead={60}>
+                {group.title}
+              </Text>
+            )}
+            {group.sections.map((section) => (
+              <SectionBlock key={section.title} section={section} />
+            ))}
+          </View>
         ))}
-
-        {tankSections.length > 0 && (
-          <View>
-            <Text style={styles.groupTitle} minPresenceAhead={60}>
-              Serbatoi
-            </Text>
-            {tankSections.map((section) => (
-              <SectionBlock key={section.title} section={section} />
-            ))}
-          </View>
-        )}
-
-        {baySections.length > 0 && (
-          <View>
-            <Text style={styles.groupTitle} minPresenceAhead={60}>
-              Piste
-            </Text>
-            {baySections.map((section) => (
-              <SectionBlock key={section.title} section={section} />
-            ))}
-          </View>
-        )}
 
         <View style={styles.footer} fixed>
           <Text>{generatedLine}</Text>
