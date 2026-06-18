@@ -1,14 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { buttonVariants } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { MSG } from "@/lib/messages";
 
 interface SaveWarningDialogProps {
@@ -36,25 +26,18 @@ const SaveWarningDialog = ({
         : MSG.saveWarning.offerOnly;
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{messages.title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {messages.description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Annulla</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className={buttonVariants({ variant: "destructive" })}
-          >
-            {messages.confirm}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmModal
+      isOpen={open}
+      onOpenChange={(next) => {
+        if (!next) onCancel();
+        onOpenChange(next);
+      }}
+      title={messages.title}
+      description={messages.description}
+      onConfirm={onConfirm}
+      confirmText={messages.confirm}
+      confirmVariant="destructive"
+    />
   );
 };
 

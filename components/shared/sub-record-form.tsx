@@ -7,20 +7,11 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { type FieldValues, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import { ConfirmModal } from "@/components/confirm-modal";
 import Fieldset from "@/components/fieldset";
 import SaveWarningDialog from "@/components/shared/save-warning-dialog";
 import { SubmitButton } from "@/components/shared/submit-button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { isConfigLocked } from "@/lib/access";
@@ -343,25 +334,16 @@ const SubRecordForm = <
           </fieldset>
         </FormDisabledContext.Provider>
       </Form>
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Conferma eliminazione</AlertDialogTitle>
-            <AlertDialogDescription>
-              {`Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""}?`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className={buttonVariants({ variant: "destructive" })}
-            >
-              Elimina
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Conferma eliminazione"
+        description={`Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""}?`}
+        onConfirm={handleDeleteConfirm}
+        confirmText="Elimina"
+        confirmVariant="destructive"
+        isConfirming={isDeleting}
+      />
       <SaveWarningDialog
         open={showSaveWarning}
         onOpenChange={setShowSaveWarning}
