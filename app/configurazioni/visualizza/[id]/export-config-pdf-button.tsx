@@ -35,7 +35,6 @@ const ExportConfigPdfButton = ({
     icon={<FileText />}
     errorMsg="Errore durante l'esportazione del PDF."
     variant="outline"
-    size="sm"
   >
     Esporta PDF
   </AsyncActionButton>
