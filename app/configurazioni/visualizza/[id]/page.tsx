@@ -38,23 +38,25 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
             {configuration.name || "Configurazione"}
           </p>
         </div>
-        <div className="flex items-end gap-2 sm:ml-auto">
+        <div className="flex flex-col items-start gap-2 sm:ml-auto sm:items-end">
           <StatusForm confId={id} initialStatus={status} userRole={user.role} />
-          <ExportConfigPdfButton
-            confId={id}
-            configuration={configuration}
-            waterTanks={waterTanks}
-            washBays={washBays}
-            generatorEmail={null}
-          />
-          {editable && (
-            <Button asChild>
-              <Link href={`/configurazioni/modifica/${id}`}>
-                <Pencil />
-                Modifica
-              </Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <ExportConfigPdfButton
+              confId={id}
+              configuration={configuration}
+              waterTanks={waterTanks}
+              washBays={washBays}
+              generatorEmail={null}
+            />
+            {editable && (
+              <Button asChild variant="outline">
+                <Link href={`/configurazioni/modifica/${id}`}>
+                  <Pencil />
+                  Modifica
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       <ConfigView

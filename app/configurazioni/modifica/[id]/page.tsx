@@ -1,8 +1,10 @@
+import { Eye } from "lucide-react";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import FormContainer from "@/components/form-container";
-import StatusForm from "@/components/status-form";
+import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import { getUserData, hasEngineeringBom, hasOfferSnapshot } from "@/db/queries";
 
@@ -51,7 +53,12 @@ const EditConfiguration = async (props: EditConfigProps) => {
           </p>
         </div>
         <div className="sm:ml-auto sm:flex sm:justify-center sm:items-center">
-          <StatusForm confId={id} initialStatus={status} userRole={user.role} />
+          <Button asChild variant="outline">
+            <Link href={`/configurazioni/visualizza/${id}`}>
+              <Eye />
+              Visualizza configurazione
+            </Link>
+          </Button>
         </div>
       </div>
       <FormContainer

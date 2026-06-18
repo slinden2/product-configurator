@@ -208,7 +208,9 @@ describe("ConfigForm", () => {
         );
       });
 
-      expect(toast.success).toHaveBeenCalledWith("Configurazione aggiornata.");
+      expect(toast.success).toHaveBeenCalledWith(
+        "Configurazione salvata. Puoi inviarla dalla pagina di visualizzazione.",
+      );
     });
 
     test("shows error toast when editConfigurationAction fails", async () => {

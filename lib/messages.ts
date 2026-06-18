@@ -64,6 +64,8 @@ export const MSG = {
   },
   toast: {
     configUpdated: "Configurazione aggiornata.",
+    configSavedSubmitHint:
+      "Configurazione salvata. Puoi inviarla dalla pagina di visualizzazione.",
     configCreated: "Configurazione creata.",
     configDeleted: "Configurazione eliminata con successo.",
     configDuplicated: "Configurazione duplicata.",

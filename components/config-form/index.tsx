@@ -107,7 +107,7 @@ const ConfigForm = ({
           }
           const result = await editConfigurationAction(id, values);
           if (result.success) {
-            toast.success(MSG.toast.configUpdated);
+            toast.success(MSG.toast.configSavedSubmitHint);
             form.reset(values);
             if (formKey) {
               onSaved?.(formKey);

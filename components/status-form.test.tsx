@@ -19,15 +19,24 @@ vi.mock("@/app/actions/update-config-status-action", () => ({
 // --- Imports (after mocks) ---
 
 import { toast } from "sonner";
-import StatusForm from "@/components/status-form";
+import StatusControl from "@/components/status-form";
 import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
-async function selectStatus(optionText: string) {
-  await userEvent.click(screen.getByRole("combobox"));
-  const option = screen.getByRole("option", { name: optionText });
-  await userEvent.click(option);
+const LOCKOUT_TEXT = /Non potrai più modificare la configurazione/;
+
+async function clickButton(name: string | RegExp) {
+  await userEvent.click(screen.getByRole("button", { name }));
+}
+
+async function confirm() {
+  await userEvent.click(screen.getByRole("button", { name: "Conferma" }));
+}
+
+async function selectJump(optionText: string) {
+  await userEvent.click(screen.getByRole("combobox", { name: "Cambia stato" }));
+  await userEvent.click(screen.getByRole("option", { name: optionText }));
 }
 
 // --- Setup ---
@@ -41,11 +50,11 @@ beforeEach(() => {
 
 // --- Tests ---
 
-describe("StatusForm", () => {
-  describe("Rendering", () => {
-    test("renders label and initial status", () => {
+describe("StatusControl", () => {
+  describe("Badge rendering", () => {
+    test("renders the current status label", () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
       expect(screen.getByText("Stato")).toBeInTheDocument();
@@ -53,97 +62,171 @@ describe("StatusForm", () => {
     });
   });
 
-  describe("Role-based status rendering", () => {
-    test("SALES at DRAFT sees select with Bozza and Inviato only", async () => {
-      render(<StatusForm confId={1} initialStatus="DRAFT" userRole="SALES" />);
+  describe("Role-based action buttons", () => {
+    test("SALES at DRAFT sees only the Invia button", () => {
+      render(
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+      );
 
-      await userEvent.click(screen.getByRole("combobox"));
-
-      expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Invia" })).toBeInTheDocument();
       expect(
-        screen.getByRole("option", { name: "Inviato" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("option", { name: "In revisione" }),
+        screen.queryByRole("button", { name: "Approva" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("option", { name: "Approvato" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("option", { name: "Chiuso" }),
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
       ).not.toBeInTheDocument();
     });
 
-    test("SALES at IN_REVIEW sees text label, no select", () => {
+    test("SALES at SUBMITTED sees only the Riporta in bozza button", () => {
       render(
-        <StatusForm confId={1} initialStatus="IN_REVIEW" userRole="SALES" />,
+        <StatusControl confId={1} initialStatus="SUBMITTED" userRole="SALES" />,
       );
 
-      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Riporta in bozza" }),
+      ).toBeInTheDocument();
+    });
+
+    test("SALES at IN_REVIEW is read-only (badge, no controls)", () => {
+      render(
+        <StatusControl confId={1} initialStatus="IN_REVIEW" userRole="SALES" />,
+      );
+
       expect(screen.getByText("In revisione")).toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
+      ).not.toBeInTheDocument();
     });
 
-    test("SALES at APPROVED sees text label, no select", () => {
+    test("ENGINEER at IN_REVIEW sees forward and backward buttons", () => {
       render(
-        <StatusForm confId={1} initialStatus="APPROVED" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="IN_REVIEW"
+          userRole="ENGINEER"
+        />,
       );
 
-      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-      expect(screen.getByText("Approvato")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Approva" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Rimanda" }),
+      ).toBeInTheDocument();
     });
 
-    test("ENGINEER at APPROVED sees select with Approvato and In revisione only", async () => {
+    test("ENGINEER at APPROVED sees only the Riapri button", () => {
       render(
-        <StatusForm confId={1} initialStatus="APPROVED" userRole="ENGINEER" />,
+        <StatusControl
+          confId={1}
+          initialStatus="APPROVED"
+          userRole="ENGINEER"
+        />,
       );
 
-      await userEvent.click(screen.getByRole("combobox"));
-
       expect(
-        screen.getByRole("option", { name: "Approvato" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("option", { name: "In revisione" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("option", { name: "Bozza" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("option", { name: "Inviato" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("option", { name: "Chiuso" }),
-      ).not.toBeInTheDocument();
-    });
-
-    test("ADMIN sees all statuses in select", async () => {
-      render(<StatusForm confId={1} initialStatus="DRAFT" userRole="ADMIN" />);
-
-      await userEvent.click(screen.getByRole("combobox"));
-
-      expect(screen.getByRole("option", { name: "Bozza" })).toBeInTheDocument();
-      expect(
-        screen.getByRole("option", { name: "Inviato" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("option", { name: "In revisione" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("option", { name: "Approvato" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("option", { name: "Chiuso" }),
+        screen.getByRole("button", { name: "Riapri" }),
       ).toBeInTheDocument();
     });
   });
 
-  describe("Status change — success", () => {
-    test("calls action with correct confId and new status", async () => {
+  describe("ADMIN manual dropdown", () => {
+    test("ADMIN at DRAFT sees the adjacent button plus a jump dropdown", () => {
       render(
-        <StatusForm confId={42} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="ADMIN" />,
       );
 
-      await selectStatus("Inviato");
+      // Adjacent (±1) move is a button.
+      expect(screen.getByRole("button", { name: "Invia" })).toBeInTheDocument();
+      // Non-adjacent jumps live in the manual dropdown.
+      expect(
+        screen.getByRole("combobox", { name: "Cambia stato" }),
+      ).toBeInTheDocument();
+    });
+
+    test("dropdown is not shown for SALES or ENGINEER", () => {
+      render(
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+      );
+
+      expect(
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("ADMIN can jump to a non-adjacent status via the dropdown", async () => {
+      render(
+        <StatusControl confId={7} initialStatus="DRAFT" userRole="ADMIN" />,
+      );
+
+      await selectJump("Chiuso");
+      await confirm();
+
+      await waitFor(() => {
+        expect(mockUpdateConfigStatus).toHaveBeenCalledWith(7, {
+          status: "CLOSED",
+        });
+      });
+    });
+  });
+
+  describe("Confirmation dialog", () => {
+    test("clicking an action opens the confirmation dialog", async () => {
+      render(
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+      );
+
+      await clickButton("Invia");
+
+      expect(
+        screen.getByRole("alertdialog", { name: "Conferma cambio di stato" }),
+      ).toBeInTheDocument();
+    });
+
+    test("warns about losing edit access when the target is non-editable", async () => {
+      render(
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+      );
+
+      await clickButton("Invia");
+
+      expect(screen.getByText(LOCKOUT_TEXT)).toBeInTheDocument();
+    });
+
+    test("omits the lockout warning when the config stays editable", async () => {
+      render(
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+      );
+
+      await clickButton("Invia");
+
+      expect(screen.queryByText(LOCKOUT_TEXT)).not.toBeInTheDocument();
+    });
+
+    test("does not call the action until confirmed", async () => {
+      render(
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+      );
+
+      await clickButton("Invia");
+      expect(mockUpdateConfigStatus).not.toHaveBeenCalled();
+
+      await confirm();
+      await waitFor(() => {
+        expect(mockUpdateConfigStatus).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Transition — success", () => {
+    test("calls the action with the confId and target status", async () => {
+      render(
+        <StatusControl confId={42} initialStatus="DRAFT" userRole="ENGINEER" />,
+      );
+
+      await clickButton("Invia");
+      await confirm();
 
       await waitFor(() => {
         expect(mockUpdateConfigStatus).toHaveBeenCalledWith(42, {
@@ -152,12 +235,13 @@ describe("StatusForm", () => {
       });
     });
 
-    test("shows success toast", async () => {
+    test("shows the success toast", async () => {
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
-      await selectStatus("Inviato");
+      await clickButton("Invia");
+      await confirm();
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith(MSG.toast.statusUpdated);
@@ -165,44 +249,38 @@ describe("StatusForm", () => {
     });
   });
 
-  describe("Status change — server error", () => {
-    test("shows error from action and reverts status", async () => {
+  describe("Transition — failure", () => {
+    test("shows the error returned by the action", async () => {
       mockUpdateConfigStatus.mockResolvedValue({
         success: false,
         error: "Permesso negato",
       });
 
       render(
-        <StatusForm confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
       );
 
-      await selectStatus("Inviato");
+      await clickButton("Invia");
+      await confirm();
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Permesso negato");
       });
-
-      // Status should revert to initial
-      expect(screen.getByText("Bozza")).toBeInTheDocument();
     });
-  });
 
-  describe("Status change — exception", () => {
-    test("shows generic error toast and reverts status", async () => {
+    test("shows a generic error toast on exception", async () => {
       mockUpdateConfigStatus.mockRejectedValue(new Error("Network error"));
 
       render(
-        <StatusForm confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />,
+        <StatusControl confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />,
       );
 
-      await selectStatus("In revisione");
+      await clickButton("Prendi in revisione");
+      await confirm();
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(MSG.toast.statusUpdateFailed);
       });
-
-      // Status should revert to initial
-      expect(screen.getByText("Inviato")).toBeInTheDocument();
     });
   });
 });
