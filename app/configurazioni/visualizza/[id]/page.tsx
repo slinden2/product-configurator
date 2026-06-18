@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
-import StatusForm from "@/components/status-form";
+import StatusControl from "@/components/status-form";
 import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import { getUserData } from "@/db/queries";
@@ -39,7 +39,11 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 sm:ml-auto sm:items-end">
-          <StatusForm confId={id} initialStatus={status} userRole={user.role} />
+          <StatusControl
+            confId={id}
+            initialStatus={status}
+            userRole={user.role}
+          />
           <div className="flex items-center gap-2">
             <ExportConfigPdfButton
               confId={id}

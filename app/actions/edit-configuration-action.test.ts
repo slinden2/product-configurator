@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { mockCanAccessConfiguration } from "@/test/access-mocks";
 
 // --- Mocks ---
 
@@ -14,6 +15,7 @@ const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
+  canAccessConfiguration: mockCanAccessConfiguration,
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
   updateConfiguration: (...args: unknown[]) => mockUpdateConfiguration(...args),
@@ -213,27 +215,27 @@ describe("editConfigurationAction", () => {
     expect(result).toEqual({ success: true });
   });
 
-  test("ADMIN user can edit another user's SUBMITTED config", async () => {
+  test("ADMIN user can edit another user's IN_SALES_REVIEW config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "admin-user",
       role: "ADMIN",
       initials: "AU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "SUBMITTED" }),
+      mockConfig({ status: "IN_SALES_REVIEW" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
   });
 
-  test("SALES cannot edit SUBMITTED config", async () => {
+  test("SALES cannot edit IN_SALES_REVIEW config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "SALES",
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "SUBMITTED" }),
+      mockConfig({ status: "IN_SALES_REVIEW" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);

@@ -30,7 +30,7 @@ npm run seed:reset       # Reset and reseed database
 - **React 19** with **React Hook Form + Zod** for form state/validation
 - **Radix UI / shadcn/ui** components with **Tailwind CSS** (dark mode via class)
 - **Drizzle ORM + PostgreSQL** with Row Level Security (RLS)
-- **Supabase** for auth (roles: ADMIN, ENGINEER, SALES)
+- **Supabase** for auth (roles: ADMIN, ENGINEER, SALES, SALES_MANAGER, SALES_DIRECTOR)
 - **Vitest + @testing-library/react** for testing
 
 ### Key Directories

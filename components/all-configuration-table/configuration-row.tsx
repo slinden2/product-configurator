@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { AllConfigurations, UserData } from "@/db/queries";
-import { canViewBom, canViewOffer } from "@/lib/access";
+import { canManageConfigs, canViewBom, canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 
@@ -31,9 +31,10 @@ interface ConfigurationRowProps {
 
 const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
   const router = useRouter();
+  // The list is already scoped to what the user may see (configScopeWhere), so
+  // any visible row is in scope; managers/directors may act on it too.
   const canEdit =
-    ["ADMIN", "ENGINEER"].includes(user.role) ||
-    configuration.user.id === user.id;
+    canManageConfigs(user.role) || configuration.user.id === user.id;
   const canDelete = canEdit && isEditable(configuration.status, user.role);
   const canDuplicate = canEdit;
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);

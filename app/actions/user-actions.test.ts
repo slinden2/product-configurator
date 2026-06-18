@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockGetUserData = vi.fn();
 const mockChangeUserRoleWithAudit = vi.fn();
+const mockAssignManagerWithAudit = vi.fn();
 const mockLogActivity = vi.fn();
 const mockFindFirst = vi.fn();
 const mockResetPasswordForEmail = vi.fn();
@@ -13,6 +14,8 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   changeUserRoleWithAudit: (...args: unknown[]) =>
     mockChangeUserRoleWithAudit(...args),
+  assignManagerWithAudit: (...args: unknown[]) =>
+    mockAssignManagerWithAudit(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
@@ -62,6 +65,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import {
+  assignManagerAction,
   changeUserRoleAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
@@ -71,6 +75,7 @@ import { MSG } from "@/lib/messages";
 const ADMIN_ID = "00000000-0000-4000-8000-000000000001";
 const ENGINEER_ID = "00000000-0000-4000-8000-000000000002";
 const TARGET_ID = "00000000-0000-4000-8000-000000000003";
+const MANAGER_ID = "00000000-0000-4000-8000-000000000004";
 
 const adminUser = { id: ADMIN_ID, role: "ADMIN" as const, initials: "A" };
 const engineerUser = {
@@ -212,6 +217,86 @@ describe("changeUserRoleAction", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe(MSG.db.unknown);
+  });
+});
+
+// ── assignManagerAction ──────────────────────────────────────────────────────
+
+describe("assignManagerAction", () => {
+  const salesTarget = { id: TARGET_ID, role: "SALES" as const };
+  const salesManager = { id: MANAGER_ID, role: "SALES_MANAGER" as const };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockAssignManagerWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("rejects non-ADMIN users", async () => {
+    mockGetUserData.mockResolvedValue(engineerUser);
+    const result = await assignManagerAction({
+      userId: TARGET_ID,
+      managerId: MANAGER_ID,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.auth.unauthorized);
+    expect(mockAssignManagerWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects assigning a manager to a non-SALES target", async () => {
+    // Target is an ENGINEER — only SALES agents may report to a manager.
+    mockFindFirst.mockResolvedValueOnce({ id: TARGET_ID, role: "ENGINEER" });
+    const result = await assignManagerAction({
+      userId: TARGET_ID,
+      managerId: MANAGER_ID,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.users.invalidManager);
+    expect(mockAssignManagerWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the manager is not a SALES_MANAGER", async () => {
+    mockFindFirst
+      .mockResolvedValueOnce(salesTarget)
+      .mockResolvedValueOnce({ id: MANAGER_ID, role: "SALES" });
+    const result = await assignManagerAction({
+      userId: TARGET_ID,
+      managerId: MANAGER_ID,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.users.invalidManager);
+    expect(mockAssignManagerWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("assigns a SALES_MANAGER to a SALES target and revalidates", async () => {
+    mockFindFirst
+      .mockResolvedValueOnce(salesTarget)
+      .mockResolvedValueOnce(salesManager);
+    const result = await assignManagerAction({
+      userId: TARGET_ID,
+      managerId: MANAGER_ID,
+    });
+    expect(result.success).toBe(true);
+    expect(mockAssignManagerWithAudit).toHaveBeenCalledWith({
+      userId: TARGET_ID,
+      managerId: MANAGER_ID,
+      changedBy: ADMIN_ID,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/gestione/utenti");
+  });
+
+  test("clears a manager (managerId null) without a manager lookup", async () => {
+    mockFindFirst.mockResolvedValueOnce(salesTarget);
+    const result = await assignManagerAction({
+      userId: TARGET_ID,
+      managerId: null,
+    });
+    expect(result.success).toBe(true);
+    expect(mockAssignManagerWithAudit).toHaveBeenCalledWith({
+      userId: TARGET_ID,
+      managerId: null,
+      changedBy: ADMIN_ID,
+    });
   });
 });
 

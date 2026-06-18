@@ -17,6 +17,7 @@ import {
   searchPartNumbers,
 } from "@/db/queries";
 import { engineeringBomItems, type NewEngineeringBomItem } from "@/db/schemas";
+import { canViewBom } from "@/lib/access";
 import { BOM, type BOMItemWithDescription } from "@/lib/BOM";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { MSG } from "@/lib/messages";
@@ -51,7 +52,9 @@ async function authorizeEngineeringBomAction(confId: number) {
     };
   }
 
-  if (user.role === "SALES") {
+  // The engineering BOM is an ENGINEER/ADMIN artifact; all sales-side roles
+  // (including SALES_MANAGER/SALES_DIRECTOR) are barred from mutating it.
+  if (!canViewBom(user.role)) {
     return {
       success: false as const,
       error: MSG.bom.unauthorized,

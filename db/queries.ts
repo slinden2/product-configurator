@@ -10,6 +10,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import { canTransition } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
   activityLogs,
@@ -33,6 +34,7 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
+import { canAccessAllConfigs } from "@/lib/access";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
 import type {
@@ -100,7 +102,7 @@ export const getUserData = async () => {
 
   const userProfile = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.id, data.user.id),
-    columns: { role: true, initials: true },
+    columns: { role: true, initials: true, manager_id: true },
   });
 
   if (!userProfile) {
@@ -111,8 +113,76 @@ export const getUserData = async () => {
     id: data.user.id,
     role: userProfile.role,
     initials: userProfile.initials,
+    manager_id: userProfile.manager_id,
   };
 };
+
+/**
+ * Builds the WHERE fragment that scopes a configuration list/count to what the
+ * given user may see. Returns `undefined` for "see everything" so it composes
+ * with an absent filter.
+ * - SALES: own configurations only.
+ * - SALES_MANAGER: own + direct reports' configurations.
+ * - SALES_DIRECTOR/ENGINEER/ADMIN: all configurations.
+ */
+export function configScopeWhere(user: NonNullable<UserData>) {
+  // All-access roles (ADMIN/ENGINEER/SALES_DIRECTOR) see everything.
+  if (canAccessAllConfigs(user.role)) {
+    return undefined;
+  }
+
+  if (user.role === "SALES") {
+    return eq(configurations.user_id, user.id);
+  }
+
+  if (user.role === "SALES_MANAGER") {
+    return inArray(
+      configurations.user_id,
+      db
+        .select({ id: userProfiles.id })
+        .from(userProfiles)
+        .where(
+          or(
+            eq(userProfiles.manager_id, user.id),
+            eq(userProfiles.id, user.id),
+          ),
+        ),
+    );
+  }
+
+  // Any unrecognized role fails closed: match no rows rather than all rows.
+  return sql`false`;
+}
+
+/**
+ * Single-record access decision used once a configuration row (with its owner's
+ * user_id) is in hand. Mirrors {@link configScopeWhere} for one record.
+ */
+export async function canAccessConfiguration(
+  user: NonNullable<UserData>,
+  config: { user_id: string },
+): Promise<boolean> {
+  // All-access roles (ADMIN/ENGINEER/SALES_DIRECTOR) see every configuration.
+  if (canAccessAllConfigs(user.role)) {
+    return true;
+  }
+  if (config.user_id === user.id) {
+    return true;
+  }
+  // SALES_MANAGER: in scope only if the config owner reports to this manager.
+  if (user.role === "SALES_MANAGER") {
+    const report = await db.query.userProfiles.findFirst({
+      where: and(
+        eq(userProfiles.id, config.user_id),
+        eq(userProfiles.manager_id, user.id),
+      ),
+      columns: { id: true },
+    });
+    return !!report;
+  }
+  // SALES (and any unrecognized role) fail closed: own configs only.
+  return false;
+}
 
 // Gets all configurations for the user if the role is SALES.
 // For ENGINEER and ADMIN, gets all configurations
@@ -121,8 +191,7 @@ export async function getUserConfigurations(
   page: number = 1,
   pageSize: number = 20,
 ) {
-  const whereClause =
-    user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined;
+  const whereClause = configScopeWhere(user);
 
   const [data, countResult] = await Promise.all([
     db.query.configurations.findMany({
@@ -173,11 +242,9 @@ export async function getConfigurationWithTanksAndBays(
     },
   });
 
-  // SALES users can only view/edit their own configurations
-  if (user.role === "SALES") {
-    if (response?.user_id !== user.id) {
-      return null;
-    }
+  // Scope check: SALES sees own, SALES_MANAGER sees own + reports, others see all
+  if (response && !(await canAccessConfiguration(user, response))) {
+    return null;
   }
 
   return response;
@@ -320,39 +387,6 @@ export const touchConfigurationUpdatedAt = async (
     .where(eq(configurations.id, confId));
 };
 
-function canTransition(
-  role: Role,
-  from: ConfigurationStatusType,
-  to: ConfigurationStatusType,
-): boolean {
-  if (from === to) return true;
-  if (role === "ADMIN") return true;
-
-  // SALES (Area Manager): Only their own DRAFT <-> SUBMITTED
-  if (role === "SALES") {
-    return (
-      (from === "DRAFT" && to === "SUBMITTED") ||
-      (from === "SUBMITTED" && to === "DRAFT")
-    );
-  }
-
-  // ENGINEER (Technical Office): Can take into review and approve
-  if (role === "ENGINEER") {
-    const allowedTransitions = [
-      { from: "DRAFT", to: "SUBMITTED" },
-      { from: "SUBMITTED", to: "DRAFT" },
-      { from: "SUBMITTED", to: "IN_REVIEW" },
-      { from: "IN_REVIEW", to: "SUBMITTED" },
-      { from: "IN_REVIEW", to: "APPROVED" },
-      { from: "APPROVED", to: "IN_REVIEW" },
-    ];
-
-    return allowedTransitions.some((t) => t.from === from && t.to === to);
-  }
-
-  return false;
-}
-
 export const updateConfigStatus = async (
   confId: number,
   user: NonNullable<UserData>,
@@ -369,7 +403,7 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.statusAlreadyUpdated, 400);
   }
 
-  if (user.role === "SALES" && user.id !== configuration.user_id) {
+  if (!(await canAccessConfiguration(user, configuration))) {
     throw new QueryError(MSG.auth.userUnauthorized, 403);
   }
 
@@ -386,7 +420,8 @@ export const updateConfigStatus = async (
 
   // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
   const forwardStatuses: ConfigurationStatusType[] = [
-    "SUBMITTED",
+    "IN_SALES_REVIEW",
+    "SALES_APPROVED",
     "IN_REVIEW",
     "APPROVED",
     "CLOSED",
@@ -711,8 +746,7 @@ export async function getConfigurationStatusCounts() {
   const user = await getUserData();
   if (!user) return null;
 
-  const whereClause =
-    user.role === "SALES" ? eq(configurations.user_id, user.id) : undefined;
+  const whereClause = configScopeWhere(user);
 
   const result = await db
     .select({
@@ -729,8 +763,9 @@ export async function getConfigurationStatusCounts() {
 export type UserWithStats = {
   id: string;
   email: string;
-  role: "ADMIN" | "ENGINEER" | "SALES";
+  role: Role;
   initials: string | null;
+  manager_id: string | null;
   last_login_at: Date | null;
   configCount: number;
   lastActivity: Date | null;
@@ -743,6 +778,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       email: userProfiles.email,
       role: userProfiles.role,
       initials: userProfiles.initials,
+      manager_id: userProfiles.manager_id,
       last_login_at: userProfiles.last_login_at,
       configCount: countDistinct(configurations.id),
       lastActivity: max(activityLogs.created_at),
@@ -755,6 +791,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       userProfiles.email,
       userProfiles.role,
       userProfiles.initials,
+      userProfiles.manager_id,
       userProfiles.last_login_at,
     )
     .orderBy(asc(userProfiles.email));
@@ -1402,10 +1439,25 @@ export async function changeUserRoleWithAudit(data: {
 
     if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
 
+    // Only SALES agents report to a manager; clear a stale manager_id when the
+    // user moves to any other role.
+    const managerPatch = data.newRole === "SALES" ? {} : { manager_id: null };
     await tx
       .update(userProfiles)
-      .set({ role: data.newRole })
+      .set({ role: data.newRole, ...managerPatch })
       .where(eq(userProfiles.id, data.userId));
+
+    // When a user leaves the SALES_MANAGER role, detach their direct reports so
+    // none remain pointing at a non-manager.
+    if (
+      targetRow.role === "SALES_MANAGER" &&
+      data.newRole !== "SALES_MANAGER"
+    ) {
+      await tx
+        .update(userProfiles)
+        .set({ manager_id: null })
+        .where(eq(userProfiles.manager_id, data.userId));
+    }
 
     await insertActivityLog(
       {
@@ -1414,6 +1466,40 @@ export async function changeUserRoleWithAudit(data: {
         targetEntity: "user_profile",
         targetId: data.userId,
         metadata: { from_role: targetRow.role, to_role: data.newRole },
+      },
+      tx,
+    );
+  });
+}
+
+export async function assignManagerWithAudit(data: {
+  userId: string;
+  managerId: string | null;
+  changedBy: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [targetRow] = await tx
+      .select({ id: userProfiles.id, manager_id: userProfiles.manager_id })
+      .from(userProfiles)
+      .where(eq(userProfiles.id, data.userId));
+
+    if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+
+    await tx
+      .update(userProfiles)
+      .set({ manager_id: data.managerId })
+      .where(eq(userProfiles.id, data.userId));
+
+    await insertActivityLog(
+      {
+        userId: data.changedBy,
+        action: "MANAGER_ASSIGN",
+        targetEntity: "user_profile",
+        targetId: data.userId,
+        metadata: {
+          from_manager: targetRow.manager_id,
+          to_manager: data.managerId,
+        },
       },
       tx,
     );

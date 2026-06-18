@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
+  assignManagerAction,
   changeUserRoleAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
@@ -27,17 +28,28 @@ import type { Role } from "@/types";
 interface UserRowProps {
   user: UserWithStats;
   currentUserId: string;
+  managers: { id: string; email: string }[];
 }
 
-const ASSIGNABLE_ROLES: Role[] = ["ENGINEER", "SALES"];
+const ASSIGNABLE_ROLES: Role[] = [
+  "ENGINEER",
+  "SALES",
+  "SALES_MANAGER",
+  "SALES_DIRECTOR",
+];
 
 const RoleLabels: Record<Role, string> = {
   ADMIN: "Admin",
   ENGINEER: "Ingegnere",
   SALES: "Commerciale",
+  SALES_MANAGER: "Responsabile vendite",
+  SALES_DIRECTOR: "Direttore vendite",
 };
 
-const UserRow = ({ user, currentUserId }: UserRowProps) => {
+// Sentinel for the "no manager" option (Radix Select disallows empty values).
+const NO_MANAGER_VALUE = "none";
+
+const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   const isCurrentUser = user.id === currentUserId;
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -52,6 +64,23 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
       }
     });
   };
+
+  const handleManagerChange = (value: string) => {
+    const managerId = value === NO_MANAGER_VALUE ? null : value;
+    startTransition(async () => {
+      const result = await assignManagerAction({ userId: user.id, managerId });
+      if (result.success) {
+        toast.success(MSG.toast.managerUpdated);
+      } else {
+        toast.error(result.error ?? MSG.toast.managerUpdateFailed);
+      }
+    });
+  };
+
+  // Only SALES agents are assigned to a manager; managers a SALES user can pick
+  // are the SALES_MANAGER users (excluding the user themselves).
+  const canAssignManager = user.role === "SALES";
+  const managerOptions = managers.filter((m) => m.id !== user.id);
 
   const handlePasswordReset = () => {
     startTransition(async () => {
@@ -91,6 +120,29 @@ const UserRow = ({ user, currentUserId }: UserRowProps) => {
                 ))}
               </SelectContent>
             </Select>
+          )}
+        </TableCell>
+        <TableCell>
+          {canAssignManager ? (
+            <Select
+              value={user.manager_id ?? NO_MANAGER_VALUE}
+              disabled={isPending || managerOptions.length === 0}
+              onValueChange={handleManagerChange}
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Nessuno" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_MANAGER_VALUE}>Nessuno</SelectItem>
+                {managerOptions.map((manager) => (
+                  <SelectItem key={manager.id} value={manager.id}>
+                    {manager.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
           )}
         </TableCell>
         <TableCell className="text-sm">{user.initials ?? "—"}</TableCell>

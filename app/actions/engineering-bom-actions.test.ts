@@ -207,6 +207,16 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
+  test.each([
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("returns error when user is %s (BOM is ENGINEER/ADMIN only)", async (role) => {
+    mockGetUserData.mockResolvedValue(mockUser({ role }));
+    const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain(MSG.bom.unauthorized);
+  });
+
   test("returns error when configuration not found", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(null);
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
@@ -232,10 +242,10 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.error).toBe(MSG.bom.unauthorizedState);
   });
 
-  test("ADMIN can snapshot SUBMITTED config", async () => {
+  test("ADMIN can snapshot IN_SALES_REVIEW config", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "ADMIN" }));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "SUBMITTED" }),
+      mockConfig({ status: "IN_SALES_REVIEW" }),
     );
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);

@@ -24,7 +24,8 @@ describe("STATUS_PIPELINE", () => {
   test("lists every status in workflow order", () => {
     expect(STATUS_PIPELINE).toEqual([
       "DRAFT",
-      "SUBMITTED",
+      "IN_SALES_REVIEW",
+      "SALES_APPROVED",
       "IN_REVIEW",
       "APPROVED",
       "CLOSED",
@@ -34,13 +35,13 @@ describe("STATUS_PIPELINE", () => {
 
 describe("getTransitionDirection", () => {
   test("returns forward when the target is later in the pipeline", () => {
-    expect(getTransitionDirection("DRAFT", "SUBMITTED")).toBe("forward");
+    expect(getTransitionDirection("DRAFT", "IN_SALES_REVIEW")).toBe("forward");
     expect(getTransitionDirection("IN_REVIEW", "APPROVED")).toBe("forward");
     expect(getTransitionDirection("DRAFT", "CLOSED")).toBe("forward");
   });
 
   test("returns backward when the target is earlier in the pipeline", () => {
-    expect(getTransitionDirection("SUBMITTED", "DRAFT")).toBe("backward");
+    expect(getTransitionDirection("IN_SALES_REVIEW", "DRAFT")).toBe("backward");
     expect(getTransitionDirection("APPROVED", "IN_REVIEW")).toBe("backward");
     expect(getTransitionDirection("CLOSED", "DRAFT")).toBe("backward");
   });
@@ -48,24 +49,26 @@ describe("getTransitionDirection", () => {
 
 describe("isAdjacentTransition", () => {
   test("is true only for single-step moves in either direction", () => {
-    expect(isAdjacentTransition("DRAFT", "SUBMITTED")).toBe(true);
-    expect(isAdjacentTransition("SUBMITTED", "DRAFT")).toBe(true);
+    expect(isAdjacentTransition("DRAFT", "IN_SALES_REVIEW")).toBe(true);
+    expect(isAdjacentTransition("IN_SALES_REVIEW", "DRAFT")).toBe(true);
     expect(isAdjacentTransition("APPROVED", "CLOSED")).toBe(true);
   });
 
   test("is false for multi-step jumps", () => {
     expect(isAdjacentTransition("DRAFT", "IN_REVIEW")).toBe(false);
     expect(isAdjacentTransition("DRAFT", "CLOSED")).toBe(false);
-    expect(isAdjacentTransition("SUBMITTED", "APPROVED")).toBe(false);
+    expect(isAdjacentTransition("IN_SALES_REVIEW", "IN_REVIEW")).toBe(false);
   });
 });
 
 describe("getTransitionLabel", () => {
   test.each([
-    ["DRAFT", "SUBMITTED", "Invia"],
-    ["SUBMITTED", "DRAFT", "Riporta in bozza"],
-    ["SUBMITTED", "IN_REVIEW", "Prendi in revisione"],
-    ["IN_REVIEW", "SUBMITTED", "Rimanda"],
+    ["DRAFT", "IN_SALES_REVIEW", "Invia in revisione"],
+    ["IN_SALES_REVIEW", "DRAFT", "Rifiuta"],
+    ["IN_SALES_REVIEW", "SALES_APPROVED", "Approva"],
+    ["SALES_APPROVED", "IN_SALES_REVIEW", "Riapri vendite"],
+    ["SALES_APPROVED", "IN_REVIEW", "Prendi in revisione"],
+    ["IN_REVIEW", "SALES_APPROVED", "Rimanda a vendite"],
     ["IN_REVIEW", "APPROVED", "Approva"],
     ["APPROVED", "IN_REVIEW", "Riapri"],
     ["APPROVED", "CLOSED", "Chiudi"],

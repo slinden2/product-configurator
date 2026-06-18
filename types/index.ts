@@ -105,14 +105,21 @@ export type PressureWasherType = (typeof PressureWashers)[number];
 
 export const ConfigurationStatus = [
   "DRAFT",
-  "SUBMITTED",
+  "IN_SALES_REVIEW",
+  "SALES_APPROVED",
   "IN_REVIEW",
   "APPROVED",
   "CLOSED",
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 
-export const Roles = ["ADMIN", "ENGINEER", "SALES"] as const;
+export const Roles = [
+  "ADMIN",
+  "ENGINEER",
+  "SALES",
+  "SALES_MANAGER",
+  "SALES_DIRECTOR",
+] as const;
 export type Role = (typeof Roles)[number];
 
 export const ActivityActions = [
@@ -122,6 +129,7 @@ export const ActivityActions = [
   "CONFIG_DUPLICATE",
   "CONFIG_STATUS_CHANGE",
   "ROLE_CHANGE",
+  "MANAGER_ASSIGN",
   "PASSWORD_RESET",
   "BOM_GENERATE",
   "BOM_REGENERATE",
@@ -149,6 +157,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   CONFIG_DUPLICATE: "Duplicazione configurazione",
   CONFIG_STATUS_CHANGE: "Cambio stato",
   ROLE_CHANGE: "Cambio ruolo",
+  MANAGER_ASSIGN: "Assegnazione responsabile",
   PASSWORD_RESET: "Reset password",
   BOM_GENERATE: "Generazione distinta",
   BOM_REGENERATE: "Rigenerazione distinta",

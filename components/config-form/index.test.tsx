@@ -115,13 +115,13 @@ describe("ConfigForm", () => {
   });
 
   describe("Disabled state", () => {
-    test("disables the fieldset when status is SUBMITTED for SALES role", () => {
+    test("disables the fieldset when status is IN_SALES_REVIEW for SALES role", () => {
       const config = makeValidConfig();
       render(
         <ConfigForm
           id={1}
           configuration={config}
-          status="SUBMITTED"
+          status="IN_SALES_REVIEW"
           userRole="SALES"
         />,
       );
@@ -130,13 +130,13 @@ describe("ConfigForm", () => {
       expect(fieldset).toBeDisabled();
     });
 
-    test("enables the fieldset when status is SUBMITTED for ENGINEER role", () => {
+    test("enables the fieldset when status is IN_SALES_REVIEW for ENGINEER role", () => {
       const config = makeValidConfig();
       render(
         <ConfigForm
           id={1}
           configuration={config}
-          status="SUBMITTED"
+          status="IN_SALES_REVIEW"
           userRole="ENGINEER"
         />,
       );

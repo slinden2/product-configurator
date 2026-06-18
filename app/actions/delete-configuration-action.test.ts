@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { mockCanAccessConfiguration } from "@/test/access-mocks";
 
 // --- Mocks ---
 
@@ -9,6 +10,7 @@ const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
+  canAccessConfiguration: mockCanAccessConfiguration,
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
   deleteConfiguration: (...args: unknown[]) => mockDeleteConfiguration(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
@@ -156,13 +158,15 @@ describe("deleteConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
-  test("SALES cannot delete SUBMITTED config", async () => {
+  test("SALES cannot delete IN_SALES_REVIEW config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "SALES",
       initials: "EX",
     });
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "IN_SALES_REVIEW" }),
+    );
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);

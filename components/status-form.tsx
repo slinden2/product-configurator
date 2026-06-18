@@ -3,19 +3,10 @@
 import { Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { isEditable } from "@/app/actions/lib/auth-checks";
+import { canTransition, isEditable } from "@/app/actions/lib/auth-checks";
 import { updateConfigStatusAction } from "@/app/actions/update-config-status-action";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -42,33 +33,19 @@ interface StatusControlProps {
 }
 
 /**
- * Valid target statuses a role can move to from the current status. Mirrors the
- * server-side `canTransition` guard in `db/queries.ts` — keep both in sync.
+ * Valid target statuses a role can move to from the current status, derived from
+ * the server-side `canTransition` guard (app/actions/lib/auth-checks.ts) so the
+ * client buttons and the server gate cannot drift. Ordering follows
+ * STATUS_PIPELINE, which drives the button-vs-dropdown split below.
  */
 function getValidTransitions(
   role: Role,
   currentStatus: ConfigurationStatusType,
 ): ConfigurationStatusType[] {
-  if (role === "ADMIN") {
-    return STATUS_PIPELINE.filter((s) => s !== currentStatus);
-  }
-  if (role === "SALES") {
-    if (currentStatus === "DRAFT") return ["SUBMITTED"];
-    if (currentStatus === "SUBMITTED") return ["DRAFT"];
-    return [];
-  }
-  // ENGINEER
-  const transitions: Record<
-    ConfigurationStatusType,
-    ConfigurationStatusType[]
-  > = {
-    DRAFT: ["SUBMITTED"],
-    SUBMITTED: ["DRAFT", "IN_REVIEW"],
-    IN_REVIEW: ["SUBMITTED", "APPROVED"],
-    APPROVED: ["IN_REVIEW"],
-    CLOSED: [],
-  };
-  return transitions[currentStatus] ?? [];
+  return STATUS_PIPELINE.filter(
+    (status) =>
+      status !== currentStatus && canTransition(role, currentStatus, status),
+  );
 }
 
 const StatusControl = ({
@@ -77,7 +54,7 @@ const StatusControl = ({
   userRole,
 }: StatusControlProps) => {
   const [isPending, startTransition] = useTransition();
-  // The transition awaiting confirmation; also drives the AlertDialog open state.
+  // The transition awaiting confirmation; also drives the confirmation modal.
   const [pendingTarget, setPendingTarget] =
     useState<ConfigurationStatusType | null>(null);
 
@@ -99,17 +76,19 @@ const StatusControl = ({
         const result = await updateConfigStatusAction(confId, {
           status: target,
         });
-        if (!result.success) {
+        if (result.success) {
+          toast.success(MSG.toast.statusUpdated);
+        } else {
           toast.error(result.error);
-          return;
         }
-        toast.success(MSG.toast.statusUpdated);
       } catch (err) {
         console.error(err);
         toast.error(MSG.toast.statusUpdateFailed);
-      } finally {
-        setPendingTarget(null);
       }
+      // Close the confirmation dialog once the action settles (success or
+      // failure). Placed after try/catch rather than in a `finally`, per the
+      // project loading-state convention.
+      setPendingTarget(null);
     });
   };
 
@@ -174,43 +153,29 @@ const StatusControl = ({
         </>
       )}
 
-      <AlertDialog
-        open={pendingTarget !== null}
+      <ConfirmModal
+        isOpen={pendingTarget !== null}
         onOpenChange={(open) => {
           if (!open && !isPending) setPendingTarget(null);
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Conferma cambio di stato</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingTarget && (
-                <>
-                  Confermi il passaggio da «{label}» a «
-                  {STATUS_CONFIG[pendingTarget].label}»?
-                  {isEditable(initialStatus, userRole) &&
-                    !isEditable(pendingTarget, userRole) &&
-                    " Non potrai più modificare la configurazione."}
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isPending}
-              onClick={(event) => {
-                // Keep the dialog open until the action settles; runTransition
-                // closes it via setPendingTarget(null).
-                event.preventDefault();
-                if (pendingTarget) runTransition(pendingTarget);
-              }}
-            >
-              Conferma
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Conferma cambio di stato"
+        description={
+          pendingTarget && (
+            <>
+              Confermi il passaggio da «{label}» a «
+              {STATUS_CONFIG[pendingTarget].label}»?
+              {isEditable(initialStatus, userRole) &&
+                !isEditable(pendingTarget, userRole) &&
+                " In questo stato non potrai modificare la configurazione."}
+            </>
+          )
+        }
+        onConfirm={() => {
+          if (pendingTarget) runTransition(pendingTarget);
+        }}
+        confirmVariant="default"
+        isConfirming={isPending}
+      />
     </div>
   );
 };

@@ -17,6 +17,7 @@ interface UsersTableProps {
 const headers = [
   "Email",
   "Ruolo",
+  "Responsabile",
   "Iniziali",
   "N. Configurazioni",
   "Ultima Attività",
@@ -25,6 +26,11 @@ const headers = [
 ];
 
 const UsersTable = ({ users, currentUserId }: UsersTableProps) => {
+  // Candidate managers a SALES user can be assigned to.
+  const managers = users
+    .filter((u) => u.role === "SALES_MANAGER")
+    .map((u) => ({ id: u.id, email: u.email }));
+
   return (
     <div className="rounded-md sm:border">
       <Table>
@@ -44,6 +50,7 @@ const UsersTable = ({ users, currentUserId }: UsersTableProps) => {
                 key={user.id}
                 user={user}
                 currentUserId={currentUserId}
+                managers={managers}
               />
             ))
           ) : (

@@ -24,7 +24,7 @@ import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
 
-const LOCKOUT_TEXT = /Non potrai più modificare la configurazione/;
+const LOCKOUT_TEXT = /In questo stato non potrai modificare la configurazione/;
 
 async function clickButton(name: string | RegExp) {
   await userEvent.click(screen.getByRole("button", { name }));
@@ -63,12 +63,14 @@ describe("StatusControl", () => {
   });
 
   describe("Role-based action buttons", () => {
-    test("SALES at DRAFT sees only the Invia button", () => {
+    test("SALES at DRAFT sees only the Invia in revisione button", () => {
       render(
         <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      expect(screen.getByRole("button", { name: "Invia" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Invia in revisione" }),
+      ).toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: "Approva" }),
       ).not.toBeInTheDocument();
@@ -77,14 +79,21 @@ describe("StatusControl", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("SALES at SUBMITTED sees only the Riporta in bozza button", () => {
+    test("SALES at IN_SALES_REVIEW sees only the Rifiuta button", () => {
       render(
-        <StatusControl confId={1} initialStatus="SUBMITTED" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="IN_SALES_REVIEW"
+          userRole="SALES"
+        />,
       );
 
       expect(
-        screen.getByRole("button", { name: "Riporta in bozza" }),
+        screen.getByRole("button", { name: "Rifiuta" }),
       ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Approva" }),
+      ).not.toBeInTheDocument();
     });
 
     test("SALES at IN_REVIEW is read-only (badge, no controls)", () => {
@@ -97,6 +106,37 @@ describe("StatusControl", () => {
       expect(
         screen.queryByRole("combobox", { name: "Cambia stato" }),
       ).not.toBeInTheDocument();
+    });
+
+    test("SALES_MANAGER at IN_SALES_REVIEW sees Approva and Rifiuta", () => {
+      render(
+        <StatusControl
+          confId={1}
+          initialStatus="IN_SALES_REVIEW"
+          userRole="SALES_MANAGER"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Approva" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Rifiuta" }),
+      ).toBeInTheDocument();
+    });
+
+    test("SALES_DIRECTOR at SALES_APPROVED sees only Riapri vendite", () => {
+      render(
+        <StatusControl
+          confId={1}
+          initialStatus="SALES_APPROVED"
+          userRole="SALES_DIRECTOR"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Riapri vendite" }),
+      ).toBeInTheDocument();
     });
 
     test("ENGINEER at IN_REVIEW sees forward and backward buttons", () => {
@@ -112,21 +152,21 @@ describe("StatusControl", () => {
         screen.getByRole("button", { name: "Approva" }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Rimanda" }),
+        screen.getByRole("button", { name: "Rimanda a vendite" }),
       ).toBeInTheDocument();
     });
 
-    test("ENGINEER at APPROVED sees only the Riapri button", () => {
+    test("ENGINEER at SALES_APPROVED sees only the Prendi in revisione button", () => {
       render(
         <StatusControl
           confId={1}
-          initialStatus="APPROVED"
+          initialStatus="SALES_APPROVED"
           userRole="ENGINEER"
         />,
       );
 
       expect(
-        screen.getByRole("button", { name: "Riapri" }),
+        screen.getByRole("button", { name: "Prendi in revisione" }),
       ).toBeInTheDocument();
     });
   });
@@ -138,7 +178,9 @@ describe("StatusControl", () => {
       );
 
       // Adjacent (±1) move is a button.
-      expect(screen.getByRole("button", { name: "Invia" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Invia in revisione" }),
+      ).toBeInTheDocument();
       // Non-adjacent jumps live in the manual dropdown.
       expect(
         screen.getByRole("combobox", { name: "Cambia stato" }),
@@ -177,10 +219,10 @@ describe("StatusControl", () => {
         <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
 
       expect(
-        screen.getByRole("alertdialog", { name: "Conferma cambio di stato" }),
+        screen.getByRole("dialog", { name: "Conferma cambio di stato" }),
       ).toBeInTheDocument();
     });
 
@@ -189,17 +231,22 @@ describe("StatusControl", () => {
         <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
 
       expect(screen.getByText(LOCKOUT_TEXT)).toBeInTheDocument();
     });
 
     test("omits the lockout warning when the config stays editable", async () => {
+      // A manager keeps edit rights in IN_SALES_REVIEW, so no lockout warning.
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl
+          confId={1}
+          initialStatus="DRAFT"
+          userRole="SALES_MANAGER"
+        />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
 
       expect(screen.queryByText(LOCKOUT_TEXT)).not.toBeInTheDocument();
     });
@@ -209,7 +256,7 @@ describe("StatusControl", () => {
         <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
       expect(mockUpdateConfigStatus).not.toHaveBeenCalled();
 
       await confirm();
@@ -222,25 +269,25 @@ describe("StatusControl", () => {
   describe("Transition — success", () => {
     test("calls the action with the confId and target status", async () => {
       render(
-        <StatusControl confId={42} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={42} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
       await confirm();
 
       await waitFor(() => {
         expect(mockUpdateConfigStatus).toHaveBeenCalledWith(42, {
-          status: "SUBMITTED",
+          status: "IN_SALES_REVIEW",
         });
       });
     });
 
     test("shows the success toast", async () => {
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
       await confirm();
 
       await waitFor(() => {
@@ -257,22 +304,29 @@ describe("StatusControl", () => {
       });
 
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
       );
 
-      await clickButton("Invia");
+      await clickButton("Invia in revisione");
       await confirm();
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Permesso negato");
       });
+      // The badge reflects the prop, never an optimistic target, so it must
+      // still show the original status after a failed transition.
+      expect(screen.getByText("Bozza")).toBeInTheDocument();
     });
 
     test("shows a generic error toast on exception", async () => {
       mockUpdateConfigStatus.mockRejectedValue(new Error("Network error"));
 
       render(
-        <StatusControl confId={1} initialStatus="SUBMITTED" userRole="ADMIN" />,
+        <StatusControl
+          confId={1}
+          initialStatus="SALES_APPROVED"
+          userRole="ADMIN"
+        />,
       );
 
       await clickButton("Prendi in revisione");
@@ -281,6 +335,9 @@ describe("StatusControl", () => {
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(MSG.toast.statusUpdateFailed);
       });
+      // Badge stays on the original status after the exception (no optimistic
+      // update to roll back).
+      expect(screen.getByText("Approvato vendite")).toBeInTheDocument();
     });
   });
 });

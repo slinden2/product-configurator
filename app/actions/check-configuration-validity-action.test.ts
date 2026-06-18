@@ -29,7 +29,7 @@ function makeValidDbConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: 10,
     user_id: "engineer-1",
-    status: "SUBMITTED",
+    status: "IN_SALES_REVIEW",
     name: "Offerta Valida",
     machine_type: "STD",
     description: "",

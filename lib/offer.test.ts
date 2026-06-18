@@ -66,8 +66,8 @@ describe("isOfferStale", () => {
     expect(isOfferStale({ generated_at: FRESH }, "DRAFT")).toBe(false);
   });
 
-  test("returns true when SUBMITTED and older than threshold", () => {
-    expect(isOfferStale({ generated_at: OLD }, "SUBMITTED")).toBe(true);
+  test("returns true when IN_SALES_REVIEW and older than threshold", () => {
+    expect(isOfferStale({ generated_at: OLD }, "IN_SALES_REVIEW")).toBe(true);
   });
 
   test("returns true when IN_REVIEW and older than threshold", () => {

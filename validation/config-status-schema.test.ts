@@ -4,7 +4,8 @@ import { configStatusSchema } from "@/validation/config-status-schema";
 describe("configStatusSchema", () => {
   test.each([
     "DRAFT",
-    "SUBMITTED",
+    "IN_SALES_REVIEW",
+    "SALES_APPROVED",
     "IN_REVIEW",
     "APPROVED",
     "CLOSED",

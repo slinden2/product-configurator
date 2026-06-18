@@ -51,6 +51,7 @@ export const MSG = {
     notFound: "Utente non trovato.",
     cannotChangeOwnRole: "Non puoi modificare il tuo ruolo.",
     cannotPromoteToAdmin: "Non è possibile promuovere un utente ad ADMIN.",
+    invalidManager: "Il responsabile selezionato non è valido.",
     adminOnly: "Accesso riservato agli amministratori.",
   },
   db: {
@@ -109,6 +110,8 @@ export const MSG = {
     validationErrors: "Errori di validazione: correggere i campi evidenziati.",
     roleUpdated: "Ruolo utente aggiornato.",
     roleUpdateFailed: "Impossibile aggiornare il ruolo.",
+    managerUpdated: "Responsabile aggiornato.",
+    managerUpdateFailed: "Impossibile aggiornare il responsabile.",
     passwordResetSent: "Email di reset password inviata.",
     passwordResetFailed: "Impossibile inviare l'email di reset.",
     subBomLoadFailed: "Impossibile caricare la distinta del sotto-assieme.",
@@ -193,7 +196,8 @@ export const MSG = {
       "Solo gli amministratori possono gestire i costi di installazione.",
   },
   offer: {
-    unauthorized: "Solo SALES e ADMIN possono gestire l'offerta.",
+    unauthorized:
+      "Solo il personale vendite e ADMIN possono gestire l'offerta.",
     cannotEdit:
       "Non è possibile modificare l'offerta in questo stato della configurazione.",
     notFound: "Offerta non trovata.",

@@ -6,14 +6,23 @@ import {
   type LucideIcon,
   Send,
 } from "lucide-react";
-import type { ConfigurationStatusType } from "@/types";
+import { ConfigurationStatus, type ConfigurationStatusType } from "@/types";
 
 export const STATUS_CONFIG: Record<
   ConfigurationStatusType,
   { label: string; color: string; icon: LucideIcon }
 > = {
   DRAFT: { label: "Bozza", color: "#94a3b8", icon: FilePen },
-  SUBMITTED: { label: "Inviato", color: "#4ade80", icon: Send },
+  IN_SALES_REVIEW: {
+    label: "In revisione vendite",
+    color: "#4ade80",
+    icon: Send,
+  },
+  SALES_APPROVED: {
+    label: "Approvato vendite",
+    color: "#34d399",
+    icon: BadgeCheck,
+  },
   IN_REVIEW: { label: "In revisione", color: "#60a5fa", icon: Eye },
   APPROVED: { label: "Approvato", color: "#fbbf24", icon: BadgeCheck },
   CLOSED: { label: "Chiuso", color: "#fb7185", icon: Lock },
@@ -22,13 +31,11 @@ export const STATUS_CONFIG: Record<
 /**
  * Linear order of the workflow pipeline. A transition's direction is derived by
  * comparing the two statuses' indices here: a higher target index is "forward".
+ * Derived from `ConfigurationStatus` (types/index.ts), which is declared in
+ * pipeline order, so a new status is only added in one place.
  */
 export const STATUS_PIPELINE: ConfigurationStatusType[] = [
-  "DRAFT",
-  "SUBMITTED",
-  "IN_REVIEW",
-  "APPROVED",
-  "CLOSED",
+  ...ConfigurationStatus,
 ];
 
 export type TransitionDirection = "forward" | "backward";
@@ -61,10 +68,12 @@ export function isAdjacentTransition(
  * fall back to the target status label (see {@link getTransitionLabel}).
  */
 export const TRANSITION_LABELS: Record<string, string> = {
-  "DRAFT->SUBMITTED": "Invia",
-  "SUBMITTED->DRAFT": "Riporta in bozza",
-  "SUBMITTED->IN_REVIEW": "Prendi in revisione",
-  "IN_REVIEW->SUBMITTED": "Rimanda",
+  "DRAFT->IN_SALES_REVIEW": "Invia in revisione",
+  "IN_SALES_REVIEW->DRAFT": "Rifiuta",
+  "IN_SALES_REVIEW->SALES_APPROVED": "Approva",
+  "SALES_APPROVED->IN_SALES_REVIEW": "Riapri vendite",
+  "SALES_APPROVED->IN_REVIEW": "Prendi in revisione",
+  "IN_REVIEW->SALES_APPROVED": "Rimanda a vendite",
   "IN_REVIEW->APPROVED": "Approva",
   "APPROVED->IN_REVIEW": "Riapri",
   "APPROVED->CLOSED": "Chiudi",

@@ -5,6 +5,7 @@ import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
+  canAccessConfiguration,
   deleteConfiguration,
   getConfiguration,
   getUserData,
@@ -26,8 +27,8 @@ export const deleteConfigurationAction = async (id: number) => {
     return { success: false as const, error: MSG.config.notFound };
   }
 
-  // SALES users can only delete their own configurations
-  if (user.role === "SALES" && user.id !== configuration.user_id) {
+  // Scope: SALES delete own, SALES_MANAGER own + reports, others all
+  if (!(await canAccessConfiguration(user, configuration))) {
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 

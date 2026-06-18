@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { mockCanAccessConfiguration } from "@/test/access-mocks";
 
 // --- Mocks ---
 
@@ -12,6 +13,7 @@ const mockTouchConfigurationUpdatedAt = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
+  canAccessConfiguration: mockCanAccessConfiguration,
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
@@ -242,13 +244,15 @@ describe("handleSubRecordAction", () => {
     });
   });
 
-  test("SALES cannot modify sub-records of SUBMITTED config", async () => {
+  test("SALES cannot modify sub-records of IN_SALES_REVIEW config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "SALES",
       initials: "EX",
     });
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "SUBMITTED" }));
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "IN_SALES_REVIEW" }),
+    );
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,

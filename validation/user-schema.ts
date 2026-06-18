@@ -7,6 +7,12 @@ export const changeRoleSchema = z.object({
 });
 export type ChangeRoleSchema = z.infer<typeof changeRoleSchema>;
 
+export const assignManagerSchema = z.object({
+  userId: z.uuid(),
+  managerId: z.uuid().nullable(),
+});
+export type AssignManagerSchema = z.infer<typeof assignManagerSchema>;
+
 export const sendPasswordResetSchema = z.object({
   userId: z.uuid(),
 });

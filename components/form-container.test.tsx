@@ -233,13 +233,13 @@ describe("FormContainer", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("hides add buttons when SALES and status is SUBMITTED", async () => {
+    test("hides add buttons when SALES and status is IN_SALES_REVIEW", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="SUBMITTED"
+          confStatus="IN_SALES_REVIEW"
           userRole="SALES"
           initialWaterTanks={[]}
           initialWashBays={[]}
@@ -253,13 +253,13 @@ describe("FormContainer", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("shows add buttons when ENGINEER and status is SUBMITTED", async () => {
+    test("shows add buttons when ENGINEER and status is IN_SALES_REVIEW", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="SUBMITTED"
+          confStatus="IN_SALES_REVIEW"
           userRole="ENGINEER"
           initialWaterTanks={[]}
           initialWashBays={[]}

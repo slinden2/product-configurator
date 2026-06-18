@@ -5,6 +5,7 @@ import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
+  canAccessConfiguration,
   getConfigurationWithTanksAndBays,
   getEngineeringBomItems,
   getInstallationItemSettings,
@@ -17,6 +18,7 @@ import {
   updateOfferSettingsWithAudit,
   upsertOfferSnapshot,
 } from "@/db/queries";
+import { canViewOffer } from "@/lib/access";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { MSG } from "@/lib/messages";
 import {
@@ -45,7 +47,7 @@ async function authorizeOfferAction(confId: number) {
   if (!user)
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
 
-  if (user.role !== "SALES" && user.role !== "ADMIN") {
+  if (!canViewOffer(user.role)) {
     return { success: false as const, error: MSG.offer.unauthorized };
   }
 
@@ -53,7 +55,7 @@ async function authorizeOfferAction(confId: number) {
   if (!configuration)
     return { success: false as const, error: MSG.config.notFound };
 
-  if (user.role === "SALES" && user.id !== configuration.user_id) {
+  if (!(await canAccessConfiguration(user, configuration))) {
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 

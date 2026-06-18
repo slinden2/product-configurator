@@ -123,6 +123,7 @@ function makeUser(
     id: "user-1",
     role: "ENGINEER" as Role,
     initials: "TE",
+    manager_id: null,
     ...overrides,
   };
 }
@@ -195,9 +196,9 @@ describe("ConfigurationRow", () => {
     });
 
     test("renders status badge with correct status text", () => {
-      renderRow({ status: "SUBMITTED" });
+      renderRow({ status: "IN_SALES_REVIEW" });
 
-      expect(screen.getByText("Inviato")).toBeInTheDocument();
+      expect(screen.getByText("In revisione vendite")).toBeInTheDocument();
     });
   });
 
@@ -272,10 +273,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user can delete SUBMITTED configuration", async () => {
+    test("ENGINEER user can delete IN_SALES_REVIEW configuration", async () => {
       renderRow(
         {
-          status: "SUBMITTED",
+          status: "IN_SALES_REVIEW",
           user: { id: "other-user", email: "other@test.com", initials: "OT" },
         },
         { id: "user-1", role: "ENGINEER" },
@@ -336,10 +337,10 @@ describe("ConfigurationRow", () => {
       ).not.toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES owner cannot delete own SUBMITTED configuration", async () => {
+    test("SALES owner cannot delete own IN_SALES_REVIEW configuration", async () => {
       renderRow(
         {
-          status: "SUBMITTED",
+          status: "IN_SALES_REVIEW",
           user: { id: "user-1", email: "ext@test.com", initials: "EX" },
         },
         { id: "user-1", role: "SALES" },

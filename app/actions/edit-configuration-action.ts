@@ -5,6 +5,7 @@ import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
+  canAccessConfiguration,
   deleteAllEngineeringBomItems,
   deleteOfferSnapshotByConfigurationId,
   getConfigurationWithTanksAndBays,
@@ -44,12 +45,8 @@ export const editConfigurationAction = async (
     return { success: false as const, error: MSG.config.notFound };
   }
 
-  // Authorization: owner, ENGINEER, or ADMIN
-  if (
-    user.id !== configuration.user_id &&
-    user.role !== "ADMIN" &&
-    user.role !== "ENGINEER"
-  ) {
+  // Authorization: owner, in-scope manager, ENGINEER, ADMIN, or SALES_DIRECTOR
+  if (!(await canAccessConfiguration(user, configuration))) {
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 

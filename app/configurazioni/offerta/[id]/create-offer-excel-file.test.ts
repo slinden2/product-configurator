@@ -19,7 +19,7 @@ import type { OfferSnapshotSettings } from "@/lib/offer-settings";
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeUser(): NonNullable<UserData> {
-  return { id: "user-1", role: "SALES", initials: "SL" };
+  return { id: "user-1", role: "SALES", initials: "SL", manager_id: null };
 }
 
 function makeSettings(

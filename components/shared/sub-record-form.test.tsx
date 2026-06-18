@@ -329,11 +329,11 @@ describe("SubRecordForm — WaterTankForm", () => {
       expect(fieldset).toBeDisabled();
     });
 
-    test("disables fieldset when SALES and status is SUBMITTED", () => {
+    test("disables fieldset when SALES and status is IN_SALES_REVIEW", () => {
       render(
         <WaterTankForm
           confId={1}
-          confStatus="SUBMITTED"
+          confStatus="IN_SALES_REVIEW"
           userRole="SALES"
           waterTank={makeWaterTank()}
           waterTankIndex={1}

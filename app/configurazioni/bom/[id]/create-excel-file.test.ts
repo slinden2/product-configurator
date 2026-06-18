@@ -35,7 +35,7 @@ function makeLeafItem(
 }
 
 function makeUser(): NonNullable<UserData> {
-  return { id: "user-1", role: "ENGINEER", initials: "AB" };
+  return { id: "user-1", role: "ENGINEER", initials: "AB", manager_id: null };
 }
 
 function getSheet(wb: ExcelJS.Workbook) {

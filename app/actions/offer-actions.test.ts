@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { mockCanAccessConfiguration } from "@/test/access-mocks";
 
 // --- Mocks ---
 
@@ -16,6 +17,7 @@ const mockInsertActivityLog = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
+  canAccessConfiguration: mockCanAccessConfiguration,
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
   getOfferSnapshotByConfigurationId: (...args: unknown[]) =>

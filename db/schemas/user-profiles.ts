@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   pgEnum,
   pgPolicy,
   pgTable,
@@ -30,6 +31,10 @@ export const userProfiles = pgTable(
     role: roleEnum().notNull(),
     initials: varchar({ length: 3 }),
     last_login_at: timestamp("last_login_at", { mode: "date", precision: 3 }),
+    // Self-referential link to the SALES_MANAGER a SALES user reports to.
+    manager_id: uuid().references((): AnyPgColumn => userProfiles.id, {
+      onDelete: "set null",
+    }),
   },
   () => [
     pgPolicy("Allow authenticated users to select all profiles", {

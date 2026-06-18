@@ -6,6 +6,7 @@ import { z } from "zod";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
+  canAccessConfiguration,
   type DatabaseType,
   deleteAllEngineeringBomItems,
   deleteOfferSnapshotByConfigurationId,
@@ -118,11 +119,7 @@ export async function handleSubRecordAction<
     };
   }
 
-  if (
-    user.id !== configuration.user_id &&
-    user.role !== "ADMIN" &&
-    user.role !== "ENGINEER"
-  ) {
+  if (!(await canAccessConfiguration(user, configuration))) {
     return {
       success: false as const,
       error: MSG.auth.unauthorizedSubRecord,
