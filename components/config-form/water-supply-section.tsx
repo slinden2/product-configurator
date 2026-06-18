@@ -3,6 +3,8 @@ import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import { Separator } from "@/components/ui/separator";
+import { isInverterPump1Selected } from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
@@ -16,9 +18,9 @@ const WaterSupplySection = () => {
   const water2TypeWatch = useWatch({ control, name: "water_2_type" });
 
   // Determine if an inverter pump is selected for water 1
-  const isInvPump1Selected =
-    water1PumpWatch === zodEnums.WaterPump1Enum.enum.INV_3KW_200L ||
-    water1PumpWatch === zodEnums.WaterPump1Enum.enum.INV_3KW_250L;
+  const isInvPump1Selected = isInverterPump1Selected({
+    water_1_pump: water1PumpWatch,
+  });
 
   // Determine if pumps should be disabled (if their water type is not selected)
   const isWater1PumpDisabled = water1TypeWatch === undefined;
@@ -35,7 +37,7 @@ const WaterSupplySection = () => {
               <SelectField<ConfigSchema>
                 name="water_1_type"
                 dataType="string"
-                label="Tipo acqua 1"
+                label={CONFIG_FIELD_LABELS.water_1_type}
                 description="Gruppo EV acqua generale per locale tecnico"
                 items={withNoSelection(selectFieldOptions.waterTypes)}
                 fieldsToResetOnValue={[
@@ -61,7 +63,7 @@ const WaterSupplySection = () => {
               <SelectField<ConfigSchema>
                 name="water_1_pump"
                 dataType="string"
-                label="Pompa di rilancio"
+                label={CONFIG_FIELD_LABELS.water_1_pump}
                 disabled={isWater1PumpDisabled}
                 items={withNoSelection(selectFieldOptions.waterPump1Opts)}
                 fieldsToResetOnValue={[
@@ -104,18 +106,18 @@ const WaterSupplySection = () => {
                 <SelectField<ConfigSchema>
                   name="inv_pump_outlet_dosatron_qty"
                   dataType="number"
-                  label="Uscite Dosatron"
+                  label={CONFIG_FIELD_LABELS.inv_pump_outlet_dosatron_qty}
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
                 <SelectField<ConfigSchema>
                   name="inv_pump_outlet_pw_qty"
                   dataType="number"
-                  label="Uscite idropulitrice"
+                  label={CONFIG_FIELD_LABELS.inv_pump_outlet_pw_qty}
                   items={selectFieldOptions.inverterPumpOutletOpts}
                 />
                 <CheckboxField<ConfigSchema>
                   name="has_filter_backwash"
-                  label="Uscita controlavaggio filtro"
+                  label={CONFIG_FIELD_LABELS.has_filter_backwash}
                 />
               </div>
               <Separator orientation="horizontal" className="md:hidden block" />
@@ -130,7 +132,7 @@ const WaterSupplySection = () => {
               <SelectField<ConfigSchema>
                 name="water_2_type"
                 dataType="string"
-                label="Tipo acqua 2"
+                label={CONFIG_FIELD_LABELS.water_2_type}
                 description="Gruppo EV acqua per doppia alimentazione"
                 items={withNoSelection(selectFieldOptions.waterTypes)}
                 fieldsToResetOnValue={[
@@ -143,7 +145,7 @@ const WaterSupplySection = () => {
               <SelectField<ConfigSchema>
                 name="water_2_pump"
                 dataType="string"
-                label="Pompa di rilancio"
+                label={CONFIG_FIELD_LABELS.water_2_pump}
                 disabled={isWater2PumpDisabled}
                 items={withNoSelection(selectFieldOptions.waterPump2Opts)}
               />
@@ -153,7 +155,7 @@ const WaterSupplySection = () => {
         <div className="">
           <CheckboxField<ConfigSchema>
             name="has_antifreeze"
-            label="Scarico invernale"
+            label={CONFIG_FIELD_LABELS.has_antifreeze}
             fieldsToResetOnUncheck={[
               {
                 fieldsToReset: ["has_chassis_wash_detergent_manual_antifreeze"],

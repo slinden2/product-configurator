@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Edit, Receipt, ScrollText, Trash2 } from "lucide-react";
+import { Copy, Edit, Eye, Receipt, ScrollText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
@@ -139,6 +139,15 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
         </TableCell>
         <TableCell>
           <RowActionsMenu>
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/configurazioni/visualizza/${configuration.id}`}
+                aria-label="Apri configurazione"
+              >
+                <Eye />
+                Apri configurazione
+              </Link>
+            </DropdownMenuItem>
             {canEdit ? (
               <DropdownMenuItem asChild>
                 <Link

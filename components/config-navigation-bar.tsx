@@ -5,15 +5,15 @@ import type { Role } from "@/types";
 
 interface ConfigNavigationBarProps {
   confId: number;
-  activePage: "edit" | "bom" | "offerta";
+  activePage: "config" | "bom" | "offerta";
   role: Role;
 }
 
 const ALL_NAV_ITEMS = [
   {
-    key: "edit" as const,
+    key: "config" as const,
     label: "Configurazione",
-    path: (id: number) => `/configurazioni/modifica/${id}`,
+    path: (id: number) => `/configurazioni/visualizza/${id}`,
     canView: (_role: Role) => true,
   },
   {

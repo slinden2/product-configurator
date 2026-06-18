@@ -7,21 +7,31 @@ import InputField from "@/components/input-field";
 import SelectField from "@/components/select-field";
 import TextareaField from "@/components/textarea-field";
 import { FormItem, FormLabel } from "@/components/ui/form";
-import { WASH_HEIGHT_OFFSET_MM } from "@/types";
+import {
+  getWashHeightMm,
+  isOmzMachine,
+} from "@/lib/configuration/display-rules";
+import {
+  CONFIG_FIELD_LABELS,
+  DERIVED_FIELD_LABELS,
+} from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
 
 const GeneralSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const totalHeight = useWatch<ConfigSchema>({ control, name: "total_height" });
-  const machineType = useWatch<ConfigSchema>({ control, name: "machine_type" });
-  const isOMZ = machineType === "OMZ";
+  const totalHeight = useWatch<ConfigSchema, "total_height">({
+    control,
+    name: "total_height",
+  });
+  const machineType = useWatch<ConfigSchema, "machine_type">({
+    control,
+    name: "machine_type",
+  });
+  const isOMZ = isOmzMachine({ machine_type: machineType });
 
-  const totalNumber = Number(totalHeight);
-  const washHeightDisplay =
-    Number.isFinite(totalNumber) && totalNumber > WASH_HEIGHT_OFFSET_MM
-      ? `${totalNumber - WASH_HEIGHT_OFFSET_MM} mm`
-      : "—";
+  const washHeightMm = getWashHeightMm(totalHeight);
+  const washHeightDisplay = washHeightMm !== null ? `${washHeightMm} mm` : "—";
 
   return (
     <Fieldset
@@ -31,17 +41,17 @@ const GeneralSection = () => {
       <div className="fs-content">
         <InputField<ConfigSchema>
           name="name"
-          label="Nome del cliente"
+          label={CONFIG_FIELD_LABELS.name}
           placeholder="Inserire il nome del cliente"
         />
         <TextareaField<ConfigSchema>
           name="description"
-          label="Descrizione"
+          label={CONFIG_FIELD_LABELS.description}
           placeholder="Inserire la descrizione"
         />
         <SelectField<ConfigSchema>
           name="machine_type"
-          label="Tipo impianto"
+          label={CONFIG_FIELD_LABELS.machine_type}
           items={selectFieldOptions.machineTypeOpts}
           dataType="string"
           fieldsToResetOnValue={[
@@ -56,7 +66,7 @@ const GeneralSection = () => {
         {isOMZ && (
           <CheckboxField<ConfigSchema>
             name="has_omz_paint"
-            label="Verniciatura"
+            label={CONFIG_FIELD_LABELS.has_omz_paint}
           />
         )}
         <div className="fs-row">
@@ -64,13 +74,13 @@ const GeneralSection = () => {
             <InputField<ConfigSchema>
               name="total_height"
               type="number"
-              label="Altezza totale"
+              label={CONFIG_FIELD_LABELS.total_height}
               suffix="mm"
             />
           </div>
           <div className="fs-item">
             <FormItem>
-              <FormLabel>Altezza di lavaggio</FormLabel>
+              <FormLabel>{DERIVED_FIELD_LABELS.wash_height}</FormLabel>
               <p className="flex h-9 items-center text-sm text-muted-foreground">
                 {washHeightDisplay}
               </p>

@@ -38,6 +38,7 @@ import {
 import {
   CableChainWidthEnum,
   cableChainWidths,
+  getSupplyFixingOptions,
   SupplyFixingTypeEnum,
   SupplySideEnum,
   SupplyTypeEnum,
@@ -127,3 +128,5 @@ export const selectFieldOptions: SelectOptionGroup = {
   pressureWasherOpts,
   waterTankOpts,
 };
+
+export { getSupplyFixingOptions };

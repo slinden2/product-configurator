@@ -1,11 +1,14 @@
 import { useWatch } from "react-hook-form";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import { isAnchoredRail } from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 
 const RailSection = () => {
   const railType = useWatch<ConfigSchema, "rail_type">({ name: "rail_type" });
+  const showAnchorType = isAnchoredRail({ rail_type: railType });
 
   return (
     <Fieldset
@@ -18,7 +21,7 @@ const RailSection = () => {
             <SelectField<ConfigSchema>
               name="rail_type"
               dataType="string"
-              label="Tipo di rotaie"
+              label={CONFIG_FIELD_LABELS.rail_type}
               items={selectFieldOptions.railTypes}
               fieldsToResetOnValue={[
                 {
@@ -30,12 +33,12 @@ const RailSection = () => {
               ]}
             />
           </div>
-          {railType === zodEnums.RailTypeEnum.enum.ANCHORED && (
+          {showAnchorType && (
             <div className="space-y-3 md:col-start-1 md:row-start-2">
               <SelectField<ConfigSchema>
                 name="anchor_type"
                 dataType="string"
-                label="Tipo di tassello"
+                label={CONFIG_FIELD_LABELS.anchor_type}
                 items={selectFieldOptions.anchorTypes}
               />
             </div>
@@ -44,7 +47,7 @@ const RailSection = () => {
             <SelectField<ConfigSchema>
               name="rail_length"
               dataType="number"
-              label="Lunghezza rotaie"
+              label={CONFIG_FIELD_LABELS.rail_length}
               items={selectFieldOptions.railLengths}
             />
           </div>
@@ -52,7 +55,7 @@ const RailSection = () => {
             <SelectField<ConfigSchema>
               name="rail_guide_qty"
               dataType="number"
-              label="Guida ruote"
+              label={CONFIG_FIELD_LABELS.rail_guide_qty}
               items={selectFieldOptions.railGuideNum}
             />
           </div>

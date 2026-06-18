@@ -24,6 +24,7 @@ import TextareaField from "@/components/textarea-field";
 import { Button } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import { isConfigLocked } from "@/lib/access";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { MSG } from "@/lib/messages";
 import type { ConfigurationStatusType, Role } from "@/types";
 import {
@@ -196,14 +197,14 @@ const ConfigForm = ({
                 <div className="fs-content">
                   <TextareaField<ConfigSchema>
                     name="sales_notes"
-                    label="Note commerciali"
+                    label={CONFIG_FIELD_LABELS.sales_notes}
                     placeholder="Inserire eventuali note commerciali"
                     disabled={userRole === "ENGINEER"}
                   />
                   {(userRole === "ENGINEER" || userRole === "ADMIN") && (
                     <TextareaField<ConfigSchema>
                       name="engineering_notes"
-                      label="Note tecniche"
+                      label={CONFIG_FIELD_LABELS.engineering_notes}
                       placeholder="Inserire eventuali note tecniche"
                     />
                   )}

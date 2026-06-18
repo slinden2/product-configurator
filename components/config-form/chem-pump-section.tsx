@@ -2,6 +2,11 @@ import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import {
+  showAcidPumpDetails,
+  showChemicalPumpDetails,
+} from "@/lib/configuration/display-rules";
+import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
 
@@ -10,6 +15,13 @@ const ChemPumpSection = () => {
   const brushNumWatch = useWatch<ConfigSchema>({ control, name: "brush_qty" });
   const hasChemicalPumpWatch = useWatch({ control, name: "has_chemical_pump" });
   const hasAcidPumpWatch = useWatch({ control, name: "has_acid_pump" });
+
+  const showChemicalDetails = showChemicalPumpDetails({
+    has_chemical_pump: hasChemicalPumpWatch,
+  });
+  const showAcidDetails = showAcidPumpDetails({
+    has_acid_pump: hasAcidPumpWatch,
+  });
 
   return (
     <Fieldset
@@ -21,20 +33,20 @@ const ChemPumpSection = () => {
           <div className="order-1 my-1 md:my-0">
             <CheckboxField<ConfigSchema>
               name="has_shampoo_pump"
-              label="Pompa sapone"
+              label={CONFIG_FIELD_LABELS.has_shampoo_pump}
               disabled={brushNumWatch === 0}
             />
           </div>
           <div className="order-3 my-1 md:my-0 md:order-2">
             <CheckboxField<ConfigSchema>
               name="has_wax_pump"
-              label="Pompa cera"
+              label={CONFIG_FIELD_LABELS.has_wax_pump}
             />
           </div>
           <div className="order-2 my-1 md:my-0 md:oder-3">
             <CheckboxField<ConfigSchema>
               name="has_chemical_pump"
-              label="Pompa prelavaggio"
+              label={CONFIG_FIELD_LABELS.has_chemical_pump}
               fieldsToResetOnUncheck={[
                 {
                   fieldsToReset: ["chemical_qty", "chemical_pump_pos"],
@@ -49,7 +61,7 @@ const ChemPumpSection = () => {
           <div className="order-4 my-1 md:my-0">
             <CheckboxField<ConfigSchema>
               name="has_acid_pump"
-              label="Pompa acido"
+              label={CONFIG_FIELD_LABELS.has_acid_pump}
               description="Solo per OMZ"
               fieldsToResetOnUncheck={[
                 {
@@ -63,17 +75,17 @@ const ChemPumpSection = () => {
       </div>
       <div
         className={`${
-          hasChemicalPumpWatch || hasAcidPumpWatch ? "space-y-6 pt-10" : "pt-3"
+          showChemicalDetails || showAcidDetails ? "space-y-6 pt-10" : "pt-3"
         }`}
       >
-        {hasChemicalPumpWatch && (
+        {showChemicalDetails && (
           <div>
             <div className="fs-row">
               <div className="fs-item">
                 <SelectField<ConfigSchema>
                   name="chemical_qty"
                   dataType="number"
-                  label="Numero di pompe di prelavaggio"
+                  label={CONFIG_FIELD_LABELS.chemical_qty}
                   description="La seconda pompa serve esclusivamente per le barre di prelavaggio basse."
                   items={selectFieldOptions.chemicalNum}
                 />
@@ -82,23 +94,23 @@ const ChemPumpSection = () => {
                 <SelectField<ConfigSchema>
                   name="chemical_pump_pos"
                   dataType="string"
-                  label="Posizione delle pompe di prelavaggio"
+                  label={CONFIG_FIELD_LABELS.chemical_pump_pos}
                   items={selectFieldOptions.chemicalPumpPositions}
                 />
               </div>
             </div>
             <CheckboxField<ConfigSchema>
               name="has_foam"
-              label="Nebulizzazione con schiuma"
+              label={CONFIG_FIELD_LABELS.has_foam}
             />
           </div>
         )}
-        {hasAcidPumpWatch && (
+        {showAcidDetails && (
           <div>
             <SelectField<ConfigSchema>
               name="acid_pump_pos"
               dataType="string"
-              label="Posizione della pompa acido"
+              label={CONFIG_FIELD_LABELS.acid_pump_pos}
               items={selectFieldOptions.chemicalPumpPositions}
               disabled={brushNumWatch === 2}
             />
