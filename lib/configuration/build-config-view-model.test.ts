@@ -74,6 +74,33 @@ describe("buildConfigViewModel", () => {
     expect(hasLabel(withBrushes, CONFIG_FIELD_LABELS.brush_type)).toBe(true);
   });
 
+  it("uses energy-chain fixing labels for energy-chain supplies", () => {
+    const ec = findSection(
+      buildConfigViewModel(
+        makeValidConfig({
+          supply_type: "ENERGY_CHAIN",
+          supply_fixing_type: "WALL",
+        }),
+      ),
+      "Alimentazione portale",
+    );
+    const straight = findSection(
+      buildConfigViewModel(
+        makeValidConfig({
+          supply_type: "STRAIGHT_SHELF",
+          supply_fixing_type: "WALL",
+        }),
+      ),
+      "Alimentazione portale",
+    );
+    expect(rowValue(ec, CONFIG_FIELD_LABELS.supply_fixing_type)).toBe(
+      "Mensole a muro",
+    );
+    expect(rowValue(straight, CONFIG_FIELD_LABELS.supply_fixing_type)).toBe(
+      "Staffa a muro",
+    );
+  });
+
   it("renders booleans as Sì/No", () => {
     const misc = findSection(
       buildConfigViewModel(

@@ -174,10 +174,13 @@ export function buildConfigViewModel(c: ConfigSchema): ViewSection[] {
     row(CONFIG_FIELD_LABELS.has_antifreeze, formatBoolean(c.has_antifreeze)),
   );
 
-  const supplyFixingOptions = [
-    ...o.supplyFixingTypes,
-    ...o.supplyFixingTypesEnergyChain,
-  ];
+  // Energy-chain configs reuse the same fixing enum values but with different
+  // labels (POST = "Linea pali", WALL = "Mensole a muro"), mirroring the form's
+  // per-supply-type option set. Pick the matching labels so the view/PDF agree.
+  const supplyFixingOptions =
+    c.supply_type === "ENERGY_CHAIN"
+      ? o.supplyFixingTypesEnergyChain
+      : o.supplyFixingTypes;
   const supplyRows: ViewRow[] = [
     row(
       CONFIG_FIELD_LABELS.supply_type,

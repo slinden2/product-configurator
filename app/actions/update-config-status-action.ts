@@ -52,6 +52,9 @@ export const updateConfigStatusAction = async (
       return result;
     });
     revalidatePath(`/configurazioni/modifica/${updatedId}`);
+    // The read-only view also renders status-dependent UI (edit button,
+    // transition list) and the StatusForm, so it must be revalidated too.
+    revalidatePath(`/configurazioni/visualizza/${updatedId}`);
     return { success: true as const, id: updatedId };
   } catch (err) {
     console.error("Failed to update configuration status:", err);
