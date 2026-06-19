@@ -77,9 +77,12 @@ describe("canTransition", () => {
   });
 
   describe("SALES", () => {
-    test("can toggle DRAFT <-> IN_SALES_REVIEW", () => {
+    test("can submit DRAFT -> IN_SALES_REVIEW", () => {
       expect(canTransition("SALES", "DRAFT", "IN_SALES_REVIEW")).toBe(true);
-      expect(canTransition("SALES", "IN_SALES_REVIEW", "DRAFT")).toBe(true);
+    });
+
+    test("cannot pull a submitted offer back (IN_SALES_REVIEW -> DRAFT)", () => {
+      expect(canTransition("SALES", "IN_SALES_REVIEW", "DRAFT")).toBe(false);
     });
 
     test("cannot approve (IN_SALES_REVIEW -> SALES_APPROVED)", () => {

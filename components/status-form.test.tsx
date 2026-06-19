@@ -79,7 +79,7 @@ describe("StatusControl", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("SALES at IN_SALES_REVIEW sees only the Rifiuta button", () => {
+    test("SALES at IN_SALES_REVIEW is read-only (cannot pull the offer back)", () => {
       render(
         <StatusControl
           confId={1}
@@ -88,11 +88,9 @@ describe("StatusControl", () => {
         />,
       );
 
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Rifiuta" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: "Approva" }),
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
       ).not.toBeInTheDocument();
     });
 

@@ -61,12 +61,12 @@ export function canTransition(
   if (from === to) return true;
   if (role === "ADMIN") return true;
 
-  // SALES (Area Manager / Sales Agent): Only their own DRAFT <-> IN_SALES_REVIEW
+  // SALES (Area Manager / Sales Agent): can only submit their own offer for
+  // review (DRAFT -> IN_SALES_REVIEW). Once submitted they relinquish control:
+  // they cannot pull it back, so a manager mid-review is never undercut. To
+  // hand it back, a manager rejects it (IN_SALES_REVIEW -> DRAFT).
   if (role === "SALES") {
-    return (
-      (from === "DRAFT" && to === "IN_SALES_REVIEW") ||
-      (from === "IN_SALES_REVIEW" && to === "DRAFT")
-    );
+    return from === "DRAFT" && to === "IN_SALES_REVIEW";
   }
 
   // SALES_MANAGER / SALES_DIRECTOR: draft toggle plus approve/reject/un-approve

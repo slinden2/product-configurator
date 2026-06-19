@@ -15,7 +15,7 @@ The app manages a hand-off between sales agents, sales management, engineering, 
 1. **SALES (Area Manager or Sales Agent):**
    - **Primary Goal:** Capture customer requirements in `DRAFT`.
    - **Access:** Own configurations only.
-   - **Permissions:** Can EDIT in `DRAFT` and toggle `DRAFT ↔ IN_SALES_REVIEW`.
+   - **Permissions:** Can EDIT in `DRAFT` and submit `DRAFT → IN_SALES_REVIEW`. Submission is one-way: once an offer is in review the agent **cannot** pull it back to `DRAFT` — only a manager can hand it back by rejecting it. This keeps an agent from yanking a config out from under a manager who is mid-review.
    - **Lockout:** Cannot edit once status moves past `DRAFT`.
 
 2. **SALES_MANAGER (Responsabile vendite):**
