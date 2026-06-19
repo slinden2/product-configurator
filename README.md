@@ -59,10 +59,7 @@ Create a `.env.local` file in the project root:
 DATABASE_URL=postgresql://...          # Pooled connection (Supavisor)
 NEXT_PUBLIC_SUPABASE_URL=https://...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-
-# Playwright E2E (optional)
-E2E_USER_EMAIL=
-E2E_USER_PASSWORD=
+SUPABASE_SERVICE_ROLE_KEY=...          # Server-side only; required by `npm run seed`
 
 # TSE ERP sync (optional)
 TSE_USER=
@@ -82,6 +79,10 @@ npm run drizzle:push
 ```bash
 npm run seed
 ```
+
+This provisions one login account per role (plus the Playwright E2E account); the
+shared dev credentials live in `db/seed-constants.ts`. The seed is local-development
+only and refuses to run against the production Supabase project.
 
 ### 5. Start the development server
 

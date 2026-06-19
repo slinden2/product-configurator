@@ -1,3 +1,4 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
@@ -8,9 +9,18 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
-import { InstallationItemKinds, STANDARD_MACHINE_HEIGHT_MM } from "@/types";
+import {
+  InstallationItemKinds,
+  type Role,
+  STANDARD_MACHINE_HEIGHT_MM,
+} from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
+import {
+  BLOCKED_SUPABASE_PROJECT_REFS,
+  DEV_PASSWORD,
+  E2E_USER_EMAIL,
+} from "./seed-constants";
 import { transformConfigToDbInsert } from "./transformations";
 
 const configurationSimple: ConfigSchema = {
@@ -226,8 +236,164 @@ const configurationFast: ConfigSchema = {
   touch_fixing_type: undefined,
 };
 
+type SeedUser = {
+  email: string;
+  role: Role;
+  initials: string;
+  // Email of the SALES_MANAGER this user reports to (resolved to manager_id).
+  managerEmail?: string;
+};
+
+// One account per role so the full workflow can be exercised. The SALES agent
+// reports to the SALES_MANAGER to exercise manager-scoped visibility.
+const SEED_USERS: SeedUser[] = [
+  { email: "admin@itecosrl.com", role: "ADMIN", initials: "ADM" },
+  { email: "engineer@itecosrl.com", role: "ENGINEER", initials: "ENG" },
+  { email: "director@itecosrl.com", role: "SALES_DIRECTOR", initials: "DIR" },
+  { email: "manager@itecosrl.com", role: "SALES_MANAGER", initials: "MGR" },
+  {
+    email: "agent@itecosrl.com",
+    role: "SALES",
+    initials: "AGT",
+    managerEmail: "manager@itecosrl.com",
+  },
+];
+
+// Owner email for each seeded configuration (aligned with confArr order).
+const CONFIG_OWNER_EMAILS = [
+  "agent@itecosrl.com",
+  "manager@itecosrl.com",
+  "director@itecosrl.com",
+];
+
+// The Playwright E2E account (e2e/auth.setup.ts). Role SALES matches its prior
+// login-created profile. Seeded with DEV_PASSWORD like every other account.
+const E2E_USER: SeedUser = {
+  email: E2E_USER_EMAIL,
+  role: "SALES",
+  initials: "E2E",
+};
+
+function getSeedUsers(): SeedUser[] {
+  return [...SEED_USERS, E2E_USER];
+}
+
+// Admin client uses the service role key — bypasses RLS, server-side only.
+// Never expose SUPABASE_SERVICE_ROLE_KEY to the browser (no NEXT_PUBLIC_ prefix).
+function createAdminSupabaseClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceRoleKey) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to seed users.",
+    );
+  }
+
+  return createClient(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+// Deletes every auth user. Profiles cascade away via the user_profiles FK.
+async function deleteAllAuthUsers(admin: SupabaseClient) {
+  // Always re-fetch the first page: deleting shifts the list, so paging by
+  // index would skip users. Loop until no users remain.
+  while (true) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 200,
+    });
+    if (error) {
+      throw error;
+    }
+    if (data.users.length === 0) {
+      break;
+    }
+    for (const user of data.users) {
+      const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+      if (deleteError) {
+        throw deleteError;
+      }
+    }
+  }
+}
+
+// Ensures an auth user + profile exists for every SEED_USERS entry and returns
+// a map of email -> profile id. Idempotent: existing profiles are left as-is.
+async function seedUsers(admin: SupabaseClient): Promise<Map<string, string>> {
+  const idByEmail = new Map<string, string>();
+  const seedUsersList = getSeedUsers();
+
+  for (const seedUser of seedUsersList) {
+    const existingProfile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.email, seedUser.email),
+    });
+
+    if (existingProfile) {
+      idByEmail.set(seedUser.email, existingProfile.id);
+      continue;
+    }
+
+    const { data, error } = await admin.auth.admin.createUser({
+      email: seedUser.email,
+      password: DEV_PASSWORD,
+      email_confirm: true,
+    });
+    if (error || !data.user) {
+      throw new Error(
+        `Failed to create auth user ${seedUser.email}: ${error?.message}`,
+      );
+    }
+
+    await db.insert(userProfiles).values({
+      id: data.user.id,
+      email: seedUser.email,
+      role: seedUser.role,
+      initials: seedUser.initials,
+    });
+
+    idByEmail.set(seedUser.email, data.user.id);
+  }
+
+  // Second pass: wire manager_id now that every profile exists.
+  for (const seedUser of seedUsersList) {
+    if (!seedUser.managerEmail) {
+      continue;
+    }
+    const userId = idByEmail.get(seedUser.email);
+    const managerId = idByEmail.get(seedUser.managerEmail);
+    if (userId && managerId) {
+      await db
+        .update(userProfiles)
+        .set({ manager_id: managerId })
+        .where(eq(userProfiles.id, userId));
+    }
+  }
+
+  return idByEmail;
+}
+
+// Hard stop against running the seed (which deletes auth users and data)
+// against the production database. The seed is a local-development tool only.
+function assertNotProductionDatabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const databaseUrl = process.env.DATABASE_URL ?? "";
+
+  for (const ref of BLOCKED_SUPABASE_PROJECT_REFS) {
+    if (url.includes(ref) || databaseUrl.includes(ref)) {
+      throw new Error(
+        `Refusing to seed: the configured database points at the production Supabase project (${ref}). The seed is for local development only.`,
+      );
+    }
+  }
+}
+
 async function seedDb() {
+  assertNotProductionDatabase();
+
   const shouldReset = process.argv.includes("--reset");
+  const admin = createAdminSupabaseClient();
 
   if (shouldReset) {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
@@ -248,6 +414,9 @@ async function seedDb() {
     await db.execute(sql`ALTER SEQUENCE wash_bays_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE configurations_id_seq RESTART WITH 1`);
 
+    console.log("🧹 Deleting all auth users (profiles cascade)...");
+    await deleteAllAuthUsers(admin);
+
     console.log("✅ Database cleared.");
   }
 
@@ -257,36 +426,20 @@ async function seedDb() {
     configurationFast,
   ];
 
-  const adminUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.email, "samu@itecosrl.com"),
-  });
-
-  if (!adminUser) {
-    throw new Error("Admin user not found.");
-  }
-
-  const externalUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.email, "externaltest@itecosrl.com"),
-  });
-
-  if (!externalUser) {
-    throw new Error("External user not found.");
-  }
-
-  const internalUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.email, "internaltest@itecosrl.com"),
-  });
-
-  if (!internalUser) {
-    throw new Error("Internal user not found.");
-  }
-
-  const userArr = [adminUser, externalUser, internalUser];
+  console.log("🌱 Seeding users...");
+  const userIdByEmail = await seedUsers(admin);
 
   console.log("🌱 Starting seeding...");
 
   for (const [index, conf] of confArr.entries()) {
-    const dbData = transformConfigToDbInsert(conf, userArr[index].id);
+    const ownerId = userIdByEmail.get(CONFIG_OWNER_EMAILS[index]);
+    if (!ownerId) {
+      throw new Error(
+        `Owner ${CONFIG_OWNER_EMAILS[index]} not found for configuration "${conf.name}".`,
+      );
+    }
+
+    const dbData = transformConfigToDbInsert(conf, ownerId);
     const [inserted] = await db
       .insert(configurations)
       .values(dbData)
