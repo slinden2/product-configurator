@@ -418,6 +418,17 @@ export const updateConfigStatus = async (
     }
   }
 
+  // An offer must exist before a config is submitted for sales review.
+  if (
+    configuration.status === "DRAFT" &&
+    statusData.status === "IN_SALES_REVIEW"
+  ) {
+    const offerExists = await hasOfferSnapshot(confId);
+    if (!offerExists) {
+      throw new QueryError(MSG.config.salesReviewRequiresOffer, 400);
+    }
+  }
+
   // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
   const forwardStatuses: ConfigurationStatusType[] = [
     "IN_SALES_REVIEW",

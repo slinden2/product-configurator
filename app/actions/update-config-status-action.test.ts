@@ -141,6 +141,19 @@ describe("updateConfigStatusAction", () => {
     });
   });
 
+  test("returns error when submitting for sales review without an offer", async () => {
+    mockUpdateConfigStatus.mockRejectedValue(
+      new QueryError(MSG.config.salesReviewRequiresOffer, 400),
+    );
+    const result = await updateConfigStatusAction(CONF_ID, {
+      status: "IN_SALES_REVIEW",
+    });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.salesReviewRequiresOffer,
+    });
+  });
+
   test("returns error when energy chain constraint is not met", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
       new QueryError(MSG.config.energyChainRequiresGantry, 400),
