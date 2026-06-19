@@ -143,10 +143,11 @@ test.describe("Configuration form — E2E", () => {
     await page.getByRole("button", { name: "Salva configurazione" }).click();
     await page.waitForURL(/\/configurazioni\/modifica\/\d+/);
 
-    // Now on the edit page — change a field and save
-    await selectRadixOption(page, "Lunghezza rotaie", "25 metri");
+    // Now on the edit page — change a field (to a value different from the one
+    // fillMinimalForm set) and save, so the form is genuinely dirty.
+    await selectRadixOption(page, "Lunghezza rotaie", "30 metri");
     await page.getByRole("button", { name: "Salva configurazione" }).click();
 
-    await expect(page.getByText("Configurazione aggiornata.")).toBeVisible();
+    await expect(page.getByText("Configurazione salvata.")).toBeVisible();
   });
 });

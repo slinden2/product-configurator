@@ -122,7 +122,7 @@ test.describe("Wash bay form — without energy chain", () => {
 
     await page.getByRole("button", { name: "Elimina Pista 1" }).click();
 
-    const dialog = page.getByRole("alertdialog");
+    const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.getByRole("button", { name: "Elimina" }).click();
 
@@ -140,7 +140,7 @@ test.describe("Wash bay form — without energy chain", () => {
 
     await page.getByRole("button", { name: "Elimina Pista 1" }).click();
 
-    const dialog = page.getByRole("alertdialog");
+    const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.getByRole("button", { name: "Annulla" }).click();
     await expect(dialog).not.toBeVisible();

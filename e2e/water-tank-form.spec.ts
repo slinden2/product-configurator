@@ -133,7 +133,7 @@ test.describe("Water tank form", () => {
     await page.getByRole("button", { name: "Elimina Serbatoio 1" }).click();
 
     // Wait for the dialog animation to complete before confirming
-    const dialog = page.getByRole("alertdialog");
+    const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.getByRole("button", { name: "Elimina" }).click();
 
@@ -158,7 +158,7 @@ test.describe("Water tank form", () => {
     await page.getByRole("button", { name: "Elimina Serbatoio 1" }).click();
 
     // Wait for the dialog animation to complete before interacting
-    const dialog = page.getByRole("alertdialog");
+    const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
     // Cancel in the dialog
