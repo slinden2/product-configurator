@@ -120,7 +120,7 @@ describe("updateConfigStatusAction", () => {
       new QueryError("Stato non autorizzato.", 403),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "IN_REVIEW",
+      status: "IN_TECH_REVIEW",
     });
     expect(result).toEqual({
       success: false,
@@ -133,7 +133,7 @@ describe("updateConfigStatusAction", () => {
       new QueryError(MSG.config.approvedRequiresBom, 400),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "APPROVED",
+      status: "TECH_APPROVED",
     });
     expect(result).toEqual({
       success: false,

@@ -167,10 +167,10 @@ describe("duplicateConfigurationAction", () => {
     expect(result).toEqual({ success: true, id: 99 });
   });
 
-  test("SALES can duplicate own APPROVED config", async () => {
+  test("SALES can duplicate own TECH_APPROVED config", async () => {
     mockGetUserData.mockResolvedValue(makeSalesUser("sales-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeSourceConfig({ status: "APPROVED", user_id: "sales-1" }),
+      makeSourceConfig({ status: "TECH_APPROVED", user_id: "sales-1" }),
     );
 
     const result = await duplicateConfigurationAction(10);

@@ -312,11 +312,11 @@ describe("SubRecordForm — WaterTankForm", () => {
   });
 
   describe("Role-based disabling", () => {
-    test("disables fieldset when status is APPROVED", () => {
+    test("disables fieldset when status is TECH_APPROVED", () => {
       render(
         <WaterTankForm
           confId={1}
-          confStatus="APPROVED"
+          confStatus="TECH_APPROVED"
           userRole="ADMIN"
           waterTank={makeWaterTank()}
           waterTankIndex={1}

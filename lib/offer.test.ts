@@ -50,8 +50,8 @@ const FRESH = new Date(NOW.getTime() - (OFFER_STALENESS_DAYS - 1) * 86400_000);
 // --- Tests ---
 
 describe("isOfferStale", () => {
-  test("returns false for APPROVED regardless of age", () => {
-    expect(isOfferStale({ generated_at: OLD }, "APPROVED")).toBe(false);
+  test("returns false for TECH_APPROVED regardless of age", () => {
+    expect(isOfferStale({ generated_at: OLD }, "TECH_APPROVED")).toBe(false);
   });
 
   test("returns false for CLOSED regardless of age", () => {
@@ -70,8 +70,8 @@ describe("isOfferStale", () => {
     expect(isOfferStale({ generated_at: OLD }, "IN_SALES_REVIEW")).toBe(true);
   });
 
-  test("returns true when IN_REVIEW and older than threshold", () => {
-    expect(isOfferStale({ generated_at: OLD }, "IN_REVIEW")).toBe(true);
+  test("returns true when IN_TECH_REVIEW and older than threshold", () => {
+    expect(isOfferStale({ generated_at: OLD }, "IN_TECH_REVIEW")).toBe(true);
   });
 });
 

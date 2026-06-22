@@ -145,13 +145,13 @@ describe("ConfigForm", () => {
       expect(fieldset).not.toBeDisabled();
     });
 
-    test("disables the fieldset when status is APPROVED", () => {
+    test("disables the fieldset when status is TECH_APPROVED", () => {
       const config = makeValidConfig();
       render(
         <ConfigForm
           id={1}
           configuration={config}
-          status="APPROVED"
+          status="TECH_APPROVED"
           userRole="ADMIN"
         />,
       );

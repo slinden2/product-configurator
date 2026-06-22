@@ -6,8 +6,8 @@ describe("configStatusSchema", () => {
     "DRAFT",
     "IN_SALES_REVIEW",
     "SALES_APPROVED",
-    "IN_REVIEW",
-    "APPROVED",
+    "IN_TECH_REVIEW",
+    "TECH_APPROVED",
     "CLOSED",
   ])("should pass with valid status '%s'", (status) => {
     expect(() => configStatusSchema.parse({ status })).not.toThrow();

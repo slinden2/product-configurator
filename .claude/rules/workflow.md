@@ -4,11 +4,11 @@ The app manages a hand-off between sales agents, sales management, engineering, 
 
 ## Status Machine
 
-**DRAFT → IN_SALES_REVIEW → SALES_APPROVED → IN_REVIEW → APPROVED → CLOSED**
+**DRAFT → IN_SALES_REVIEW → SALES_APPROVED → IN_TECH_REVIEW → TECH_APPROVED → CLOSED**
 
 - `IN_SALES_REVIEW` — a sales agent has submitted the offer for sales-management review.
 - `SALES_APPROVED` — sales management approved it; it is a **locked hand-off snapshot** awaiting engineering. Not editable by anyone.
-- `IN_REVIEW` — an engineer has pulled it in to finalize the BOM / technical specs.
+- `IN_TECH_REVIEW` — an engineer has pulled it in to finalize the BOM / technical specs.
 
 ## Roles
 
@@ -29,8 +29,8 @@ The app manages a hand-off between sales agents, sales management, engineering, 
 4. **ENGINEER (Technical Office or Engineer):**
    - **Primary Goal:** Finalize the BOM and technical specs.
    - **Access:** All configurations.
-   - **Permissions:** Can EDIT in `DRAFT`, `IN_SALES_REVIEW`, or `IN_REVIEW`.
-   - **Transitions:** `SALES_APPROVED ↔ IN_REVIEW`, `IN_REVIEW ↔ APPROVED`.
+   - **Permissions:** Can EDIT in `DRAFT`, `IN_SALES_REVIEW`, or `IN_TECH_REVIEW`.
+   - **Transitions:** `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`.
 
 5. **ADMIN (Production/System):**
    - **Permissions:** Same edit rights as ENGINEER. Can transition between any statuses. Only role that can move status to `CLOSED` or revert a `CLOSED` status.
@@ -39,12 +39,12 @@ The app manages a hand-off between sales agents, sales management, engineering, 
 
 Editability is status × role (`isEditable` in `app/actions/lib/auth-checks.ts`); ownership/scope is enforced separately by `canAccessConfiguration` (`db/queries.ts`).
 
-- `SALES_APPROVED`, `APPROVED`, `CLOSED` → **read-only for all roles**.
+- `SALES_APPROVED`, `TECH_APPROVED`, `CLOSED` → **read-only for all roles**.
 - `SALES` → editable only in `DRAFT`.
 - `SALES_MANAGER` / `SALES_DIRECTOR` → editable in `DRAFT`, `IN_SALES_REVIEW`.
-- `ENGINEER` / `ADMIN` → editable in `DRAFT`, `IN_SALES_REVIEW`, `IN_REVIEW`.
+- `ENGINEER` / `ADMIN` → editable in `DRAFT`, `IN_SALES_REVIEW`, `IN_TECH_REVIEW`.
 
-**Frozen States:** To edit a `SALES_APPROVED` config, a manager un-approves it back to `IN_SALES_REVIEW`, or an engineer pulls it forward to `IN_REVIEW`. To edit an `APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_REVIEW`.
+**Frozen States:** To edit a `SALES_APPROVED` config, a manager un-approves it back to `IN_SALES_REVIEW`, or an engineer pulls it forward to `IN_TECH_REVIEW`. To edit an `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`.
 
 ## Scope (Visibility)
 

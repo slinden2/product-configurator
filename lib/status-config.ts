@@ -23,8 +23,16 @@ export const STATUS_CONFIG: Record<
     color: "#34d399",
     icon: BadgeCheck,
   },
-  IN_REVIEW: { label: "In revisione", color: "#60a5fa", icon: Eye },
-  APPROVED: { label: "Approvato", color: "#fbbf24", icon: BadgeCheck },
+  IN_TECH_REVIEW: {
+    label: "In revisione tecnica",
+    color: "#60a5fa",
+    icon: Eye,
+  },
+  TECH_APPROVED: {
+    label: "Approvato tecnico",
+    color: "#fbbf24",
+    icon: BadgeCheck,
+  },
   CLOSED: { label: "Chiuso", color: "#fb7185", icon: Lock },
 };
 
@@ -72,12 +80,12 @@ export const TRANSITION_LABELS: Record<string, string> = {
   "IN_SALES_REVIEW->DRAFT": "Rifiuta",
   "IN_SALES_REVIEW->SALES_APPROVED": "Approva",
   "SALES_APPROVED->IN_SALES_REVIEW": "Riapri vendite",
-  "SALES_APPROVED->IN_REVIEW": "Prendi in revisione",
-  "IN_REVIEW->SALES_APPROVED": "Rimanda a vendite",
-  "IN_REVIEW->APPROVED": "Approva",
-  "APPROVED->IN_REVIEW": "Riapri",
-  "APPROVED->CLOSED": "Chiudi",
-  "CLOSED->APPROVED": "Riapri",
+  "SALES_APPROVED->IN_TECH_REVIEW": "Prendi in revisione tecnica",
+  "IN_TECH_REVIEW->SALES_APPROVED": "Rimanda a vendite",
+  "IN_TECH_REVIEW->TECH_APPROVED": "Approva",
+  "TECH_APPROVED->IN_TECH_REVIEW": "Riapri",
+  "TECH_APPROVED->CLOSED": "Chiudi",
+  "CLOSED->TECH_APPROVED": "Riapri",
 };
 
 export function getTransitionLabel(

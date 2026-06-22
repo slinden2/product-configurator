@@ -242,9 +242,9 @@ describe("editConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotEdit);
   });
 
-  test("nobody can edit APPROVED config", async () => {
+  test("nobody can edit TECH_APPROVED config", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "APPROVED" }),
+      mockConfig({ status: "TECH_APPROVED" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);

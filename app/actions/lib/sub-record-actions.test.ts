@@ -226,8 +226,10 @@ describe("handleSubRecordAction", () => {
 
   // --- Status protection ---
 
-  test("returns error when config is APPROVED", async () => {
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
+  test("returns error when config is TECH_APPROVED", async () => {
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "TECH_APPROVED" }),
+    );
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
       success: false,
@@ -377,7 +379,9 @@ describe("handleSubRecordAction", () => {
   });
 
   test("does NOT touch parent updated_at when config is not editable", async () => {
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "TECH_APPROVED" }),
+    );
     await handleSubRecordAction(insertOptions());
     expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
   });

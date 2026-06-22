@@ -224,9 +224,9 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.error).toBe(MSG.config.notFound);
   });
 
-  test("returns error when config is APPROVED", async () => {
+  test("returns error when config is TECH_APPROVED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "APPROVED" }),
+      mockConfig({ status: "TECH_APPROVED" }),
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -388,9 +388,9 @@ describe("regenerateEngineeringBomAction", () => {
     expect(result.error).toContain(MSG.bom.unauthorized);
   });
 
-  test("returns error when config is APPROVED", async () => {
+  test("returns error when config is TECH_APPROVED", async () => {
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "APPROVED" }),
+      mockConfig({ status: "TECH_APPROVED" }),
     );
     const result = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);

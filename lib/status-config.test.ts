@@ -26,8 +26,8 @@ describe("STATUS_PIPELINE", () => {
       "DRAFT",
       "IN_SALES_REVIEW",
       "SALES_APPROVED",
-      "IN_REVIEW",
-      "APPROVED",
+      "IN_TECH_REVIEW",
+      "TECH_APPROVED",
       "CLOSED",
     ]);
   });
@@ -36,13 +36,17 @@ describe("STATUS_PIPELINE", () => {
 describe("getTransitionDirection", () => {
   test("returns forward when the target is later in the pipeline", () => {
     expect(getTransitionDirection("DRAFT", "IN_SALES_REVIEW")).toBe("forward");
-    expect(getTransitionDirection("IN_REVIEW", "APPROVED")).toBe("forward");
+    expect(getTransitionDirection("IN_TECH_REVIEW", "TECH_APPROVED")).toBe(
+      "forward",
+    );
     expect(getTransitionDirection("DRAFT", "CLOSED")).toBe("forward");
   });
 
   test("returns backward when the target is earlier in the pipeline", () => {
     expect(getTransitionDirection("IN_SALES_REVIEW", "DRAFT")).toBe("backward");
-    expect(getTransitionDirection("APPROVED", "IN_REVIEW")).toBe("backward");
+    expect(getTransitionDirection("TECH_APPROVED", "IN_TECH_REVIEW")).toBe(
+      "backward",
+    );
     expect(getTransitionDirection("CLOSED", "DRAFT")).toBe("backward");
   });
 });
@@ -51,13 +55,15 @@ describe("isAdjacentTransition", () => {
   test("is true only for single-step moves in either direction", () => {
     expect(isAdjacentTransition("DRAFT", "IN_SALES_REVIEW")).toBe(true);
     expect(isAdjacentTransition("IN_SALES_REVIEW", "DRAFT")).toBe(true);
-    expect(isAdjacentTransition("APPROVED", "CLOSED")).toBe(true);
+    expect(isAdjacentTransition("TECH_APPROVED", "CLOSED")).toBe(true);
   });
 
   test("is false for multi-step jumps", () => {
-    expect(isAdjacentTransition("DRAFT", "IN_REVIEW")).toBe(false);
+    expect(isAdjacentTransition("DRAFT", "IN_TECH_REVIEW")).toBe(false);
     expect(isAdjacentTransition("DRAFT", "CLOSED")).toBe(false);
-    expect(isAdjacentTransition("IN_SALES_REVIEW", "IN_REVIEW")).toBe(false);
+    expect(isAdjacentTransition("IN_SALES_REVIEW", "IN_TECH_REVIEW")).toBe(
+      false,
+    );
   });
 });
 
@@ -67,12 +73,12 @@ describe("getTransitionLabel", () => {
     ["IN_SALES_REVIEW", "DRAFT", "Rifiuta"],
     ["IN_SALES_REVIEW", "SALES_APPROVED", "Approva"],
     ["SALES_APPROVED", "IN_SALES_REVIEW", "Riapri vendite"],
-    ["SALES_APPROVED", "IN_REVIEW", "Prendi in revisione"],
-    ["IN_REVIEW", "SALES_APPROVED", "Rimanda a vendite"],
-    ["IN_REVIEW", "APPROVED", "Approva"],
-    ["APPROVED", "IN_REVIEW", "Riapri"],
-    ["APPROVED", "CLOSED", "Chiudi"],
-    ["CLOSED", "APPROVED", "Riapri"],
+    ["SALES_APPROVED", "IN_TECH_REVIEW", "Prendi in revisione tecnica"],
+    ["IN_TECH_REVIEW", "SALES_APPROVED", "Rimanda a vendite"],
+    ["IN_TECH_REVIEW", "TECH_APPROVED", "Approva"],
+    ["TECH_APPROVED", "IN_TECH_REVIEW", "Riapri"],
+    ["TECH_APPROVED", "CLOSED", "Chiudi"],
+    ["CLOSED", "TECH_APPROVED", "Riapri"],
   ] as const)("labels the %s -> %s edge '%s'", (from, to, expected) => {
     expect(getTransitionLabel(from, to)).toBe(expected);
   });

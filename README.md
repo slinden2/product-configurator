@@ -7,7 +7,7 @@ The UI is in Italian.
 ## What It Does
 
 - Create and manage wash system configurations through a structured form (brushes, pumps, water supply, rails, touch components, HP pumps, wash bays, water tanks)
-- Role-based workflow: `DRAFT → IN_SALES_REVIEW → SALES_APPROVED → IN_REVIEW → APPROVED → CLOSED`
+- Role-based workflow: `DRAFT → IN_SALES_REVIEW → SALES_APPROVED → IN_TECH_REVIEW → TECH_APPROVED → CLOSED`
 - Generate a **Bill of Materials (BOM)** from configuration rules, snapshot it for engineering review, allow manual adjustments, and export to Excel
 - Sync product data from the TSE ERP (SQL Server)
 
@@ -31,10 +31,10 @@ The UI is in Italian.
 | **SALES** | Own configs in `DRAFT` only | Own | `DRAFT ↔ IN_SALES_REVIEW` |
 | **SALES_MANAGER** | `DRAFT`, `IN_SALES_REVIEW` | Own + direct reports | `DRAFT ↔ IN_SALES_REVIEW`, `IN_SALES_REVIEW → SALES_APPROVED`, `IN_SALES_REVIEW → DRAFT`, `SALES_APPROVED → IN_SALES_REVIEW` |
 | **SALES_DIRECTOR** | `DRAFT`, `IN_SALES_REVIEW` | All | Same as SALES_MANAGER |
-| **ENGINEER** | All configs in `DRAFT`, `IN_SALES_REVIEW`, `IN_REVIEW` | All | `SALES_APPROVED ↔ IN_REVIEW`, `IN_REVIEW ↔ APPROVED` |
+| **ENGINEER** | All configs in `DRAFT`, `IN_SALES_REVIEW`, `IN_TECH_REVIEW` | All | `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED` |
 | **ADMIN** | Same as ENGINEER | All | Any transition, including `→ CLOSED` |
 
-`SALES_APPROVED` is a locked hand-off snapshot; `APPROVED` and `CLOSED` configurations are read-only for all roles. To edit, a manager un-approves back to `IN_SALES_REVIEW`, or an ENGINEER/ADMIN moves the config back to `IN_REVIEW`.
+`SALES_APPROVED` is a locked hand-off snapshot; `TECH_APPROVED` and `CLOSED` configurations are read-only for all roles. To edit, a manager un-approves back to `IN_SALES_REVIEW`, or an ENGINEER/ADMIN moves the config back to `IN_TECH_REVIEW`.
 
 ## Local Setup
 

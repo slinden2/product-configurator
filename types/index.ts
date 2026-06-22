@@ -107,8 +107,8 @@ export const ConfigurationStatus = [
   "DRAFT",
   "IN_SALES_REVIEW",
   "SALES_APPROVED",
-  "IN_REVIEW",
-  "APPROVED",
+  "IN_TECH_REVIEW",
+  "TECH_APPROVED",
   "CLOSED",
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];

@@ -289,10 +289,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user cannot delete APPROVED configuration", async () => {
+    test("ENGINEER user cannot delete TECH_APPROVED configuration", async () => {
       renderRow(
         {
-          status: "APPROVED",
+          status: "TECH_APPROVED",
           user: { id: "other-user", email: "other@test.com", initials: "OT" },
         },
         { id: "user-1", role: "ENGINEER" },

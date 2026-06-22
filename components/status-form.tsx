@@ -93,7 +93,7 @@ const StatusControl = ({
   };
 
   // The current user can act if there is at least one valid transition. Frozen
-  // states (e.g. APPROVED for a SALES user) render the badge with no controls.
+  // states (e.g. TECH_APPROVED for a SALES user) render the badge with no controls.
   const hasControls = buttonTargets.length > 0 || jumpTargets.length > 0;
 
   return (

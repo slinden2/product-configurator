@@ -213,13 +213,13 @@ describe("FormContainer", () => {
   });
 
   describe("Role-based add button visibility", () => {
-    test("hides add buttons when status is APPROVED", async () => {
+    test("hides add buttons when status is TECH_APPROVED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="APPROVED"
+          confStatus="TECH_APPROVED"
           userRole="ADMIN"
           initialWaterTanks={[makeWaterTank(100)]}
           initialWashBays={[]}

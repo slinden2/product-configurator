@@ -4,12 +4,12 @@ import type { ConfigurationStatusType, Role } from "@/types";
  * Determines whether a configuration is currently in an editable state
  * based on the User's Role and the Record's Status.
  * * Rules:
- * - SALES_APPROVED/APPROVED/CLOSED: Never editable by anyone. SALES_APPROVED is a
+ * - SALES_APPROVED/TECH_APPROVED/CLOSED: Never editable by anyone. SALES_APPROVED is a
  *   locked hand-off snapshot; to edit it a manager un-approves it back to
- *   IN_SALES_REVIEW, or an engineer pulls it forward to IN_REVIEW.
+ *   IN_SALES_REVIEW, or an engineer pulls it forward to IN_TECH_REVIEW.
  * - SALES: Editable only in DRAFT.
  * - SALES_MANAGER/SALES_DIRECTOR: Editable in DRAFT or IN_SALES_REVIEW.
- * - ENGINEER/ADMIN: Editable in DRAFT, IN_SALES_REVIEW, or IN_REVIEW.
+ * - ENGINEER/ADMIN: Editable in DRAFT, IN_SALES_REVIEW, or IN_TECH_REVIEW.
  *
  * Status × role only — ownership/scope is enforced separately via
  * canAccessConfiguration (db/queries.ts).
@@ -21,7 +21,7 @@ export function isEditable(
   // 1. Hard stop: Sales-approved, Approved and Closed are read-only for all roles
   if (
     status === "SALES_APPROVED" ||
-    status === "APPROVED" ||
+    status === "TECH_APPROVED" ||
     status === "CLOSED"
   ) {
     return false;
@@ -40,7 +40,7 @@ export function isEditable(
     return (
       status === "DRAFT" ||
       status === "IN_SALES_REVIEW" ||
-      status === "IN_REVIEW"
+      status === "IN_TECH_REVIEW"
     );
   }
 
@@ -85,10 +85,10 @@ export function canTransition(
   // ENGINEER (Technical Office): Pull sales-approved work into review and approve
   if (role === "ENGINEER") {
     const allowedTransitions = [
-      { from: "SALES_APPROVED", to: "IN_REVIEW" },
-      { from: "IN_REVIEW", to: "SALES_APPROVED" },
-      { from: "IN_REVIEW", to: "APPROVED" },
-      { from: "APPROVED", to: "IN_REVIEW" },
+      { from: "SALES_APPROVED", to: "IN_TECH_REVIEW" },
+      { from: "IN_TECH_REVIEW", to: "SALES_APPROVED" },
+      { from: "IN_TECH_REVIEW", to: "TECH_APPROVED" },
+      { from: "TECH_APPROVED", to: "IN_TECH_REVIEW" },
     ];
 
     return allowedTransitions.some((t) => t.from === from && t.to === to);

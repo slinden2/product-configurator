@@ -145,10 +145,10 @@ describe("generateOfferAction", () => {
     expect(result.success).toBe(false);
   });
 
-  test("returns error when configuration is APPROVED", async () => {
+  test("returns error when configuration is TECH_APPROVED", async () => {
     mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeConfig("APPROVED", "user-1"),
+      makeConfig("TECH_APPROVED", "user-1"),
     );
     const result = await generateOfferAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -173,10 +173,10 @@ describe("generateOfferAction", () => {
     expect(mockUpsertOfferSnapshot).toHaveBeenCalled();
   });
 
-  test("ADMIN can generate offer for any config in IN_REVIEW", async () => {
+  test("ADMIN can generate offer for any config in IN_TECH_REVIEW", async () => {
     mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeConfig("IN_REVIEW", "user-1"),
+      makeConfig("IN_TECH_REVIEW", "user-1"),
     );
     const result = await generateOfferAction(CONF_ID);
     expect(result.success).toBe(true);
@@ -342,10 +342,10 @@ describe("setOfferDiscountAction", () => {
     expect(result.error).toContain("non trovata");
   });
 
-  test("returns error when configuration is APPROVED", async () => {
+  test("returns error when configuration is TECH_APPROVED", async () => {
     mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeConfig("APPROVED", "user-1"),
+      makeConfig("TECH_APPROVED", "user-1"),
     );
     const result = await setOfferDiscountAction(CONF_ID, 10);
     expect(result.success).toBe(false);
@@ -436,10 +436,10 @@ describe("setOfferSettingsAction", () => {
     expect(result.success).toBe(false);
   });
 
-  test("returns error when configuration is APPROVED", async () => {
+  test("returns error when configuration is TECH_APPROVED", async () => {
     mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeConfig("APPROVED", "user-1"),
+      makeConfig("TECH_APPROVED", "user-1"),
     );
     const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
     expect(result.success).toBe(false);

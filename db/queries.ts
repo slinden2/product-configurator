@@ -411,7 +411,7 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.statusUnauthorized, 403);
   }
 
-  if (statusData.status === "APPROVED") {
+  if (statusData.status === "TECH_APPROVED") {
     const bomExists = await hasEngineeringBom(confId);
     if (!bomExists) {
       throw new QueryError(MSG.config.approvedRequiresBom, 400);
@@ -433,8 +433,8 @@ export const updateConfigStatus = async (
   const forwardStatuses: ConfigurationStatusType[] = [
     "IN_SALES_REVIEW",
     "SALES_APPROVED",
-    "IN_REVIEW",
-    "APPROVED",
+    "IN_TECH_REVIEW",
+    "TECH_APPROVED",
     "CLOSED",
   ];
   if (

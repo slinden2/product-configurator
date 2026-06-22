@@ -144,8 +144,10 @@ describe("deleteConfigurationAction", () => {
     });
   });
 
-  test("cannot delete APPROVED config", async () => {
-    mockGetConfiguration.mockResolvedValue(mockConfig({ status: "APPROVED" }));
+  test("cannot delete TECH_APPROVED config", async () => {
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "TECH_APPROVED" }),
+    );
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.config.cannotDelete);

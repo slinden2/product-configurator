@@ -94,12 +94,16 @@ describe("StatusControl", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("SALES at IN_REVIEW is read-only (badge, no controls)", () => {
+    test("SALES at IN_TECH_REVIEW is read-only (badge, no controls)", () => {
       render(
-        <StatusControl confId={1} initialStatus="IN_REVIEW" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="IN_TECH_REVIEW"
+          userRole="SALES"
+        />,
       );
 
-      expect(screen.getByText("In revisione")).toBeInTheDocument();
+      expect(screen.getByText("In revisione tecnica")).toBeInTheDocument();
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
       expect(
         screen.queryByRole("combobox", { name: "Cambia stato" }),
@@ -137,11 +141,11 @@ describe("StatusControl", () => {
       ).toBeInTheDocument();
     });
 
-    test("ENGINEER at IN_REVIEW sees forward and backward buttons", () => {
+    test("ENGINEER at IN_TECH_REVIEW sees forward and backward buttons", () => {
       render(
         <StatusControl
           confId={1}
-          initialStatus="IN_REVIEW"
+          initialStatus="IN_TECH_REVIEW"
           userRole="ENGINEER"
         />,
       );
@@ -154,7 +158,7 @@ describe("StatusControl", () => {
       ).toBeInTheDocument();
     });
 
-    test("ENGINEER at SALES_APPROVED sees only the Prendi in revisione button", () => {
+    test("ENGINEER at SALES_APPROVED sees only the Prendi in revisione tecnica button", () => {
       render(
         <StatusControl
           confId={1}
@@ -164,7 +168,7 @@ describe("StatusControl", () => {
       );
 
       expect(
-        screen.getByRole("button", { name: "Prendi in revisione" }),
+        screen.getByRole("button", { name: "Prendi in revisione tecnica" }),
       ).toBeInTheDocument();
     });
   });
@@ -327,7 +331,7 @@ describe("StatusControl", () => {
         />,
       );
 
-      await clickButton("Prendi in revisione");
+      await clickButton("Prendi in revisione tecnica");
       await confirm();
 
       await waitFor(() => {
