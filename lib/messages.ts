@@ -220,4 +220,11 @@ export const MSG = {
         `Prezzi generati il ${generatedAt} — scaduti da ${expiredDays} ${expiredDays === 1 ? "giorno" : "giorni"}. Rigenera l'offerta prima di condividerla con il cliente.`,
     },
   },
+  marginReview: {
+    noOffer: "Nessuna offerta presente per questa configurazione.",
+    ebomSourceWarning: {
+      title: "Riferimento prezzo non attendibile",
+      body: "L'offerta è stata rigenerata dalla distinta di progettazione e potrebbe non riflettere il prezzo originale proposto al cliente.",
+    },
+  },
 } as const;

@@ -1,11 +1,11 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { canViewBom, canViewOffer } from "@/lib/access";
+import { canViewBom, canViewMarginReview, canViewOffer } from "@/lib/access";
 import type { Role } from "@/types";
 
 interface ConfigNavigationBarProps {
   confId: number;
-  activePage: "config" | "bom" | "offerta";
+  activePage: "config" | "bom" | "offerta" | "marginalita";
   role: Role;
 }
 
@@ -27,6 +27,12 @@ const ALL_NAV_ITEMS = [
     label: "Offerta",
     path: (id: number) => `/configurazioni/offerta/${id}`,
     canView: canViewOffer,
+  },
+  {
+    key: "marginalita" as const,
+    label: "Marginalità",
+    path: (id: number) => `/configurazioni/marginalita/${id}`,
+    canView: canViewMarginReview,
   },
 ];
 

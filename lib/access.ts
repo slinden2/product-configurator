@@ -34,6 +34,13 @@ export const canViewBom = (role: Role): boolean =>
 export const canViewOffer = (role: Role): boolean =>
   SALES_ROLES.includes(role) || role === "ADMIN";
 
+/**
+ * Roles allowed to view the margin review page, which exposes cost AND the
+ * customer's quoted price together. Restricted to management/system roles.
+ */
+export const canViewMarginReview = (role: Role): boolean =>
+  role === "ADMIN" || role === "SALES_DIRECTOR";
+
 /** Returns true when the config cannot be edited (status frozen, unknown role, or unknown status). */
 export const isConfigLocked = (
   status: ConfigurationStatusType | undefined,

@@ -18,6 +18,17 @@ export function formatDiscountPctLabel(pct: number): string {
   return pct % 1 === 0 ? `${pct}` : pct.toFixed(2).replace(".", ",");
 }
 
+/** Formats a margin/percentage value Italian-style: 42.5 → "42,5%". */
+export function formatPct(value: number): string {
+  return `${value.toFixed(1).replace(".", ",")}%`;
+}
+
+/** Formats a signed currency delta Italian-style: 100 → "+100,00 €", -50 → "-50,00 €". */
+export function formatDelta(delta: number): string {
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${formatEur(delta)}`;
+}
+
 export function formatDateDDMMYYYYHHMM(date: Date): string {
   return new Date(date).toLocaleDateString("it-IT", {
     year: "numeric",
