@@ -31,6 +31,7 @@ The app manages a hand-off between sales agents, sales management, engineering, 
    - **Access:** All configurations.
    - **Permissions:** Can EDIT in `DRAFT`, `IN_SALES_REVIEW`, or `IN_TECH_REVIEW`.
    - **Transitions:** `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`.
+   - **No offer access:** ENGINEER edits the *config* (BOM/cost side) but cannot view or mutate the offer — that is sales-and-admin only. See [Offer Access](#offer-access).
 
 5. **ADMIN (Production/System):**
    - **Permissions:** Same edit rights as ENGINEER. Can transition between any statuses. Only role that can move status to `CLOSED` or revert a `CLOSED` status.
@@ -45,6 +46,16 @@ Editability is status × role (`isEditable` in `app/actions/lib/auth-checks.ts`)
 - `ENGINEER` / `ADMIN` → editable in `DRAFT`, `IN_SALES_REVIEW`, `IN_TECH_REVIEW`.
 
 **Frozen States:** To edit a `SALES_APPROVED` config, a manager un-approves it back to `IN_SALES_REVIEW`, or an engineer pulls it forward to `IN_TECH_REVIEW`. To edit an `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`.
+
+## Offer Access
+
+The **offer** is gated separately from the **configuration**: `isEditable` governs the config, `canViewOffer` (`lib/access.ts`) governs the offer — deliberately different role sets.
+
+- `canViewOffer` = SALES roles + `ADMIN`. **ENGINEER is excluded.**
+- The offer route (`offerta/[id]/layout.tsx`) redirects disallowed roles to the BOM page.
+- Every offer action runs `canViewOffer` first via `authorizeOfferAction` — **before** `isEditable` — so ENGINEER is rejected even where `isEditable` would otherwise allow it.
+
+Commercial terms (discount/transport/installation) are mutable only in the sales-editable zone (`DRAFT`, `IN_SALES_REVIEW`) by offer-access roles; at `SALES_APPROVED` the offer **freezes** as the immutable as-sold snapshot and rejects all mutations.
 
 ## Scope (Visibility)
 
