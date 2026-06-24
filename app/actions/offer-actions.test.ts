@@ -14,6 +14,7 @@ const mockUpsertOfferSnapshot = vi.fn();
 const mockUpdateOfferDiscountWithAudit = vi.fn();
 const mockUpdateOfferSettingsWithAudit = vi.fn();
 const mockInsertActivityLog = vi.fn();
+const mockIsOfferFrozen = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -28,7 +29,6 @@ vi.mock("@/db/queries", () => ({
     mockGetSurchargeSettings(...args),
   getInstallationItemSettings: (...args: unknown[]) =>
     mockGetInstallationItemSettings(...args),
-  getEbomMaxUpdatedAt: vi.fn().mockResolvedValue(null),
   upsertOfferSnapshot: (...args: unknown[]) => mockUpsertOfferSnapshot(...args),
   updateOfferDiscountWithAudit: (...args: unknown[]) =>
     mockUpdateOfferDiscountWithAudit(...args),
@@ -70,13 +70,13 @@ vi.mock("@/lib/BOM/max-bom", () => ({
 }));
 
 vi.mock("@/lib/offer", () => ({
-  buildOfferItemsFromEbom: vi.fn().mockResolvedValue([]),
   buildOfferItemsFromLive: vi.fn().mockResolvedValue([]),
   computeOfferTotals: vi
     .fn()
     .mockReturnValue({ total_list_price: 1000, discounted_total: 1000 }),
   appendSurchargesToOfferItems: vi.fn().mockReturnValue([]),
   sumSurchargeTotal: vi.fn().mockReturnValue(0),
+  isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
 }));
 
 vi.mock("@/lib/offer-surcharges", () => ({
@@ -114,6 +114,7 @@ describe("generateOfferAction", () => {
     mockGetInstallationItemSettings.mockResolvedValue([]);
     mockUpsertOfferSnapshot.mockResolvedValue({ id: 1 });
     mockInsertActivityLog.mockResolvedValue(undefined);
+    mockIsOfferFrozen.mockReturnValue(false);
   });
 
   test("returns error when user not authenticated", async () => {
@@ -208,7 +209,7 @@ describe("generateOfferAction", () => {
     );
   });
 
-  test("uses EBOM source when engineering BOM exists", async () => {
+  test("always uses LIVE source, even when an engineering BOM exists", async () => {
     mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
       makeConfig("DRAFT", "user-1"),
@@ -218,22 +219,26 @@ describe("generateOfferAction", () => {
     ]);
     await generateOfferAction(CONF_ID);
     expect(mockUpsertOfferSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({ source: "EBOM" }),
+      expect.objectContaining({ source: "LIVE" }),
       expect.anything(),
     );
   });
 
-  test("uses LIVE source when no engineering BOM exists", async () => {
-    mockGetUserData.mockResolvedValue(makeUser("SALES", "user-1"));
+  test("blocks regeneration when the offer is frozen", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeConfig("DRAFT", "user-1"),
+      makeConfig("IN_TECH_REVIEW", "user-1"),
     );
-    mockGetEngineeringBomItems.mockResolvedValue([]);
-    await generateOfferAction(CONF_ID);
-    expect(mockUpsertOfferSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({ source: "LIVE" }),
-      expect.anything(),
-    );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue({
+      id: 99,
+      frozen_at: new Date(),
+    });
+    mockIsOfferFrozen.mockReturnValue(true);
+
+    const result = await generateOfferAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/congelata/);
+    expect(mockUpsertOfferSnapshot).not.toHaveBeenCalled();
   });
 
   test("does not revalidate when transaction fails", async () => {
@@ -275,6 +280,24 @@ describe("setOfferDiscountAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateOfferDiscountWithAudit.mockResolvedValue(undefined);
+    mockIsOfferFrozen.mockReturnValue(false);
+  });
+
+  test("rejects when the offer is frozen", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("IN_TECH_REVIEW", "user-1"),
+    );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue({
+      id: 1,
+      discount_pct: "10",
+      frozen_at: new Date(),
+    });
+    mockIsOfferFrozen.mockReturnValue(true);
+    const result = await setOfferDiscountAction(CONF_ID, 12.5);
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/congelata/);
+    expect(mockUpdateOfferDiscountWithAudit).not.toHaveBeenCalled();
   });
 
   test("returns error when user not authenticated", async () => {
@@ -409,6 +432,23 @@ describe("setOfferSettingsAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateOfferSettingsWithAudit.mockResolvedValue(undefined);
+    mockIsOfferFrozen.mockReturnValue(false);
+  });
+
+  test("rejects when the offer is frozen", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("ADMIN", "admin-1"));
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeConfig("IN_TECH_REVIEW", "user-1"),
+    );
+    mockGetOfferSnapshotByConfigurationId.mockResolvedValue({
+      id: 1,
+      frozen_at: new Date(),
+    });
+    mockIsOfferFrozen.mockReturnValue(true);
+    const result = await setOfferSettingsAction(CONF_ID, makeOfferSettings());
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/congelata/);
+    expect(mockUpdateOfferSettingsWithAudit).not.toHaveBeenCalled();
   });
 
   test("returns error when user not authenticated", async () => {

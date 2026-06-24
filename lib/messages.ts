@@ -39,6 +39,8 @@ export const MSG = {
       "Per approvare la configurazione è obbligatoria creare la distinta di commessa.",
     salesReviewRequiresOffer:
       "Per inviare la configurazione in revisione vendite è obbligatorio generare l'offerta.",
+    salesApprovedRequiresOffer:
+      "Per approvare la configurazione è obbligatorio che l'offerta sia presente.",
   },
   bom: {
     unauthorized: "Non autorizzato a modificare la distinta di commessa.",
@@ -203,17 +205,14 @@ export const MSG = {
     cannotEdit:
       "Non è possibile modificare l'offerta in questo stato della configurazione.",
     notFound: "Offerta non trovata.",
+    frozenCannotRegenerate:
+      "L'offerta è congelata come venduta e non può essere rigenerata.",
+    frozenCannotEdit:
+      "L'offerta è congelata come venduta e non può essere modificata.",
     invalidDiscount:
       "Sconto non valido (deve essere tra 0% e 40%, multiplo di 0,5%).",
     invalidSettings: "Impostazioni offerta non valide.",
     generateError: "Errore durante la generazione dell'offerta.",
-    drift: {
-      title: "Distinta aggiornata",
-      liveButEbomExists:
-        "Offerta generata senza distinta validata. L'Ufficio Tecnico ha ora creato una distinta — rigenera per usarla.",
-      ebomChanged:
-        "La distinta è stata modificata dall'Ufficio Tecnico dopo la generazione dell'offerta. Rigenera per aggiornare i prezzi.",
-    },
     staleness: {
       title: "Prezzi scaduti",
       body: (generatedAt: string, expiredDays: number) =>

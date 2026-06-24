@@ -3,11 +3,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
+import ConfigView from "@/components/config-view";
 import StatusControl from "@/components/status-form";
 import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import { getUserData } from "@/db/queries";
-import ConfigView from "./config-view";
 import ExportConfigPdfButton from "./export-config-pdf-button";
 
 interface ViewConfigProps {

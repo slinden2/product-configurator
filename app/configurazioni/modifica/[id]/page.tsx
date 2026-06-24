@@ -6,7 +6,12 @@ import ConfigNavigationBar from "@/components/config-navigation-bar";
 import FormContainer from "@/components/form-container";
 import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
-import { getUserData, hasEngineeringBom, hasOfferSnapshot } from "@/db/queries";
+import {
+  getOfferFreezeState,
+  getUserData,
+  hasEngineeringBom,
+} from "@/db/queries";
+import { isOfferFrozen } from "@/lib/offer";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -37,10 +42,16 @@ const EditConfiguration = async (props: EditConfigProps) => {
     redirect(`/configurazioni/visualizza/${id}`);
   }
 
-  const [ebomExists, offerExists] = await Promise.all([
+  const [ebomExists, offerFreeze] = await Promise.all([
     hasEngineeringBom(id),
-    hasOfferSnapshot(id),
+    getOfferFreezeState(id),
   ]);
+
+  // A frozen offer is the immutable as-sold record and survives edits, so the
+  // save warning must not threaten to delete it — only an unfrozen offer is at
+  // risk of being regenerated.
+  const offerWillBeDeleted =
+    offerFreeze !== null && !isOfferFrozen(offerFreeze);
 
   return (
     <div>
@@ -69,7 +80,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}
         hasEngineeringBom={ebomExists}
-        hasOfferSnapshot={offerExists}
+        hasOfferSnapshot={offerWillBeDeleted}
       />
     </div>
   );

@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { canTransition, isEditable } from "@/app/actions/lib/auth-checks";
+import {
+  canTransition,
+  classifyOfferFreezeTransition,
+  isEditable,
+} from "@/app/actions/lib/auth-checks";
 import type { ConfigurationStatusType, Role } from "@/types";
 
 describe("isEditable", () => {
@@ -166,5 +170,57 @@ describe("canTransition", () => {
         expect(canTransition("ADMIN", from, to)).toBe(true);
       }
     });
+  });
+});
+
+describe("classifyOfferFreezeTransition", () => {
+  test("freezes on the standard sales approval edge", () => {
+    expect(
+      classifyOfferFreezeTransition("IN_SALES_REVIEW", "SALES_APPROVED"),
+    ).toBe("freeze");
+  });
+
+  test("thaws on the standard un-approval edge", () => {
+    expect(
+      classifyOfferFreezeTransition("SALES_APPROVED", "IN_SALES_REVIEW"),
+    ).toBe("thaw");
+  });
+
+  test.each([
+    ["DRAFT", "SALES_APPROVED"],
+    ["DRAFT", "IN_TECH_REVIEW"],
+    ["IN_SALES_REVIEW", "TECH_APPROVED"],
+    ["IN_SALES_REVIEW", "CLOSED"],
+  ] as [
+    ConfigurationStatusType,
+    ConfigurationStatusType,
+  ][])("freezes on non-adjacent jump %s -> %s (entering frozen zone)", (from, to) => {
+    expect(classifyOfferFreezeTransition(from, to)).toBe("freeze");
+  });
+
+  test.each([
+    ["SALES_APPROVED", "DRAFT"],
+    ["IN_TECH_REVIEW", "DRAFT"],
+    ["TECH_APPROVED", "IN_SALES_REVIEW"],
+    ["CLOSED", "DRAFT"],
+  ] as [
+    ConfigurationStatusType,
+    ConfigurationStatusType,
+  ][])("thaws on non-adjacent jump %s -> %s (leaving frozen zone)", (from, to) => {
+    expect(classifyOfferFreezeTransition(from, to)).toBe("thaw");
+  });
+
+  test.each([
+    ["SALES_APPROVED", "IN_TECH_REVIEW"],
+    ["IN_TECH_REVIEW", "SALES_APPROVED"],
+    ["IN_TECH_REVIEW", "TECH_APPROVED"],
+    ["TECH_APPROVED", "CLOSED"],
+    ["DRAFT", "IN_SALES_REVIEW"],
+    ["IN_SALES_REVIEW", "DRAFT"],
+  ] as [
+    ConfigurationStatusType,
+    ConfigurationStatusType,
+  ][])("is a no-op within a zone %s -> %s", (from, to) => {
+    expect(classifyOfferFreezeTransition(from, to)).toBeNull();
   });
 });

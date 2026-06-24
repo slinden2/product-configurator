@@ -10,6 +10,8 @@ const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
 const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
+const mockGetOfferFreezeState = vi.fn();
+const mockIsOfferFrozen = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -20,6 +22,7 @@ vi.mock("@/db/queries", () => ({
     mockDeleteAllEngineeringBomItems(...args),
   deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
     mockDeleteOfferSnapshotByConfigurationId(...args),
+  getOfferFreezeState: (...args: unknown[]) => mockGetOfferFreezeState(...args),
   touchConfigurationUpdatedAt: (...args: unknown[]) =>
     mockTouchConfigurationUpdatedAt(...args),
   QueryError: class QueryError extends Error {
@@ -30,6 +33,10 @@ vi.mock("@/db/queries", () => ({
       this.errorCode = errorCode;
     }
   },
+}));
+
+vi.mock("@/lib/offer", () => ({
+  isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
 }));
 
 const mockTx = {};
@@ -104,6 +111,8 @@ describe("handleSubRecordAction", () => {
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
     mockDeleteOfferSnapshotByConfigurationId.mockResolvedValue(undefined);
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
+    mockGetOfferFreezeState.mockResolvedValue(null);
+    mockIsOfferFrozen.mockReturnValue(false);
   });
 
   // --- Insert ---
@@ -398,11 +407,25 @@ describe("handleSubRecordAction", () => {
     );
   });
 
-  test("always deletes offer snapshot on sub-record mutation", async () => {
+  test("deletes a non-frozen offer snapshot on sub-record mutation", async () => {
+    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: null });
+    mockIsOfferFrozen.mockReturnValue(false);
     await handleSubRecordAction(insertOptions());
     expect(mockDeleteOfferSnapshotByConfigurationId).toHaveBeenCalledWith(
       PARENT_ID,
       expect.anything(),
     );
+  });
+
+  test("preserves a frozen offer on sub-record mutation, still invalidating the EBOM", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: new Date() });
+    mockIsOfferFrozen.mockReturnValue(true);
+    await handleSubRecordAction(insertOptions());
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
+      PARENT_ID,
+      expect.anything(),
+    );
+    expect(mockDeleteOfferSnapshotByConfigurationId).not.toHaveBeenCalled();
   });
 });

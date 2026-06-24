@@ -11,6 +11,7 @@ import {
   deleteAllEngineeringBomItems,
   deleteOfferSnapshotByConfigurationId,
   getConfiguration,
+  getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
   QueryError,
@@ -18,6 +19,7 @@ import {
   touchConfigurationUpdatedAt,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
+import { isOfferFrozen } from "@/lib/offer";
 
 // --- Types ---
 
@@ -177,8 +179,13 @@ export async function handleSubRecordAction<
       if (ebomExists) {
         await deleteAllEngineeringBomItems(parentId, tx);
       }
-      // Always delete offer snapshot — sub-record data feeds BOM pricing
-      await deleteOfferSnapshotByConfigurationId(parentId, tx);
+      // Delete offer snapshot — sub-record data feeds BOM pricing. A frozen
+      // offer is the immutable as-sold record and must survive; only the EBOM
+      // cost side is invalidated then.
+      const freeze = await getOfferFreezeState(parentId, tx);
+      if (!isOfferFrozen(freeze)) {
+        await deleteOfferSnapshotByConfigurationId(parentId, tx);
+      }
     });
 
     // --- 5. Cache Revalidation ---

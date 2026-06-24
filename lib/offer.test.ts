@@ -22,26 +22,15 @@ vi.mock("@/lib/BOM", () => ({
 
 import {
   appendSurchargesToOfferItems,
-  buildOfferItemsFromEbom,
   buildOfferItemsFromLive,
   computeOfferTotals,
-  detectEbomDrift,
   groupItemsForDisplay,
+  isOfferFrozen,
   isOfferStale,
   OFFER_STALENESS_DAYS,
 } from "@/lib/offer";
 
 // --- Helpers ---
-
-function makeSnapshot(
-  overrides: Partial<{ source: "EBOM" | "LIVE"; generated_at: Date }> = {},
-) {
-  return {
-    source: "EBOM" as const,
-    generated_at: new Date(),
-    ...overrides,
-  };
-}
 
 const NOW = new Date();
 const OLD = new Date(NOW.getTime() - (OFFER_STALENESS_DAYS + 1) * 86400_000);
@@ -49,155 +38,64 @@ const FRESH = new Date(NOW.getTime() - (OFFER_STALENESS_DAYS - 1) * 86400_000);
 
 // --- Tests ---
 
+describe("isOfferFrozen", () => {
+  test("returns false for null snapshot", () => {
+    expect(isOfferFrozen(null)).toBe(false);
+  });
+
+  test("returns false when frozen_at is null", () => {
+    expect(isOfferFrozen({ frozen_at: null })).toBe(false);
+  });
+
+  test("returns true when frozen_at is set", () => {
+    expect(isOfferFrozen({ frozen_at: new Date() })).toBe(true);
+  });
+});
+
 describe("isOfferStale", () => {
   test("returns false for TECH_APPROVED regardless of age", () => {
-    expect(isOfferStale({ generated_at: OLD }, "TECH_APPROVED")).toBe(false);
+    expect(
+      isOfferStale({ generated_at: OLD, frozen_at: null }, "TECH_APPROVED"),
+    ).toBe(false);
   });
 
   test("returns false for CLOSED regardless of age", () => {
-    expect(isOfferStale({ generated_at: OLD }, "CLOSED")).toBe(false);
+    expect(isOfferStale({ generated_at: OLD, frozen_at: null }, "CLOSED")).toBe(
+      false,
+    );
   });
 
   test("returns true when DRAFT and older than threshold", () => {
-    expect(isOfferStale({ generated_at: OLD }, "DRAFT")).toBe(true);
+    expect(isOfferStale({ generated_at: OLD, frozen_at: null }, "DRAFT")).toBe(
+      true,
+    );
   });
 
   test("returns false when DRAFT but within threshold", () => {
-    expect(isOfferStale({ generated_at: FRESH }, "DRAFT")).toBe(false);
+    expect(
+      isOfferStale({ generated_at: FRESH, frozen_at: null }, "DRAFT"),
+    ).toBe(false);
   });
 
   test("returns true when IN_SALES_REVIEW and older than threshold", () => {
-    expect(isOfferStale({ generated_at: OLD }, "IN_SALES_REVIEW")).toBe(true);
+    expect(
+      isOfferStale({ generated_at: OLD, frozen_at: null }, "IN_SALES_REVIEW"),
+    ).toBe(true);
   });
 
   test("returns true when IN_TECH_REVIEW and older than threshold", () => {
-    expect(isOfferStale({ generated_at: OLD }, "IN_TECH_REVIEW")).toBe(true);
-  });
-});
-
-describe("detectEbomDrift", () => {
-  test("returns none when source is LIVE and no EBOM exists", () => {
-    expect(detectEbomDrift(makeSnapshot({ source: "LIVE" }), null)).toBe(
-      "none",
-    );
-  });
-
-  test("returns live_but_ebom_exists when source is LIVE and EBOM now exists", () => {
-    expect(detectEbomDrift(makeSnapshot({ source: "LIVE" }), new Date())).toBe(
-      "live_but_ebom_exists",
-    );
-  });
-
-  test("returns none when source is EBOM and no EBOM exists (edge: deleted)", () => {
-    expect(detectEbomDrift(makeSnapshot({ source: "EBOM" }), null)).toBe(
-      "none",
-    );
-  });
-
-  test("returns ebom_changed when EBOM updated after offer generation", () => {
-    const generatedAt = new Date("2025-01-01");
-    const ebomUpdated = new Date("2025-01-10");
     expect(
-      detectEbomDrift(
-        makeSnapshot({ source: "EBOM", generated_at: generatedAt }),
-        ebomUpdated,
-      ),
-    ).toBe("ebom_changed");
+      isOfferStale({ generated_at: OLD, frozen_at: null }, "IN_TECH_REVIEW"),
+    ).toBe(true);
   });
 
-  test("returns none when EBOM updated before offer generation", () => {
-    const ebomUpdated = new Date("2024-12-01");
-    const generatedAt = new Date("2025-01-01");
+  test("returns false when frozen, even if old and config editable", () => {
     expect(
-      detectEbomDrift(
-        makeSnapshot({ source: "EBOM", generated_at: generatedAt }),
-        ebomUpdated,
+      isOfferStale(
+        { generated_at: OLD, frozen_at: new Date() },
+        "IN_TECH_REVIEW",
       ),
-    ).toBe("none");
-  });
-});
-
-describe("buildOfferItemsFromEbom", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  const activeRow = {
-    pn: "ITC-001",
-    description: "Frame part",
-    qty: 2,
-    is_deleted: false,
-    tag: "FRAME" as const,
-    category: "GENERAL" as const,
-    category_index: 0,
-  };
-
-  const deletedRow = {
-    pn: "ITC-DEL",
-    description: "Deleted part",
-    qty: 1,
-    is_deleted: true,
-    tag: null,
-    category: "GENERAL" as const,
-    category_index: 0,
-  };
-
-  test("excludes soft-deleted rows", async () => {
-    mockGetPriceCoefficientsByArray.mockResolvedValue([]);
-    mockEnrichWithCosts.mockResolvedValue([]);
-
-    const result = await buildOfferItemsFromEbom([deletedRow]);
-    expect(result).toHaveLength(0);
-  });
-
-  test("returns empty array when all rows are deleted", async () => {
-    mockGetPriceCoefficientsByArray.mockResolvedValue([]);
-    mockEnrichWithCosts.mockResolvedValue([]);
-
-    const result = await buildOfferItemsFromEbom([deletedRow]);
-    expect(result).toEqual([]);
-  });
-
-  test("computes list_price and line_total using cost and coefficient", async () => {
-    mockGetPriceCoefficientsByArray.mockResolvedValue([
-      { pn: "ITC-001", coefficient: "2.00" },
-    ]);
-    mockEnrichWithCosts.mockResolvedValue([{ ...activeRow, cost: 100 }]);
-
-    const result = await buildOfferItemsFromEbom([activeRow]);
-
-    expect(result).toHaveLength(1);
-    expect(result[0].coefficient).toBe(2);
-    expect(result[0].list_price).toBe(200); // 100 * 2 * 1
-    expect(result[0].line_total).toBe(400); // 100 * 2 * 2
-    expect(result[0].tag).toBe("FRAME");
-    expect(result[0].category).toBe("GENERAL");
-    expect(result[0].category_index).toBe(0);
-  });
-
-  test("falls back to DEFAULT_COEFFICIENT for unknown PNs", async () => {
-    mockGetPriceCoefficientsByArray.mockResolvedValue([]);
-    mockEnrichWithCosts.mockResolvedValue([{ ...activeRow, cost: 50 }]);
-
-    const [item] = await buildOfferItemsFromEbom([activeRow]);
-    expect(item.coefficient).toBe(3.0);
-    expect(item.line_total).toBe(50 * 3.0 * 2);
-  });
-
-  test("preserves tag and category_index from EBOM row", async () => {
-    const washBayRow = {
-      ...activeRow,
-      category: "WASH_BAY" as const,
-      category_index: 1,
-      tag: null,
-    };
-    mockGetPriceCoefficientsByArray.mockResolvedValue([]);
-    mockEnrichWithCosts.mockResolvedValue([{ ...washBayRow, cost: 0 }]);
-
-    const [item] = await buildOfferItemsFromEbom([washBayRow]);
-    expect(item.category).toBe("WASH_BAY");
-    expect(item.category_index).toBe(1);
-    expect(item.tag).toBeNull();
+    ).toBe(false);
   });
 });
 

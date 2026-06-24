@@ -1,18 +1,19 @@
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, FileCheck } from "lucide-react";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import AlertBanner from "@/components/shared/alert-banner";
 import DetailsCard from "@/components/shared/details-card";
+import { Button } from "@/components/ui/button";
 import {
   getConfiguration,
-  getEbomMaxUpdatedAt,
   getOfferSnapshotByConfigurationId,
   getUserData,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import {
-  detectEbomDrift,
+  isOfferFrozen,
   isOfferStale,
   OFFER_STALENESS_DAYS,
   prepareOfferDisplayData,
@@ -39,17 +40,19 @@ const OfferPage = async (props: OfferPageProps) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-  const [configuration, snapshot, ebomMaxUpdatedAt] = await Promise.all([
+  const [configuration, snapshot] = await Promise.all([
     getConfiguration(confId),
     getOfferSnapshotByConfigurationId(confId),
-    getEbomMaxUpdatedAt(confId),
   ]);
 
   if (!configuration) notFound();
 
   const editable = isEditable(configuration.status, user.role);
+  const frozen = isOfferFrozen(snapshot);
+  // A frozen offer is immutable: regeneration and commercial-term edits are
+  // both blocked server-side, so the controls must be hidden/disabled too.
+  const offerMutable = editable && !frozen;
   const stale = snapshot ? isOfferStale(snapshot, configuration.status) : false;
-  const drift = snapshot ? detectEbomDrift(snapshot, ebomMaxUpdatedAt) : "none";
   const expiredDays = snapshot
     ? Math.floor(
         (Date.now() - new Date(snapshot.generated_at).getTime()) /
@@ -82,8 +85,16 @@ const OfferPage = async (props: OfferPageProps) => {
           {!snapshot && editable && (
             <OfferActionButton confId={confId} mode="generate" />
           )}
-          {snapshot && editable && (
+          {snapshot && offerMutable && (
             <OfferActionButton confId={confId} mode="regenerate" />
+          )}
+          {frozen && (
+            <Button asChild variant="outline">
+              <Link href={`/configurazioni/offerta/${confId}/come-venduto`}>
+                <FileCheck />
+                Configurazione come venduta
+              </Link>
+            </Button>
           )}
           {snapshot && displayData && (
             <>
@@ -127,18 +138,6 @@ const OfferPage = async (props: OfferPageProps) => {
           )}
         </AlertBanner>
       )}
-      {drift !== "none" && (
-        <AlertBanner
-          variant="info"
-          icon={<Info className="h-4 w-4 mt-0.5 shrink-0" />}
-          title={MSG.offer.drift.title}
-        >
-          {drift === "live_but_ebom_exists"
-            ? MSG.offer.drift.liveButEbomExists
-            : MSG.offer.drift.ebomChanged}
-        </AlertBanner>
-      )}
-
       {!snapshot && (
         <div className="text-center py-16 text-muted-foreground">
           <p className="mb-4">
@@ -155,6 +154,12 @@ const OfferPage = async (props: OfferPageProps) => {
             {snapshot.generator?.email && <> da {snapshot.generator.email}</>} —
             fonte: {sourceLabel}
           </p>
+          {frozen && snapshot.frozen_at && (
+            <p>
+              Offerta congelata come venduta il{" "}
+              {formatDateDDMMYYYYHHMM(snapshot.frozen_at)}.
+            </p>
+          )}
         </div>
       )}
 
@@ -165,7 +170,7 @@ const OfferPage = async (props: OfferPageProps) => {
           confId={confId}
           discountPct={discountPct}
           settings={settings}
-          editable={editable}
+          editable={offerMutable}
           stale={stale}
         />
       )}

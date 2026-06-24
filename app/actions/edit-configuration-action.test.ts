@@ -12,6 +12,8 @@ const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockResetWashBayEnergyChainFields = vi.fn();
 const mockResetWashBayNonEnergyChainFields = vi.fn();
 const mockInsertActivityLog = vi.fn();
+const mockGetOfferFreezeState = vi.fn();
+const mockIsOfferFrozen = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -24,6 +26,7 @@ vi.mock("@/db/queries", () => ({
     mockDeleteAllEngineeringBomItems(...args),
   deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
     mockDeleteOfferSnapshotByConfigurationId(...args),
+  getOfferFreezeState: (...args: unknown[]) => mockGetOfferFreezeState(...args),
   resetWashBayEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayEnergyChainFields(...args),
   resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
@@ -37,6 +40,10 @@ vi.mock("@/db/queries", () => ({
       this.errorCode = errorCode;
     }
   },
+}));
+
+vi.mock("@/lib/offer", () => ({
+  isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
 }));
 
 const mockTx = {};
@@ -152,6 +159,8 @@ describe("editConfigurationAction", () => {
     mockResetWashBayEnergyChainFields.mockResolvedValue(undefined);
     mockResetWashBayNonEnergyChainFields.mockResolvedValue(undefined);
     mockInsertActivityLog.mockResolvedValue(undefined);
+    mockGetOfferFreezeState.mockResolvedValue(null);
+    mockIsOfferFrozen.mockReturnValue(false);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
@@ -291,6 +300,35 @@ describe("editConfigurationAction", () => {
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(true);
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+  });
+
+  // --- Offer snapshot invalidation vs freeze ---
+
+  test("deletes a non-frozen offer on a BOM-relevant edit", async () => {
+    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: null });
+    mockIsOfferFrozen.mockReturnValue(false);
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result.success).toBe(true);
+    expect(mockDeleteOfferSnapshotByConfigurationId).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx,
+    );
+  });
+
+  test("preserves a frozen offer on a BOM-relevant edit, still invalidating the EBOM", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ status: "IN_TECH_REVIEW" }),
+    );
+    mockHasEngineeringBom.mockResolvedValue(true);
+    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: new Date() });
+    mockIsOfferFrozen.mockReturnValue(true);
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result.success).toBe(true);
+    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
+      CONF_ID,
+      mockTx,
+    );
+    expect(mockDeleteOfferSnapshotByConfigurationId).not.toHaveBeenCalled();
   });
 
   test("revalidates both edit and BOM paths after successful update", async () => {

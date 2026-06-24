@@ -9,6 +9,7 @@ import {
   deleteAllEngineeringBomItems,
   deleteOfferSnapshotByConfigurationId,
   getConfigurationWithTanksAndBays,
+  getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
   insertActivityLog,
@@ -18,6 +19,7 @@ import {
   updateConfiguration,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
+import { isOfferFrozen } from "@/lib/offer";
 import {
   configSchema,
   hasBomRelevantChanges,
@@ -86,13 +88,19 @@ export const editConfigurationAction = async (
         await resetWashBayNonEnergyChainFields(confId, tx);
       }
 
-      // Delete engineering BOM and offer snapshot if BOM-relevant fields changed
+      // Invalidate the engineering BOM and offer snapshot when BOM-relevant
+      // fields changed. A frozen offer is the immutable as-sold record, so it
+      // must survive edits (an engineer can edit in IN_TECH_REVIEW); only the
+      // EBOM cost side is invalidated then.
       if (hasBomRelevantChanges(configuration, validation.data)) {
         const ebomExists = await hasEngineeringBom(confId, tx);
         if (ebomExists) {
           await deleteAllEngineeringBomItems(confId, tx);
         }
-        await deleteOfferSnapshotByConfigurationId(confId, tx);
+        const freeze = await getOfferFreezeState(confId, tx);
+        if (!isOfferFrozen(freeze)) {
+          await deleteOfferSnapshotByConfigurationId(confId, tx);
+        }
       }
 
       await insertActivityLog(

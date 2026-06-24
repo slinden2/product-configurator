@@ -96,3 +96,36 @@ export function canTransition(
 
   return false;
 }
+
+/**
+ * Statuses in which the sales side can still edit the configuration and its
+ * offer. Everything else is the "frozen zone" where the offer is the immutable
+ * as-sold snapshot.
+ */
+const SALES_EDITABLE_STATUSES: ConfigurationStatusType[] = [
+  "DRAFT",
+  "IN_SALES_REVIEW",
+];
+
+/**
+ * Classifies a status transition by how it crosses the offer's freeze boundary.
+ *
+ * The offer freezes as the immutable as-sold snapshot when a config leaves the
+ * sales-editable zone (DRAFT/IN_SALES_REVIEW) for the frozen zone
+ * (SALES_APPROVED/IN_TECH_REVIEW/TECH_APPROVED/CLOSED), and thaws when it comes
+ * back. Keying on the zone crossing — rather than the exact
+ * IN_SALES_REVIEW↔SALES_APPROVED edges — means an ADMIN jumping non-adjacently
+ * (e.g. DRAFT→SALES_APPROVED, CLOSED→DRAFT) still freezes/thaws correctly, while
+ * the engineering-side SALES_APPROVED↔IN_TECH_REVIEW edge stays within the frozen
+ * zone so the offer remains frozen while an engineer edits live config.
+ */
+export function classifyOfferFreezeTransition(
+  from: ConfigurationStatusType,
+  to: ConfigurationStatusType,
+): "freeze" | "thaw" | null {
+  const fromSalesEditable = SALES_EDITABLE_STATUSES.includes(from);
+  const toSalesEditable = SALES_EDITABLE_STATUSES.includes(to);
+  if (fromSalesEditable && !toSalesEditable) return "freeze";
+  if (!fromSalesEditable && toSalesEditable) return "thaw";
+  return null;
+}

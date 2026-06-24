@@ -7,7 +7,6 @@ import { db } from "@/db";
 import {
   canAccessConfiguration,
   getConfigurationWithTanksAndBays,
-  getEngineeringBomItems,
   getInstallationItemSettings,
   getOfferSnapshotByConfigurationId,
   getSurchargeSettings,
@@ -23,9 +22,9 @@ import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { MSG } from "@/lib/messages";
 import {
   appendSurchargesToOfferItems,
-  buildOfferItemsFromEbom,
   buildOfferItemsFromLive,
   computeOfferTotals,
+  isOfferFrozen,
   sumSurchargeTotal,
 } from "@/lib/offer";
 import { buildDefaultInstallationItems } from "@/lib/offer-installation";
@@ -72,20 +71,28 @@ export async function generateOfferAction(confId: number) {
   const { user, configuration } = auth;
 
   try {
-    const [existingSnapshot, ebomRows, surchargeSettings, installationRows] =
+    const [existingSnapshot, surchargeSettings, installationRows] =
       await Promise.all([
         getOfferSnapshotByConfigurationId(confId),
-        getEngineeringBomItems(confId),
         getSurchargeSettings(),
         getInstallationItemSettings(),
       ]);
 
-    const isRegenerate = existingSnapshot !== null;
-    const hasEbom = ebomRows.length > 0;
+    // A frozen offer is the immutable as-sold record. isEditable already blocks
+    // SALES_APPROVED/TECH_APPROVED/CLOSED, so this guards the IN_TECH_REVIEW
+    // window where the config is editable but the offer must stay frozen.
+    if (isOfferFrozen(existingSnapshot)) {
+      return {
+        success: false as const,
+        error: MSG.offer.frozenCannotRegenerate,
+      };
+    }
 
-    const bomItems = hasEbom
-      ? await buildOfferItemsFromEbom(ebomRows)
-      : await buildOfferItemsFromLive(configuration);
+    const isRegenerate = existingSnapshot !== null;
+
+    // Offers always price from live config; the EBOM (engineering cost) never
+    // re-prices the client-accepted offer.
+    const bomItems = await buildOfferItemsFromLive(configuration);
 
     const surchargeResult = resolveOfferSurcharges({
       totalHeightMm: configuration.total_height,
@@ -106,7 +113,7 @@ export async function generateOfferAction(confId: number) {
     const { total_list_price: bomTotal } = computeOfferTotals(bomItems, 0);
     const total_list_price = bomTotal + sumSurchargeTotal(surcharges);
 
-    const source = hasEbom ? ("EBOM" as const) : ("LIVE" as const);
+    const source = "LIVE" as const;
     const action = isRegenerate
       ? ("OFFER_REGENERATE" as const)
       : ("OFFER_GENERATE" as const);
@@ -166,6 +173,12 @@ export async function setOfferDiscountAction(
     if (!existing) {
       return { success: false as const, error: MSG.offer.notFound };
     }
+    // A frozen offer is the immutable as-sold commitment: its commercial terms
+    // (discount/transport/installation) are part of what the client accepted and
+    // cannot be changed, even by an engineer/admin in IN_TECH_REVIEW.
+    if (isOfferFrozen(existing)) {
+      return { success: false as const, error: MSG.offer.frozenCannotEdit };
+    }
 
     await updateOfferDiscountWithAudit({
       confId,
@@ -206,6 +219,11 @@ export async function setOfferSettingsAction(
     const existing = await getOfferSnapshotByConfigurationId(confId);
     if (!existing) {
       return { success: false as const, error: MSG.offer.notFound };
+    }
+    // A frozen offer is the immutable as-sold commitment: its commercial terms
+    // are part of what the client accepted and cannot be changed.
+    if (isOfferFrozen(existing)) {
+      return { success: false as const, error: MSG.offer.frozenCannotEdit };
     }
 
     const { transport_amount, ...rest } = parsed.data;

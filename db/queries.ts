@@ -10,7 +10,10 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { canTransition } from "@/app/actions/lib/auth-checks";
+import {
+  canTransition,
+  classifyOfferFreezeTransition,
+} from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
   activityLogs,
@@ -52,6 +55,7 @@ import type {
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
+import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 import type {
   OfferInstallationItem,
   OfferLineItem,
@@ -429,6 +433,25 @@ export const updateConfigStatus = async (
     }
   }
 
+  // The offer freezes as the immutable as-sold snapshot when the config crosses
+  // from the sales-editable zone into the frozen zone, and thaws when it crosses
+  // back (see classifyOfferFreezeTransition for why this is keyed on the zone
+  // crossing rather than the exact status edges).
+  const freezeEvent = classifyOfferFreezeTransition(
+    configuration.status as ConfigurationStatusType,
+    statusData.status,
+  );
+
+  // Freezing captures the as-sold offer, so an offer must exist. A manager could
+  // have deleted it by editing a BOM-relevant field while in IN_SALES_REVIEW, so
+  // re-check here.
+  if (freezeEvent === "freeze") {
+    const offerExists = await hasOfferSnapshot(confId, txOrDb);
+    if (!offerExists) {
+      throw new QueryError(MSG.config.salesApprovedRequiresOffer, 400);
+    }
+  }
+
   // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
   const forwardStatuses: ConfigurationStatusType[] = [
     "IN_SALES_REVIEW",
@@ -463,7 +486,10 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.updateNotFoundOrUnauthorized, 404);
   }
 
-  return { id: response.id, fromStatus };
+  // The freeze/thaw side-effects (capturing/clearing the as-sold snapshot) run in
+  // the action layer, which can build the form-shaped snapshot without the
+  // circular import that loadValidatedConfiguration would create here.
+  return { id: response.id, fromStatus, freezeEvent };
 };
 
 export const insertWaterTank = async (
@@ -1179,6 +1205,8 @@ export async function getOfferSnapshotByConfigurationId(
       transport_mode: offerSnapshots.transport_mode,
       installation_mode: offerSnapshots.installation_mode,
       installation_items: offerSnapshots.installation_items,
+      frozen_at: offerSnapshots.frozen_at,
+      config_snapshot: offerSnapshots.config_snapshot,
       updated_at: offerSnapshots.updated_at,
       generator: {
         id: userProfiles.id,
@@ -1324,14 +1352,85 @@ export async function deleteOfferSnapshotByConfigurationId(
     .where(eq(offerSnapshots.configuration_id, confId));
 }
 
-export async function getEbomMaxUpdatedAt(
+/**
+ * Lightweight read of an offer's freeze marker. Avoids the user-profile join in
+ * getOfferSnapshotByConfigurationId so it is safe and cheap to call inside a
+ * transaction. Returns null when no offer snapshot exists.
+ */
+export async function getOfferFreezeState(
   confId: number,
-): Promise<Date | null> {
-  const [row] = await db
-    .select({ maxUpdatedAt: max(engineeringBomItems.updated_at) })
-    .from(engineeringBomItems)
-    .where(eq(engineeringBomItems.configuration_id, confId));
-  return row?.maxUpdatedAt ?? null;
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<{ frozen_at: Date | null } | null> {
+  const row = await txOrDb.query.offerSnapshots.findFirst({
+    where: eq(offerSnapshots.configuration_id, confId),
+    columns: { frozen_at: true },
+  });
+  return row ?? null;
+}
+
+/**
+ * Freezes the offer as an immutable as-sold snapshot: stamps frozen_at and
+ * captures the full form-shaped configuration. Writes the audit log in the same
+ * transaction so the freeze can never be recorded without its evidence.
+ */
+export async function freezeOfferSnapshot(
+  confId: number,
+  configSnapshot: OfferConfigSnapshot,
+  userId: string,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<void> {
+  // Self-protecting: assert the update actually hit a snapshot row rather than
+  // trusting the caller-side hasOfferSnapshot precondition. Without this, a
+  // missing snapshot would silently log an OFFER_FREEZE that never happened.
+  const [frozen] = await txOrDb
+    .update(offerSnapshots)
+    .set({
+      frozen_at: new Date(),
+      config_snapshot: configSnapshot,
+      updated_at: new Date(),
+    })
+    .where(eq(offerSnapshots.configuration_id, confId))
+    .returning({ id: offerSnapshots.id });
+
+  if (!frozen) {
+    throw new QueryError(MSG.offer.notFound, 404);
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_FREEZE",
+      targetEntity: "offer_snapshot",
+      targetId: confId.toString(),
+    },
+    txOrDb,
+  );
+}
+
+/**
+ * Thaws a frozen offer: clears the freeze marker and the as-sold capture so the
+ * offer becomes editable/regenerable again. Re-approval re-captures a fresh
+ * snapshot. Keeps the invariant "frozen_at set ⇔ config_snapshot present".
+ */
+export async function thawOfferSnapshot(
+  confId: number,
+  userId: string,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<void> {
+  await txOrDb
+    .update(offerSnapshots)
+    .set({ frozen_at: null, config_snapshot: null, updated_at: new Date() })
+    .where(eq(offerSnapshots.configuration_id, confId));
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_THAW",
+      targetEntity: "offer_snapshot",
+      targetId: confId.toString(),
+    },
+    txOrDb,
+  );
 }
 
 export async function getSurchargeSettings(): Promise<SurchargeSetting[]> {
