@@ -10,11 +10,17 @@ const mockInsertEngineeringBomItems = vi.fn();
 const mockSearchPartNumbers = vi.fn();
 const mockInsertActivityLog = vi.fn();
 const mockLogActivity = vi.fn();
+// STANDALONE configs ignore this; OFFER tests default the revision to DRAFT.
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   getPartNumbersByArray: (...args: unknown[]) =>
     mockGetPartNumbersByArray(...args),
@@ -119,6 +125,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: CONF_ID,
     user_id: "owner-123",
+    // Engineering BOM work runs on standalone technical configs; sales-status
+    // tests override origin to OFFER.
+    origin: "STANDALONE",
     status: "DRAFT",
     name: "Test Config",
     water_tanks: [],
@@ -245,7 +254,7 @@ describe("snapshotEngineeringBomAction", () => {
   test("ADMIN can snapshot IN_SALES_REVIEW config", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "ADMIN" }));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);

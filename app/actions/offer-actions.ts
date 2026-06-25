@@ -12,6 +12,7 @@ import {
   getSurchargeSettings,
   getUserData,
   insertActivityLog,
+  offerRevisionStatusFor,
   QueryError,
   updateOfferDiscountWithAudit,
   updateOfferSettingsWithAudit,
@@ -58,7 +59,15 @@ async function authorizeOfferAction(confId: number) {
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 
-  if (!isEditable(configuration.status, user.role, configuration.origin)) {
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
+  if (
+    !isEditable(
+      configuration.status,
+      user.role,
+      configuration.origin,
+      offerRevisionStatus,
+    )
+  ) {
     return { success: false as const, error: MSG.offer.cannotEdit };
   }
 

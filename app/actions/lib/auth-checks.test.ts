@@ -29,48 +29,71 @@ describe("isEditable", () => {
     });
   });
 
-  describe("SALES role", () => {
-    test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", "SALES")).toBe(true);
+  // OFFER pre-handoff (DRAFT/IN_SALES_REVIEW) is a two-phase gate: editable only
+  // while the offer revision is DRAFT. A missing revision status fails closed.
+  describe("OFFER pre-handoff — revision is DRAFT", () => {
+    test("SALES can edit DRAFT only", () => {
+      expect(isEditable("DRAFT", "SALES", "OFFER", "DRAFT")).toBe(true);
+      expect(isEditable("IN_SALES_REVIEW", "SALES", "OFFER", "DRAFT")).toBe(
+        false,
+      );
     });
 
-    test("cannot edit IN_SALES_REVIEW", () => {
-      expect(isEditable("IN_SALES_REVIEW", "SALES")).toBe(false);
+    test.each([
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s can edit DRAFT and IN_SALES_REVIEW", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER", "DRAFT")).toBe(true);
+      expect(isEditable("IN_SALES_REVIEW", role, "OFFER", "DRAFT")).toBe(true);
     });
 
-    test("cannot edit IN_TECH_REVIEW", () => {
-      expect(isEditable("IN_TECH_REVIEW", "SALES")).toBe(false);
-    });
-  });
-
-  describe.each([
-    "SALES_MANAGER",
-    "SALES_DIRECTOR",
-  ] as const)("%s role", (role) => {
-    test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", role)).toBe(true);
-    });
-
-    test("can edit IN_SALES_REVIEW", () => {
-      expect(isEditable("IN_SALES_REVIEW", role)).toBe(true);
-    });
-
-    test("cannot edit IN_TECH_REVIEW", () => {
-      expect(isEditable("IN_TECH_REVIEW", role)).toBe(false);
+    test("ENGINEER has no offer access pre-handoff", () => {
+      expect(isEditable("DRAFT", "ENGINEER", "OFFER", "DRAFT")).toBe(false);
+      expect(isEditable("IN_SALES_REVIEW", "ENGINEER", "OFFER", "DRAFT")).toBe(
+        false,
+      );
     });
   });
 
-  describe.each(["ENGINEER", "ADMIN"] as const)("%s role", (role) => {
-    test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", role)).toBe(true);
+  describe("OFFER pre-handoff — fail closed", () => {
+    const roles: Role[] = [
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ENGINEER",
+      "ADMIN",
+    ];
+
+    test.each(
+      roles,
+    )("%s cannot edit DRAFT when the revision is not DRAFT (SENT)", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER", "SENT")).toBe(false);
     });
 
-    test("can edit IN_SALES_REVIEW", () => {
-      expect(isEditable("IN_SALES_REVIEW", role)).toBe(true);
+    test.each(
+      roles,
+    )("%s cannot edit DRAFT when no revision status is supplied", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER")).toBe(false);
+      expect(isEditable("IN_SALES_REVIEW", role, "OFFER")).toBe(false);
     });
+  });
 
-    test("can edit IN_TECH_REVIEW", () => {
+  describe("OFFER engineering zone (IN_TECH_REVIEW)", () => {
+    test.each([
+      "ENGINEER",
+      "ADMIN",
+    ] as const)("%s can edit IN_TECH_REVIEW regardless of revision", (role) => {
       expect(isEditable("IN_TECH_REVIEW", role)).toBe(true);
+      expect(isEditable("IN_TECH_REVIEW", role, "OFFER", "SENT")).toBe(true);
+    });
+
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+    ] as const)("%s cannot edit IN_TECH_REVIEW", (role) => {
+      expect(isEditable("IN_TECH_REVIEW", role, "OFFER", "DRAFT")).toBe(false);
     });
   });
 });

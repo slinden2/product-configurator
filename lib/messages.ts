@@ -72,6 +72,9 @@ export const MSG = {
     configSavedSubmitHint:
       "Configurazione salvata. Puoi inviarla dalla pagina di visualizzazione.",
     configCreated: "Configurazione creata.",
+    offerCreated: "Offerta creata.",
+    offerLineCreated: "Configurazione aggiunta all'offerta.",
+    offerLineRemoved: "Configurazione rimossa dall'offerta.",
     configDeleted: "Configurazione eliminata con successo.",
     configDuplicated: "Configurazione duplicata.",
     duplicateError: "Errore durante la duplicazione.",
@@ -205,6 +208,11 @@ export const MSG = {
     cannotEdit:
       "Non è possibile modificare l'offerta in questo stato della configurazione.",
     notFound: "Offerta non trovata.",
+    createFailed: "Impossibile creare l'offerta.",
+    numberRetry:
+      "Numero offerta già in uso, riprova. Se il problema persiste, contatta l'amministratore.",
+    lineCannotEdit:
+      "Le configurazioni dell'offerta sono modificabili solo finché la revisione è in bozza.",
     frozenCannotRegenerate:
       "L'offerta è congelata come venduta e non può essere rigenerata.",
     frozenCannotEdit:

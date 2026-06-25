@@ -28,6 +28,8 @@ import {
   type NewWashBay,
   type NewWaterTank,
   type OfferSnapshot,
+  offerRevisionLines,
+  offerRevisions,
   offerSnapshots,
   offers,
   partNumbers,
@@ -51,6 +53,7 @@ import type {
   ConfigOrigin,
   ConfigurationStatusType,
   InstallationItemKind,
+  OfferStatusType,
   Role,
   SurchargeKind,
   TransportMode,
@@ -61,6 +64,7 @@ import type {
   UpdateConfigSchema,
 } from "@/validation/config-schema";
 import type { ConfigStatusSchema } from "@/validation/config-status-schema";
+import type { OfferHeaderInput } from "@/validation/offer/offer-schema";
 import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 import type {
   OfferInstallationItem,
@@ -270,6 +274,319 @@ export async function canAccessOffer(
   return false;
 }
 
+/**
+ * Status of the offer revision that owns this configuration, or `null` if the
+ * config is not an offer line (standalone, or no line yet). Threaded into
+ * {@link isEditable} so an OFFER config's pre-handoff edit gate keys on the
+ * revision lifecycle (editable only while the revision is DRAFT).
+ */
+export async function getOfferRevisionStatusForConfig(
+  configId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<OfferStatusType | null> {
+  const [row] = await txOrDb
+    .select({ status: offerRevisions.status })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .where(eq(offerRevisionLines.configuration_id, configId))
+    .limit(1);
+
+  return row?.status ?? null;
+}
+
+/**
+ * Resolves the {@link isEditable} `offerRevisionStatus` argument for a config:
+ * the owning revision's status for an OFFER config, or `undefined` for a
+ * STANDALONE config (whose branch never consults it). Centralises the threading
+ * so every editability call site stays consistent.
+ */
+export async function offerRevisionStatusFor(
+  config: { id: number; origin: ConfigOrigin },
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<OfferStatusType | undefined> {
+  if (config.origin !== "OFFER") return undefined;
+  return (
+    (await getOfferRevisionStatusForConfig(config.id, txOrDb)) ?? undefined
+  );
+}
+
+/**
+ * Next offer number for the current year, formatted `OFF-{year}-{NNNN}`. Derived
+ * from the max existing number for the year; relies on the `offer_number` UNIQUE
+ * to reject the rare concurrent collision (caller surfaces a retry message).
+ */
+export async function generateOfferNumber(
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<string> {
+  const year = new Date().getFullYear();
+  const prefix = `OFF-${year}-`;
+  const [row] = await txOrDb
+    .select({ max: max(offers.offer_number) })
+    .from(offers)
+    .where(ilike(offers.offer_number, `${prefix}%`));
+
+  const lastSeq = row?.max ? parseInt(row.max.slice(prefix.length), 10) : 0;
+  const next = (Number.isNaN(lastSeq) ? 0 : lastSeq) + 1;
+  return `${prefix}${String(next).padStart(4, "0")}`;
+}
+
+/**
+ * Creates an offer header plus its implicit revision 1 (DRAFT) atomically. The
+ * offer number is generated server-side; the owner is the creating agent.
+ */
+export async function insertOffer(
+  data: OfferHeaderInput,
+  userId: string,
+): Promise<{ id: number }> {
+  return db.transaction(async (tx) => {
+    const offer_number = await generateOfferNumber(tx);
+
+    const [offer] = await tx
+      .insert(offers)
+      .values({
+        offer_number,
+        customer_name: data.customer_name,
+        customer_address: data.customer_address || null,
+        customer_email: data.customer_email || null,
+        user_id: userId,
+      })
+      .returning({ id: offers.id });
+
+    if (!offer) {
+      throw new QueryError(MSG.offer.createFailed, 500);
+    }
+
+    await tx.insert(offerRevisions).values({
+      offer_id: offer.id,
+      revision_no: 1,
+      status: "DRAFT",
+    });
+
+    return { id: offer.id };
+  });
+}
+
+/**
+ * Offer-side equivalent of {@link getUserConfigurations}: a scoped, paginated list
+ * with each offer's revision-1 status and line count.
+ */
+export async function getUserOffers(
+  user: NonNullable<UserData>,
+  page: number = 1,
+  pageSize: number = 20,
+) {
+  const whereClause = offerScopeWhere(user);
+
+  const [data, countResult] = await Promise.all([
+    db.query.offers.findMany({
+      where: whereClause,
+      columns: {
+        id: true,
+        offer_number: true,
+        customer_name: true,
+        created_at: true,
+        updated_at: true,
+      },
+      with: {
+        owner: { columns: { id: true, email: true, initials: true } },
+        revisions: {
+          where: eq(offerRevisions.revision_no, 1),
+          columns: { id: true, status: true },
+          with: { lines: { columns: { id: true } } },
+        },
+      },
+      orderBy: [desc(offers.updated_at)],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
+    db.select({ count: sql<number>`count(*)` }).from(offers).where(whereClause),
+  ]);
+
+  const shaped = data.map((offer) => {
+    const revision = offer.revisions[0];
+    return {
+      id: offer.id,
+      offer_number: offer.offer_number,
+      customer_name: offer.customer_name,
+      created_at: offer.created_at,
+      updated_at: offer.updated_at,
+      owner: offer.owner,
+      status: revision?.status ?? null,
+      lineCount: revision?.lines.length ?? 0,
+    };
+  });
+
+  return { data: shaped, totalCount: Number(countResult[0].count) };
+}
+
+export type AllOffers = Awaited<ReturnType<typeof getUserOffers>>["data"];
+
+/**
+ * Single offer with its revision 1 and that revision's lines (each carrying a
+ * lightweight config summary), ordered by position. Returns `null` when the offer
+ * doesn't exist or is out of the user's scope.
+ */
+export async function getOfferWithRevisionAndLines(
+  offerId: number,
+  user: NonNullable<UserData>,
+) {
+  const offer = await db.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    with: {
+      owner: { columns: { id: true, email: true, initials: true } },
+      revisions: {
+        where: eq(offerRevisions.revision_no, 1),
+        with: {
+          lines: {
+            orderBy: [asc(offerRevisionLines.position)],
+            with: {
+              configuration: {
+                columns: { id: true, name: true, status: true, origin: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!offer) return null;
+  if (!(await canAccessOffer(user, offer))) return null;
+
+  return offer;
+}
+
+export type OfferWithRevisionAndLines = NonNullable<
+  Awaited<ReturnType<typeof getOfferWithRevisionAndLines>>
+>;
+
+/**
+ * Adds a new configuration line to an offer's revision 1. Inserts the config with
+ * `origin=OFFER` owned by the **offer owner** (not the acting user, so a manager
+ * adding to a report's offer doesn't flip ownership) and an `offer_revision_lines`
+ * row at the next position with placeholder pricing (real pricing is Phase 3).
+ * Gated on the revision being DRAFT. Audited in-transaction.
+ */
+export async function addOfferLine(
+  offerId: number,
+  configData: ConfigSchema,
+  userId: string,
+): Promise<{ id: number }> {
+  return db.transaction(async (tx) => {
+    const offer = await tx.query.offers.findFirst({
+      where: eq(offers.id, offerId),
+      columns: { id: true, user_id: true },
+      with: {
+        revisions: {
+          where: eq(offerRevisions.revision_no, 1),
+          columns: { id: true, status: true },
+        },
+      },
+    });
+
+    if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+    const revision = offer.revisions[0];
+    if (!revision) throw new QueryError(MSG.offer.notFound, 404);
+    if (revision.status !== "DRAFT") {
+      throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    }
+
+    const { id: configId } = await insertConfiguration(
+      configData,
+      offer.user_id,
+      "OFFER",
+      tx,
+    );
+
+    const [posRow] = await tx
+      .select({ max: max(offerRevisionLines.position) })
+      .from(offerRevisionLines)
+      .where(eq(offerRevisionLines.offer_revision_id, revision.id));
+    const nextPosition = Number(posRow?.max ?? -1) + 1;
+
+    await tx.insert(offerRevisionLines).values({
+      offer_revision_id: revision.id,
+      configuration_id: configId,
+      position: nextPosition,
+      quantity: 1,
+      list_price: "0.00",
+      net_price: "0.00",
+      line_discount_percent: null,
+      pricing_snapshot: null,
+    });
+
+    await insertActivityLog(
+      {
+        userId,
+        action: "OFFER_LINE_ADD",
+        targetEntity: "offer",
+        targetId: String(offerId),
+        metadata: { configurationId: configId, position: nextPosition },
+      },
+      tx,
+    );
+
+    return { id: configId };
+  });
+}
+
+/**
+ * Removes a configuration line from an offer's revision 1 by deleting its
+ * configuration (the line row cascades via the FK). Gated on the revision being
+ * DRAFT and the line actually belonging to this offer's revision 1. Audited
+ * in-transaction (delete ⇒ audit in the same tx).
+ */
+export async function removeOfferLine(
+  offerId: number,
+  configId: number,
+  userId: string,
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const offer = await tx.query.offers.findFirst({
+      where: eq(offers.id, offerId),
+      columns: { id: true },
+      with: {
+        revisions: {
+          where: eq(offerRevisions.revision_no, 1),
+          columns: { id: true, status: true },
+          with: {
+            lines: {
+              where: eq(offerRevisionLines.configuration_id, configId),
+              columns: { id: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+    const revision = offer.revisions[0];
+    if (!revision) throw new QueryError(MSG.offer.notFound, 404);
+    if (revision.status !== "DRAFT") {
+      throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    }
+    if (revision.lines.length === 0) {
+      throw new QueryError(MSG.offer.notFound, 404);
+    }
+
+    await tx.delete(configurations).where(eq(configurations.id, configId));
+
+    await insertActivityLog(
+      {
+        userId,
+        action: "OFFER_LINE_REMOVE",
+        targetEntity: "offer",
+        targetId: String(offerId),
+        metadata: { configurationId: configId },
+      },
+      tx,
+    );
+  });
+}
+
 // Gets all configurations for the user if the role is SALES.
 // For ENGINEER and ADMIN, gets all configurations.
 // Pass `origin` to restrict the list to one lifecycle (e.g. the standalone
@@ -360,12 +677,14 @@ export async function getWashBaysByConfigId(configId: number) {
 export const insertConfiguration = async (
   newConfiguration: ConfigSchema,
   userId: string,
+  origin: ConfigOrigin = "STANDALONE",
+  txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const dbData = transformConfigToDbInsert(newConfiguration, userId);
 
-  const [insertedConfiguration] = await db
+  const [insertedConfiguration] = await txOrDb
     .insert(configurations)
-    .values(dbData)
+    .values({ ...dbData, origin })
     .returning({ id: configurations.id });
 
   if (!insertedConfiguration) {

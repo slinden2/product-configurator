@@ -15,6 +15,11 @@ const mockUpdateOfferDiscountWithAudit = vi.fn();
 const mockUpdateOfferSettingsWithAudit = vi.fn();
 const mockInsertActivityLog = vi.fn();
 const mockIsOfferFrozen = vi.fn();
+// Configs here are pre-handoff OFFER lines; default the owning revision to DRAFT
+// so the two-phase editability gate stays open (impl survives clearAllMocks).
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -35,6 +40,8 @@ vi.mock("@/db/queries", () => ({
   updateOfferSettingsWithAudit: (...args: unknown[]) =>
     mockUpdateOfferSettingsWithAudit(...args),
   deleteOfferSnapshotByConfigurationId: vi.fn(),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;

@@ -1,4 +1,9 @@
-import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 
 /**
  * The two sales-side statuses an OFFER-origin config passes through. A
@@ -11,10 +16,19 @@ const SALES_STATUSES: ConfigurationStatusType[] = [
 
 /**
  * Determines whether a configuration is currently in an editable state based on
- * the User's Role, the Record's Status and its `origin`.
+ * the User's Role, the Record's Status, its `origin`, and — for an offer-owned
+ * config in the pre-handoff zone — the status of its offer revision.
  *
- * `origin` defaults to `"OFFER"`, which preserves the pre-separation sales/offer
- * lifecycle; standalone callers must pass `"STANDALONE"` explicitly.
+ * `origin` defaults to `"OFFER"`; standalone callers must pass `"STANDALONE"`.
+ *
+ * Two-phase gate for OFFER-origin configs:
+ * - Before SALES_APPROVED (DRAFT/IN_SALES_REVIEW) the config is governed by its
+ *   offer revision: editable only while the revision is `DRAFT`. This is a
+ *   fail-closed gate — a missing `offerRevisionStatus` (no offer wired up, or a
+ *   non-DRAFT lifecycle state) means not editable. ENGINEER has no offer access
+ *   here and is excluded.
+ * - At SALES_APPROVED+ the config is governed by ConfigurationStatus (engineering
+ *   rules), regardless of the revision; the offer is already frozen.
  *
  * Rules:
  * - SALES_APPROVED/TECH_APPROVED/CLOSED: Never editable by anyone (both origins).
@@ -22,17 +36,19 @@ const SALES_STATUSES: ConfigurationStatusType[] = [
  *   it back to IN_SALES_REVIEW, or an engineer pulls it forward to IN_TECH_REVIEW.
  * - STANDALONE: Engineer/Admin only, editable in DRAFT or IN_TECH_REVIEW. The two
  *   sales statuses never apply.
- * - OFFER · SALES: Editable only in DRAFT.
- * - OFFER · SALES_MANAGER/SALES_DIRECTOR: Editable in DRAFT or IN_SALES_REVIEW.
- * - OFFER · ENGINEER/ADMIN: Editable in DRAFT, IN_SALES_REVIEW, or IN_TECH_REVIEW.
+ * - OFFER · IN_TECH_REVIEW: Engineer/Admin (post-handoff engineering zone).
+ * - OFFER · DRAFT/IN_SALES_REVIEW: offer-access roles only, and only while the
+ *   offer revision is DRAFT — SALES in DRAFT, SALES_MANAGER/SALES_DIRECTOR/ADMIN
+ *   in DRAFT or IN_SALES_REVIEW.
  *
- * Status × role × origin only — ownership/scope is enforced separately via
- * canAccessConfiguration (db/queries.ts).
+ * Status × role × origin × revision only — ownership/scope is enforced separately
+ * via canAccessConfiguration (db/queries.ts).
  */
 export function isEditable(
   status: ConfigurationStatusType,
   role: Role,
   origin: ConfigOrigin = "OFFER",
+  offerRevisionStatus?: OfferStatusType,
 ): boolean {
   // 1. Hard stop: Sales-approved, Approved and Closed are read-only for all roles
   if (
@@ -52,21 +68,28 @@ export function isEditable(
     return status === "DRAFT" || status === "IN_TECH_REVIEW";
   }
 
-  // 3. OFFER origin: role-based permissions for active states.
+  // 3. OFFER · engineering zone (post-handoff): governed by config status, not the
+  // revision. Engineer/Admin finalize the BOM here; the offer is already frozen.
+  if (status === "IN_TECH_REVIEW") {
+    return role === "ENGINEER" || role === "ADMIN";
+  }
+
+  // 4. OFFER · pre-handoff (DRAFT/IN_SALES_REVIEW): governed by the offer revision.
+  // Fail closed — editable only while the revision is DRAFT; a missing or non-DRAFT
+  // revision status means not editable.
+  if (offerRevisionStatus !== "DRAFT") {
+    return false;
+  }
+  // Offer-access roles only — ENGINEER has no offer access pre-handoff.
   if (role === "SALES") {
     return status === "DRAFT";
   }
-
-  if (role === "SALES_MANAGER" || role === "SALES_DIRECTOR") {
+  if (
+    role === "SALES_MANAGER" ||
+    role === "SALES_DIRECTOR" ||
+    role === "ADMIN"
+  ) {
     return status === "DRAFT" || status === "IN_SALES_REVIEW";
-  }
-
-  if (role === "ENGINEER" || role === "ADMIN") {
-    return (
-      status === "DRAFT" ||
-      status === "IN_SALES_REVIEW" ||
-      status === "IN_TECH_REVIEW"
-    );
   }
 
   return false;

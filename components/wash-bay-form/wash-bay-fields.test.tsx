@@ -73,6 +73,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
       <WashBayForm
         confId={1}
         confStatus="DRAFT"
+        origin="STANDALONE"
         userRole="ENGINEER"
         supplyType="ENERGY_CHAIN"
         supplyFixingType="WALL"
@@ -93,6 +94,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
       <WashBayForm
         confId={1}
         confStatus="DRAFT"
+        origin="STANDALONE"
         userRole="ENGINEER"
         supplyType="ENERGY_CHAIN"
         supplyFixingType="POST"
@@ -113,6 +115,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
       <WashBayForm
         confId={1}
         confStatus="DRAFT"
+        origin="STANDALONE"
         userRole="ENGINEER"
         supplyType="ENERGY_CHAIN"
         supplyFixingType="WALL"
@@ -142,6 +145,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
       <WashBayForm
         confId={1}
         confStatus="DRAFT"
+        origin="STANDALONE"
         userRole="ENGINEER"
         supplyType="ENERGY_CHAIN"
         supplyFixingType="WALL"
@@ -164,6 +168,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
       <WashBayForm
         confId={1}
         confStatus="DRAFT"
+        origin="STANDALONE"
         userRole="ENGINEER"
         supplyType="ENERGY_CHAIN"
         supplyFixingType="WALL"
@@ -185,6 +190,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
       <WashBayForm
         confId={1}
         confStatus="DRAFT"
+        origin="STANDALONE"
         userRole="ENGINEER"
         supplyType="ENERGY_CHAIN"
         supplyFixingType="POST"

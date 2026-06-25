@@ -7,7 +7,7 @@ import ConfigView from "@/components/config-view";
 import StatusControl from "@/components/status-form";
 import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
-import { getUserData } from "@/db/queries";
+import { getUserData, offerRevisionStatusFor } from "@/db/queries";
 import ExportConfigPdfButton from "./export-config-pdf-button";
 
 interface ViewConfigProps {
@@ -26,7 +26,8 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
   if (!loaded) notFound();
 
   const { configuration, status, origin, waterTanks, washBays } = loaded;
-  const editable = isEditable(status, user.role, origin);
+  const offerRevisionStatus = await offerRevisionStatusFor({ id, origin });
+  const editable = isEditable(status, user.role, origin, offerRevisionStatus);
 
   return (
     <div>
@@ -44,6 +45,7 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
             initialStatus={status}
             userRole={user.role}
             origin={origin}
+            offerRevisionStatus={offerRevisionStatus}
           />
           <div className="flex items-center gap-2">
             <ExportConfigPdfButton

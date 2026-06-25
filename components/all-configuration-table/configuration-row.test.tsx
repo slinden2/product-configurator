@@ -110,7 +110,8 @@ function makeConfiguration(
     status: "DRAFT" as ConfigurationStatusType,
     name: "Config Test",
     description: "Descrizione test",
-    origin: "OFFER" as ConfigOrigin,
+    // The technical-configurations table lists standalone configs only.
+    origin: "STANDALONE" as ConfigOrigin,
     created_at: new Date("2025-06-15T10:30:00"),
     updated_at: new Date("2025-06-16T14:00:00"),
     user: { id: "user-1", email: "test@example.com", initials: "TE" },
@@ -323,7 +324,7 @@ describe("ConfigurationRow", () => {
       ).toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES owner can delete own DRAFT configuration", async () => {
+    test("SALES cannot delete a standalone configuration (Engineer/Admin only)", async () => {
       renderRow(
         {
           status: "DRAFT",
@@ -336,7 +337,7 @@ describe("ConfigurationRow", () => {
 
       expect(
         screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
-      ).not.toHaveAttribute("aria-disabled", "true");
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
     test("SALES owner cannot delete own IN_SALES_REVIEW configuration", async () => {

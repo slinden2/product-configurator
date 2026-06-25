@@ -14,6 +14,7 @@ import {
   getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
+  offerRevisionStatusFor,
   QueryError,
   type TransactionType,
   touchConfigurationUpdatedAt,
@@ -128,7 +129,15 @@ export async function handleSubRecordAction<
     };
   }
 
-  if (!isEditable(configuration.status, user.role, configuration.origin)) {
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
+  if (
+    !isEditable(
+      configuration.status,
+      user.role,
+      configuration.origin,
+      offerRevisionStatus,
+    )
+  ) {
     return {
       success: false as const,
       error: MSG.config.cannotEditSubRecord,

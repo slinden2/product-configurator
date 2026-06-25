@@ -24,7 +24,12 @@ import {
   STATUS_CONFIG,
   STATUS_PIPELINE,
 } from "@/lib/status-config";
-import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 
 interface StatusControlProps {
   confId: number;
@@ -32,6 +37,11 @@ interface StatusControlProps {
   userRole: Role;
   /** Defaults to "OFFER" (the full sales+engineering machine). */
   origin?: ConfigOrigin;
+  /**
+   * Owning offer revision status (OFFER origin only), so the lockout-warning
+   * editability prediction matches the two-phase gate.
+   */
+  offerRevisionStatus?: OfferStatusType;
 }
 
 /**
@@ -57,6 +67,7 @@ const StatusControl = ({
   initialStatus,
   userRole,
   origin = "OFFER",
+  offerRevisionStatus,
 }: StatusControlProps) => {
   const [isPending, startTransition] = useTransition();
   // The transition awaiting confirmation; also drives the confirmation modal.
@@ -169,8 +180,18 @@ const StatusControl = ({
             <>
               Confermi il passaggio da «{label}» a «
               {STATUS_CONFIG[pendingTarget].label}»?
-              {isEditable(initialStatus, userRole, origin) &&
-                !isEditable(pendingTarget, userRole, origin) &&
+              {isEditable(
+                initialStatus,
+                userRole,
+                origin,
+                offerRevisionStatus,
+              ) &&
+                !isEditable(
+                  pendingTarget,
+                  userRole,
+                  origin,
+                  offerRevisionStatus,
+                ) &&
                 " In questo stato non potrai modificare la configurazione."}
             </>
           )

@@ -25,6 +25,10 @@ vi.mock("@/app/actions/edit-configuration-action", () => ({
   editConfigurationAction: (...args: unknown[]) => mockEditAction(...args),
 }));
 
+vi.mock("@/app/actions/offer-line-actions", () => ({
+  addOfferLineAction: vi.fn(),
+}));
+
 vi.mock("@hookform/devtools", () => ({
   DevTool: () => null,
 }));
@@ -60,6 +64,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -93,6 +98,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -125,6 +131,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -153,6 +160,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -180,6 +188,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -211,6 +220,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -238,6 +248,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -266,6 +277,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -290,6 +302,7 @@ describe("Cross-section validation (superRefine)", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );

@@ -10,6 +10,7 @@ import {
   getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
+  offerRevisionStatusFor,
 } from "@/db/queries";
 import { isOfferFrozen } from "@/lib/offer";
 
@@ -38,8 +39,10 @@ const EditConfiguration = async (props: EditConfigProps) => {
 
   // Once a config is frozen (or the user otherwise lacks edit rights) there is
   // nothing to edit here — send them to the read-only view instead of rendering
-  // a disabled form.
-  if (!isEditable(status, user.role, origin)) {
+  // a disabled form. OFFER configs additionally key on the owning revision being
+  // DRAFT.
+  const offerRevisionStatus = await offerRevisionStatusFor({ id, origin });
+  if (!isEditable(status, user.role, origin, offerRevisionStatus)) {
     redirect(`/configurazioni/visualizza/${id}`);
   }
 
@@ -77,6 +80,8 @@ const EditConfiguration = async (props: EditConfigProps) => {
         confId={id}
         configuration={validatedConfiguration}
         confStatus={status}
+        origin={origin}
+        offerRevisionStatus={offerRevisionStatus}
         userRole={user.role}
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}

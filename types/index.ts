@@ -168,6 +168,9 @@ export const ActivityActions = [
   "OFFER_THAW",
   "OFFER_DISCOUNT_SET",
   "OFFER_SETTINGS_SET",
+  "OFFER_CREATE",
+  "OFFER_LINE_ADD",
+  "OFFER_LINE_REMOVE",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
 ] as const;
@@ -198,6 +201,9 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_THAW: "Scongelamento offerta",
   OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
   OFFER_SETTINGS_SET: "Impostazione opzioni offerta",
+  OFFER_CREATE: "Creazione offerta",
+  OFFER_LINE_ADD: "Aggiunta configurazione offerta",
+  OFFER_LINE_REMOVE: "Rimozione configurazione offerta",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };

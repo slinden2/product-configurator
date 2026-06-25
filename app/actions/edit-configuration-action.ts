@@ -13,6 +13,7 @@ import {
   getUserData,
   hasEngineeringBom,
   insertActivityLog,
+  offerRevisionStatusFor,
   QueryError,
   resetWashBayEnergyChainFields,
   resetWashBayNonEnergyChainFields,
@@ -52,8 +53,18 @@ export const editConfigurationAction = async (
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 
-  // Status protection: enforce editable rules per role and origin
-  if (!isEditable(configuration.status, user.role, configuration.origin)) {
+  // Status protection: enforce editable rules per role, origin, and — for an
+  // OFFER config pre-handoff — the owning revision's status (editable only while
+  // the revision is DRAFT).
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
+  if (
+    !isEditable(
+      configuration.status,
+      user.role,
+      configuration.origin,
+      offerRevisionStatus,
+    )
+  ) {
     return {
       success: false as const,
       error: MSG.config.cannotEdit,
@@ -116,6 +127,10 @@ export const editConfigurationAction = async (
     revalidatePath(`/configurazioni/modifica/${confId}`);
     revalidatePath(`/configurazioni/bom/${confId}`);
     revalidatePath(`/configurazioni/offerta/${confId}`);
+    // An OFFER line config surfaces on its offer detail page too.
+    if (configuration.origin === "OFFER") {
+      revalidatePath("/offerte/[id]", "page");
+    }
     return { success: true as const };
   } catch (err) {
     console.error("Failed to edit configuration:", err);

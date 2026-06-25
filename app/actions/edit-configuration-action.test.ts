@@ -14,6 +14,11 @@ const mockResetWashBayNonEnergyChainFields = vi.fn();
 const mockInsertActivityLog = vi.fn();
 const mockGetOfferFreezeState = vi.fn();
 const mockIsOfferFrozen = vi.fn();
+// STANDALONE configs ignore this; OFFER tests default the revision to DRAFT so
+// the pre-handoff editability gate stays open (impl survives clearAllMocks).
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -27,6 +32,8 @@ vi.mock("@/db/queries", () => ({
   deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
     mockDeleteOfferSnapshotByConfigurationId(...args),
   getOfferFreezeState: (...args: unknown[]) => mockGetOfferFreezeState(...args),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   resetWashBayEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayEnergyChainFields(...args),
   resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
@@ -134,6 +141,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: CONF_ID,
     user_id: OWNER_ID,
+    // Engineer/admin technical edits run on standalone configs (Phase 1); the
+    // sales-status tests below override origin to OFFER.
+    origin: "STANDALONE",
     status: "DRAFT",
     name: "Test",
     supply_type: "STRAIGHT_SHELF",
@@ -231,7 +241,7 @@ describe("editConfigurationAction", () => {
       initials: "AU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
@@ -244,7 +254,7 @@ describe("editConfigurationAction", () => {
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);

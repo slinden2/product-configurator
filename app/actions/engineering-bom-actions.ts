@@ -13,6 +13,7 @@ import {
   insertActivityLog,
   insertEngineeringBomItems,
   logActivity,
+  offerRevisionStatusFor,
   QueryError,
   searchPartNumbers,
 } from "@/db/queries";
@@ -69,7 +70,15 @@ async function authorizeEngineeringBomAction(confId: number) {
     };
   }
 
-  if (!isEditable(configuration.status, user.role, configuration.origin)) {
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
+  if (
+    !isEditable(
+      configuration.status,
+      user.role,
+      configuration.origin,
+      offerRevisionStatus,
+    )
+  ) {
     return {
       success: false as const,
       error: MSG.bom.unauthorizedState,

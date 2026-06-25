@@ -27,6 +27,10 @@ vi.mock("@/app/actions/edit-configuration-action", () => ({
   editConfigurationAction: (...args: unknown[]) => mockEditConfig(...args),
 }));
 
+vi.mock("@/app/actions/offer-line-actions", () => ({
+  addOfferLineAction: vi.fn(),
+}));
+
 vi.mock("@/app/actions/water-tank-actions", () => ({
   insertWaterTankAction: vi.fn().mockResolvedValue({ success: true }),
   editWaterTankAction: vi.fn().mockResolvedValue({ success: true }),
@@ -122,6 +126,7 @@ describe("FormContainer", () => {
       confId: 1,
       configuration: config,
       confStatus: "DRAFT" as const,
+      origin: "STANDALONE" as const,
       userRole: "ENGINEER" as const,
       initialWaterTanks: [makeWaterTank(100)],
       initialWashBays: [makeWashBay(200)],
@@ -253,13 +258,14 @@ describe("FormContainer", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("shows add buttons when ENGINEER and status is IN_SALES_REVIEW", async () => {
+    test("shows add buttons when ENGINEER and status is IN_TECH_REVIEW", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="IN_SALES_REVIEW"
+          confStatus="IN_TECH_REVIEW"
+          origin="OFFER"
           userRole="ENGINEER"
           initialWaterTanks={[]}
           initialWashBays={[]}

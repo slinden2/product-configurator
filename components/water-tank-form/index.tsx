@@ -7,7 +7,12 @@ import {
 } from "@/app/actions/water-tank-actions";
 import SubRecordForm from "@/components/shared/sub-record-form";
 import WaterTankFields from "@/components/water-tank-form/water-tank-fields";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 import {
   type UpdateWaterTankSchema,
   waterTankDefaults,
@@ -17,6 +22,8 @@ import {
 interface WaterTankFormProps {
   confId: number;
   confStatus: ConfigurationStatusType;
+  origin?: ConfigOrigin;
+  offerRevisionStatus?: OfferStatusType;
   userRole?: Role;
   waterTank?: UpdateWaterTankSchema;
   waterTankIndex?: number;
@@ -39,6 +46,8 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       entityIndex={props.waterTankIndex}
       parentId={props.confId}
       parentStatus={props.confStatus}
+      parentOrigin={props.origin}
+      offerRevisionStatus={props.offerRevisionStatus}
       userRole={props.userRole}
       onDelete={props.onDelete}
       onSaveSuccess={props.onSaveSuccess}

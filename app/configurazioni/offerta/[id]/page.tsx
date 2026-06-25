@@ -10,6 +10,7 @@ import {
   getConfiguration,
   getOfferSnapshotByConfigurationId,
   getUserData,
+  offerRevisionStatusFor,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import {
@@ -47,10 +48,12 @@ const OfferPage = async (props: OfferPageProps) => {
 
   if (!configuration) notFound();
 
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
   const editable = isEditable(
     configuration.status,
     user.role,
     configuration.origin,
+    offerRevisionStatus,
   );
   const frozen = isOfferFrozen(snapshot);
   // A frozen offer is immutable: regeneration and commercial-term edits are

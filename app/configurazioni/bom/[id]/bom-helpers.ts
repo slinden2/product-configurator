@@ -3,6 +3,7 @@ import {
   type EngineeringBomItemWithPart,
   getEngineeringBomItems,
   hasEngineeringBom,
+  offerRevisionStatusFor,
 } from "@/db/queries";
 import type { Configuration } from "@/db/schemas";
 import {
@@ -142,10 +143,12 @@ export async function prepareBOMPageData(
   const ebomItems = hasEbom ? await getEngineeringBomItems(confId) : [];
   const activeEbomItems = ebomItems.filter((i) => !i.is_deleted);
 
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
   const editable = isEditable(
     configuration.status,
     userRole,
     configuration.origin,
+    offerRevisionStatus,
   );
   const ebomGrouped = groupEbomByCategory(ebomItems);
 

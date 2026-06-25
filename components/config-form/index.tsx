@@ -8,6 +8,7 @@ import { type FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
+import { addOfferLineAction } from "@/app/actions/offer-line-actions";
 import BrushSection from "@/components/config-form/brush-section";
 import ChemPumpSection from "@/components/config-form/chem-pump-section";
 import GeneralSection from "@/components/config-form/general-section";
@@ -26,7 +27,12 @@ import { Form, FormDisabledContext } from "@/components/ui/form";
 import { isConfigLocked } from "@/lib/access";
 import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { MSG } from "@/lib/messages";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 import {
   BOM_EXEMPT_FIELDS,
   type ConfigInputSchema,
@@ -41,6 +47,17 @@ interface ConfigurationFormProps {
   id?: number;
   configuration?: UpdateConfigSchema;
   status?: ConfigurationStatusType;
+  origin?: ConfigOrigin;
+  /**
+   * Status of the offer revision owning this config (OFFER origin only). Threaded
+   * into the lock check so a pre-handoff offer line stays editable while DRAFT.
+   */
+  offerRevisionStatus?: OfferStatusType;
+  /**
+   * When set, this is a new offer line: create submits to addOfferLineAction and
+   * navigation returns to the offer detail.
+   */
+  offerId?: number;
   userRole?: Role;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
@@ -53,6 +70,9 @@ const ConfigForm = ({
   id,
   configuration,
   status,
+  origin,
+  offerRevisionStatus,
+  offerId,
   userRole,
   formKey,
   onDirtyChange,
@@ -68,7 +88,9 @@ const ConfigForm = ({
   const isNewConfiguration = !id && !configuration && !status;
 
   const formIsDisabled =
-    isPending || (!isNewConfiguration && isConfigLocked(status, userRole));
+    isPending ||
+    (!isNewConfiguration &&
+      isConfigLocked(status, userRole, origin, offerRevisionStatus));
 
   const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
     resolver: zodResolver(configSchema, {
@@ -117,12 +139,18 @@ const ConfigForm = ({
             toast.error(result.error);
           }
         } else {
-          const result = await insertConfigurationAction(values);
+          // An offerId marks this as a new offer line: create the config + line in
+          // one action, then land on its edit page so tanks/bays become editable.
+          const result = offerId
+            ? await addOfferLineAction(offerId, values)
+            : await insertConfigurationAction(values);
           if (!result.success) {
             toast.error(result.error);
             return;
           }
-          toast.success(MSG.toast.configCreated);
+          toast.success(
+            offerId ? MSG.toast.offerLineCreated : MSG.toast.configCreated,
+          );
           router.push(`/configurazioni/modifica/${result.id}`);
         }
       } catch (err) {
@@ -212,7 +240,11 @@ const ConfigForm = ({
               </Fieldset>
               <div className="flex gap-4">
                 {!isNewConfiguration && (
-                  <BackButton fallbackPath={"/configurazioni"} />
+                  <BackButton
+                    fallbackPath={
+                      origin === "OFFER" ? "/offerte" : "/configurazioni"
+                    }
+                  />
                 )}
                 <Button
                   type="button"

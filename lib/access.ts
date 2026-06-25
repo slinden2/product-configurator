@@ -1,5 +1,10 @@
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 
 /** Sales-side roles that capture or review offers. */
 export const SALES_ROLES: Role[] = ["SALES", "SALES_MANAGER", "SALES_DIRECTOR"];
@@ -61,14 +66,14 @@ export const canViewMarginReview = (role: Role): boolean =>
 
 /**
  * Returns true when the config cannot be edited (status frozen, unknown role, or
- * unknown status). `origin` defaults to `"OFFER"` to preserve the pre-separation
- * editing gate; the form tree leaves it defaulted because the engineer/admin edit
- * gate is identical for every status a STANDALONE config can actually occupy
- * (DRAFT/IN_TECH_REVIEW editable, the rest frozen). Pass it explicitly once the
- * offer-revision two-phase gate lands.
+ * unknown status). `origin` defaults to `"OFFER"`. For an offer-owned config in
+ * the pre-handoff zone, pass `offerRevisionStatus` so the two-phase gate (editable
+ * only while the revision is DRAFT) is applied — otherwise it fails closed.
  */
 export const isConfigLocked = (
   status: ConfigurationStatusType | undefined,
   role: Role | undefined,
   origin: ConfigOrigin = "OFFER",
-): boolean => !status || !role || !isEditable(status, role, origin);
+  offerRevisionStatus?: OfferStatusType,
+): boolean =>
+  !status || !role || !isEditable(status, role, origin, offerRevisionStatus);

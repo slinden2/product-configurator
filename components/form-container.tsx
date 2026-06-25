@@ -23,7 +23,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useMediaQuery from "@/hooks/use-media-query";
 import { isConfigLocked } from "@/lib/access";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 import type { UpdateConfigSchema } from "@/validation/config-schema";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
 import type { UpdateWaterTankSchema } from "@/validation/water-tank-schema";
@@ -35,6 +40,10 @@ interface ConfigurationFormProps {
   confId?: number;
   configuration?: UpdateConfigSchema;
   confStatus?: ConfigurationStatusType;
+  origin?: ConfigOrigin;
+  offerRevisionStatus?: OfferStatusType;
+  /** Set in the offer-line create flow; threaded to ConfigForm's create branch. */
+  offerId?: number;
   userRole?: Role;
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
@@ -88,6 +97,9 @@ const FormContainer = ({
   confId,
   configuration,
   confStatus,
+  origin,
+  offerRevisionStatus,
+  offerId,
   userRole,
   initialWaterTanks,
   initialWashBays,
@@ -108,7 +120,12 @@ const FormContainer = ({
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 640px)");
-  const showAddEntityButton = !isConfigLocked(confStatus, userRole);
+  const showAddEntityButton = !isConfigLocked(
+    confStatus,
+    userRole,
+    origin,
+    offerRevisionStatus,
+  );
 
   useEffect(() => {
     setWaterTanks(initialWaterTanks || []);
@@ -186,7 +203,7 @@ const FormContainer = ({
   };
 
   if (!confId || !confStatus) {
-    return <ConfigForm />;
+    return <ConfigForm offerId={offerId} />;
   }
 
   return (
@@ -228,6 +245,8 @@ const FormContainer = ({
             id={confId}
             configuration={configuration}
             status={confStatus}
+            origin={origin}
+            offerRevisionStatus={offerRevisionStatus}
             userRole={userRole}
             formKey="config"
             onDirtyChange={handleDirtyChange}
@@ -250,6 +269,8 @@ const FormContainer = ({
                   key={wt.id}
                   confId={confId}
                   confStatus={confStatus}
+                  origin={origin}
+                  offerRevisionStatus={offerRevisionStatus}
                   userRole={userRole}
                   waterTank={wt}
                   waterTankIndex={index + 1}
@@ -267,6 +288,8 @@ const FormContainer = ({
               <WaterTankForm
                 confId={confId}
                 confStatus={confStatus}
+                origin={origin}
+                offerRevisionStatus={offerRevisionStatus}
                 userRole={userRole}
                 onSaveSuccess={handleSaveSuccess}
                 formKey="new-tank"
@@ -301,6 +324,8 @@ const FormContainer = ({
                   key={wb.id}
                   confId={confId}
                   confStatus={confStatus}
+                  origin={origin}
+                  offerRevisionStatus={offerRevisionStatus}
                   userRole={userRole}
                   supplyType={configuration?.supply_type}
                   supplyFixingType={configuration?.supply_fixing_type}
@@ -320,6 +345,8 @@ const FormContainer = ({
               <WashBayForm
                 confId={confId}
                 confStatus={confStatus}
+                origin={origin}
+                offerRevisionStatus={offerRevisionStatus}
                 userRole={userRole}
                 supplyType={configuration?.supply_type}
                 supplyFixingType={configuration?.supply_fixing_type}

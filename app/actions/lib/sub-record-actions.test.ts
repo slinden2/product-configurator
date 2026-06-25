@@ -12,11 +12,17 @@ const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
 const mockGetOfferFreezeState = vi.fn();
 const mockIsOfferFrozen = vi.fn();
+// STANDALONE configs ignore this; OFFER tests default the revision to DRAFT.
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   canAccessConfiguration: mockCanAccessConfiguration,
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
@@ -77,6 +83,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: PARENT_ID,
     user_id: OWNER_ID,
+    // Engineer/admin sub-record edits run on standalone configs; sales-status
+    // tests override origin to OFFER.
+    origin: "STANDALONE",
     status: "DRAFT",
     name: "Test",
     ...overrides,
@@ -262,7 +271,7 @@ describe("handleSubRecordAction", () => {
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({

@@ -230,7 +230,12 @@ describe("StatusControl", () => {
 
     test("warns about losing edit access when the target is non-editable", async () => {
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="DRAFT"
+          userRole="SALES"
+          offerRevisionStatus="DRAFT"
+        />,
       );
 
       await clickButton("Invia in revisione");
