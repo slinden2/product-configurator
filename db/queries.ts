@@ -29,6 +29,7 @@ import {
   type NewWaterTank,
   type OfferSnapshot,
   offerSnapshots,
+  offers,
   partNumbers,
   priceCoefficients,
   type SurchargeSetting,
@@ -37,7 +38,11 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
-import { canAccessAllConfigs } from "@/lib/access";
+import {
+  canAccessAllConfigs,
+  canAccessAllOffers,
+  canViewOffer,
+} from "@/lib/access";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
 import type {
@@ -185,6 +190,82 @@ export async function canAccessConfiguration(
     return !!report;
   }
   // SALES (and any unrecognized role) fail closed: own configs only.
+  return false;
+}
+
+/**
+ * Offer-side equivalent of {@link configScopeWhere}: scopes an offer list/count to what the
+ * given user may see. Returns `undefined` for "see everything".
+ * - ENGINEER (and any role without offer access): no offers at all — fails closed.
+ * - SALES: own offers only.
+ * - SALES_MANAGER: own + direct reports' offers.
+ * - SALES_DIRECTOR/ADMIN: all offers.
+ */
+export function offerScopeWhere(user: NonNullable<UserData>) {
+  // ENGINEER and unknown roles have no offer access: match no rows.
+  if (!canViewOffer(user.role)) {
+    return sql`false`;
+  }
+
+  // All-offer-access roles (ADMIN/SALES_DIRECTOR) see everything.
+  if (canAccessAllOffers(user.role)) {
+    return undefined;
+  }
+
+  if (user.role === "SALES") {
+    return eq(offers.user_id, user.id);
+  }
+
+  if (user.role === "SALES_MANAGER") {
+    return inArray(
+      offers.user_id,
+      db
+        .select({ id: userProfiles.id })
+        .from(userProfiles)
+        .where(
+          or(
+            eq(userProfiles.manager_id, user.id),
+            eq(userProfiles.id, user.id),
+          ),
+        ),
+    );
+  }
+
+  // Defensive: any other role fails closed.
+  return sql`false`;
+}
+
+/**
+ * Single-record access decision for one offer (with its owner's user_id). Mirrors
+ * {@link offerScopeWhere}; ENGINEER is excluded entirely.
+ */
+export async function canAccessOffer(
+  user: NonNullable<UserData>,
+  offer: { user_id: string },
+): Promise<boolean> {
+  // ENGINEER and unknown roles have no offer access.
+  if (!canViewOffer(user.role)) {
+    return false;
+  }
+  // All-offer-access roles (ADMIN/SALES_DIRECTOR) see every offer.
+  if (canAccessAllOffers(user.role)) {
+    return true;
+  }
+  if (offer.user_id === user.id) {
+    return true;
+  }
+  // SALES_MANAGER: in scope only if the offer owner reports to this manager.
+  if (user.role === "SALES_MANAGER") {
+    const report = await db.query.userProfiles.findFirst({
+      where: and(
+        eq(userProfiles.id, offer.user_id),
+        eq(userProfiles.manager_id, user.id),
+      ),
+      columns: { id: true },
+    });
+    return !!report;
+  }
+  // SALES (and any unrecognized role) fail closed: own offers only.
   return false;
 }
 

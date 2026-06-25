@@ -35,6 +35,16 @@ export const canViewOffer = (role: Role): boolean =>
   SALES_ROLES.includes(role) || role === "ADMIN";
 
 /**
+ * Offer-side equivalent of {@link canAccessAllConfigs}: roles that see every offer regardless of
+ * ownership. Note this deliberately EXCLUDES ENGINEER (who has no offer access at all), so it
+ * cannot reuse `ALL_ACCESS_ROLES`.
+ */
+export const OFFER_ALL_ACCESS_ROLES: Role[] = ["ADMIN", "SALES_DIRECTOR"];
+
+export const canAccessAllOffers = (role: Role): boolean =>
+  OFFER_ALL_ACCESS_ROLES.includes(role);
+
+/**
  * Roles allowed to view the margin review page, which exposes cost AND the
  * customer's quoted price together. Restricted to management/system roles.
  */

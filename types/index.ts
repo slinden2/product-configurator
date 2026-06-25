@@ -113,6 +113,27 @@ export const ConfigurationStatus = [
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 
+/**
+ * Discriminates how a configuration came into being and which lifecycle governs it:
+ *
+ * - STANDALONE — a pure technical configuration created directly by Engineer/Admin for
+ *   internal evaluation. It runs only the engineering sub-chain
+ *   `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches the two sales
+ *   statuses (`IN_SALES_REVIEW`, `SALES_APPROVED`).
+ * - OFFER — a configuration owned by a specific offer revision (via offer_revision_lines).
+ *   Before `SALES_APPROVED` its editability is governed by the parent offer revision (editable
+ *   only while the revision is `DRAFT`); at `SALES_APPROVED`+ it is governed by
+ *   `ConfigurationStatus` (the engineering rules), exactly like a standalone config. The offer's
+ *   own lifecycle (see `OfferStatus`) lives on the revision, not on the configuration.
+ */
+export const ConfigOrigins = ["STANDALONE", "OFFER"] as const;
+export type ConfigOrigin = (typeof ConfigOrigins)[number];
+
+export const ConfigOriginLabels: Record<ConfigOrigin, string> = {
+  STANDALONE: "Autonoma",
+  OFFER: "Offerta",
+};
+
 export const Roles = [
   "ADMIN",
   "ENGINEER",
@@ -186,6 +207,38 @@ export type CoefficientSource = (typeof CoefficientSources)[number];
 
 export const OfferSources = ["EBOM", "LIVE"] as const;
 export type OfferSource = (typeof OfferSources)[number];
+
+/**
+ * Per-revision offer lifecycle. The status is carried by `offer_revisions`, not by the offer
+ * header — each revision is approved and sent independently, so revision 1 can be SENT/REJECTED
+ * while revision 2 is still DRAFT.
+ *
+ * `DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT → ACCEPTED / REJECTED / EXPIRED`
+ *
+ * Manager approval is required on every revision before send (scoped to direct reports). On
+ * ACCEPTED, each line configuration fans out into the existing per-config approval flow
+ * (`SALES_APPROVED` + the as-sold freeze), then engineering proceeds unchanged.
+ */
+export const OfferStatus = [
+  "DRAFT",
+  "PENDING_APPROVAL",
+  "APPROVED_TO_SEND",
+  "SENT",
+  "ACCEPTED",
+  "REJECTED",
+  "EXPIRED",
+] as const;
+export type OfferStatusType = (typeof OfferStatus)[number];
+
+export const OfferStatusLabels: Record<OfferStatusType, string> = {
+  DRAFT: "Bozza",
+  PENDING_APPROVAL: "In approvazione",
+  APPROVED_TO_SEND: "Approvata per invio",
+  SENT: "Inviata",
+  ACCEPTED: "Accettata",
+  REJECTED: "Rifiutata",
+  EXPIRED: "Scaduta",
+};
 
 export const BomTags = [
   "FRAME",

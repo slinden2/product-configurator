@@ -3,7 +3,10 @@ import { activityLogs } from "@/db/schemas/activity-logs";
 import { bomLines } from "@/db/schemas/bom-lines";
 import { configurations } from "@/db/schemas/configurations";
 import { engineeringBomItems } from "@/db/schemas/engineering-bom-items";
+import { offerRevisionLines } from "@/db/schemas/offer-revision-lines";
+import { offerRevisions } from "@/db/schemas/offer-revisions";
 import { offerSnapshots } from "@/db/schemas/offer-snapshots";
+import { offers } from "@/db/schemas/offers";
 import { partNumbers } from "@/db/schemas/part-numbers";
 import { priceCoefficients } from "@/db/schemas/price-coefficients";
 import { surchargeSettings } from "@/db/schemas/surcharge-settings";
@@ -24,6 +27,55 @@ export const configurationsRelations = relations(
     offer_snapshot: one(offerSnapshots, {
       fields: [configurations.id],
       references: [offerSnapshots.configuration_id],
+    }),
+    offer_revision_line: one(offerRevisionLines, {
+      fields: [configurations.id],
+      references: [offerRevisionLines.configuration_id],
+    }),
+  }),
+);
+
+export const offersRelations = relations(offers, ({ many, one }) => ({
+  owner: one(userProfiles, {
+    fields: [offers.user_id],
+    references: [userProfiles.id],
+  }),
+  // Two relations connect offers↔offer_revisions (the full list vs. the accepted one), so both
+  // are named to disambiguate for the relational query builder.
+  revisions: many(offerRevisions, { relationName: "offer_revisions" }),
+  accepted_revision: one(offerRevisions, {
+    fields: [offers.accepted_revision_id],
+    references: [offerRevisions.id],
+    relationName: "accepted_revision",
+  }),
+}));
+
+export const offerRevisionsRelations = relations(
+  offerRevisions,
+  ({ many, one }) => ({
+    offer: one(offers, {
+      fields: [offerRevisions.offer_id],
+      references: [offers.id],
+      relationName: "offer_revisions",
+    }),
+    lines: many(offerRevisionLines),
+    approver: one(userProfiles, {
+      fields: [offerRevisions.approved_by],
+      references: [userProfiles.id],
+    }),
+  }),
+);
+
+export const offerRevisionLinesRelations = relations(
+  offerRevisionLines,
+  ({ one }) => ({
+    revision: one(offerRevisions, {
+      fields: [offerRevisionLines.offer_revision_id],
+      references: [offerRevisions.id],
+    }),
+    configuration: one(configurations, {
+      fields: [offerRevisionLines.configuration_id],
+      references: [configurations.id],
     }),
   }),
 );
