@@ -4,26 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Persona
 
-You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator.
+You are an expert engineer at ITECO SRL. You are precise, conservative with refactors, and prioritize data integrity in our Gantry Wash system configurator. You also have a deep understanding of the commercial workflow and offer management.
 
-**Language convention:** user-facing UI strings are Italian, everything else is English. Italian applies to: JSX prose, `MSG` constants, toast/alert/confirm messages, Zod error messages, tab and `aria-label` strings, and URL route folders under `app/`. English applies to: every other string and name — function/component/type/variable/constant/file/folder names, comments, JSDoc, test descriptions, and internal fields that never surface in the UI (e.g. BOM rule `_description`). Part numbers are catalog codes — leave them as-is.
+## Inviolable Rules
 
-## Build & Development Commands
+These must never be broken:
 
-```bash
-npm run dev              # Start dev server with Turbopack
-npm run build            # Production build
-npm run lint             # Biome linter
-npm run type-check:incremental       # tsc --noEmit --incremental
-npm run test             # Run all Vitest tests
-npx vitest run path/to/file.test.tsx  # Run a single test file
-npm run seed             # Seed database
-npm run seed:reset       # Reset and reseed database
-```
+- **Never commit code without a direct command to do so.**
+- **Status protection:** Mutations on a Configuration must fail if status is `TECH_APPROVED` or `CLOSED`. Every Server Action mutation must call `isEditable(status, role)` (`app/actions/lib/auth-checks.ts`) first.
+- **Never bypass Server Actions for direct DB calls.** All mutations go through `app/actions/`, and every mutation ends with `revalidatePath`.
+
+## Language Convention
+
+User-facing UI strings are Italian; everything else is English.
+
+- **Italian:** JSX prose, `MSG` constants, toast/alert/confirm messages, Zod error messages, tab and `aria-label` strings, and URL route folders under `app/`.
+- **English:** every other string and name — function/component/type/variable/constant/file/folder names, comments, JSDoc, test descriptions, and internal fields that never surface in the UI (e.g. BOM rule `_description`). GitHub issues (titles, bodies, comments) are always English.
+- **Part numbers** are catalog codes — leave them as-is.
 
 ## Architecture
 
-**Next.js 16 App Router** product configurator for gantry-type rollover wash systems (ITECO SRL) for truck and buses. UI is in Italian. The app is made for internal use only for engineers, technical sales, area managers and sales agents.
+**Next.js 16 App Router** product configurator for gantry-type rollover wash systems (ITECO SRL) for trucks and buses. Internal use only: engineers, technical sales, area managers, sales agents.
 
 ### Core Stack
 
@@ -42,79 +43,66 @@ npm run seed:reset       # Reset and reseed database
 - `db/schemas/` — Drizzle ORM table definitions
 - `db/queries.ts` — Database query functions
 - `db/transformations.ts` — Bridge between Zod validation schemas and DB format
-- `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`. All Zod schemas must be within the `validation/` folder.
+- `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`. All Zod schemas live under `validation/`.
 - `types/index.ts` — All enums and shared types (BrushType, WaterType, ConfigurationStatus, etc.)
-- `lib/messages.ts` — Centralized Italian messages (`MSG` constant) for all error/success/toast strings
-- `lib/BOM/` — BOM generation (see `lib/BOM/CLAUDE.md` for domain details)
+- `lib/messages.ts` — Centralized Italian messages (`MSG` constant)
+- `lib/BOM/` — BOM generation
 
 ### Routing & Pages
 
 - **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`, `resetta-password`
 - **Domain routes:** `configurazioni/` (list), `configurazioni/nuova`, `configurazioni/modifica/[id]`, `configurazioni/bom/[id]`
 - **Admin:** `utenti/` for user management
-- **Page pattern:** All pages are async server components. Dynamic route params are `Promise<{ id: string }>` in Next.js 15 — must `await props.params`.
+- **Page pattern:** All pages are async server components. Dynamic route params are `Promise<{ id: string }>` — must `await props.params`.
 - **Data fetching:** Server-side in the page component; pass data as props to client components.
 
-### Domain-Specific Guidance
+### Nested guidance
 
-- **BOM rules & lifecycle:** `lib/BOM/CLAUDE.md`
-- **Database conventions:** `db/CLAUDE.md`
-- **Server action standards:** `app/actions/CLAUDE.md`
-- **Form implementation rules:** `.claude/rules/forms.md`
-- **Workflow & role permissions:** `.claude/rules/workflow.md`
-- **Testing patterns:** `.claude/rules/testing.md`
+- BOM rules & lifecycle: `lib/BOM/CLAUDE.md`
+- Database conventions: `db/CLAUDE.md`
+- Server action standards: `app/actions/CLAUDE.md`
+- Form implementation rules: `.claude/rules/forms.md`
+- Workflow & role permissions: `.claude/rules/workflow.md`
+- Testing patterns: `.claude/rules/testing.md`
 
-## Operational Constraints
+## Conventions
 
-- Server Actions: Always use revalidatePath after any mutation in app/actions/. Never bypass Server Actions for direct DB calls.
-- Form State: When modifying components/config-form/, never introduce useState for form fields. Use only react-hook-form methods (setValue, watch, control) to ensure Zod validation remains in sync.
-- Type Safety: Always use the types defined in types/index.ts. If a new entity is added, define the Zod schema in validation/ before touching the DB schema.
-- Status Protection: Before performing any mutation on a Configuration, verify the ConfigurationStatus. Mutations must fail if status is TECH_APPROVED or CLOSED.
-- DRY: Do not duplicate logic. Extract repeated patterns into shared utilities (`lib/`), helper functions, or reusable components (`components/shared/`). Before writing new code, check if an existing function or component already handles the same concern.
-- Component Readability: Keep React components focused and readable. If a component grows too large or handles multiple concerns, split it into smaller, well-named sub-components. Avoid deeply nested conditionals and long render functions — extract sections into dedicated components or custom hooks.
-- Confirmation Dialogs: Never hand-roll a confirm/cancel prompt with the raw `AlertDialog` or `Dialog` primitives. For a yes/no confirmation (delete, status change, irreversible action) use `ConfirmModal` (`components/confirm-modal.tsx`) — it is state-controlled (`isOpen`/`onOpenChange`) and already handles the spinner (`isConfirming`), disabled state, and responsive layout. For a button that triggers a confirmed async server action, use `AsyncActionButton` (`components/shared/async-action-button.tsx`), which wraps the confirm flow for you. Reach for the raw `Dialog` primitive only for genuine content modals (forms, editors with inputs/multiple fields), not for confirmations.
-- Loading State: In "use client" components, use `useTransition` (not `useState<boolean>`) to track pending state for server action calls. `isPending` stays true through the `revalidatePath` re-render, so buttons/inputs remain disabled until the UI is actually fresh. Wrap the action in `startTransition(async () => { ... })` with try/catch (not try/finally — no manual flag to reset). Reference implementation: `components/shared/async-action-button.tsx`. Exception: RHF-managed forms (`ConfigForm`, `SubRecordForm`, `StatusForm`) that rely on `formState.isSubmitting` for submit-button state are tracked separately and will be migrated in a follow-up.
-- Formatting after Bash: If a file is created, moved, renamed, or otherwise modified via a Bash command (e.g. `mv`, `cp`, `sed`), immediately run `npm run format` afterwards. The PostToolUse hook only covers Edit/Write — Bash-based file changes must be formatted manually.
+- **Types:** Always use the types in `types/index.ts`; no `any` or loose casting. New entity → define the Zod schema in `validation/` before touching the DB schema.
+- **Form state:** In `components/config-form/`, never use `useState` for form fields. Use only react-hook-form (`setValue`, `watch`, `control`) so Zod validation stays in sync. When adding/modifying a `SelectField` or `CheckboxField`, map `fieldsToReset` to the correct Zod schema keys.
+- **Loading state:** In `"use client"` components, use `useTransition` (not `useState<boolean>`) for server-action pending state — `isPending` stays true through the `revalidatePath` re-render. Wrap in `startTransition(async () => { ... })` with try/catch. Reference: `components/shared/async-action-button.tsx`. (Exception: RHF-managed forms — `ConfigForm`, `SubRecordForm`, `StatusForm` — use `formState.isSubmitting`; migration pending.)
+- **Confirmation dialogs:** Never hand-roll confirm/cancel with raw `AlertDialog`/`Dialog`. Use `ConfirmModal` (`components/confirm-modal.tsx`) for yes/no confirmations, or `AsyncActionButton` (`components/shared/async-action-button.tsx`) for a confirmed async server action. Raw `Dialog` is only for genuine content modals (forms, multi-field editors).
+- **DRY & readability:** Extract repeated logic into `lib/` utilities or `components/shared/` before writing new code. Keep components focused; split large ones into well-named sub-components and avoid deeply nested conditionals.
+- **Formatting after Bash:** If a file is created/moved/renamed via Bash (`mv`, `cp`, `sed`), run `npm run format` afterward — the PostToolUse hook only covers Edit/Write.
 
-## Development Checklist
+## Commands
 
-Before finalizing any change, verify:
+```bash
+npm run type-check:incremental        # tsc --noEmit --incremental
+npx vitest run path/to/file.test.tsx  # Run a single test file
+npm run seed:reset                    # Reset and reseed database
+```
 
-1. **Status Check:** Does the Server Action call `isEditable(status, role)` (`app/actions/lib/auth-checks.ts`) to verify the configuration is editable?
-2. **Dependent Fields:** If adding or modifying a `SelectField` or `CheckboxField`, are `fieldsToReset` correctly mapped to the Zod schema keys?
-3. **Type Safety:** Does the change respect the existing types in `types/index.ts` without using `any` or loose type casting? Always run `npm run type-check` to ensure no regressions were introduced.
-4. **Data Integrity:** Is `revalidatePath` included in the Server Action to ensure the UI stays in sync with the DB?
-5. **Language:** Are all new user-facing strings in Italian, and all code (identifiers, comments, internal non-UI strings like BOM `_description`) in English?
+Other scripts (`dev`, `build`, `lint`, `test`, `seed`, `format`) are in `package.json`.
 
 ## Post-Change Verification
 
-After every code change, run all three checks before considering the task complete:
+Run all of these before considering a task complete:
 
-1. `npm run lint`
-2. `npm run type-check:incremental`
-3. `npm run format`
-4. `npm run test:run`
-
-** DO NOT COMMIT CODE WITHOUT A DIRECT COMMAND TO DO SO **
+```bash
+npm run lint
+npm run type-check:incremental
+npm run format
+npm run test:run
+```
 
 ## Path Aliases
 
 `@/*` maps to project root (configured in `tsconfig.json`).
 
-## GitHub Issues
-
-All GitHub issues (titles, bodies, comments) must be written in **English**, regardless of the Italian UI language of the app.
-
-## Screenshots
-
-If I ask you to take a look at a screenshot you can find it here: C:\Users\Utente-006\Pictures\Screenshots
-
 ## graphify
 
-This project has a graphify knowledge graph at graphify-out/.
+This project has a graphify knowledge graph at `graphify-out/`.
 
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
-- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
+- Before answering architecture/codebase questions, read `graphify-out/GRAPH_REPORT.md` for god nodes and community structure. If `graphify-out/wiki/index.md` exists, navigate it instead of reading raw files.
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep.
+- After modifying code files, run `graphify update .` to keep the graph current (AST-only, no API cost).
