@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { canManageStandaloneConfigs } from "@/lib/access";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types";
 
@@ -40,11 +41,17 @@ const MainNav = ({ user, role }: MainNavProps) => {
       href: "/",
       active: pathname === "/",
     },
-    {
-      label: "Configurazioni",
-      href: "/configurazioni",
-      active: pathname.startsWith("/configurazioni"),
-    },
+    // The configurations area is the standalone "Technical" list: Engineer/Admin
+    // only. Sales will reach their work from /offerte (added in a later phase).
+    ...(role && canManageStandaloneConfigs(role)
+      ? [
+          {
+            label: "Configurazioni tecniche",
+            href: "/configurazioni",
+            active: pathname.startsWith("/configurazioni"),
+          },
+        ]
+      : []),
     ...(role === "ADMIN"
       ? [
           {

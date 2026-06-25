@@ -8,6 +8,7 @@ import {
   logActivity,
   QueryError,
 } from "@/db/queries";
+import { canManageStandaloneConfigs } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
 
@@ -22,6 +23,12 @@ export const insertConfigurationAction = async (formData: unknown) => {
 
   if (!user) {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
+  }
+
+  // This flow creates standalone (origin=STANDALONE, the DB default) technical
+  // configs, which are Engineer/Admin only. Sales create configs from offers.
+  if (!canManageStandaloneConfigs(user.role)) {
+    return { success: false as const, error: MSG.auth.unauthorized };
   }
 
   try {

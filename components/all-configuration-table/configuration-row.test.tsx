@@ -89,7 +89,7 @@ import { toast } from "sonner";
 import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
 
 // --- Helpers ---
 
@@ -99,6 +99,7 @@ function makeConfiguration(
     status: ConfigurationStatusType;
     name: string;
     description: string;
+    origin: ConfigOrigin;
     created_at: Date;
     updated_at: Date;
     user: { id: string; email: string; initials: string | null };
@@ -109,6 +110,7 @@ function makeConfiguration(
     status: "DRAFT" as ConfigurationStatusType,
     name: "Config Test",
     description: "Descrizione test",
+    origin: "OFFER" as ConfigOrigin,
     created_at: new Date("2025-06-15T10:30:00"),
     updated_at: new Date("2025-06-16T14:00:00"),
     user: { id: "user-1", email: "test@example.com", initials: "TE" },

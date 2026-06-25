@@ -128,7 +128,7 @@ export async function handleSubRecordAction<
     };
   }
 
-  if (!isEditable(configuration.status, user.role)) {
+  if (!isEditable(configuration.status, user.role, configuration.origin)) {
     return {
       success: false as const,
       error: MSG.config.cannotEditSubRecord,

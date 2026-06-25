@@ -33,7 +33,7 @@ export const deleteConfigurationAction = async (id: number) => {
   }
 
   // Status protection: only allow deletion if user can edit this status
-  if (!isEditable(configuration.status, user.role)) {
+  if (!isEditable(configuration.status, user.role, configuration.origin)) {
     return {
       success: false as const,
       error: MSG.config.cannotDelete,

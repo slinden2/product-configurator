@@ -52,8 +52,8 @@ export const editConfigurationAction = async (
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 
-  // Status protection: enforce editable rules per role
-  if (!isEditable(configuration.status, user.role)) {
+  // Status protection: enforce editable rules per role and origin
+  if (!isEditable(configuration.status, user.role, configuration.origin)) {
     return {
       success: false as const,
       error: MSG.config.cannotEdit,

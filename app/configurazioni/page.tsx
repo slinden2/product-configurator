@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AllConfigurationsTable from "@/components/all-configuration-table";
 import { Button } from "@/components/ui/button";
 import { getUserConfigurations, getUserData } from "@/db/queries";
+import { canManageStandaloneConfigs } from "@/lib/access";
 
 const PAGE_SIZE = 20;
 
@@ -13,6 +14,10 @@ const Configurations = async (props: {
   const user = await getUserData();
   if (!user) redirect("/login");
 
+  // The configurations area is the standalone "Technical" list: Engineer/Admin
+  // only. Sales work from offers (/offerte), not from technical configs.
+  if (!canManageStandaloneConfigs(user.role)) redirect("/");
+
   const { page: pageParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
 
@@ -20,6 +25,7 @@ const Configurations = async (props: {
     user,
     page,
     PAGE_SIZE,
+    "STANDALONE",
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -30,7 +36,9 @@ const Configurations = async (props: {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Configurazioni</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Configurazioni tecniche
+        </h1>
         <div>
           <Link href="/configurazioni/nuova">
             <Button className="flex items-center gap-2">

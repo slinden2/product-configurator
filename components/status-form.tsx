@@ -24,12 +24,14 @@ import {
   STATUS_CONFIG,
   STATUS_PIPELINE,
 } from "@/lib/status-config";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
 
 interface StatusControlProps {
   confId: number;
   initialStatus: ConfigurationStatusType;
   userRole: Role;
+  /** Defaults to "OFFER" (the full sales+engineering machine). */
+  origin?: ConfigOrigin;
 }
 
 /**
@@ -41,10 +43,12 @@ interface StatusControlProps {
 function getValidTransitions(
   role: Role,
   currentStatus: ConfigurationStatusType,
+  origin: ConfigOrigin,
 ): ConfigurationStatusType[] {
   return STATUS_PIPELINE.filter(
     (status) =>
-      status !== currentStatus && canTransition(role, currentStatus, status),
+      status !== currentStatus &&
+      canTransition(role, currentStatus, status, origin),
   );
 }
 
@@ -52,6 +56,7 @@ const StatusControl = ({
   confId,
   initialStatus,
   userRole,
+  origin = "OFFER",
 }: StatusControlProps) => {
   const [isPending, startTransition] = useTransition();
   // The transition awaiting confirmation; also drives the confirmation modal.
@@ -59,7 +64,7 @@ const StatusControl = ({
     useState<ConfigurationStatusType | null>(null);
 
   const { label } = STATUS_CONFIG[initialStatus];
-  const validTargets = getValidTransitions(userRole, initialStatus);
+  const validTargets = getValidTransitions(userRole, initialStatus, origin);
 
   // Adjacent (±1) moves become buttons; the rest (ADMIN-only jumps) go in the
   // manual dropdown.
@@ -164,8 +169,8 @@ const StatusControl = ({
             <>
               Confermi il passaggio da «{label}» a «
               {STATUS_CONFIG[pendingTarget].label}»?
-              {isEditable(initialStatus, userRole) &&
-                !isEditable(pendingTarget, userRole) &&
+              {isEditable(initialStatus, userRole, origin) &&
+                !isEditable(pendingTarget, userRole, origin) &&
                 " In questo stato non potrai modificare la configurazione."}
             </>
           )

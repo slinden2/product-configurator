@@ -31,6 +31,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const {
     configuration: validatedConfiguration,
     status,
+    origin,
     waterTanks: validatedWaterTanks,
     washBays: validatedWashBays,
   } = loaded;
@@ -38,7 +39,7 @@ const EditConfiguration = async (props: EditConfigProps) => {
   // Once a config is frozen (or the user otherwise lacks edit rights) there is
   // nothing to edit here — send them to the read-only view instead of rendering
   // a disabled form.
-  if (!isEditable(status, user.role)) {
+  if (!isEditable(status, user.role, origin)) {
     redirect(`/configurazioni/visualizza/${id}`);
   }
 

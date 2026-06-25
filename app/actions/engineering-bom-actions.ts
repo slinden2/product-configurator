@@ -69,7 +69,7 @@ async function authorizeEngineeringBomAction(confId: number) {
     };
   }
 
-  if (!isEditable(configuration.status, user.role)) {
+  if (!isEditable(configuration.status, user.role, configuration.origin)) {
     return {
       success: false as const,
       error: MSG.bom.unauthorizedState,

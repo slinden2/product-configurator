@@ -142,7 +142,11 @@ export async function prepareBOMPageData(
   const ebomItems = hasEbom ? await getEngineeringBomItems(confId) : [];
   const activeEbomItems = ebomItems.filter((i) => !i.is_deleted);
 
-  const editable = isEditable(configuration.status, userRole);
+  const editable = isEditable(
+    configuration.status,
+    userRole,
+    configuration.origin,
+  );
   const ebomGrouped = groupEbomByCategory(ebomItems);
 
   const exportData = hasEbom

@@ -35,7 +35,9 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
   // any visible row is in scope; managers/directors may act on it too.
   const canEdit =
     canManageConfigs(user.role) || configuration.user.id === user.id;
-  const canDelete = canEdit && isEditable(configuration.status, user.role);
+  const canDelete =
+    canEdit &&
+    isEditable(configuration.status, user.role, configuration.origin);
   const canDuplicate = canEdit;
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, startDelete] = useTransition();

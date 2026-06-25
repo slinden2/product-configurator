@@ -25,8 +25,8 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
   const loaded = await loadValidatedConfiguration(id, user);
   if (!loaded) notFound();
 
-  const { configuration, status, waterTanks, washBays } = loaded;
-  const editable = isEditable(status, user.role);
+  const { configuration, status, origin, waterTanks, washBays } = loaded;
+  const editable = isEditable(status, user.role, origin);
 
   return (
     <div>
@@ -43,6 +43,7 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
             confId={id}
             initialStatus={status}
             userRole={user.role}
+            origin={origin}
           />
           <div className="flex items-center gap-2">
             <ExportConfigPdfButton

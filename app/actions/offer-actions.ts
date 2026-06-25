@@ -58,7 +58,7 @@ async function authorizeOfferAction(confId: number) {
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 
-  if (!isEditable(configuration.status, user.role)) {
+  if (!isEditable(configuration.status, user.role, configuration.origin)) {
     return { success: false as const, error: MSG.offer.cannotEdit };
   }
 

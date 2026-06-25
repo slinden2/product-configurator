@@ -47,7 +47,11 @@ const OfferPage = async (props: OfferPageProps) => {
 
   if (!configuration) notFound();
 
-  const editable = isEditable(configuration.status, user.role);
+  const editable = isEditable(
+    configuration.status,
+    user.role,
+    configuration.origin,
+  );
   const frozen = isOfferFrozen(snapshot);
   // A frozen offer is immutable: regeneration and commercial-term edits are
   // both blocked server-side, so the controls must be hidden/disabled too.

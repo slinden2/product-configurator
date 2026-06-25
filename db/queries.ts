@@ -48,6 +48,7 @@ import { MSG } from "@/lib/messages";
 import type {
   ActivityAction,
   CoefficientSource,
+  ConfigOrigin,
   ConfigurationStatusType,
   InstallationItemKind,
   Role,
@@ -270,13 +271,19 @@ export async function canAccessOffer(
 }
 
 // Gets all configurations for the user if the role is SALES.
-// For ENGINEER and ADMIN, gets all configurations
+// For ENGINEER and ADMIN, gets all configurations.
+// Pass `origin` to restrict the list to one lifecycle (e.g. the standalone
+// "Technical" list passes "STANDALONE"); omit it to list every origin.
 export async function getUserConfigurations(
   user: NonNullable<UserData>,
   page: number = 1,
   pageSize: number = 20,
+  origin?: ConfigOrigin,
 ) {
-  const whereClause = configScopeWhere(user);
+  const scopeWhere = configScopeWhere(user);
+  const whereClause = origin
+    ? and(scopeWhere, eq(configurations.origin, origin))
+    : scopeWhere;
 
   const [data, countResult] = await Promise.all([
     db.query.configurations.findMany({
@@ -286,6 +293,7 @@ export async function getUserConfigurations(
         status: true,
         name: true,
         description: true,
+        origin: true,
         created_at: true,
         updated_at: true,
       },
@@ -492,7 +500,14 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.auth.userUnauthorized, 403);
   }
 
-  if (!canTransition(user.role, configuration.status, statusData.status)) {
+  if (
+    !canTransition(
+      user.role,
+      configuration.status,
+      statusData.status,
+      configuration.origin,
+    )
+  ) {
     throw new QueryError(MSG.config.statusUnauthorized, 403);
   }
 
@@ -521,6 +536,7 @@ export const updateConfigStatus = async (
   const freezeEvent = classifyOfferFreezeTransition(
     configuration.status as ConfigurationStatusType,
     statusData.status,
+    configuration.origin,
   );
 
   // Freezing captures the as-sold offer, so an offer must exist. A manager could

@@ -75,6 +75,43 @@ describe("isEditable", () => {
   });
 });
 
+describe("isEditable — STANDALONE origin", () => {
+  describe.each(["ENGINEER", "ADMIN"] as const)("%s role", (role) => {
+    test("can edit DRAFT", () => {
+      expect(isEditable("DRAFT", role, "STANDALONE")).toBe(true);
+    });
+
+    test("can edit IN_TECH_REVIEW", () => {
+      expect(isEditable("IN_TECH_REVIEW", role, "STANDALONE")).toBe(true);
+    });
+
+    test("cannot edit the frozen states", () => {
+      expect(isEditable("TECH_APPROVED", role, "STANDALONE")).toBe(false);
+      expect(isEditable("CLOSED", role, "STANDALONE")).toBe(false);
+    });
+
+    test("the two sales statuses are never editable", () => {
+      expect(isEditable("IN_SALES_REVIEW", role, "STANDALONE")).toBe(false);
+      expect(isEditable("SALES_APPROVED", role, "STANDALONE")).toBe(false);
+    });
+  });
+
+  describe.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("%s role can never edit a standalone config", (role) => {
+    test.each([
+      "DRAFT",
+      "IN_SALES_REVIEW",
+      "IN_TECH_REVIEW",
+      "TECH_APPROVED",
+    ] as ConfigurationStatusType[])("not editable in %s", (status) => {
+      expect(isEditable(status, role, "STANDALONE")).toBe(false);
+    });
+  });
+});
+
 describe("canTransition", () => {
   test("a same-status no-op is always allowed", () => {
     expect(canTransition("SALES", "DRAFT", "DRAFT")).toBe(true);
@@ -173,6 +210,93 @@ describe("canTransition", () => {
   });
 });
 
+describe("canTransition — STANDALONE origin", () => {
+  describe("ENGINEER walks the engineering sub-chain", () => {
+    test("can open and reopen review (DRAFT <-> IN_TECH_REVIEW)", () => {
+      expect(
+        canTransition("ENGINEER", "DRAFT", "IN_TECH_REVIEW", "STANDALONE"),
+      ).toBe(true);
+      expect(
+        canTransition("ENGINEER", "IN_TECH_REVIEW", "DRAFT", "STANDALONE"),
+      ).toBe(true);
+    });
+
+    test("can approve and reopen (IN_TECH_REVIEW <-> TECH_APPROVED)", () => {
+      expect(
+        canTransition(
+          "ENGINEER",
+          "IN_TECH_REVIEW",
+          "TECH_APPROVED",
+          "STANDALONE",
+        ),
+      ).toBe(true);
+      expect(
+        canTransition(
+          "ENGINEER",
+          "TECH_APPROVED",
+          "IN_TECH_REVIEW",
+          "STANDALONE",
+        ),
+      ).toBe(true);
+    });
+
+    test("cannot reach the sales statuses", () => {
+      expect(
+        canTransition("ENGINEER", "DRAFT", "IN_SALES_REVIEW", "STANDALONE"),
+      ).toBe(false);
+      expect(
+        canTransition("ENGINEER", "DRAFT", "SALES_APPROVED", "STANDALONE"),
+      ).toBe(false);
+    });
+
+    test("cannot close (ADMIN only)", () => {
+      expect(
+        canTransition("ENGINEER", "TECH_APPROVED", "CLOSED", "STANDALONE"),
+      ).toBe(false);
+    });
+  });
+
+  describe("ADMIN", () => {
+    test("can make any engineering-chain jump, including closing", () => {
+      const edges: [ConfigurationStatusType, ConfigurationStatusType][] = [
+        ["DRAFT", "IN_TECH_REVIEW"],
+        ["DRAFT", "TECH_APPROVED"],
+        ["TECH_APPROVED", "CLOSED"],
+        ["CLOSED", "IN_TECH_REVIEW"],
+      ];
+      for (const [from, to] of edges) {
+        expect(canTransition("ADMIN", from, to, "STANDALONE")).toBe(true);
+      }
+    });
+
+    test("still cannot route a standalone config through a sales status", () => {
+      expect(
+        canTransition("ADMIN", "DRAFT", "IN_SALES_REVIEW", "STANDALONE"),
+      ).toBe(false);
+      expect(
+        canTransition(
+          "ADMIN",
+          "SALES_APPROVED",
+          "IN_TECH_REVIEW",
+          "STANDALONE",
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("%s cannot transition a standalone config", (role) => {
+    test("DRAFT -> IN_TECH_REVIEW is rejected", () => {
+      expect(canTransition(role, "DRAFT", "IN_TECH_REVIEW", "STANDALONE")).toBe(
+        false,
+      );
+    });
+  });
+});
+
 describe("classifyOfferFreezeTransition", () => {
   test("freezes on the standard sales approval edge", () => {
     expect(
@@ -222,5 +346,26 @@ describe("classifyOfferFreezeTransition", () => {
     ConfigurationStatusType,
   ][])("is a no-op within a zone %s -> %s", (from, to) => {
     expect(classifyOfferFreezeTransition(from, to)).toBeNull();
+  });
+
+  describe("STANDALONE origin never freezes or thaws", () => {
+    // A standalone config has no offer, so every engineering-chain move must be
+    // a no-op. Crucially DRAFT -> IN_TECH_REVIEW crosses the same zone boundary
+    // that would read as "freeze" for an OFFER config; without the origin guard
+    // the caller's offer-snapshot precondition would block it and the whole
+    // standalone engineering lifecycle would be unreachable.
+    test.each([
+      ["DRAFT", "IN_TECH_REVIEW"],
+      ["IN_TECH_REVIEW", "DRAFT"],
+      ["IN_TECH_REVIEW", "TECH_APPROVED"],
+      ["TECH_APPROVED", "IN_TECH_REVIEW"],
+      ["TECH_APPROVED", "CLOSED"],
+      ["CLOSED", "IN_TECH_REVIEW"],
+    ] as [
+      ConfigurationStatusType,
+      ConfigurationStatusType,
+    ][])("returns null for %s -> %s", (from, to) => {
+      expect(classifyOfferFreezeTransition(from, to, "STANDALONE")).toBeNull();
+    });
   });
 });

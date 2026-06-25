@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { getConfigurationWithTanksAndBays, type UserData } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
-import type { ConfigurationStatusType } from "@/types";
+import type { ConfigOrigin, ConfigurationStatusType } from "@/types";
 import {
   type UpdateConfigSchema,
   updateConfigSchema,
@@ -19,6 +19,8 @@ export interface ValidatedConfiguration {
   configuration: UpdateConfigSchema;
   /** DB-only lifecycle status (not part of the validated config schema). */
   status: ConfigurationStatusType;
+  /** DB-only lifecycle discriminator (STANDALONE vs OFFER), drives editability. */
+  origin: ConfigOrigin;
   waterTanks: UpdateWaterTankSchema[];
   washBays: UpdateWashBaySchema[];
 }
@@ -56,6 +58,7 @@ export async function loadValidatedConfiguration(
   return {
     configuration: validatedConfiguration,
     status: configuration.status,
+    origin: configuration.origin,
     waterTanks,
     washBays,
   };

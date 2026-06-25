@@ -126,6 +126,17 @@ describe("insertConfigurationAction", () => {
     expect(mockInsertConfiguration).not.toHaveBeenCalled();
   });
 
+  test("rejects sales roles: standalone configs are Engineer/Admin only", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "user-2",
+      role: "SALES",
+      initials: "SA",
+    });
+    const result = await insertConfigurationAction(makeValidFormData());
+    expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
+    expect(mockInsertConfiguration).not.toHaveBeenCalled();
+  });
+
   test("returns error message on QueryError", async () => {
     mockInsertConfiguration.mockRejectedValue(
       new QueryError("Impossibile creare la configurazione.", 500),

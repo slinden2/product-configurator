@@ -1,5 +1,5 @@
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
 
 /** Sales-side roles that capture or review offers. */
 export const SALES_ROLES: Role[] = ["SALES", "SALES_MANAGER", "SALES_DIRECTOR"];
@@ -31,6 +31,14 @@ export const canManageConfigs = (role: Role): boolean =>
 export const canViewBom = (role: Role): boolean =>
   role === "ENGINEER" || role === "ADMIN";
 
+/**
+ * Roles that own the standalone (pure technical) configuration area: the
+ * "Technical" list, creation, and the engineering lifecycle. Sales roles work
+ * from offers instead and never see standalone configs.
+ */
+export const canManageStandaloneConfigs = (role: Role): boolean =>
+  role === "ENGINEER" || role === "ADMIN";
+
 export const canViewOffer = (role: Role): boolean =>
   SALES_ROLES.includes(role) || role === "ADMIN";
 
@@ -51,8 +59,16 @@ export const canAccessAllOffers = (role: Role): boolean =>
 export const canViewMarginReview = (role: Role): boolean =>
   role === "ADMIN" || role === "SALES_DIRECTOR";
 
-/** Returns true when the config cannot be edited (status frozen, unknown role, or unknown status). */
+/**
+ * Returns true when the config cannot be edited (status frozen, unknown role, or
+ * unknown status). `origin` defaults to `"OFFER"` to preserve the pre-separation
+ * editing gate; the form tree leaves it defaulted because the engineer/admin edit
+ * gate is identical for every status a STANDALONE config can actually occupy
+ * (DRAFT/IN_TECH_REVIEW editable, the rest frozen). Pass it explicitly once the
+ * offer-revision two-phase gate lands.
+ */
 export const isConfigLocked = (
   status: ConfigurationStatusType | undefined,
   role: Role | undefined,
-): boolean => !status || !role || !isEditable(status, role);
+  origin: ConfigOrigin = "OFFER",
+): boolean => !status || !role || !isEditable(status, role, origin);
