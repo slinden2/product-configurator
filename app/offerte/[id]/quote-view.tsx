@@ -11,7 +11,7 @@ import {
   parseOfferSettings,
 } from "@/lib/offer-settings";
 import { formatEur } from "@/lib/utils";
-import LineBreakdown from "./_components/line-breakdown";
+import LineBreakdown from "./line-breakdown";
 
 interface Props {
   offerId: number;
