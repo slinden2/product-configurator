@@ -12,6 +12,7 @@ const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
 const mockGetOfferFreezeState = vi.fn();
 const mockIsOfferFrozen = vi.fn();
+const mockRepriceOfferLine = vi.fn();
 // STANDALONE configs ignore this; OFFER tests default the revision to DRAFT.
 const mockOfferRevisionStatusFor = vi.fn(
   async (..._args: unknown[]) => "DRAFT",
@@ -43,6 +44,10 @@ vi.mock("@/db/queries", () => ({
 
 vi.mock("@/lib/offer", () => ({
   isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
+}));
+
+vi.mock("@/lib/offer-revision-pricing", () => ({
+  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
 }));
 
 const mockTx = {};
@@ -122,6 +127,7 @@ describe("handleSubRecordAction", () => {
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
     mockGetOfferFreezeState.mockResolvedValue(null);
     mockIsOfferFrozen.mockReturnValue(false);
+    mockRepriceOfferLine.mockResolvedValue(undefined);
   });
 
   // --- Insert ---
@@ -436,5 +442,29 @@ describe("handleSubRecordAction", () => {
       expect.anything(),
     );
     expect(mockDeleteOfferSnapshotByConfigurationId).not.toHaveBeenCalled();
+  });
+
+  // --- Offer line re-pricing (tanks/bays feed the BOM) ---
+
+  test("reprices the owning line and revalidates the offer route for an OFFER config", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfiguration.mockResolvedValue(mockConfig({ origin: "OFFER" }));
+    await handleSubRecordAction(insertOptions());
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      PARENT_ID,
+      "admin-user",
+      mockTx,
+    );
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).toHaveBeenCalledWith("/offerte/[id]", "page");
+  });
+
+  test("does not reprice a STANDALONE config", async () => {
+    await handleSubRecordAction(insertOptions());
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
   });
 });

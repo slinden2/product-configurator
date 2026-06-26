@@ -14,6 +14,7 @@ const mockResetWashBayNonEnergyChainFields = vi.fn();
 const mockInsertActivityLog = vi.fn();
 const mockGetOfferFreezeState = vi.fn();
 const mockIsOfferFrozen = vi.fn();
+const mockRepriceOfferLine = vi.fn();
 // STANDALONE configs ignore this; OFFER tests default the revision to DRAFT so
 // the pre-handoff editability gate stays open (impl survives clearAllMocks).
 const mockOfferRevisionStatusFor = vi.fn(
@@ -53,6 +54,10 @@ vi.mock("@/lib/offer", () => ({
   isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
 }));
 
+vi.mock("@/lib/offer-revision-pricing", () => ({
+  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
+}));
+
 const mockTx = {};
 vi.mock("@/db", () => ({
   db: {
@@ -80,6 +85,7 @@ vi.mock("pg", () => ({
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
+import { configSchema } from "@/validation/config-schema";
 
 // --- Helpers ---
 
@@ -171,6 +177,7 @@ describe("editConfigurationAction", () => {
     mockInsertActivityLog.mockResolvedValue(undefined);
     mockGetOfferFreezeState.mockResolvedValue(null);
     mockIsOfferFrozen.mockReturnValue(false);
+    mockRepriceOfferLine.mockResolvedValue(undefined);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
@@ -245,6 +252,81 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
+  });
+
+  test("does not reprice a STANDALONE config", async () => {
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+  });
+
+  test("reprices the owning line on an OFFER config edit", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      CONF_ID,
+      "admin-user",
+      mockTx,
+    );
+  });
+
+  test("reprices on a surcharge-only (BOM-exempt) edit, without BOM invalidation", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    // Old config mirrors the *parsed* new form data on every non-exempt field, so
+    // the only change is total_height — a BOM-exempt surcharge driver. The
+    // snapshot/EBOM invalidation must NOT fire, yet the line must still be re-priced.
+    mockHasEngineeringBom.mockResolvedValue(true);
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue({
+      ...configSchema.parse(makeValidFormData()),
+      id: CONF_ID,
+      user_id: OWNER_ID,
+      origin: "OFFER",
+      status: "DRAFT",
+      total_height: 2500,
+    });
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({ total_height: 3000 }),
+    );
+    expect(result).toEqual({ success: true });
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockDeleteOfferSnapshotByConfigurationId).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      CONF_ID,
+      "admin-user",
+      mockTx,
+    );
+  });
+
+  test("rolls back the edit when repricing fails", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    mockRepriceOfferLine.mockRejectedValue(
+      new QueryError(MSG.surcharge.priceNotConfigured, 400),
+    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({
+      success: false,
+      error: MSG.surcharge.priceNotConfigured,
+    });
   });
 
   test("SALES cannot edit IN_SALES_REVIEW config", async () => {

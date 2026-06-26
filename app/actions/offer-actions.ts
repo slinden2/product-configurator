@@ -21,16 +21,8 @@ import {
 import { canViewOffer } from "@/lib/access";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { MSG } from "@/lib/messages";
-import {
-  appendSurchargesToOfferItems,
-  buildOfferItemsFromLive,
-  computeOfferTotals,
-  isOfferFrozen,
-  sumSurchargeTotal,
-} from "@/lib/offer";
+import { computeOfferListPricing, isOfferFrozen } from "@/lib/offer";
 import { buildDefaultInstallationItems } from "@/lib/offer-installation";
-import { resolveOfferSurcharges } from "@/lib/offer-surcharges";
-import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import {
   type OfferSettings,
   offerDiscountSchema,
@@ -101,26 +93,17 @@ export async function generateOfferAction(confId: number) {
 
     // Offers always price from live config; the EBOM (engineering cost) never
     // re-prices the client-accepted offer.
-    const bomItems = await buildOfferItemsFromLive(configuration);
-
-    const surchargeResult = resolveOfferSurcharges({
-      totalHeightMm: configuration.total_height,
-      standardHeightMm: STANDARD_MACHINE_HEIGHT_MM,
-      hasOmzPaint: configuration.has_omz_paint,
-      settings: surchargeSettings,
-    });
-    if (!surchargeResult.ok) {
+    const pricing = await computeOfferListPricing(
+      configuration,
+      surchargeSettings,
+    );
+    if (!pricing.ok) {
       return {
         success: false as const,
         error: MSG.surcharge.priceNotConfigured,
       };
     }
-    const { surcharges } = surchargeResult;
-
-    const items = appendSurchargesToOfferItems(bomItems, surcharges);
-
-    const { total_list_price: bomTotal } = computeOfferTotals(bomItems, 0);
-    const total_list_price = bomTotal + sumSurchargeTotal(surcharges);
+    const { items, total_list_price } = pricing;
 
     const source = "LIVE" as const;
     const action = isRegenerate

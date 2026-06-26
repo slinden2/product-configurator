@@ -21,6 +21,7 @@ import {
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { isOfferFrozen } from "@/lib/offer";
+import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 
 // --- Types ---
 
@@ -195,12 +196,21 @@ export async function handleSubRecordAction<
       if (!isOfferFrozen(freeze)) {
         await deleteOfferSnapshotByConfigurationId(parentId, tx);
       }
+
+      // Water tanks and wash bays feed the BOM, so a tank/bay change re-prices the
+      // owning OFFER line. No-op for STANDALONE configs and non-DRAFT revisions.
+      if (configuration.origin === "OFFER") {
+        await repriceOfferLine(parentId, user.id, tx);
+      }
     });
 
     // --- 5. Cache Revalidation ---
     revalidatePath(revalidatePathStr);
     revalidatePath(`/configurazioni/bom/${parentId}`);
     revalidatePath(`/configurazioni/offerta/${parentId}`);
+    if (configuration.origin === "OFFER") {
+      revalidatePath("/offerte/[id]", "page");
+    }
 
     // --- 6. Return Success ---
     return { success: true as const, data: operationResult };

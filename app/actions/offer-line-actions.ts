@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
+import { db } from "@/db";
 import {
   addOfferLine,
   getOfferWithRevisionAndLines,
@@ -11,6 +12,7 @@ import {
 } from "@/db/queries";
 import { canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
+import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import { configSchema } from "@/validation/config-schema";
 
 /**
@@ -47,7 +49,18 @@ export const addOfferLineAction = async (
 
   try {
     // The revision-DRAFT gate lives in addOfferLine (throws QueryError otherwise).
-    const { id } = await addOfferLine(offerId, validation.data, user.id);
+    // Price the new line from its live BOM in the same transaction; the
+    // OFFER_LINE_ADD log already records the creation, so skip the reprice audit.
+    const id = await db.transaction(async (tx) => {
+      const { id: configId } = await addOfferLine(
+        offerId,
+        validation.data,
+        user.id,
+        tx,
+      );
+      await repriceOfferLine(configId, user.id, tx, { audit: false });
+      return configId;
+    });
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const, id };
   } catch (err) {

@@ -2,10 +2,13 @@ import { getPriceCoefficientsByArray } from "@/db/queries";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import type { OfferSnapshot } from "@/db/schemas/offer-snapshots";
 import { BOM, enrichWithCosts } from "@/lib/BOM";
-import { sumSurchargeTotal } from "@/lib/offer-surcharges";
+import {
+  resolveOfferSurcharges,
+  sumSurchargeTotal,
+} from "@/lib/offer-surcharges";
 import { computeLinePrice, DEFAULT_COEFFICIENT } from "@/lib/pricing";
 import type { BomTag, ConfigurationStatusType } from "@/types";
-import { BomTagLabels, BomTags } from "@/types";
+import { BomTagLabels, BomTags, STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import {
   isSurchargeItem,
   type OfferBomLineItem,
@@ -274,6 +277,40 @@ export function appendSurchargesToOfferItems(
 }
 
 export { sumSurchargeTotal } from "@/lib/offer-surcharges";
+
+/**
+ * Builds an offer's list-price item set and total from a configuration's live BOM:
+ * BOM part items plus the applicable height/paint surcharges. Single source of
+ * truth for "the list price of a config" — shared by the per-config offer snapshot
+ * (generateOfferAction) and the per-revision-line pricing (computeLinePricing).
+ *
+ * Returns { ok: false } when a triggered surcharge has no configured price so the
+ * caller can fail loudly before persisting bad pricing.
+ */
+export async function computeOfferListPricing(
+  configuration: ConfigurationWithWaterTanksAndWashBays,
+  surchargeSettings: { kind: string; price: string | number }[],
+): Promise<
+  { ok: true; items: OfferLineItem[]; total_list_price: number } | { ok: false }
+> {
+  const bomItems = await buildOfferItemsFromLive(configuration);
+
+  const surchargeResult = resolveOfferSurcharges({
+    totalHeightMm: configuration.total_height,
+    standardHeightMm: STANDARD_MACHINE_HEIGHT_MM,
+    hasOmzPaint: configuration.has_omz_paint,
+    settings: surchargeSettings,
+  });
+  if (!surchargeResult.ok) return { ok: false };
+  const { surcharges } = surchargeResult;
+
+  const { total_list_price: bomTotal } = computeOfferTotals(bomItems, 0);
+  return {
+    ok: true,
+    items: appendSurchargesToOfferItems(bomItems, surcharges),
+    total_list_price: bomTotal + sumSurchargeTotal(surcharges),
+  };
+}
 
 /**
  * Parses raw snapshot items JSON, splits BOM vs surcharge items, groups BOM items

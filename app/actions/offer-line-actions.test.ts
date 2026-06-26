@@ -7,6 +7,15 @@ const mockGetUserData = vi.fn();
 const mockGetOfferWithRevisionAndLines = vi.fn();
 const mockAddOfferLine = vi.fn();
 const mockRemoveOfferLine = vi.fn();
+const mockRepriceOfferLine = vi.fn();
+
+const TX = { tx: true };
+
+vi.mock("@/db", () => ({
+  db: {
+    transaction: (cb: (tx: unknown) => unknown) => cb(TX),
+  },
+}));
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -22,6 +31,10 @@ vi.mock("@/db/queries", () => ({
       this.errorCode = errorCode;
     }
   },
+}));
+
+vi.mock("@/lib/offer-revision-pricing", () => ({
+  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -112,6 +125,7 @@ describe("addOfferLineAction", () => {
       revisions: [{ id: 1, status: "DRAFT", lines: [] }],
     });
     mockAddOfferLine.mockResolvedValue({ id: CONFIG_ID });
+    mockRepriceOfferLine.mockResolvedValue(undefined);
   });
 
   test("adds a line and returns the new configuration id", async () => {
@@ -121,7 +135,26 @@ describe("addOfferLineAction", () => {
       OFFER_ID,
       expect.objectContaining({ name: "Test Config" }),
       "u1",
+      TX,
     );
+  });
+
+  test("prices the new line in the same transaction, without a reprice audit", async () => {
+    await addOfferLineAction(OFFER_ID, makeValidConfig());
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(CONFIG_ID, "u1", TX, {
+      audit: false,
+    });
+  });
+
+  test("surfaces a misconfigured surcharge price from the reprice step", async () => {
+    mockRepriceOfferLine.mockRejectedValue(
+      new QueryError(MSG.surcharge.priceNotConfigured, 400),
+    );
+    const result = await addOfferLineAction(OFFER_ID, makeValidConfig());
+    expect(result).toEqual({
+      success: false,
+      error: MSG.surcharge.priceNotConfigured,
+    });
   });
 
   test("rejects ENGINEER (no offer access)", async () => {

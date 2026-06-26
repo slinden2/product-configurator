@@ -77,17 +77,10 @@ vi.mock("@/lib/BOM/max-bom", () => ({
 }));
 
 vi.mock("@/lib/offer", () => ({
-  buildOfferItemsFromLive: vi.fn().mockResolvedValue([]),
-  computeOfferTotals: vi
+  computeOfferListPricing: vi
     .fn()
-    .mockReturnValue({ total_list_price: 1000, discounted_total: 1000 }),
-  appendSurchargesToOfferItems: vi.fn().mockReturnValue([]),
-  sumSurchargeTotal: vi.fn().mockReturnValue(0),
+    .mockResolvedValue({ ok: true, items: [], total_list_price: 1000 }),
   isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
-}));
-
-vi.mock("@/lib/offer-surcharges", () => ({
-  resolveOfferSurcharges: vi.fn().mockReturnValue({ ok: true, surcharges: [] }),
 }));
 
 import { revalidatePath } from "next/cache";

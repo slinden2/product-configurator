@@ -467,70 +467,143 @@ export type OfferWithRevisionAndLines = NonNullable<
  * Adds a new configuration line to an offer's revision 1. Inserts the config with
  * `origin=OFFER` owned by the **offer owner** (not the acting user, so a manager
  * adding to a report's offer doesn't flip ownership) and an `offer_revision_lines`
- * row at the next position with placeholder pricing (real pricing is Phase 3).
- * Gated on the revision being DRAFT. Audited in-transaction.
+ * row at the next position with placeholder pricing — the caller re-prices the
+ * line (via `repriceOfferLine`) in the same transaction. Gated on the revision
+ * being DRAFT. Audited in the caller's transaction.
  */
 export async function addOfferLine(
   offerId: number,
   configData: ConfigSchema,
   userId: string,
+  // Required: the caller owns the transaction so the config + line insert and the
+  // OFFER_LINE_ADD audit (and the follow-up reprice) commit atomically.
+  txOrDb: DatabaseType | TransactionType,
 ): Promise<{ id: number }> {
-  return db.transaction(async (tx) => {
-    const offer = await tx.query.offers.findFirst({
-      where: eq(offers.id, offerId),
-      columns: { id: true, user_id: true },
-      with: {
-        revisions: {
-          where: eq(offerRevisions.revision_no, 1),
-          columns: { id: true, status: true },
-        },
+  const offer = await txOrDb.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true, user_id: true },
+    with: {
+      revisions: {
+        where: eq(offerRevisions.revision_no, 1),
+        columns: { id: true, status: true },
       },
-    });
-
-    if (!offer) throw new QueryError(MSG.offer.notFound, 404);
-    const revision = offer.revisions[0];
-    if (!revision) throw new QueryError(MSG.offer.notFound, 404);
-    if (revision.status !== "DRAFT") {
-      throw new QueryError(MSG.offer.lineCannotEdit, 403);
-    }
-
-    const { id: configId } = await insertConfiguration(
-      configData,
-      offer.user_id,
-      "OFFER",
-      tx,
-    );
-
-    const [posRow] = await tx
-      .select({ max: max(offerRevisionLines.position) })
-      .from(offerRevisionLines)
-      .where(eq(offerRevisionLines.offer_revision_id, revision.id));
-    const nextPosition = Number(posRow?.max ?? -1) + 1;
-
-    await tx.insert(offerRevisionLines).values({
-      offer_revision_id: revision.id,
-      configuration_id: configId,
-      position: nextPosition,
-      quantity: 1,
-      list_price: "0.00",
-      net_price: "0.00",
-      line_discount_percent: null,
-      pricing_snapshot: null,
-    });
-
-    await insertActivityLog(
-      {
-        userId,
-        action: "OFFER_LINE_ADD",
-        targetEntity: "offer",
-        targetId: String(offerId),
-        metadata: { configurationId: configId, position: nextPosition },
-      },
-      tx,
-    );
-
-    return { id: configId };
+    },
   });
+
+  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  const revision = offer.revisions[0];
+  if (!revision) throw new QueryError(MSG.offer.notFound, 404);
+  if (revision.status !== "DRAFT") {
+    throw new QueryError(MSG.offer.lineCannotEdit, 403);
+  }
+
+  const { id: configId } = await insertConfiguration(
+    configData,
+    offer.user_id,
+    "OFFER",
+    txOrDb,
+  );
+
+  const [posRow] = await txOrDb
+    .select({ max: max(offerRevisionLines.position) })
+    .from(offerRevisionLines)
+    .where(eq(offerRevisionLines.offer_revision_id, revision.id));
+  const nextPosition = Number(posRow?.max ?? -1) + 1;
+
+  await txOrDb.insert(offerRevisionLines).values({
+    offer_revision_id: revision.id,
+    configuration_id: configId,
+    position: nextPosition,
+    quantity: 1,
+    list_price: "0.00",
+    net_price: "0.00",
+    line_discount_percent: null,
+    pricing_snapshot: null,
+  });
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_LINE_ADD",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { configurationId: configId, position: nextPosition },
+    },
+    txOrDb,
+  );
+
+  return { id: configId };
+}
+
+/**
+ * Tx-capable, unscoped loader of a configuration with its water tanks and wash
+ * bays for BOM pricing. Unlike getConfigurationWithTanksAndBays it performs no
+ * scope check (callers gate access upstream) and accepts a transaction so it can
+ * read rows written earlier in the same tx.
+ */
+export async function loadConfigForPricing(
+  configId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<ConfigurationWithWaterTanksAndWashBays | undefined> {
+  return txOrDb.query.configurations.findFirst({
+    where: eq(configurations.id, configId),
+    with: {
+      water_tanks: { orderBy: [asc(waterTanks.id)] },
+      wash_bays: { orderBy: [asc(washBays.id)] },
+    },
+  });
+}
+
+/**
+ * Resolves the offer revision line owning `configId`, with the revision's discount
+ * and status, for re-pricing. Returns null for a config that is not an offer line.
+ */
+export async function offerRevisionLineForConfig(
+  configId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<{
+  lineId: number;
+  revisionId: number;
+  discount_pct: string;
+  status: OfferStatusType;
+} | null> {
+  const [row] = await txOrDb
+    .select({
+      lineId: offerRevisionLines.id,
+      revisionId: offerRevisions.id,
+      discount_pct: offerRevisions.discount_pct,
+      status: offerRevisions.status,
+    })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .where(eq(offerRevisionLines.configuration_id, configId))
+    .limit(1);
+
+  return row ?? null;
+}
+
+/** Persists a recomputed line's list/net price and pricing snapshot. */
+export async function updateOfferRevisionLinePricing(
+  lineId: number,
+  pricing: {
+    list_price: number;
+    net_price: number;
+    pricing_snapshot: OfferLineItem[];
+  },
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<void> {
+  await txOrDb
+    .update(offerRevisionLines)
+    .set({
+      list_price: pricing.list_price.toFixed(2),
+      net_price: pricing.net_price.toFixed(2),
+      pricing_snapshot: pricing.pricing_snapshot,
+      updated_at: new Date(),
+    })
+    .where(eq(offerRevisionLines.id, lineId));
 }
 
 /**
@@ -1766,6 +1839,100 @@ export async function deleteOfferSnapshotByConfigurationId(
   await txOrDb
     .delete(offerSnapshots)
     .where(eq(offerSnapshots.configuration_id, confId));
+}
+
+/**
+ * Sets the revision header discount and re-derives every line's net_price from its
+ * stored list_price (pure arithmetic — no BOM rebuild). Audited in the same
+ * transaction so the recompute can never be recorded without its evidence.
+ */
+export async function updateRevisionDiscountWithAudit(data: {
+  revisionId: number;
+  discount_pct: string;
+  updated_by: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ discount_pct: offerRevisions.discount_pct })
+      .from(offerRevisions)
+      .where(eq(offerRevisions.id, data.revisionId));
+
+    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
+
+    await tx
+      .update(offerRevisions)
+      .set({ discount_pct: data.discount_pct, updated_at: new Date() })
+      .where(eq(offerRevisions.id, data.revisionId));
+
+    // Re-derive every line's net_price from its stored list_price in one set-based
+    // UPDATE (pure arithmetic, no BOM rebuild, no per-line round-trip). Mirrors
+    // computeNetPrice in lib/utils — Postgres round() and Math.round both round
+    // half away from zero for non-negative money values.
+    const factor = 1 - Number(data.discount_pct) / 100;
+    await tx
+      .update(offerRevisionLines)
+      .set({
+        net_price: sql`round(${offerRevisionLines.list_price} * ${factor}::numeric, 2)`,
+        updated_at: new Date(),
+      })
+      .where(eq(offerRevisionLines.offer_revision_id, data.revisionId));
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "OFFER_REVISION_DISCOUNT_SET",
+        targetEntity: "offer_revision",
+        targetId: data.revisionId.toString(),
+        metadata: {
+          previous_pct: existing.discount_pct,
+          new_pct: data.discount_pct,
+        },
+      },
+      tx,
+    );
+  });
+}
+
+/**
+ * Updates the revision header transport/installation/presentation settings. These
+ * are offer-level add-ons that do not affect per-line list/net prices, so no line
+ * recompute is needed. Audited in the same transaction.
+ */
+export async function updateRevisionSettingsWithAudit(data: {
+  revisionId: number;
+  settings: OfferSnapshotSettingsUpdate;
+  updated_by: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        show_net_total_only: offerRevisions.show_net_total_only,
+        transport_amount: offerRevisions.transport_amount,
+        transport_mode: offerRevisions.transport_mode,
+        installation_mode: offerRevisions.installation_mode,
+        installation_items: offerRevisions.installation_items,
+      })
+      .from(offerRevisions)
+      .where(eq(offerRevisions.id, data.revisionId));
+
+    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
+
+    await tx
+      .update(offerRevisions)
+      .set({ ...data.settings, updated_at: new Date() })
+      .where(eq(offerRevisions.id, data.revisionId));
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "OFFER_REVISION_SETTINGS_SET",
+        targetEntity: "offer_revision",
+        targetId: data.revisionId.toString(),
+        metadata: { old_value: existing, new_value: data.settings },
+      },
+      tx,
+    );
+  });
 }
 
 /**

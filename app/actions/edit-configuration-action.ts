@@ -21,6 +21,7 @@ import {
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { isOfferFrozen } from "@/lib/offer";
+import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import {
   configSchema,
   hasBomRelevantChanges,
@@ -112,6 +113,14 @@ export const editConfigurationAction = async (
         if (!isOfferFrozen(freeze)) {
           await deleteOfferSnapshotByConfigurationId(confId, tx);
         }
+      }
+
+      // An OFFER line's price tracks its config. Re-price unconditionally (not
+      // gated on hasBomRelevantChanges) because the surcharge drivers total_height
+      // and has_omz_paint are BOM-exempt — a BOM-relevance gate would miss them.
+      // No-op for STANDALONE configs and non-DRAFT revisions.
+      if (configuration.origin === "OFFER") {
+        await repriceOfferLine(confId, user.id, tx);
       }
 
       await insertActivityLog(

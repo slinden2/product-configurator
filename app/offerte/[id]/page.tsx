@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
 import { OfferStatusLabels } from "@/types";
+import QuoteView from "./quote-view";
 import RemoveLineButton from "./remove-line-button";
 
 interface OfferDetailProps {
@@ -137,6 +138,10 @@ const OfferDetail = async (props: OfferDetailProps) => {
           </Table>
         </div>
       </div>
+
+      {revision && (
+        <QuoteView offerId={offer.id} revision={revision} editable={editable} />
+      )}
 
       <BackButton fallbackPath="/offerte" />
     </div>
