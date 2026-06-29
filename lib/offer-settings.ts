@@ -1,4 +1,3 @@
-import type { OfferSnapshot } from "@/db/schemas/offer-snapshots";
 import { sumInstallationTotal } from "@/lib/offer-installation";
 import type { TransportMode } from "@/types";
 import { InstallationItemKinds } from "@/types";
@@ -7,8 +6,8 @@ import {
   offerInstallationItemsSchema,
 } from "@/validation/offer-schema";
 
-/** Offer-level presentation settings stored on the snapshot, in display form. */
-export interface OfferSnapshotSettings {
+/** Offer-level presentation settings (transport/installation), in display form. */
+export interface OfferDisplaySettings {
   show_net_total_only: boolean;
   transport_amount: number;
   transport_mode: TransportMode;
@@ -17,30 +16,26 @@ export interface OfferSnapshotSettings {
   installation_items: OfferInstallationItem[];
 }
 
-/** Neutral settings used when no snapshot exists yet. */
-export const DEFAULT_OFFER_SETTINGS: OfferSnapshotSettings = {
-  show_net_total_only: false,
-  transport_amount: 0,
-  transport_mode: "TBD",
-  installation_mode: "TBD",
-  installation_items: [],
-};
+/**
+ * Source columns for {@link parseOfferSettings} — the presentation fields shared by
+ * the offer revision header (the new commercial source of truth).
+ */
+export interface OfferSettingsSource {
+  show_net_total_only: boolean;
+  transport_amount: string;
+  transport_mode: TransportMode;
+  installation_mode: TransportMode;
+  installation_items: unknown;
+}
 
 /**
- * Converts the snapshot's settings columns to display form. The stored
+ * Converts the revision's settings columns to display form. The stored
  * installation items are merged over the full catalog so offers created
  * before a catalog extension still show every kind.
  */
 export function parseOfferSettings(
-  snapshot: Pick<
-    OfferSnapshot,
-    | "show_net_total_only"
-    | "transport_amount"
-    | "transport_mode"
-    | "installation_mode"
-    | "installation_items"
-  >,
-): OfferSnapshotSettings {
+  snapshot: OfferSettingsSource,
+): OfferDisplaySettings {
   const parsed = offerInstallationItemsSchema.safeParse(
     snapshot.installation_items,
   );
@@ -82,7 +77,7 @@ export interface OfferSummaryExtras {
  * sum of the items flagged as included.
  */
 export function computeOfferSummaryExtras(
-  settings: OfferSnapshotSettings,
+  settings: OfferDisplaySettings,
   discountedTotal: number,
 ): OfferSummaryExtras {
   const transportRowByMode: Record<TransportMode, OfferSummaryRow> = {

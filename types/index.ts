@@ -162,12 +162,7 @@ export const ActivityActions = [
   "COEFFICIENT_DELETE",
   "COEFFICIENT_RESET",
   "COEFFICIENT_SYNC",
-  "OFFER_GENERATE",
-  "OFFER_REGENERATE",
-  "OFFER_FREEZE",
-  "OFFER_THAW",
-  "OFFER_DISCOUNT_SET",
-  "OFFER_SETTINGS_SET",
+  "CONFIG_AS_SOLD_FREEZE",
   "OFFER_CREATE",
   "OFFER_LINE_ADD",
   "OFFER_LINE_REMOVE",
@@ -179,6 +174,9 @@ export const ActivityActions = [
   "OFFER_REVISION_APPROVE",
   "OFFER_REVISION_REJECT",
   "OFFER_REVISION_SEND",
+  "OFFER_REVISION_ACCEPT",
+  "OFFER_REVISION_DECLINE",
+  "OFFER_REVISION_EXPIRE",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
 ] as const;
@@ -203,12 +201,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   COEFFICIENT_DELETE: "Eliminazione coefficiente",
   COEFFICIENT_RESET: "Ripristino coefficiente",
   COEFFICIENT_SYNC: "Sincronizzazione coefficienti MaxBOM",
-  OFFER_GENERATE: "Generazione offerta",
-  OFFER_REGENERATE: "Rigenerazione offerta",
-  OFFER_FREEZE: "Congelamento offerta",
-  OFFER_THAW: "Scongelamento offerta",
-  OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
-  OFFER_SETTINGS_SET: "Impostazione opzioni offerta",
+  CONFIG_AS_SOLD_FREEZE: "Congelamento configurazione come venduta",
   OFFER_CREATE: "Creazione offerta",
   OFFER_LINE_ADD: "Aggiunta configurazione offerta",
   OFFER_LINE_REMOVE: "Rimozione configurazione offerta",
@@ -220,15 +213,15 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_REVISION_APPROVE: "Approvazione revisione offerta",
   OFFER_REVISION_REJECT: "Riporto revisione offerta in bozza",
   OFFER_REVISION_SEND: "Invio revisione offerta",
+  OFFER_REVISION_ACCEPT: "Accettazione revisione offerta",
+  OFFER_REVISION_DECLINE: "Rifiuto revisione offerta",
+  OFFER_REVISION_EXPIRE: "Scadenza revisione offerta",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
 export type CoefficientSource = (typeof CoefficientSources)[number];
-
-export const OfferSources = ["EBOM", "LIVE"] as const;
-export type OfferSource = (typeof OfferSources)[number];
 
 /**
  * Per-revision offer lifecycle. The status is carried by `offer_revisions`, not by the offer

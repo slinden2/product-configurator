@@ -9,9 +9,7 @@ import {
   canAccessConfiguration,
   type DatabaseType,
   deleteAllEngineeringBomItems,
-  deleteOfferSnapshotByConfigurationId,
   getConfiguration,
-  getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
   offerRevisionStatusFor,
@@ -20,7 +18,6 @@ import {
   touchConfigurationUpdatedAt,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
-import { isOfferFrozen } from "@/lib/offer";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 
 // --- Types ---
@@ -189,13 +186,6 @@ export async function handleSubRecordAction<
       if (ebomExists) {
         await deleteAllEngineeringBomItems(parentId, tx);
       }
-      // Delete offer snapshot — sub-record data feeds BOM pricing. A frozen
-      // offer is the immutable as-sold record and must survive; only the EBOM
-      // cost side is invalidated then.
-      const freeze = await getOfferFreezeState(parentId, tx);
-      if (!isOfferFrozen(freeze)) {
-        await deleteOfferSnapshotByConfigurationId(parentId, tx);
-      }
 
       // Water tanks and wash bays feed the BOM, so a tank/bay change re-prices the
       // owning OFFER line. No-op for STANDALONE configs and non-DRAFT revisions.
@@ -207,7 +197,7 @@ export async function handleSubRecordAction<
     // --- 5. Cache Revalidation ---
     revalidatePath(revalidatePathStr);
     revalidatePath(`/configurazioni/bom/${parentId}`);
-    revalidatePath(`/configurazioni/offerta/${parentId}`);
+    revalidatePath(`/configurazioni/marginalita/${parentId}`);
     if (configuration.origin === "OFFER") {
       revalidatePath("/offerte/[id]", "page");
     }

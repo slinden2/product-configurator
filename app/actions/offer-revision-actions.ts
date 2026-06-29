@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { canTransitionRevision } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
+import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
+  acceptOfferRevisionWithAudit,
   approveOfferRevisionWithAudit,
   createOfferRevisionFrom,
   getOfferWorkingRevision,
@@ -12,6 +14,7 @@ import {
   getWorkingRevisionForSend,
   markOfferRevisionSentWithAudit,
   QueryError,
+  recordOfferRevisionOutcomeWithAudit,
   returnOfferRevisionToDraftWithAudit,
   submitOfferRevisionForApprovalWithAudit,
   type TransactionType,
@@ -21,6 +24,7 @@ import {
 import { canApproveRevision, canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
+import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 import {
   type OfferSettings,
   offerDiscountSchema,
@@ -325,4 +329,109 @@ export async function createRevisionAction(
     }
     return { success: false as const, error: MSG.db.unknown };
   }
+}
+
+/**
+ * Records customer acceptance of the SENT working revision (SENT → ACCEPTED) and hands
+ * every line config off to engineering: each flips to `SALES_APPROVED` with an
+ * at-acceptance as-sold freeze written onto its line, and the offer locks
+ * (`accepted_revision_id`). Any offer-access role within scope can record the outcome —
+ * recording what the customer decided is not a management gate.
+ *
+ * Each line's config form-shape is loaded here (pooled reads, before the tx) and frozen
+ * inside the tx, mirroring the old as-sold freeze pattern.
+ */
+export async function acceptRevisionAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canTransitionRevision(user.role, revision.status, "ACCEPTED")) {
+    return { success: false as const, error: MSG.offer.cannotAccept };
+  }
+
+  const working = await getWorkingRevisionForSend(offerId);
+  if (!working) return { success: false as const, error: MSG.offer.notFound };
+  if (working.status !== "SENT") {
+    return { success: false as const, error: MSG.offer.cannotAccept };
+  }
+  if (working.configIds.length === 0) {
+    return { success: false as const, error: MSG.offer.cannotSendEmpty };
+  }
+
+  const asSoldByConfigId: Record<number, OfferConfigSnapshot> = {};
+  for (const configId of working.configIds) {
+    const loaded = await loadValidatedConfiguration(configId, user);
+    if (!loaded) return { success: false as const, error: MSG.config.notFound };
+    asSoldByConfigId[configId] = {
+      configuration: loaded.configuration,
+      waterTanks: loaded.waterTanks,
+      washBays: loaded.washBays,
+    };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await acceptOfferRevisionWithAudit(
+        offerId,
+        working.id,
+        user.id,
+        asSoldByConfigId,
+        tx,
+      );
+    });
+
+    revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/offerte");
+    // The line configs are now SALES_APPROVED — refresh the engineering surfaces.
+    revalidatePath("/configurazioni");
+    for (const configId of working.configIds) {
+      revalidatePath(`/configurazioni/modifica/${configId}`);
+      revalidatePath(`/configurazioni/visualizza/${configId}`);
+      revalidatePath(`/configurazioni/bom/${configId}`);
+    }
+    return { success: true as const };
+  } catch (err) {
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: MSG.db.error };
+    }
+    return { success: false as const, error: MSG.db.unknown };
+  }
+}
+
+/**
+ * Records a non-accepting customer outcome on the SENT working revision: REJECTED
+ * (customer declined) or EXPIRED (validity lapsed). Terminal for that revision; the
+ * configs are untouched and a new revision can still be cloned forward. Any offer-access
+ * role within scope can record it.
+ */
+export async function recordRevisionOutcomeAction(
+  offerId: number,
+  outcome: "REJECTED" | "EXPIRED",
+) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canTransitionRevision(user.role, revision.status, outcome)) {
+    return { success: false as const, error: MSG.offer.cannotRecordOutcome };
+  }
+
+  return runRevisionTransition(offerId, async (tx) => {
+    const working = await getWorkingRevisionForSend(offerId, tx);
+    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (working.status !== "SENT") {
+      throw new QueryError(MSG.offer.cannotRecordOutcome, 403);
+    }
+    await recordOfferRevisionOutcomeWithAudit(
+      offerId,
+      working.id,
+      user.id,
+      outcome,
+      tx,
+    );
+  });
 }

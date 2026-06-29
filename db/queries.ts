@@ -10,10 +10,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import {
-  canTransition,
-  classifyOfferFreezeTransition,
-} from "@/app/actions/lib/auth-checks";
+import { canTransition } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
   activityLogs,
@@ -28,10 +25,8 @@ import {
   type NewOfferRevisionLine,
   type NewWashBay,
   type NewWaterTank,
-  type OfferSnapshot,
   offerRevisionLines,
   offerRevisions,
-  offerSnapshots,
   offers,
   partNumbers,
   priceCoefficients,
@@ -623,6 +618,47 @@ export async function offerRevisionLineForConfig(
   return row ?? null;
 }
 
+/**
+ * Reads the offer revision line pricing for a configuration, for the margin page:
+ * the as-sent `pricing_snapshot` (revenue reference) plus the derived net/list prices,
+ * the revision discount/status, and the at-acceptance as-sold freeze. Returns null for
+ * a config that is not an offer line (e.g. standalone). The unique on
+ * `configuration_id` means at most one line per config.
+ */
+export async function getOfferLinePricingForConfig(confId: number): Promise<{
+  pricing_snapshot: OfferLineItem[] | null;
+  net_price: string;
+  list_price: string;
+  discount_pct: string;
+  revisionStatus: OfferStatusType;
+  as_sold_snapshot: unknown;
+  as_sold_frozen_at: Date | null;
+} | null> {
+  const [row] = await db
+    .select({
+      pricing_snapshot: offerRevisionLines.pricing_snapshot,
+      net_price: offerRevisionLines.net_price,
+      list_price: offerRevisionLines.list_price,
+      discount_pct: offerRevisions.discount_pct,
+      revisionStatus: offerRevisions.status,
+      as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
+      as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+    })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .where(eq(offerRevisionLines.configuration_id, confId))
+    .limit(1);
+
+  if (!row) return null;
+  return {
+    ...row,
+    pricing_snapshot: (row.pricing_snapshot as OfferLineItem[] | null) ?? null,
+  };
+}
+
 /** Persists a recomputed line's list/net price and pricing snapshot. */
 export async function updateOfferRevisionLinePricing(
   lineId: number,
@@ -1023,6 +1059,166 @@ export async function markOfferRevisionSentWithAudit(
 }
 
 /**
+ * Records customer acceptance of a SENT revision and hands every line config off to
+ * engineering. In one transaction it:
+ *  - locks the offer row, then guards the offer is not already accepted and the
+ *    revision is SENT;
+ *  - moves the revision SENT → ACCEPTED and sets `offers.accepted_revision_id`
+ *    (locking the offer — no further revisions);
+ *  - for each line: flips its config to `SALES_APPROVED`, writes the at-acceptance
+ *    as-sold freeze (`as_sold_snapshot` + `as_sold_frozen_at`) onto the line, and
+ *    audits the status change and the freeze.
+ *
+ * `asSoldByConfigId` carries each line config's form-shaped snapshot, loaded by the
+ * caller (the action layer can build it without the circular import a load here would
+ * create). After this, the existing per-config engineering flow runs unchanged.
+ */
+export async function acceptOfferRevisionWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  asSoldByConfigId: Record<number, OfferConfigSnapshot>,
+  tx: TransactionType,
+): Promise<void> {
+  // Serialize against concurrent lifecycle mutations on this offer.
+  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+
+  const [offerRow] = await tx
+    .select({ accepted_revision_id: offers.accepted_revision_id })
+    .from(offers)
+    .where(eq(offers.id, offerId));
+  if (!offerRow) throw new QueryError(MSG.offer.notFound, 404);
+  if (offerRow.accepted_revision_id !== null) {
+    throw new QueryError(MSG.offer.alreadyAccepted, 409);
+  }
+
+  const lines = await tx
+    .select({
+      lineId: offerRevisionLines.id,
+      configId: offerRevisionLines.configuration_id,
+      configStatus: configurations.status,
+    })
+    .from(offerRevisionLines)
+    .innerJoin(
+      configurations,
+      eq(offerRevisionLines.configuration_id, configurations.id),
+    )
+    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
+
+  if (lines.length === 0) {
+    throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+  }
+
+  // SENT → ACCEPTED, guarded so a concurrent outcome can't slip past us.
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({ status: "ACCEPTED", updated_at: new Date() })
+    .where(
+      and(eq(offerRevisions.id, revisionId), eq(offerRevisions.status, "SENT")),
+    )
+    .returning({ id: offerRevisions.id });
+  if (!updated) throw new QueryError(MSG.offer.cannotAccept, 403);
+
+  const now = new Date();
+
+  await tx
+    .update(offers)
+    .set({ accepted_revision_id: revisionId, updated_at: now })
+    .where(eq(offers.id, offerId));
+
+  for (const line of lines) {
+    const asSold = asSoldByConfigId[line.configId];
+    if (!asSold) throw new QueryError(MSG.config.notFound, 404);
+
+    await tx
+      .update(configurations)
+      .set({ status: "SALES_APPROVED" })
+      .where(eq(configurations.id, line.configId));
+
+    await tx
+      .update(offerRevisionLines)
+      .set({
+        as_sold_snapshot: asSold,
+        as_sold_frozen_at: now,
+        updated_at: now,
+      })
+      .where(eq(offerRevisionLines.id, line.lineId));
+
+    await insertActivityLog(
+      {
+        userId,
+        action: "CONFIG_STATUS_CHANGE",
+        targetEntity: "configuration",
+        targetId: line.configId.toString(),
+        metadata: {
+          from: line.configStatus,
+          to: "SALES_APPROVED",
+          via: "OFFER_ACCEPT",
+        },
+      },
+      tx,
+    );
+    await insertActivityLog(
+      {
+        userId,
+        action: "CONFIG_AS_SOLD_FREEZE",
+        targetEntity: "offer_revision_line",
+        targetId: line.lineId.toString(),
+        metadata: { configId: line.configId, revisionId },
+      },
+      tx,
+    );
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_ACCEPT",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId },
+    },
+    tx,
+  );
+}
+
+/**
+ * Records a non-accepting customer outcome on a SENT revision (REJECTED or EXPIRED).
+ * Terminal for that revision and does not touch the configs or `accepted_revision_id` —
+ * a new revision can still be cloned forward to try again. Audited in the caller's tx.
+ */
+export async function recordOfferRevisionOutcomeWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  outcome: "REJECTED" | "EXPIRED",
+  tx: TransactionType,
+): Promise<void> {
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({ status: outcome, updated_at: new Date() })
+    .where(
+      and(eq(offerRevisions.id, revisionId), eq(offerRevisions.status, "SENT")),
+    )
+    .returning({ id: offerRevisions.id });
+  if (!updated) throw new QueryError(MSG.offer.cannotRecordOutcome, 403);
+
+  await insertActivityLog(
+    {
+      userId,
+      action:
+        outcome === "REJECTED"
+          ? "OFFER_REVISION_DECLINE"
+          : "OFFER_REVISION_EXPIRE",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId },
+    },
+    tx,
+  );
+}
+
+/**
  * Removes a configuration line from an offer's **working revision** (the latest by
  * `revision_no`) by deleting its configuration (the line row cascades via the FK).
  * Gated on the revision being DRAFT and the line actually belonging to that working
@@ -1368,37 +1564,6 @@ export const updateConfigStatus = async (
     }
   }
 
-  // An offer must exist before a config is submitted for sales review.
-  if (
-    configuration.status === "DRAFT" &&
-    statusData.status === "IN_SALES_REVIEW"
-  ) {
-    const offerExists = await hasOfferSnapshot(confId);
-    if (!offerExists) {
-      throw new QueryError(MSG.config.salesReviewRequiresOffer, 400);
-    }
-  }
-
-  // The offer freezes as the immutable as-sold snapshot when the config crosses
-  // from the sales-editable zone into the frozen zone, and thaws when it crosses
-  // back (see classifyOfferFreezeTransition for why this is keyed on the zone
-  // crossing rather than the exact status edges).
-  const freezeEvent = classifyOfferFreezeTransition(
-    configuration.status as ConfigurationStatusType,
-    statusData.status,
-    configuration.origin,
-  );
-
-  // Freezing captures the as-sold offer, so an offer must exist. A manager could
-  // have deleted it by editing a BOM-relevant field while in IN_SALES_REVIEW, so
-  // re-check here.
-  if (freezeEvent === "freeze") {
-    const offerExists = await hasOfferSnapshot(confId, txOrDb);
-    if (!offerExists) {
-      throw new QueryError(MSG.config.salesApprovedRequiresOffer, 400);
-    }
-  }
-
   // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
   const forwardStatuses: ConfigurationStatusType[] = [
     "IN_SALES_REVIEW",
@@ -1433,10 +1598,7 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.updateNotFoundOrUnauthorized, 404);
   }
 
-  // The freeze/thaw side-effects (capturing/clearing the as-sold snapshot) run in
-  // the action layer, which can build the form-shaped snapshot without the
-  // circular import that loadValidatedConfiguration would create here.
-  return { id: response.id, fromStatus, freezeEvent };
+  return { id: response.id, fromStatus };
 };
 
 export const insertWaterTank = async (
@@ -1642,17 +1804,6 @@ export async function hasEngineeringBom(
 ) {
   const row = await txOrDb.query.engineeringBomItems.findFirst({
     where: eq(engineeringBomItems.configuration_id, confId),
-    columns: { id: true },
-  });
-  return row !== undefined;
-}
-
-export async function hasOfferSnapshot(
-  confId: number,
-  txOrDb: DatabaseType | TransactionType = db,
-) {
-  const row = await txOrDb.query.offerSnapshots.findFirst({
-    where: eq(offerSnapshots.configuration_id, confId),
     columns: { id: true },
   });
   return row !== undefined;
@@ -2127,178 +2278,6 @@ export async function resetPriceCoefficientWithAudit(data: {
   });
 }
 
-// --- Offer Snapshots ---
-
-export type OfferSnapshotWithGenerator = OfferSnapshot & {
-  generator: { id: string; email: string | null } | null;
-};
-
-export async function getOfferSnapshotByConfigurationId(
-  confId: number,
-): Promise<OfferSnapshotWithGenerator | null> {
-  const [row] = await db
-    .select({
-      id: offerSnapshots.id,
-      configuration_id: offerSnapshots.configuration_id,
-      source: offerSnapshots.source,
-      generated_at: offerSnapshots.generated_at,
-      generated_by: offerSnapshots.generated_by,
-      discount_pct: offerSnapshots.discount_pct,
-      items: offerSnapshots.items,
-      total_list_price: offerSnapshots.total_list_price,
-      bom_rules_version: offerSnapshots.bom_rules_version,
-      show_net_total_only: offerSnapshots.show_net_total_only,
-      transport_amount: offerSnapshots.transport_amount,
-      transport_mode: offerSnapshots.transport_mode,
-      installation_mode: offerSnapshots.installation_mode,
-      installation_items: offerSnapshots.installation_items,
-      frozen_at: offerSnapshots.frozen_at,
-      config_snapshot: offerSnapshots.config_snapshot,
-      updated_at: offerSnapshots.updated_at,
-      generator: {
-        id: userProfiles.id,
-        email: userProfiles.email,
-      },
-    })
-    .from(offerSnapshots)
-    .leftJoin(userProfiles, eq(offerSnapshots.generated_by, userProfiles.id))
-    .where(eq(offerSnapshots.configuration_id, confId));
-  return row ?? null;
-}
-
-export async function upsertOfferSnapshot(
-  data: {
-    configuration_id: number;
-    source: "EBOM" | "LIVE";
-    generated_by: string;
-    items: OfferLineItem[];
-    total_list_price: string;
-    bom_rules_version: string;
-    installation_items: OfferInstallationItem[];
-  },
-  txOrDb: DatabaseType | TransactionType = db,
-): Promise<OfferSnapshot> {
-  const now = new Date();
-  // installation_items seeds defaults on first insert only: like discount_pct,
-  // offer-level settings survive regeneration.
-  const { configuration_id, installation_items, ...fields } = data;
-  const [row] = await txOrDb
-    .insert(offerSnapshots)
-    .values({
-      configuration_id,
-      ...fields,
-      installation_items,
-      generated_at: now,
-      updated_at: now,
-    })
-    .onConflictDoUpdate({
-      target: offerSnapshots.configuration_id,
-      set: { ...fields, generated_at: now, updated_at: now },
-    })
-    .returning();
-  return row;
-}
-
-export async function updateOfferDiscount(
-  confId: number,
-  discount_pct: string,
-): Promise<OfferSnapshot | undefined> {
-  const [row] = await db
-    .update(offerSnapshots)
-    .set({ discount_pct, updated_at: new Date() })
-    .where(eq(offerSnapshots.configuration_id, confId))
-    .returning();
-  return row;
-}
-
-export async function updateOfferDiscountWithAudit(data: {
-  confId: number;
-  discount_pct: string;
-  updated_by: string;
-}): Promise<void> {
-  await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({ discount_pct: offerSnapshots.discount_pct })
-      .from(offerSnapshots)
-      .where(eq(offerSnapshots.configuration_id, data.confId));
-
-    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
-
-    await tx
-      .update(offerSnapshots)
-      .set({ discount_pct: data.discount_pct, updated_at: new Date() })
-      .where(eq(offerSnapshots.configuration_id, data.confId));
-
-    await insertActivityLog(
-      {
-        userId: data.updated_by,
-        action: "OFFER_DISCOUNT_SET",
-        targetEntity: "offer_snapshot",
-        targetId: data.confId.toString(),
-        metadata: {
-          previous_pct: existing.discount_pct,
-          new_pct: data.discount_pct,
-        },
-      },
-      tx,
-    );
-  });
-}
-
-export type OfferSnapshotSettingsUpdate = {
-  show_net_total_only: boolean;
-  transport_amount: string;
-  transport_mode: TransportMode;
-  installation_mode: TransportMode;
-  installation_items: OfferInstallationItem[];
-};
-
-export async function updateOfferSettingsWithAudit(data: {
-  confId: number;
-  settings: OfferSnapshotSettingsUpdate;
-  updated_by: string;
-}): Promise<void> {
-  await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({
-        show_net_total_only: offerSnapshots.show_net_total_only,
-        transport_amount: offerSnapshots.transport_amount,
-        transport_mode: offerSnapshots.transport_mode,
-        installation_mode: offerSnapshots.installation_mode,
-        installation_items: offerSnapshots.installation_items,
-      })
-      .from(offerSnapshots)
-      .where(eq(offerSnapshots.configuration_id, data.confId));
-
-    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
-
-    await tx
-      .update(offerSnapshots)
-      .set({ ...data.settings, updated_at: new Date() })
-      .where(eq(offerSnapshots.configuration_id, data.confId));
-
-    await insertActivityLog(
-      {
-        userId: data.updated_by,
-        action: "OFFER_SETTINGS_SET",
-        targetEntity: "offer_snapshot",
-        targetId: data.confId.toString(),
-        metadata: { old_value: existing, new_value: data.settings },
-      },
-      tx,
-    );
-  });
-}
-
-export async function deleteOfferSnapshotByConfigurationId(
-  confId: number,
-  txOrDb: DatabaseType | TransactionType = db,
-): Promise<void> {
-  await txOrDb
-    .delete(offerSnapshots)
-    .where(eq(offerSnapshots.configuration_id, confId));
-}
-
 /**
  * Sets the revision header discount and re-derives every line's net_price from its
  * stored list_price (pure arithmetic — no BOM rebuild). Audited in the same
@@ -2351,6 +2330,14 @@ export async function updateRevisionDiscountWithAudit(data: {
   });
 }
 
+export type RevisionSettingsUpdate = {
+  show_net_total_only: boolean;
+  transport_amount: string;
+  transport_mode: TransportMode;
+  installation_mode: TransportMode;
+  installation_items: OfferInstallationItem[];
+};
+
 /**
  * Updates the revision header transport/installation/presentation settings. These
  * are offer-level add-ons that do not affect per-line list/net prices, so no line
@@ -2358,7 +2345,7 @@ export async function updateRevisionDiscountWithAudit(data: {
  */
 export async function updateRevisionSettingsWithAudit(data: {
   revisionId: number;
-  settings: OfferSnapshotSettingsUpdate;
+  settings: RevisionSettingsUpdate;
   updated_by: string;
 }): Promise<void> {
   await db.transaction(async (tx) => {
@@ -2391,87 +2378,6 @@ export async function updateRevisionSettingsWithAudit(data: {
       tx,
     );
   });
-}
-
-/**
- * Lightweight read of an offer's freeze marker. Avoids the user-profile join in
- * getOfferSnapshotByConfigurationId so it is safe and cheap to call inside a
- * transaction. Returns null when no offer snapshot exists.
- */
-export async function getOfferFreezeState(
-  confId: number,
-  txOrDb: DatabaseType | TransactionType = db,
-): Promise<{ frozen_at: Date | null } | null> {
-  const row = await txOrDb.query.offerSnapshots.findFirst({
-    where: eq(offerSnapshots.configuration_id, confId),
-    columns: { frozen_at: true },
-  });
-  return row ?? null;
-}
-
-/**
- * Freezes the offer as an immutable as-sold snapshot: stamps frozen_at and
- * captures the full form-shaped configuration. Writes the audit log in the same
- * transaction so the freeze can never be recorded without its evidence.
- */
-export async function freezeOfferSnapshot(
-  confId: number,
-  configSnapshot: OfferConfigSnapshot,
-  userId: string,
-  txOrDb: DatabaseType | TransactionType = db,
-): Promise<void> {
-  // Self-protecting: assert the update actually hit a snapshot row rather than
-  // trusting the caller-side hasOfferSnapshot precondition. Without this, a
-  // missing snapshot would silently log an OFFER_FREEZE that never happened.
-  const [frozen] = await txOrDb
-    .update(offerSnapshots)
-    .set({
-      frozen_at: new Date(),
-      config_snapshot: configSnapshot,
-      updated_at: new Date(),
-    })
-    .where(eq(offerSnapshots.configuration_id, confId))
-    .returning({ id: offerSnapshots.id });
-
-  if (!frozen) {
-    throw new QueryError(MSG.offer.notFound, 404);
-  }
-
-  await insertActivityLog(
-    {
-      userId,
-      action: "OFFER_FREEZE",
-      targetEntity: "offer_snapshot",
-      targetId: confId.toString(),
-    },
-    txOrDb,
-  );
-}
-
-/**
- * Thaws a frozen offer: clears the freeze marker and the as-sold capture so the
- * offer becomes editable/regenerable again. Re-approval re-captures a fresh
- * snapshot. Keeps the invariant "frozen_at set ⇔ config_snapshot present".
- */
-export async function thawOfferSnapshot(
-  confId: number,
-  userId: string,
-  txOrDb: DatabaseType | TransactionType = db,
-): Promise<void> {
-  await txOrDb
-    .update(offerSnapshots)
-    .set({ frozen_at: null, config_snapshot: null, updated_at: new Date() })
-    .where(eq(offerSnapshots.configuration_id, confId));
-
-  await insertActivityLog(
-    {
-      userId,
-      action: "OFFER_THAW",
-      targetEntity: "offer_snapshot",
-      targetId: confId.toString(),
-    },
-    txOrDb,
-  );
 }
 
 export async function getSurchargeSettings(

@@ -7,9 +7,7 @@ import { db } from "@/db";
 import {
   canAccessConfiguration,
   deleteAllEngineeringBomItems,
-  deleteOfferSnapshotByConfigurationId,
   getConfigurationWithTanksAndBays,
-  getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
   insertActivityLog,
@@ -20,7 +18,6 @@ import {
   updateConfiguration,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
-import { isOfferFrozen } from "@/lib/offer";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import {
   configSchema,
@@ -100,18 +97,14 @@ export const editConfigurationAction = async (
         await resetWashBayNonEnergyChainFields(confId, tx);
       }
 
-      // Invalidate the engineering BOM and offer snapshot when BOM-relevant
-      // fields changed. A frozen offer is the immutable as-sold record, so it
-      // must survive edits (an engineer can edit in IN_TECH_REVIEW); only the
-      // EBOM cost side is invalidated then.
+      // Invalidate the engineering BOM when BOM-relevant fields changed. The offer's
+      // commercial figures live on the offer revision line and are recomputed by the
+      // reprice below (while the revision is DRAFT) or already frozen on a sent/accepted
+      // revision — there is no separate offer snapshot to invalidate.
       if (hasBomRelevantChanges(configuration, validation.data)) {
         const ebomExists = await hasEngineeringBom(confId, tx);
         if (ebomExists) {
           await deleteAllEngineeringBomItems(confId, tx);
-        }
-        const freeze = await getOfferFreezeState(confId, tx);
-        if (!isOfferFrozen(freeze)) {
-          await deleteOfferSnapshotByConfigurationId(confId, tx);
         }
       }
 
@@ -135,7 +128,7 @@ export const editConfigurationAction = async (
     });
     revalidatePath(`/configurazioni/modifica/${confId}`);
     revalidatePath(`/configurazioni/bom/${confId}`);
-    revalidatePath(`/configurazioni/offerta/${confId}`);
+    revalidatePath(`/configurazioni/marginalita/${confId}`);
     // An OFFER line config surfaces on its offer detail page too.
     if (configuration.origin === "OFFER") {
       revalidatePath("/offerte/[id]", "page");

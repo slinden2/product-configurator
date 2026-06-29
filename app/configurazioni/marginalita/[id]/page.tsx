@@ -1,12 +1,10 @@
-import { AlertTriangle } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
-import AlertBanner from "@/components/shared/alert-banner";
 import DetailsCard from "@/components/shared/details-card";
 import {
   getConfiguration,
   getEngineeringBomItems,
-  getOfferSnapshotByConfigurationId,
+  getOfferLinePricingForConfig,
   getUserData,
 } from "@/db/queries";
 import { enrichWithCosts } from "@/lib/BOM";
@@ -27,9 +25,9 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-  const [configuration, snapshot, ebomRows] = await Promise.all([
+  const [configuration, linePricing, ebomRows] = await Promise.all([
     getConfiguration(confId),
-    getOfferSnapshotByConfigurationId(confId),
+    getOfferLinePricingForConfig(confId),
     getEngineeringBomItems(confId),
   ]);
 
@@ -61,13 +59,16 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     </div>
   );
 
-  // Revenue reference: the frozen sales offer, discounted, incl. surcharges.
-  const discountPct = snapshot ? Number(snapshot.discount_pct) : 0;
-  const { displayData } = snapshot
-    ? prepareOfferDisplayData(snapshot.items, discountPct)
+  // Revenue reference: the offer revision line's as-sent quote (pricing_snapshot),
+  // discounted by the revision header discount, incl. surcharges. Null until the
+  // owning revision has been submitted/sent.
+  const items = linePricing?.pricing_snapshot ?? null;
+  const discountPct = linePricing ? Number(linePricing.discount_pct) : 0;
+  const { displayData } = items
+    ? prepareOfferDisplayData(items, discountPct)
     : { displayData: null };
 
-  if (!snapshot || !displayData) return emptyState(MSG.marginReview.noOffer);
+  if (!items || !displayData) return emptyState(MSG.marginReview.noOffer);
 
   // EBOM cost basis: current catalog cost of the non-deleted engineering BOM.
   // When no EBOM exists the engineering side renders as 0 placeholders.
@@ -97,16 +98,6 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   return (
     <div className="space-y-6">
       {header}
-
-      {snapshot.source === "EBOM" && (
-        <AlertBanner
-          variant="error"
-          icon={<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />}
-          title={MSG.marginReview.ebomSourceWarning.title}
-        >
-          {MSG.marginReview.ebomSourceWarning.body}
-        </AlertBanner>
-      )}
 
       <MarginReviewView comparison={comparison} discountPct={discountPct} />
     </div>

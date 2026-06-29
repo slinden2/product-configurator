@@ -15,9 +15,11 @@ import {
 import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
 import { canApproveRevision } from "@/lib/access";
 import { OfferStatusLabels, OPEN_REVISION_STATUSES } from "@/types";
+import AcceptRevisionButton from "./accept-revision-button";
 import ApproveRevisionButton from "./approve-revision-button";
 import CreateRevisionButton from "./create-revision-button";
 import QuoteView from "./quote-view";
+import RecordOutcomeButton from "./record-outcome-button";
 import RejectRevisionButton from "./reject-revision-button";
 import RemoveLineButton from "./remove-line-button";
 import RevisionHistory from "./revision-history";
@@ -45,10 +47,15 @@ const OfferDetail = async (props: OfferDetailProps) => {
   const revision = offer.revisions[0];
   // Offer lines are editable only while the working revision is DRAFT.
   const editable = revision?.status === "DRAFT";
+  // Once a revision is accepted the offer locks — no further revisions.
+  const isAccepted = offer.accepted_revision_id !== null;
   // A new revision can be cloned forward only once the working revision has been sent
-  // (left the open working states) — one open working revision at a time.
+  // (left the open working states) — one open working revision at a time — and the
+  // offer has not been accepted.
   const canCreateRevision =
-    !!revision && !OPEN_REVISION_STATUSES.includes(revision.status);
+    !!revision &&
+    !OPEN_REVISION_STATUSES.includes(revision.status) &&
+    !isAccepted;
   // Approve / reject / un-approve are management-only (scope already enforced by the
   // scoped fetch above).
   const canApprove = canApproveRevision(user.role);
@@ -93,6 +100,13 @@ const OfferDetail = async (props: OfferDetailProps) => {
                 {canApprove && (
                   <RejectRevisionButton offerId={offer.id} mode="unapprove" />
                 )}
+              </>
+            )}
+            {revision.status === "SENT" && (
+              <>
+                <AcceptRevisionButton offerId={offer.id} />
+                <RecordOutcomeButton offerId={offer.id} outcome="REJECTED" />
+                <RecordOutcomeButton offerId={offer.id} outcome="EXPIRED" />
               </>
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}

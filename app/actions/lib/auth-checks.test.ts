@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import {
   canTransition,
   canTransitionRevision,
-  classifyOfferFreezeTransition,
   isEditable,
 } from "@/app/actions/lib/auth-checks";
 import type { ConfigurationStatusType, OfferStatusType, Role } from "@/types";
@@ -333,79 +332,6 @@ describe("canTransition — STANDALONE origin", () => {
   });
 });
 
-describe("classifyOfferFreezeTransition", () => {
-  test("freezes on the standard sales approval edge", () => {
-    expect(
-      classifyOfferFreezeTransition("IN_SALES_REVIEW", "SALES_APPROVED"),
-    ).toBe("freeze");
-  });
-
-  test("thaws on the standard un-approval edge", () => {
-    expect(
-      classifyOfferFreezeTransition("SALES_APPROVED", "IN_SALES_REVIEW"),
-    ).toBe("thaw");
-  });
-
-  test.each([
-    ["DRAFT", "SALES_APPROVED"],
-    ["DRAFT", "IN_TECH_REVIEW"],
-    ["IN_SALES_REVIEW", "TECH_APPROVED"],
-    ["IN_SALES_REVIEW", "CLOSED"],
-  ] as [
-    ConfigurationStatusType,
-    ConfigurationStatusType,
-  ][])("freezes on non-adjacent jump %s -> %s (entering frozen zone)", (from, to) => {
-    expect(classifyOfferFreezeTransition(from, to)).toBe("freeze");
-  });
-
-  test.each([
-    ["SALES_APPROVED", "DRAFT"],
-    ["IN_TECH_REVIEW", "DRAFT"],
-    ["TECH_APPROVED", "IN_SALES_REVIEW"],
-    ["CLOSED", "DRAFT"],
-  ] as [
-    ConfigurationStatusType,
-    ConfigurationStatusType,
-  ][])("thaws on non-adjacent jump %s -> %s (leaving frozen zone)", (from, to) => {
-    expect(classifyOfferFreezeTransition(from, to)).toBe("thaw");
-  });
-
-  test.each([
-    ["SALES_APPROVED", "IN_TECH_REVIEW"],
-    ["IN_TECH_REVIEW", "SALES_APPROVED"],
-    ["IN_TECH_REVIEW", "TECH_APPROVED"],
-    ["TECH_APPROVED", "CLOSED"],
-    ["DRAFT", "IN_SALES_REVIEW"],
-    ["IN_SALES_REVIEW", "DRAFT"],
-  ] as [
-    ConfigurationStatusType,
-    ConfigurationStatusType,
-  ][])("is a no-op within a zone %s -> %s", (from, to) => {
-    expect(classifyOfferFreezeTransition(from, to)).toBeNull();
-  });
-
-  describe("STANDALONE origin never freezes or thaws", () => {
-    // A standalone config has no offer, so every engineering-chain move must be
-    // a no-op. Crucially DRAFT -> IN_TECH_REVIEW crosses the same zone boundary
-    // that would read as "freeze" for an OFFER config; without the origin guard
-    // the caller's offer-snapshot precondition would block it and the whole
-    // standalone engineering lifecycle would be unreachable.
-    test.each([
-      ["DRAFT", "IN_TECH_REVIEW"],
-      ["IN_TECH_REVIEW", "DRAFT"],
-      ["IN_TECH_REVIEW", "TECH_APPROVED"],
-      ["TECH_APPROVED", "IN_TECH_REVIEW"],
-      ["TECH_APPROVED", "CLOSED"],
-      ["CLOSED", "IN_TECH_REVIEW"],
-    ] as [
-      ConfigurationStatusType,
-      ConfigurationStatusType,
-    ][])("returns null for %s -> %s", (from, to) => {
-      expect(classifyOfferFreezeTransition(from, to, "STANDALONE")).toBeNull();
-    });
-  });
-});
-
 describe("canTransitionRevision", () => {
   const management: Role[] = ["SALES_MANAGER", "SALES_DIRECTOR", "ADMIN"];
 
@@ -491,13 +417,34 @@ describe("canTransitionRevision", () => {
     });
   });
 
+  describe("SENT -> ACCEPTED / REJECTED / EXPIRED (record customer outcome)", () => {
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s (offer-access) may record any outcome", (role) => {
+      expect(canTransitionRevision(role, "SENT", "ACCEPTED")).toBe(true);
+      expect(canTransitionRevision(role, "SENT", "REJECTED")).toBe(true);
+      expect(canTransitionRevision(role, "SENT", "EXPIRED")).toBe(true);
+    });
+
+    test("ENGINEER may not record an outcome", () => {
+      expect(canTransitionRevision("ENGINEER", "SENT", "ACCEPTED")).toBe(false);
+      expect(canTransitionRevision("ENGINEER", "SENT", "REJECTED")).toBe(false);
+      expect(canTransitionRevision("ENGINEER", "SENT", "EXPIRED")).toBe(false);
+    });
+  });
+
   describe("unsupported edges fail closed", () => {
     const badEdges: [OfferStatusType, OfferStatusType][] = [
       ["DRAFT", "APPROVED_TO_SEND"],
       ["DRAFT", "SENT"],
       ["PENDING_APPROVAL", "SENT"],
       ["SENT", "DRAFT"],
-      ["SENT", "ACCEPTED"],
+      ["ACCEPTED", "DRAFT"],
+      ["ACCEPTED", "SENT"],
+      ["REJECTED", "SENT"],
     ];
     test.each(badEdges)("ADMIN cannot jump %s -> %s", (from, to) => {
       expect(canTransitionRevision("ADMIN", from, to)).toBe(false);

@@ -63,7 +63,6 @@ interface ConfigurationFormProps {
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
   hasEngineeringBom?: boolean;
-  hasOfferSnapshot?: boolean;
 }
 
 const ConfigForm = ({
@@ -78,7 +77,6 @@ const ConfigForm = ({
   onDirtyChange,
   onSaved,
   hasEngineeringBom,
-  hasOfferSnapshot,
 }: ConfigurationFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [showSaveWarning, setShowSaveWarning] = useState(false);
@@ -179,11 +177,7 @@ const ConfigForm = ({
     const onlyExemptFieldsDirty = Object.keys(form.formState.dirtyFields).every(
       (key) => BOM_EXEMPT_FIELDS.has(key as keyof ConfigSchema),
     );
-    if (
-      (hasEngineeringBom || hasOfferSnapshot) &&
-      id &&
-      !onlyExemptFieldsDirty
-    ) {
+    if (hasEngineeringBom && id && !onlyExemptFieldsDirty) {
       pendingValuesRef.current = values;
       setShowSaveWarning(true);
       return;
@@ -277,8 +271,6 @@ const ConfigForm = ({
           pendingValuesRef.current = null;
         }}
         onConfirm={handleSaveWarningConfirm}
-        hasEngineeringBom={!!hasEngineeringBom}
-        hasOfferSnapshot={!!hasOfferSnapshot}
       />
     </div>
   );

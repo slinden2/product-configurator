@@ -80,6 +80,10 @@ export const MSG = {
     offerRevisionApproved: "Revisione approvata per l'invio.",
     offerRevisionReturnedToDraft: "Revisione riportata in bozza.",
     offerRevisionCreated: "Nuova revisione creata.",
+    offerRevisionAccepted:
+      "Offerta accettata: configurazioni in lavorazione tecnica.",
+    offerRevisionDeclined: "Rifiuto del cliente registrato.",
+    offerRevisionExpired: "Revisione segnata come scaduta.",
     configDeleted: "Configurazione eliminata con successo.",
     configDuplicated: "Configurazione duplicata.",
     duplicateError: "Errore durante la duplicazione.",
@@ -153,18 +157,6 @@ export const MSG = {
         "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
       confirm: "Salva e elimina distinta",
     },
-    offerOnly: {
-      title: "Offerta presente",
-      description:
-        "Salvando le modifiche alla configurazione, l'offerta verrà eliminata e dovrà essere rigenerata. Continuare?",
-      confirm: "Salva e elimina offerta",
-    },
-    both: {
-      title: "Distinta e offerta presenti",
-      description:
-        "Salvando le modifiche alla configurazione, la distinta di commessa e l'offerta verranno eliminate e dovranno essere rigenerate. Continuare?",
-      confirm: "Salva e elimina",
-    },
   },
   duplicateConfirm: {
     title: "Conferma duplicazione",
@@ -236,6 +228,11 @@ export const MSG = {
       "Solo una revisione in approvazione o approvata può essere riportata in bozza.",
     unauthorizedApprove:
       "Solo i responsabili vendite, i direttori vendite e gli ADMIN possono approvare le revisioni.",
+    cannotAccept: "Solo una revisione inviata può essere accettata.",
+    cannotRecordOutcome:
+      "L'esito del cliente può essere registrato solo su una revisione inviata.",
+    alreadyAccepted:
+      "L'offerta è già stata accettata e non può più essere modificata.",
     workingRevisionExists:
       "Esiste già una revisione di lavoro non ancora inviata. Completane l'invio prima di crearne una nuova.",
     submitConfirm:
@@ -248,6 +245,12 @@ export const MSG = {
       "Revocare l'approvazione e riportare la revisione in bozza? Le configurazioni torneranno modificabili.",
     sendConfirm:
       "Inviare questa revisione? I prezzi verranno congelati e le configurazioni non saranno più modificabili.",
+    acceptConfirm:
+      "Registrare l'accettazione del cliente? Le configurazioni passeranno all'ufficio tecnico (come venduto) e l'offerta verrà bloccata.",
+    declineConfirm:
+      "Registrare il rifiuto del cliente per questa revisione? Potrai creare una nuova revisione per riprovare.",
+    expireConfirm:
+      "Segnare questa revisione come scaduta? Potrai creare una nuova revisione per riprovare.",
     createRevisionConfirm:
       "Creare una nuova revisione? Le configurazioni verranno clonate in righe modificabili.",
     revertConfirm:

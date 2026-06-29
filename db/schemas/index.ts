@@ -5,7 +5,6 @@ export * from "./engineering-bom-items";
 export * from "./installation-item-settings";
 export * from "./offer-revision-lines";
 export * from "./offer-revisions";
-export * from "./offer-snapshots";
 export * from "./offers";
 export * from "./part-numbers";
 export * from "./price-coefficients";

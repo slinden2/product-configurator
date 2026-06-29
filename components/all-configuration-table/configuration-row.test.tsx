@@ -405,7 +405,7 @@ describe("ConfigurationRow", () => {
       );
     });
 
-    test("SALES sees offer item linking to /configurazioni/offerta/{id}", async () => {
+    test("the retired offer link is no longer shown to SALES", async () => {
       renderRow(
         {
           id: 42,
@@ -417,18 +417,15 @@ describe("ConfigurationRow", () => {
       await openActionsMenu();
 
       expect(
+        screen.queryByRole("menuitem", { name: /Visualizza offerta/ }),
+      ).toBeNull();
+      // SALES has no BOM access either.
+      expect(
         screen.queryByRole("menuitem", { name: /Visualizza distinta/ }),
       ).toBeNull();
-      const offerItem = screen.getByRole("menuitem", {
-        name: /Visualizza offerta/,
-      });
-      expect(offerItem.closest("a")).toHaveAttribute(
-        "href",
-        "/configurazioni/offerta/42",
-      );
     });
 
-    test("ADMIN sees both BOM and offer items", async () => {
+    test("ADMIN sees the BOM item and no retired offer item", async () => {
       renderRow(
         {
           id: 42,
@@ -445,10 +442,8 @@ describe("ConfigurationRow", () => {
           .closest("a"),
       ).toHaveAttribute("href", "/configurazioni/bom/42");
       expect(
-        screen
-          .getByRole("menuitem", { name: /Visualizza offerta/ })
-          .closest("a"),
-      ).toHaveAttribute("href", "/configurazioni/offerta/42");
+        screen.queryByRole("menuitem", { name: /Visualizza offerta/ }),
+      ).toBeNull();
     });
   });
 

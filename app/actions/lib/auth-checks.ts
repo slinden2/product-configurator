@@ -180,11 +180,11 @@ export function canTransition(
  * reports) is enforced separately by canAccessOffer (db/queries.ts), and the
  * management-only approval capability by canApproveRevision (lib/access.ts).
  *
- * Lifecycle this phase (Phase 5):
+ * Lifecycle:
  *   DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT
+ *        → ACCEPTED / REJECTED / EXPIRED
  * plus manager hand-back (PENDING_APPROVAL → DRAFT) and un-approve
- * (APPROVED_TO_SEND → DRAFT). The post-SENT customer outcomes
- * (ACCEPTED/REJECTED/EXPIRED) are out of scope here.
+ * (APPROVED_TO_SEND → DRAFT).
  *
  * Rules:
  * - DRAFT → PENDING_APPROVAL (submit): any offer-access role (SALES on own).
@@ -193,6 +193,9 @@ export function canTransition(
  *   cannot pull back its own submission — mirrors the config IN_SALES_REVIEW gate.
  * - APPROVED_TO_SEND → DRAFT (un-approve): management roles only.
  * - APPROVED_TO_SEND → SENT (send): any offer-access role.
+ * - SENT → ACCEPTED / REJECTED / EXPIRED (record customer outcome): any
+ *   offer-access role. Recording what the customer decided is not a management
+ *   gate — approval already happened before send.
  *
  * Fails closed for ENGINEER (no offer access) on every edge, the identity edge
  * included — a no-op is not a licence for a role with no authority over offers.
@@ -218,49 +221,11 @@ export function canTransitionRevision(
   if (from === "PENDING_APPROVAL" && to === "DRAFT") return isManagement;
   if (from === "APPROVED_TO_SEND" && to === "DRAFT") return isManagement;
   if (from === "APPROVED_TO_SEND" && to === "SENT") return true;
+  if (
+    from === "SENT" &&
+    (to === "ACCEPTED" || to === "REJECTED" || to === "EXPIRED")
+  )
+    return true;
 
   return false;
-}
-
-/**
- * Statuses in which the sales side can still edit the configuration and its
- * offer. Everything else is the "frozen zone" where the offer is the immutable
- * as-sold snapshot.
- */
-const SALES_EDITABLE_STATUSES: ConfigurationStatusType[] = [
-  "DRAFT",
-  "IN_SALES_REVIEW",
-];
-
-/**
- * Classifies a status transition by how it crosses the offer's freeze boundary.
- *
- * The offer freezes as the immutable as-sold snapshot when a config leaves the
- * sales-editable zone (DRAFT/IN_SALES_REVIEW) for the frozen zone
- * (SALES_APPROVED/IN_TECH_REVIEW/TECH_APPROVED/CLOSED), and thaws when it comes
- * back. Keying on the zone crossing — rather than the exact
- * IN_SALES_REVIEW↔SALES_APPROVED edges — means an ADMIN jumping non-adjacently
- * (e.g. DRAFT→SALES_APPROVED, CLOSED→DRAFT) still freezes/thaws correctly, while
- * the engineering-side SALES_APPROVED↔IN_TECH_REVIEW edge stays within the frozen
- * zone so the offer remains frozen while an engineer edits live config.
- *
- * A STANDALONE config has no offer, so it never freezes/thaws — this always
- * returns `null` for it. Without this guard a standalone DRAFT→IN_TECH_REVIEW
- * move would be read as a "freeze" (it crosses the same zone boundary) and the
- * caller's offer-snapshot precondition would block the entire engineering
- * lifecycle. `origin` defaults to `"OFFER"` to preserve the offer behaviour.
- */
-export function classifyOfferFreezeTransition(
-  from: ConfigurationStatusType,
-  to: ConfigurationStatusType,
-  origin: ConfigOrigin = "OFFER",
-): "freeze" | "thaw" | null {
-  // Standalone configs are pure technical work with no offer to freeze.
-  if (origin === "STANDALONE") return null;
-
-  const fromSalesEditable = SALES_EDITABLE_STATUSES.includes(from);
-  const toSalesEditable = SALES_EDITABLE_STATUSES.includes(to);
-  if (fromSalesEditable && !toSalesEditable) return "freeze";
-  if (!fromSalesEditable && toSalesEditable) return "thaw";
-  return null;
 }

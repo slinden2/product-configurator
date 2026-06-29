@@ -13,12 +13,19 @@ const mockMarkOfferRevisionSentWithAudit = vi.fn();
 const mockSubmitOfferRevisionForApprovalWithAudit = vi.fn();
 const mockApproveOfferRevisionWithAudit = vi.fn();
 const mockReturnOfferRevisionToDraftWithAudit = vi.fn();
+const mockAcceptOfferRevisionWithAudit = vi.fn();
+const mockRecordOfferRevisionOutcomeWithAudit = vi.fn();
 const mockRepriceOfferLines = vi.fn();
+const mockLoadValidatedConfiguration = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getOfferWorkingRevision: (...args: unknown[]) =>
     mockGetOfferWorkingRevision(...args),
+  acceptOfferRevisionWithAudit: (...args: unknown[]) =>
+    mockAcceptOfferRevisionWithAudit(...args),
+  recordOfferRevisionOutcomeWithAudit: (...args: unknown[]) =>
+    mockRecordOfferRevisionOutcomeWithAudit(...args),
   updateRevisionDiscountWithAudit: (...args: unknown[]) =>
     mockUpdateRevisionDiscountWithAudit(...args),
   updateRevisionSettingsWithAudit: (...args: unknown[]) =>
@@ -55,6 +62,11 @@ vi.mock("@/lib/offer-revision-pricing", () => ({
   repriceOfferLines: (...args: unknown[]) => mockRepriceOfferLines(...args),
 }));
 
+vi.mock("@/db/load-validated-configuration", () => ({
+  loadValidatedConfiguration: (...args: unknown[]) =>
+    mockLoadValidatedConfiguration(...args),
+}));
+
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 vi.mock("pg", () => ({
@@ -69,8 +81,10 @@ vi.mock("pg", () => ({
 // --- Imports (after mocks) ---
 
 import {
+  acceptRevisionAction,
   approveRevisionAction,
   createRevisionAction,
+  recordRevisionOutcomeAction,
   rejectRevisionAction,
   sendRevisionAction,
   setRevisionDiscountAction,
@@ -526,5 +540,155 @@ describe("createRevisionAction", () => {
     const result = await createRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
     expect(mockCreateOfferRevisionFrom).not.toHaveBeenCalled();
+  });
+});
+
+describe("acceptRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+    });
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+      configIds: [11, 12],
+    });
+    mockLoadValidatedConfiguration.mockResolvedValue({
+      configuration: { name: "C" },
+      status: "DRAFT",
+      origin: "OFFER",
+      waterTanks: [],
+      washBays: [],
+    });
+    mockAcceptOfferRevisionWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("accepts a SENT revision and fans out each line config", async () => {
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    // Each line config snapshot is loaded for the as-sold freeze.
+    expect(mockLoadValidatedConfiguration).toHaveBeenCalledTimes(2);
+    expect(mockAcceptOfferRevisionWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "u1",
+      {
+        11: { configuration: { name: "C" }, waterTanks: [], washBays: [] },
+        12: { configuration: { name: "C" }, waterTanks: [], washBays: [] },
+      },
+      expect.anything(),
+    );
+  });
+
+  test("manager may accept a report's offer (scope enforced by the fetch)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "m1", role: "SALES_MANAGER" });
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the working revision is not SENT", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+    });
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotAccept });
+    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects an empty revision", async () => {
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+      configIds: [],
+    });
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotSendEmpty,
+    });
+    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("propagates an already-accepted QueryError from the helper", async () => {
+    mockAcceptOfferRevisionWithAudit.mockRejectedValue(
+      new QueryError(MSG.offer.alreadyAccepted, 409),
+    );
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.alreadyAccepted,
+    });
+  });
+});
+
+describe("recordRevisionOutcomeAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+    });
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+      configIds: [11],
+    });
+    mockRecordOfferRevisionOutcomeWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("records REJECTED on a SENT revision", async () => {
+    const result = await recordRevisionOutcomeAction(OFFER_ID, "REJECTED");
+    expect(result).toEqual({ success: true });
+    expect(mockRecordOfferRevisionOutcomeWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "u1",
+      "REJECTED",
+      expect.anything(),
+    );
+  });
+
+  test("records EXPIRED on a SENT revision", async () => {
+    const result = await recordRevisionOutcomeAction(OFFER_ID, "EXPIRED");
+    expect(result).toEqual({ success: true });
+    expect(mockRecordOfferRevisionOutcomeWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "u1",
+      "EXPIRED",
+      expect.anything(),
+    );
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await recordRevisionOutcomeAction(OFFER_ID, "REJECTED");
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockRecordOfferRevisionOutcomeWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the working revision is not SENT", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+    });
+    const result = await recordRevisionOutcomeAction(OFFER_ID, "REJECTED");
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotRecordOutcome,
+    });
+    expect(mockRecordOfferRevisionOutcomeWithAudit).not.toHaveBeenCalled();
   });
 });

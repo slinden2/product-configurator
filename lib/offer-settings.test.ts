@@ -5,13 +5,13 @@ import {
 } from "@/lib/offer-installation";
 import {
   computeOfferSummaryExtras,
-  type OfferSnapshotSettings,
+  type OfferDisplaySettings,
   parseOfferSettings,
 } from "@/lib/offer-settings";
 
 function makeSettings(
-  overrides: Partial<OfferSnapshotSettings> = {},
-): OfferSnapshotSettings {
+  overrides: Partial<OfferDisplaySettings> = {},
+): OfferDisplaySettings {
   return {
     show_net_total_only: false,
     transport_amount: 0,

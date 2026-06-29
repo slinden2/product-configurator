@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MSG } from "@/lib/messages";
-import type { OfferSnapshotSettings } from "@/lib/offer-settings";
+import type { OfferDisplaySettings } from "@/lib/offer-settings";
 import type { InstallationItemKind, TransportMode } from "@/types";
 import {
   InstallationItemKindLabels,
@@ -26,7 +26,7 @@ import DiscountInput from "./discount-input";
 
 interface Props {
   initialDiscount: number;
-  initialSettings: OfferSnapshotSettings;
+  initialSettings: OfferDisplaySettings;
   disabled?: boolean;
   /** Persists the discount — a per-config or per-revision server action. */
   onSaveDiscount: (
@@ -34,11 +34,11 @@ interface Props {
   ) => Promise<{ success: boolean; error?: string }>;
   /** Persists the settings — a per-config or per-revision server action. */
   onSaveSettings: (
-    settings: OfferSnapshotSettings,
+    settings: OfferDisplaySettings,
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-function amountDrafts(settings: OfferSnapshotSettings) {
+function amountDrafts(settings: OfferDisplaySettings) {
   return Object.fromEntries(
     settings.installation_items.map((item) => [
       item.kind,
@@ -64,7 +64,7 @@ export default function OfferSettingsCard({
 
   const controlsDisabled = disabled || isPending;
 
-  const persist = (next: OfferSnapshotSettings) => {
+  const persist = (next: OfferDisplaySettings) => {
     setSettings(next);
     startTransition(async () => {
       const result = await onSaveSettings(next);

@@ -1,9 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
+  acceptOfferRevisionWithAudit,
   approveOfferRevisionWithAudit,
-  createOfferRevisionFrom,
   markOfferRevisionSentWithAudit,
   submitOfferRevisionForApprovalWithAudit,
 } from "@/db/queries";
@@ -18,10 +19,7 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
-import {
-  repriceOfferLine,
-  repriceOfferLines,
-} from "@/lib/offer-revision-pricing";
+import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import {
   type ConfigOrigin,
   InstallationItemKinds,
@@ -503,13 +501,15 @@ async function seedDb() {
     .values(InstallationItemKinds.map((kind) => ({ kind, price: "0.00" })))
     .onConflictDoNothing({ target: installationItemSettings.kind });
 
-  // A sample offer with a revision series: Rev 1 SENT (frozen as-quoted) and Rev 2
-  // DRAFT (the working revision, clone-forwarded from Rev 1) — exercises the real
-  // clone-forward + send path so the history UI has browsable data.
-  console.log("🌱 Seeding sample offer (Rev 1 SENT → Rev 2 DRAFT)...");
+  // A sample offer walked through the full lifecycle to ACCEPTED: the agent submits
+  // Rev 1, the manager approves it, the agent sends it, and the customer accepts —
+  // fanning the line config out to SALES_APPROVED with its at-acceptance as-sold freeze
+  // and locking the offer. This leaves an offer-born config in the engineering queue.
+  console.log("🌱 Seeding sample offer (Rev 1 DRAFT → … → ACCEPTED)...");
   const agentId = userIdByEmail.get("agent@itecosrl.com");
   const managerId = userIdByEmail.get("manager@itecosrl.com");
-  if (agentId && managerId && offerConfigId !== undefined) {
+  const adminId = userIdByEmail.get("admin@itecosrl.com");
+  if (agentId && managerId && adminId && offerConfigId !== undefined) {
     const [offer] = await db
       .insert(offers)
       .values({
@@ -539,10 +539,27 @@ async function seedDb() {
       net_price: "0.00",
     });
 
+    // Load the line config's form-shape for the at-acceptance as-sold freeze, the same
+    // way acceptRevisionAction does (pooled read, before the tx). An ADMIN sees all.
+    const adminUser = {
+      id: adminId,
+      role: "ADMIN" as const,
+      initials: "ADM",
+      manager_id: null,
+    };
+    const loaded = await loadValidatedConfiguration(offerConfigId, adminUser);
+    if (!loaded)
+      throw new Error("Seed: offer config not found for as-sold freeze");
+    const asSoldByConfigId = {
+      [offerConfigId]: {
+        configuration: loaded.configuration,
+        waterTanks: loaded.waterTanks,
+        washBays: loaded.washBays,
+      },
+    };
+
     await db.transaction(async (tx) => {
-      // Walk Rev 1 through the real lifecycle: price from the live BOM while DRAFT, the
-      // agent submits it for approval, the manager approves it, then it freezes as SENT.
-      // Clone it forward into an editable Rev 2 and price that too.
+      // Price from the live BOM while DRAFT, submit, approve, send, then accept.
       await repriceOfferLine(offerConfigId, agentId, tx, { audit: false });
       await submitOfferRevisionForApprovalWithAudit(
         offer.id,
@@ -552,14 +569,13 @@ async function seedDb() {
       );
       await approveOfferRevisionWithAudit(offer.id, revision.id, managerId, tx);
       await markOfferRevisionSentWithAudit(offer.id, revision.id, agentId, tx);
-
-      const { configIds } = await createOfferRevisionFrom(
+      await acceptOfferRevisionWithAudit(
         offer.id,
-        1,
+        revision.id,
         agentId,
+        asSoldByConfigId,
         tx,
       );
-      await repriceOfferLines(configIds, agentId, tx, { audit: false });
     });
   }
 }

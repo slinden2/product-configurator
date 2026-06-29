@@ -33,7 +33,6 @@ interface WaterTankFormProps {
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
   hasEngineeringBom?: boolean;
-  hasOfferSnapshot?: boolean;
 }
 
 const WaterTankForm = (props: WaterTankFormProps) => {
@@ -59,7 +58,6 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}
       hasEngineeringBom={props.hasEngineeringBom}
-      hasOfferSnapshot={props.hasOfferSnapshot}
     />
   );
 };

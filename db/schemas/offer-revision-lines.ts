@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   integer,
   jsonb,
   numeric,
@@ -20,6 +22,11 @@ export type NewOfferRevisionLine = typeof offerRevisionLines.$inferInsert;
  *
  * Each revision deep-clones its configurations, so a configuration belongs to exactly one line
  * (enforced by the unique on configuration_id).
+ *
+ * `as_sold_snapshot` / `as_sold_frozen_at` capture the configuration exactly as sold at the
+ * moment the customer accepts this revision (the technical counterpart to the commercial
+ * `pricing_snapshot`). Both sit on the same frozen line so commercial and technical can never
+ * drift. They are written together at acceptance and never cleared (the offer locks).
  */
 export const offerRevisionLines = pgTable(
   "offer_revision_lines",
@@ -41,6 +48,14 @@ export const offerRevisionLines = pgTable(
       scale: 2,
     }),
     pricing_snapshot: jsonb("pricing_snapshot"),
+    // As-sold capture, set at the at-acceptance freeze. as_sold_frozen_at !== null is the
+    // freeze marker; as_sold_snapshot holds the full form-shaped configuration (config +
+    // water tanks + wash bays) as sold.
+    as_sold_frozen_at: timestamp("as_sold_frozen_at", {
+      mode: "date",
+      precision: 3,
+    }),
+    as_sold_snapshot: jsonb("as_sold_snapshot"),
     created_at: timestamp("created_at", { mode: "date", precision: 3 })
       .notNull()
       .defaultNow(),
@@ -49,5 +64,13 @@ export const offerRevisionLines = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [unique().on(table.offer_revision_id, table.position)],
+  (table) => [
+    unique().on(table.offer_revision_id, table.position),
+    // The as-sold freeze marker and capture are set together at acceptance, never one
+    // without the other (mirrors the consistency invariant the old offer_snapshots had).
+    check(
+      "offer_revision_lines_as_sold_consistency",
+      sql`(${table.as_sold_frozen_at} IS NULL) = (${table.as_sold_snapshot} IS NULL)`,
+    ),
+  ],
 ).enableRLS();

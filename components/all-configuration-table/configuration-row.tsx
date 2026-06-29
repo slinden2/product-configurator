@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Edit, Eye, Receipt, ScrollText, Trash2 } from "lucide-react";
+import { Copy, Edit, Eye, ScrollText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { AllConfigurations, UserData } from "@/db/queries";
-import { canManageConfigs, canViewBom, canViewOffer } from "@/lib/access";
+import { canManageConfigs, canViewBom } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 
@@ -173,17 +173,6 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
                 >
                   <ScrollText />
                   Visualizza distinta
-                </Link>
-              </DropdownMenuItem>
-            )}
-            {canViewOffer(user.role) && (
-              <DropdownMenuItem asChild>
-                <Link
-                  href={`/configurazioni/offerta/${configuration.id}`}
-                  aria-label="Visualizza offerta"
-                >
-                  <Receipt />
-                  Visualizza offerta
                 </Link>
               </DropdownMenuItem>
             )}

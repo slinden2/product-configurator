@@ -58,7 +58,6 @@ interface SubRecordFormProps<
   ) => Promise<ActionResult>;
   deleteAction: (parentId: number, id: number) => Promise<ActionResult>;
   hasEngineeringBom?: boolean;
-  hasOfferSnapshot?: boolean;
   // Component to render the specific fields
   FieldsComponent: React.ComponentType;
 }
@@ -86,7 +85,6 @@ const SubRecordForm = <
   editAction,
   deleteAction,
   hasEngineeringBom,
-  hasOfferSnapshot,
   FieldsComponent,
 }: SubRecordFormProps<TData, TFormSchema>) => {
   type FormData = TData;
@@ -189,7 +187,7 @@ const SubRecordForm = <
 
   const handleSaveSubmit = useCallback(
     (values: FormData) => {
-      if (hasEngineeringBom || hasOfferSnapshot) {
+      if (hasEngineeringBom) {
         pendingValuesRef.current = values;
         pendingActionRef.current = "save";
         setShowSaveWarning(true);
@@ -197,7 +195,7 @@ const SubRecordForm = <
       }
       executeSave(values);
     },
-    [hasEngineeringBom, hasOfferSnapshot, executeSave],
+    [hasEngineeringBom, executeSave],
   );
 
   const executeDelete = useCallback(() => {
@@ -240,13 +238,13 @@ const SubRecordForm = <
 
   const handleDeleteConfirm = useCallback(() => {
     setShowDeleteConfirm(false);
-    if (hasEngineeringBom || hasOfferSnapshot) {
+    if (hasEngineeringBom) {
       pendingActionRef.current = "delete";
       setShowSaveWarning(true);
       return;
     }
     executeDelete();
-  }, [hasEngineeringBom, hasOfferSnapshot, executeDelete]);
+  }, [hasEngineeringBom, executeDelete]);
 
   const handleSaveWarningConfirm = useCallback(() => {
     setShowSaveWarning(false);
@@ -363,8 +361,6 @@ const SubRecordForm = <
           pendingActionRef.current = null;
         }}
         onConfirm={handleSaveWarningConfirm}
-        hasEngineeringBom={!!hasEngineeringBom}
-        hasOfferSnapshot={!!hasOfferSnapshot}
       />
     </div>
   );

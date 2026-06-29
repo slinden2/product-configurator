@@ -10,15 +10,15 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import {
-  installationModeEnum,
-  transportModeEnum,
-} from "@/db/schemas/offer-snapshots";
 import { offers } from "@/db/schemas/offers";
 import { userProfiles } from "@/db/schemas/user-profiles";
-import { OfferStatus } from "@/types";
+import { OfferStatus, TransportModes } from "@/types";
 
 export const offerStatusEnum = pgEnum("offer_status", OfferStatus);
+
+// Transport and installation share the same TBD/INCLUDED/SEPARATE value set.
+export const transportModeEnum = pgEnum("transport_mode", TransportModes);
+export const installationModeEnum = pgEnum("installation_mode", TransportModes);
 
 export type OfferRevision = typeof offerRevisions.$inferSelect;
 export type NewOfferRevision = typeof offerRevisions.$inferInsert;
