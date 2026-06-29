@@ -48,11 +48,21 @@ User-facing UI strings are Italian; everything else is English.
 - `lib/messages.ts` — Centralized Italian messages (`MSG` constant)
 - `lib/BOM/` — BOM generation
 
+### Offer / configuration model
+
+Sales work from **offers**; engineers from **configurations**. An offer is a 3-table spine —
+`offers` (header) → `offer_revisions` (per-revision lifecycle + commercial terms) → `offer_revision_lines`
+(one line per config, with pricing + the at-acceptance as-sold freeze). A `configurations` row carries an
+`origin` (`STANDALONE` | `OFFER`); OFFER configs live under a revision until acceptance hands them off into
+the engineering status machine. Full rules: `.claude/rules/workflow.md`.
+
 ### Routing & Pages
 
 - **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`, `resetta-password`
-- **Domain routes:** `configurazioni/` (list), `configurazioni/nuova`, `configurazioni/modifica/[id]`, `configurazioni/bom/[id]`
-- **Admin:** `utenti/` for user management
+- **Landing:** `/` (`app/page.tsx`) redirects by role — SALES → `/offerte`, ENGINEER → `/configurazioni`, ADMIN → dashboard.
+- **Offers (sales):** `offerte/` (list), `offerte/nuova`, `offerte/[id]` (detail + revision workflow). Gated by `canViewOffer` (ENGINEER excluded).
+- **Configurations (engineer/admin technical queue):** `configurazioni/` (list — standalone all-statuses + handed-off offer configs), `configurazioni/nuova`, `configurazioni/modifica/[id]`, `configurazioni/visualizza/[id]`, `configurazioni/bom/[id]`, `configurazioni/marginalita/[id]`. The old `configurazioni/offerta/[id]` route is **retired**.
+- **Admin:** `gestione/utenti/` for user management
 - **Page pattern:** All pages are async server components. Dynamic route params are `Promise<{ id: string }>` — must `await props.params`.
 - **Data fetching:** Server-side in the page component; pass data as props to client components.
 

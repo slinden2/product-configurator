@@ -54,7 +54,11 @@ import type {
   SurchargeKind,
   TransportMode,
 } from "@/types";
-import { OPEN_REVISION_STATUSES } from "@/types";
+import {
+  HANDED_OFF_STATUSES,
+  OPEN_REVISION_STATUSES,
+  PRE_HANDOFF_STATUSES,
+} from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
   ConfigSchema,
@@ -171,8 +175,24 @@ export function configScopeWhere(user: NonNullable<UserData>) {
  */
 export async function canAccessConfiguration(
   user: NonNullable<UserData>,
-  config: { user_id: string },
+  config: {
+    user_id: string;
+    origin: ConfigOrigin;
+    status: ConfigurationStatusType;
+  },
 ): Promise<boolean> {
+  // ENGINEER has no offer access: a pre-handoff OFFER config (DRAFT/IN_SALES_REVIEW)
+  // belongs to the sales workflow and is invisible to engineers, even by direct URL.
+  // Checked before the all-access shortcut since ENGINEER is otherwise all-access.
+  // Once handed off (SALES_APPROVED+) the engineer picks it up like any config.
+  if (
+    user.role === "ENGINEER" &&
+    config.origin === "OFFER" &&
+    PRE_HANDOFF_STATUSES.includes(config.status)
+  ) {
+    return false;
+  }
+
   // All-access roles (ADMIN/ENGINEER/SALES_DIRECTOR) see every configuration.
   if (canAccessAllConfigs(user.role)) {
     return true;
@@ -1273,20 +1293,27 @@ export async function removeOfferLine(
   });
 }
 
-// Gets all configurations for the user if the role is SALES.
-// For ENGINEER and ADMIN, gets all configurations.
-// Pass `origin` to restrict the list to one lifecycle (e.g. the standalone
-// "Technical" list passes "STANDALONE"); omit it to list every origin.
+// Builds the engineer/admin "Technical" config queue: every STANDALONE config
+// (all statuses) plus OFFER-origin configs that have been handed off to
+// engineering (`SALES_APPROVED`+). Pre-handoff offer configs (`DRAFT`/
+// `IN_SALES_REVIEW`) stay in the sales workflow and never surface here.
+// Visibility is further scoped per role via `configScopeWhere`.
 export async function getUserConfigurations(
   user: NonNullable<UserData>,
   page: number = 1,
   pageSize: number = 20,
-  origin?: ConfigOrigin,
 ) {
   const scopeWhere = configScopeWhere(user);
-  const whereClause = origin
-    ? and(scopeWhere, eq(configurations.origin, origin))
-    : scopeWhere;
+  const technicalQueueWhere = or(
+    eq(configurations.origin, "STANDALONE"),
+    and(
+      eq(configurations.origin, "OFFER"),
+      inArray(configurations.status, HANDED_OFF_STATUSES),
+    ),
+  );
+  const whereClause = scopeWhere
+    ? and(scopeWhere, technicalQueueWhere)
+    : technicalQueueWhere;
 
   const [data, countResult] = await Promise.all([
     db.query.configurations.findMany({

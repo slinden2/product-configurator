@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Lock } from "lucide-react";
 import AlertBanner from "@/components/shared/alert-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,11 +11,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { type MarginComparison, MIN_MARGIN_PCT } from "@/lib/margin";
-import { cn, formatDelta, formatEur, formatPct } from "@/lib/utils";
+import {
+  cn,
+  formatDateDDMMYYYYHHMM,
+  formatDelta,
+  formatEur,
+  formatPct,
+} from "@/lib/utils";
 
 interface Props {
   comparison: MarginComparison;
   discountPct: number;
+  /**
+   * When set, the configuration was frozen as-sold at offer acceptance (the
+   * at-acceptance as-sold snapshot). `null` for a config whose offer revision
+   * has not been accepted yet.
+   */
+  asSoldFrozenAt?: Date | null;
 }
 
 /** Red when cost grew (delta > 0), green when it shrank. */
@@ -216,9 +228,24 @@ function TagBreakdownCard({ comparison }: { comparison: MarginComparison }) {
   );
 }
 
-export default function MarginReviewView({ comparison, discountPct }: Props) {
+export default function MarginReviewView({
+  comparison,
+  discountPct,
+  asSoldFrozenAt,
+}: Props) {
   return (
     <div className="space-y-6">
+      {asSoldFrozenAt && (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>
+            Configurazione congelata come venduta il{" "}
+            <span className="font-medium text-foreground">
+              {formatDateDDMMYYYYHHMM(asSoldFrozenAt)}
+            </span>
+          </span>
+        </div>
+      )}
       <SummaryCard comparison={comparison} discountPct={discountPct} />
       <TagBreakdownCard comparison={comparison} />
     </div>

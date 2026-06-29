@@ -25,7 +25,6 @@ const Configurations = async (props: {
     user,
     page,
     PAGE_SIZE,
-    "STANDALONE",
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));

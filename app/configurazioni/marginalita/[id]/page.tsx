@@ -7,6 +7,7 @@ import {
   getOfferLinePricingForConfig,
   getUserData,
 } from "@/db/queries";
+import { canViewMarginReview } from "@/lib/access";
 import { enrichWithCosts } from "@/lib/BOM";
 import { buildMarginComparison, type EbomCostItem } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
@@ -24,6 +25,11 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
 
   const user = await getUserData();
   if (!user) redirect("/login");
+
+  // The margin page exposes cost AND the customer's quoted price together, so it
+  // is restricted to management/system roles (ADMIN/SALES_DIRECTOR). ENGINEER —
+  // who has no offer access — must never reach it, even by direct URL.
+  if (!canViewMarginReview(user.role)) notFound();
 
   const [configuration, linePricing, ebomRows] = await Promise.all([
     getConfiguration(confId),
@@ -99,7 +105,11 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     <div className="space-y-6">
       {header}
 
-      <MarginReviewView comparison={comparison} discountPct={discountPct} />
+      <MarginReviewView
+        comparison={comparison}
+        discountPct={discountPct}
+        asSoldFrozenAt={linePricing?.as_sold_frozen_at ?? null}
+      />
     </div>
   );
 };

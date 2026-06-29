@@ -114,6 +114,30 @@ export const ConfigurationStatus = [
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 
 /**
+ * Config statuses an OFFER-origin configuration reaches only after the owning offer
+ * revision has been accepted and the config has been handed off to engineering. From
+ * `SALES_APPROVED` onward an offer config is governed by the engineering rules, exactly
+ * like a standalone config, and becomes visible in the engineer/admin technical queue.
+ * The complement (`DRAFT`, `IN_SALES_REVIEW`) is the sales-only pre-handoff zone.
+ */
+export const HANDED_OFF_STATUSES: ConfigurationStatusType[] = [
+  "SALES_APPROVED",
+  "IN_TECH_REVIEW",
+  "TECH_APPROVED",
+  "CLOSED",
+];
+
+/**
+ * The sales-only pre-handoff config statuses for an OFFER-origin configuration. While a
+ * config is in this zone, ENGINEER has no access to it (view or edit) — it belongs to the
+ * sales workflow until the offer revision is accepted.
+ */
+export const PRE_HANDOFF_STATUSES: ConfigurationStatusType[] = [
+  "DRAFT",
+  "IN_SALES_REVIEW",
+];
+
+/**
  * Discriminates how a configuration came into being and which lifecycle governs it:
  *
  * - STANDALONE — a pure technical configuration created directly by Engineer/Admin for
