@@ -10,6 +10,9 @@ const mockUpdateRevisionSettingsWithAudit = vi.fn();
 const mockCreateOfferRevisionFrom = vi.fn();
 const mockGetWorkingRevisionForSend = vi.fn();
 const mockMarkOfferRevisionSentWithAudit = vi.fn();
+const mockSubmitOfferRevisionForApprovalWithAudit = vi.fn();
+const mockApproveOfferRevisionWithAudit = vi.fn();
+const mockReturnOfferRevisionToDraftWithAudit = vi.fn();
 const mockRepriceOfferLines = vi.fn();
 
 vi.mock("@/db/queries", () => ({
@@ -26,6 +29,12 @@ vi.mock("@/db/queries", () => ({
     mockGetWorkingRevisionForSend(...args),
   markOfferRevisionSentWithAudit: (...args: unknown[]) =>
     mockMarkOfferRevisionSentWithAudit(...args),
+  submitOfferRevisionForApprovalWithAudit: (...args: unknown[]) =>
+    mockSubmitOfferRevisionForApprovalWithAudit(...args),
+  approveOfferRevisionWithAudit: (...args: unknown[]) =>
+    mockApproveOfferRevisionWithAudit(...args),
+  returnOfferRevisionToDraftWithAudit: (...args: unknown[]) =>
+    mockReturnOfferRevisionToDraftWithAudit(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -60,10 +69,13 @@ vi.mock("pg", () => ({
 // --- Imports (after mocks) ---
 
 import {
+  approveRevisionAction,
   createRevisionAction,
+  rejectRevisionAction,
   sendRevisionAction,
   setRevisionDiscountAction,
   setRevisionSettingsAction,
+  submitRevisionForApprovalAction,
 } from "@/app/actions/offer-revision-actions";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -188,7 +200,7 @@ describe("setRevisionSettingsAction", () => {
   });
 });
 
-describe("sendRevisionAction", () => {
+describe("submitRevisionForApprovalAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
@@ -202,13 +214,12 @@ describe("sendRevisionAction", () => {
       configIds: [11, 12],
     });
     mockRepriceOfferLines.mockResolvedValue(undefined);
-    mockMarkOfferRevisionSentWithAudit.mockResolvedValue(undefined);
+    mockSubmitOfferRevisionForApprovalWithAudit.mockResolvedValue(undefined);
   });
 
-  test("reprices every line then freezes the revision as sent", async () => {
-    const result = await sendRevisionAction(OFFER_ID);
+  test("reprices the lines (last DRAFT moment) then submits for approval", async () => {
+    const result = await submitRevisionForApprovalAction(OFFER_ID);
     expect(result).toEqual({ success: true });
-    expect(mockRepriceOfferLines).toHaveBeenCalledTimes(1);
     expect(mockRepriceOfferLines).toHaveBeenCalledWith(
       [11, 12],
       "u1",
@@ -217,6 +228,195 @@ describe("sendRevisionAction", () => {
         audit: false,
       },
     );
+    expect(mockSubmitOfferRevisionForApprovalWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "u1",
+      {},
+    );
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await submitRevisionForApprovalAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockSubmitOfferRevisionForApprovalWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects a non-DRAFT revision before opening a transaction", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+    });
+    const result = await submitRevisionForApprovalAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotSubmit });
+    expect(mockGetWorkingRevisionForSend).not.toHaveBeenCalled();
+    expect(mockSubmitOfferRevisionForApprovalWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("refuses to submit an empty revision", async () => {
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+      configIds: [],
+    });
+    const result = await submitRevisionForApprovalAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotSendEmpty,
+    });
+    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
+    expect(mockSubmitOfferRevisionForApprovalWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe("approveRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "m1", role: "SALES_MANAGER" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "PENDING_APPROVAL",
+    });
+    mockApproveOfferRevisionWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("a manager approves a pending revision (scope already gated by the fetch)", async () => {
+    const result = await approveRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockApproveOfferRevisionWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "m1",
+      {},
+    );
+  });
+
+  test("a director may approve", async () => {
+    mockGetUserData.mockResolvedValue({ id: "d1", role: "SALES_DIRECTOR" });
+    const result = await approveRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+  });
+
+  test("a SALES agent cannot approve (even own)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    const result = await approveRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.unauthorizedApprove,
+    });
+    expect(mockApproveOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await approveRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockApproveOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("returns notFound when the offer is out of scope", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
+    const result = await approveRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(mockApproveOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the revision is not PENDING_APPROVAL", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+    });
+    const result = await approveRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotApprove });
+    expect(mockApproveOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe("rejectRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "m1", role: "SALES_MANAGER" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "PENDING_APPROVAL",
+    });
+    mockReturnOfferRevisionToDraftWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("a manager hands a pending revision back to DRAFT", async () => {
+    const result = await rejectRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockReturnOfferRevisionToDraftWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "m1",
+      "PENDING_APPROVAL",
+      {},
+    );
+  });
+
+  test("a manager un-approves an APPROVED_TO_SEND revision", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "APPROVED_TO_SEND",
+    });
+    const result = await rejectRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockReturnOfferRevisionToDraftWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "m1",
+      "APPROVED_TO_SEND",
+      {},
+    );
+  });
+
+  test("a SALES agent cannot reject", async () => {
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    const result = await rejectRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.unauthorizedApprove,
+    });
+    expect(mockReturnOfferRevisionToDraftWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the revision is neither pending nor approved", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+    });
+    const result = await rejectRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotReturnToDraft,
+    });
+    expect(mockReturnOfferRevisionToDraftWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe("sendRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "APPROVED_TO_SEND",
+    });
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "APPROVED_TO_SEND",
+      configIds: [11, 12],
+    });
+    mockMarkOfferRevisionSentWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("freezes an approved revision as sent without re-pricing", async () => {
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    // Lines were already priced at submit — send must not re-price.
+    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
     expect(mockMarkOfferRevisionSentWithAudit).toHaveBeenCalledWith(
       OFFER_ID,
       REVISION_ID,
@@ -239,7 +439,18 @@ describe("sendRevisionAction", () => {
     expect(mockGetWorkingRevisionForSend).not.toHaveBeenCalled();
   });
 
-  test("rejects a non-DRAFT working revision", async () => {
+  test("rejects a revision that is not APPROVED_TO_SEND", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+    });
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotSend });
+    expect(mockGetWorkingRevisionForSend).not.toHaveBeenCalled();
+    expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the in-tx read shows it left APPROVED_TO_SEND", async () => {
     mockGetWorkingRevisionForSend.mockResolvedValue({
       id: REVISION_ID,
       status: "SENT",
@@ -247,22 +458,6 @@ describe("sendRevisionAction", () => {
     });
     const result = await sendRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.cannotSend });
-    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
-    expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
-  });
-
-  test("refuses to freeze an empty revision as sent", async () => {
-    mockGetWorkingRevisionForSend.mockResolvedValue({
-      id: REVISION_ID,
-      status: "DRAFT",
-      configIds: [],
-    });
-    const result = await sendRevisionAction(OFFER_ID);
-    expect(result).toEqual({
-      success: false,
-      error: MSG.offer.cannotSendEmpty,
-    });
-    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
     expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
   });
 });

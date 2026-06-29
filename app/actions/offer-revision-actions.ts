@@ -2,18 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
+import { canTransitionRevision } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
+  approveOfferRevisionWithAudit,
   createOfferRevisionFrom,
   getOfferWorkingRevision,
   getUserData,
   getWorkingRevisionForSend,
   markOfferRevisionSentWithAudit,
   QueryError,
+  returnOfferRevisionToDraftWithAudit,
+  submitOfferRevisionForApprovalWithAudit,
+  type TransactionType,
   updateRevisionDiscountWithAudit,
   updateRevisionSettingsWithAudit,
 } from "@/db/queries";
-import { canViewOffer } from "@/lib/access";
+import { canApproveRevision, canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
 import {
@@ -130,36 +135,17 @@ async function authorizeOfferLifecycleAction(offerId: number) {
 }
 
 /**
- * Freezes the offer's working revision as sent: re-prices every line (so its
- * `pricing_snapshot` is the authoritative as-sent figure) then flips the revision to
- * `SENT` with a `sent_at` stamp. Once SENT the two-phase editability gate locks the
- * line configs. Phase 5 inserts the approval states ahead of this; for now it is a
- * direct DRAFT → SENT transition.
+ * Shared tail for the revision lifecycle transitions (submit / approve / reject /
+ * send): runs `txFn` in a single transaction, revalidates the offer detail + list
+ * routes on success, and maps QueryError / DatabaseError / unknown to the standard
+ * Italian error shape. Callers run their own auth + transition-gate checks first.
  */
-export async function sendRevisionAction(offerId: number) {
-  const auth = await authorizeOfferLifecycleAction(offerId);
-  if (!auth.success) return auth;
-  const { user } = auth;
-
+async function runRevisionTransition(
+  offerId: number,
+  txFn: (tx: TransactionType) => Promise<void>,
+) {
   try {
-    await db.transaction(async (tx) => {
-      const working = await getWorkingRevisionForSend(offerId, tx);
-      if (!working) throw new QueryError(MSG.offer.notFound, 404);
-      if (working.status !== "DRAFT") {
-        throw new QueryError(MSG.offer.cannotSend, 403);
-      }
-      // An empty revision must not freeze as the immutable as-sent record — the UI
-      // hides Send when there are no lines, but the action is the real boundary
-      // (direct invocation, or the last line removed in another tab mid-send).
-      if (working.configIds.length === 0) {
-        throw new QueryError(MSG.offer.cannotSendEmpty, 422);
-      }
-
-      // Re-price while still DRAFT — repricing no-ops once frozen.
-      await repriceOfferLines(working.configIds, user.id, tx, { audit: false });
-
-      await markOfferRevisionSentWithAudit(offerId, working.id, user.id, tx);
-    });
+    await db.transaction(txFn);
 
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
@@ -173,6 +159,127 @@ export async function sendRevisionAction(offerId: number) {
     }
     return { success: false as const, error: MSG.db.unknown };
   }
+}
+
+/**
+ * Submits the working revision for manager approval (DRAFT → PENDING_APPROVAL). This is
+ * the last DRAFT moment, so every line is re-priced here (its `pricing_snapshot` becomes
+ * the as-submitted figure the manager reviews and that is later sent). Once it leaves
+ * DRAFT the two-phase editability gate locks the line configs until a manager approves
+ * it or hands it back.
+ */
+export async function submitRevisionForApprovalAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canTransitionRevision(user.role, revision.status, "PENDING_APPROVAL")) {
+    return { success: false as const, error: MSG.offer.cannotSubmit };
+  }
+
+  return runRevisionTransition(offerId, async (tx) => {
+    const working = await getWorkingRevisionForSend(offerId, tx);
+    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (working.status !== "DRAFT") {
+      throw new QueryError(MSG.offer.cannotSubmit, 403);
+    }
+    // An empty revision must not enter approval — it would freeze empty at send. The
+    // UI hides Submit with no lines, but the action is the real boundary.
+    if (working.configIds.length === 0) {
+      throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+    }
+
+    // Re-price while still DRAFT — repricing no-ops once it leaves DRAFT.
+    await repriceOfferLines(working.configIds, user.id, tx, { audit: false });
+
+    await submitOfferRevisionForApprovalWithAudit(
+      offerId,
+      working.id,
+      user.id,
+      tx,
+    );
+  });
+}
+
+/**
+ * Manager approval of a revision for send (PENDING_APPROVAL → APPROVED_TO_SEND),
+ * stamping `approved_by` / `approved_at`. Requires a management role
+ * ({@link canApproveRevision}); scope (manager → own + direct reports) is already
+ * enforced by `authorizeOfferLifecycleAction` via `canAccessOffer`, so self-approval
+ * within scope is allowed.
+ */
+export async function approveRevisionAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canApproveRevision(user.role)) {
+    return { success: false as const, error: MSG.offer.unauthorizedApprove };
+  }
+  if (!canTransitionRevision(user.role, revision.status, "APPROVED_TO_SEND")) {
+    return { success: false as const, error: MSG.offer.cannotApprove };
+  }
+
+  return runRevisionTransition(offerId, async (tx) => {
+    await approveOfferRevisionWithAudit(offerId, revision.id, user.id, tx);
+  });
+}
+
+/**
+ * Returns a revision to DRAFT — a manager hand-back from PENDING_APPROVAL, or an
+ * un-approve from APPROVED_TO_SEND. Clears `approved_by` / `approved_at`; the line
+ * configs unlock for the agent to revise and re-submit. Requires a management role.
+ */
+export async function rejectRevisionAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canApproveRevision(user.role)) {
+    return { success: false as const, error: MSG.offer.unauthorizedApprove };
+  }
+  const from = revision.status;
+  if (from !== "PENDING_APPROVAL" && from !== "APPROVED_TO_SEND") {
+    return { success: false as const, error: MSG.offer.cannotReturnToDraft };
+  }
+  if (!canTransitionRevision(user.role, from, "DRAFT")) {
+    return { success: false as const, error: MSG.offer.cannotReturnToDraft };
+  }
+
+  return runRevisionTransition(offerId, async (tx) => {
+    await returnOfferRevisionToDraftWithAudit(
+      offerId,
+      revision.id,
+      user.id,
+      from,
+      tx,
+    );
+  });
+}
+
+/**
+ * Freezes an approved revision as sent (APPROVED_TO_SEND → SENT) with a `sent_at` stamp.
+ * The lines were already re-priced at submit, so there is no re-pricing here. Once SENT
+ * the two-phase editability gate keeps the line configs locked.
+ */
+export async function sendRevisionAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canTransitionRevision(user.role, revision.status, "SENT")) {
+    return { success: false as const, error: MSG.offer.cannotSend };
+  }
+
+  return runRevisionTransition(offerId, async (tx) => {
+    const working = await getWorkingRevisionForSend(offerId, tx);
+    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (working.status !== "APPROVED_TO_SEND") {
+      throw new QueryError(MSG.offer.cannotSend, 403);
+    }
+
+    await markOfferRevisionSentWithAudit(offerId, working.id, user.id, tx);
+  });
 }
 
 /**

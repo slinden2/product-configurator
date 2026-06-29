@@ -13,12 +13,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
-import { OfferStatusLabels } from "@/types";
+import { canApproveRevision } from "@/lib/access";
+import { OfferStatusLabels, OPEN_REVISION_STATUSES } from "@/types";
+import ApproveRevisionButton from "./approve-revision-button";
 import CreateRevisionButton from "./create-revision-button";
 import QuoteView from "./quote-view";
+import RejectRevisionButton from "./reject-revision-button";
 import RemoveLineButton from "./remove-line-button";
 import RevisionHistory from "./revision-history";
 import SendRevisionButton from "./send-revision-button";
+import SubmitForApprovalButton from "./submit-for-approval-button";
 
 interface OfferDetailProps {
   params: Promise<{ id: string }>;
@@ -41,9 +45,13 @@ const OfferDetail = async (props: OfferDetailProps) => {
   const revision = offer.revisions[0];
   // Offer lines are editable only while the working revision is DRAFT.
   const editable = revision?.status === "DRAFT";
-  // A new revision can be cloned forward only once the working revision is frozen —
-  // one editable working draft at a time.
-  const canCreateRevision = !!revision && revision.status !== "DRAFT";
+  // A new revision can be cloned forward only once the working revision has been sent
+  // (left the open working states) — one open working revision at a time.
+  const canCreateRevision =
+    !!revision && !OPEN_REVISION_STATUSES.includes(revision.status);
+  // Approve / reject / un-approve are management-only (scope already enforced by the
+  // scoped fetch above).
+  const canApprove = canApproveRevision(user.role);
   const lines = revision?.lines ?? [];
 
   return (
@@ -66,12 +74,26 @@ const OfferDetail = async (props: OfferDetailProps) => {
           )}
         </div>
         {revision && (
-          <div className="mt-4 flex items-center gap-3 sm:mt-0 sm:ml-auto">
+          <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-0 sm:ml-auto">
             <span className="text-sm text-muted-foreground">
               Rev {revision.revision_no} · {OfferStatusLabels[revision.status]}
             </span>
-            {editable && lines.length > 0 && (
-              <SendRevisionButton offerId={offer.id} />
+            {revision.status === "DRAFT" && lines.length > 0 && (
+              <SubmitForApprovalButton offerId={offer.id} />
+            )}
+            {revision.status === "PENDING_APPROVAL" && canApprove && (
+              <>
+                <ApproveRevisionButton offerId={offer.id} />
+                <RejectRevisionButton offerId={offer.id} mode="reject" />
+              </>
+            )}
+            {revision.status === "APPROVED_TO_SEND" && (
+              <>
+                <SendRevisionButton offerId={offer.id} />
+                {canApprove && (
+                  <RejectRevisionButton offerId={offer.id} mode="unapprove" />
+                )}
+              </>
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
           </div>

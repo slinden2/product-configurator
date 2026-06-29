@@ -2,8 +2,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  approveOfferRevisionWithAudit,
   createOfferRevisionFrom,
   markOfferRevisionSentWithAudit,
+  submitOfferRevisionForApprovalWithAudit,
 } from "@/db/queries";
 import {
   configurations,
@@ -506,7 +508,8 @@ async function seedDb() {
   // clone-forward + send path so the history UI has browsable data.
   console.log("🌱 Seeding sample offer (Rev 1 SENT → Rev 2 DRAFT)...");
   const agentId = userIdByEmail.get("agent@itecosrl.com");
-  if (agentId && offerConfigId !== undefined) {
+  const managerId = userIdByEmail.get("manager@itecosrl.com");
+  if (agentId && managerId && offerConfigId !== undefined) {
     const [offer] = await db
       .insert(offers)
       .values({
@@ -537,9 +540,17 @@ async function seedDb() {
     });
 
     await db.transaction(async (tx) => {
-      // Price Rev 1 from the live BOM, freeze it as SENT, then clone it forward into
-      // an editable Rev 2 and price that too.
+      // Walk Rev 1 through the real lifecycle: price from the live BOM while DRAFT, the
+      // agent submits it for approval, the manager approves it, then it freezes as SENT.
+      // Clone it forward into an editable Rev 2 and price that too.
       await repriceOfferLine(offerConfigId, agentId, tx, { audit: false });
+      await submitOfferRevisionForApprovalWithAudit(
+        offer.id,
+        revision.id,
+        agentId,
+        tx,
+      );
+      await approveOfferRevisionWithAudit(offer.id, revision.id, managerId, tx);
       await markOfferRevisionSentWithAudit(offer.id, revision.id, agentId, tx);
 
       const { configIds } = await createOfferRevisionFrom(

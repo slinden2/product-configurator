@@ -76,6 +76,9 @@ export const MSG = {
     offerLineCreated: "Configurazione aggiunta all'offerta.",
     offerLineRemoved: "Configurazione rimossa dall'offerta.",
     offerRevisionSent: "Revisione inviata.",
+    offerRevisionSubmitted: "Revisione inviata in approvazione.",
+    offerRevisionApproved: "Revisione approvata per l'invio.",
+    offerRevisionReturnedToDraft: "Revisione riportata in bozza.",
     offerRevisionCreated: "Nuova revisione creata.",
     configDeleted: "Configurazione eliminata con successo.",
     configDuplicated: "Configurazione duplicata.",
@@ -223,11 +226,26 @@ export const MSG = {
       "Sconto non valido (deve essere tra 0% e 40%, multiplo di 0,5%).",
     invalidSettings: "Impostazioni offerta non valide.",
     generateError: "Errore durante la generazione dell'offerta.",
-    cannotSend: "Solo una revisione in bozza può essere inviata.",
+    cannotSend: "Solo una revisione approvata per l'invio può essere inviata.",
     cannotSendEmpty:
       "Aggiungi almeno una configurazione prima di inviare la revisione.",
+    cannotSubmit:
+      "Solo una revisione in bozza può essere inviata in approvazione.",
+    cannotApprove: "Solo una revisione in approvazione può essere approvata.",
+    cannotReturnToDraft:
+      "Solo una revisione in approvazione o approvata può essere riportata in bozza.",
+    unauthorizedApprove:
+      "Solo i responsabili vendite, i direttori vendite e gli ADMIN possono approvare le revisioni.",
     workingRevisionExists:
-      "Esiste già una revisione di lavoro in bozza. Inviala prima di crearne una nuova.",
+      "Esiste già una revisione di lavoro non ancora inviata. Completane l'invio prima di crearne una nuova.",
+    submitConfirm:
+      "Inviare questa revisione in approvazione? Le configurazioni si bloccheranno finché un responsabile non la approva o la riporta in bozza.",
+    approveConfirm:
+      "Approvare questa revisione per l'invio? Potrà poi essere inviata al cliente.",
+    rejectConfirm:
+      "Riportare questa revisione in bozza? L'agente potrà modificarla e reinviarla in approvazione.",
+    unapproveConfirm:
+      "Revocare l'approvazione e riportare la revisione in bozza? Le configurazioni torneranno modificabili.",
     sendConfirm:
       "Inviare questa revisione? I prezzi verranno congelati e le configurazioni non saranno più modificabili.",
     createRevisionConfirm:

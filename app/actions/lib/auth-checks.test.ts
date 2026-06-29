@@ -1,10 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
   canTransition,
+  canTransitionRevision,
   classifyOfferFreezeTransition,
   isEditable,
 } from "@/app/actions/lib/auth-checks";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, OfferStatusType, Role } from "@/types";
 
 describe("isEditable", () => {
   describe("SALES_APPROVED, TECH_APPROVED and CLOSED are never editable", () => {
@@ -69,6 +70,18 @@ describe("isEditable", () => {
       roles,
     )("%s cannot edit DRAFT when the revision is not DRAFT (SENT)", (role) => {
       expect(isEditable("DRAFT", role, "OFFER", "SENT")).toBe(false);
+    });
+
+    // The approval states lock the line configs exactly like SENT does.
+    test.each(
+      roles,
+    )("%s cannot edit DRAFT when the revision is PENDING_APPROVAL or APPROVED_TO_SEND", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER", "PENDING_APPROVAL")).toBe(
+        false,
+      );
+      expect(isEditable("DRAFT", role, "OFFER", "APPROVED_TO_SEND")).toBe(
+        false,
+      );
     });
 
     test.each(
@@ -389,6 +402,105 @@ describe("classifyOfferFreezeTransition", () => {
       ConfigurationStatusType,
     ][])("returns null for %s -> %s", (from, to) => {
       expect(classifyOfferFreezeTransition(from, to, "STANDALONE")).toBeNull();
+    });
+  });
+});
+
+describe("canTransitionRevision", () => {
+  const management: Role[] = ["SALES_MANAGER", "SALES_DIRECTOR", "ADMIN"];
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+    "ADMIN",
+  ] as const)("identity transition is allowed for offer-access role %s", (role) => {
+    expect(canTransitionRevision(role, "DRAFT", "DRAFT")).toBe(true);
+  });
+
+  test("ENGINEER (no offer access) is rejected even on the identity edge", () => {
+    expect(canTransitionRevision("ENGINEER", "DRAFT", "DRAFT")).toBe(false);
+  });
+
+  describe("DRAFT -> PENDING_APPROVAL (submit)", () => {
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s (offer-access) may submit", (role) => {
+      expect(canTransitionRevision(role, "DRAFT", "PENDING_APPROVAL")).toBe(
+        true,
+      );
+    });
+
+    test("ENGINEER may not submit", () => {
+      expect(
+        canTransitionRevision("ENGINEER", "DRAFT", "PENDING_APPROVAL"),
+      ).toBe(false);
+    });
+  });
+
+  describe("PENDING_APPROVAL -> APPROVED_TO_SEND (approve)", () => {
+    test.each(management)("%s may approve", (role) => {
+      expect(
+        canTransitionRevision(role, "PENDING_APPROVAL", "APPROVED_TO_SEND"),
+      ).toBe(true);
+    });
+
+    test.each(["SALES", "ENGINEER"] as const)("%s may not approve", (role) => {
+      expect(
+        canTransitionRevision(role, "PENDING_APPROVAL", "APPROVED_TO_SEND"),
+      ).toBe(false);
+    });
+  });
+
+  describe("return to DRAFT (reject / un-approve) is management-only", () => {
+    test.each(management)("%s may hand back and un-approve", (role) => {
+      expect(canTransitionRevision(role, "PENDING_APPROVAL", "DRAFT")).toBe(
+        true,
+      );
+      expect(canTransitionRevision(role, "APPROVED_TO_SEND", "DRAFT")).toBe(
+        true,
+      );
+    });
+
+    test("SALES cannot pull back its own submission", () => {
+      expect(canTransitionRevision("SALES", "PENDING_APPROVAL", "DRAFT")).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("APPROVED_TO_SEND -> SENT (send)", () => {
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s (offer-access) may send", (role) => {
+      expect(canTransitionRevision(role, "APPROVED_TO_SEND", "SENT")).toBe(
+        true,
+      );
+    });
+
+    test("ENGINEER may not send", () => {
+      expect(
+        canTransitionRevision("ENGINEER", "APPROVED_TO_SEND", "SENT"),
+      ).toBe(false);
+    });
+  });
+
+  describe("unsupported edges fail closed", () => {
+    const badEdges: [OfferStatusType, OfferStatusType][] = [
+      ["DRAFT", "APPROVED_TO_SEND"],
+      ["DRAFT", "SENT"],
+      ["PENDING_APPROVAL", "SENT"],
+      ["SENT", "DRAFT"],
+      ["SENT", "ACCEPTED"],
+    ];
+    test.each(badEdges)("ADMIN cannot jump %s -> %s", (from, to) => {
+      expect(canTransitionRevision("ADMIN", from, to)).toBe(false);
     });
   });
 });

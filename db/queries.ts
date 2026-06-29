@@ -59,6 +59,7 @@ import type {
   SurchargeKind,
   TransportMode,
 } from "@/types";
+import { OPEN_REVISION_STATUSES } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import type {
   ConfigSchema,
@@ -704,8 +705,10 @@ export async function createOfferRevisionFrom(
 
   const latest = offer.revisions[0];
   if (!latest) throw new QueryError(MSG.offer.notFound, 404);
-  // Only one editable working revision at a time: the latest must already be frozen.
-  if (latest.status === "DRAFT") {
+  // Only one open working revision at a time: a new revision can be cloned forward only
+  // once the latest has been sent (or otherwise closed). DRAFT/PENDING_APPROVAL/
+  // APPROVED_TO_SEND are all still the active working revision.
+  if (OPEN_REVISION_STATUSES.includes(latest.status)) {
     throw new QueryError(MSG.offer.workingRevisionExists, 409);
   }
 
@@ -835,10 +838,146 @@ export async function getWorkingRevisionForSend(
 }
 
 /**
- * Freezes a working revision as sent: guards it is still DRAFT, sets `status = "SENT"`
- * and `sent_at`, and audits the transition. Re-pricing of the lines (so their
- * `pricing_snapshot` is the authoritative as-sent figure) must already have run in the
- * same transaction — once SENT, `repriceOfferLine` no-ops. Audited in the caller's tx.
+ * Submits a working revision for manager approval: guards it is still DRAFT and
+ * non-empty, flips `status = "PENDING_APPROVAL"`, and audits the transition. The lines
+ * must already have been re-priced in the same transaction (submit is the last DRAFT
+ * moment — once it leaves DRAFT, `repriceOfferLine` no-ops, so the `pricing_snapshot`
+ * the manager reviews is the as-submitted figure). Audited in the caller's tx.
+ */
+export async function submitOfferRevisionForApprovalWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  tx: TransactionType,
+): Promise<void> {
+  // An empty revision must never enter approval — it would freeze as an empty as-sent
+  // record at send. Same invariant as the send freeze, enforced here at the entry gate.
+  const [lineCount] = await tx
+    .select({ count: sql<number>`count(*)` })
+    .from(offerRevisionLines)
+    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
+  if (Number(lineCount?.count ?? 0) === 0) {
+    throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+  }
+
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({ status: "PENDING_APPROVAL", updated_at: new Date() })
+    .where(
+      and(
+        eq(offerRevisions.id, revisionId),
+        eq(offerRevisions.status, "DRAFT"),
+      ),
+    )
+    .returning({ id: offerRevisions.id });
+
+  // No row updated ⇒ the revision left DRAFT under us (concurrent submit/send).
+  if (!updated) throw new QueryError(MSG.offer.cannotSubmit, 403);
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_SUBMIT",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId },
+    },
+    tx,
+  );
+}
+
+/**
+ * Approves a revision for send: guards it is PENDING_APPROVAL, flips
+ * `status = "APPROVED_TO_SEND"` and stamps `approved_by` / `approved_at`, and audits
+ * the transition. The acting user's approval authority (management role + scope) is
+ * checked by the caller. Audited in the caller's tx.
+ */
+export async function approveOfferRevisionWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  tx: TransactionType,
+): Promise<void> {
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({
+      status: "APPROVED_TO_SEND",
+      approved_by: userId,
+      approved_at: new Date(),
+      updated_at: new Date(),
+    })
+    .where(
+      and(
+        eq(offerRevisions.id, revisionId),
+        eq(offerRevisions.status, "PENDING_APPROVAL"),
+      ),
+    )
+    .returning({ id: offerRevisions.id });
+
+  // No row updated ⇒ the revision left PENDING_APPROVAL under us.
+  if (!updated) throw new QueryError(MSG.offer.cannotApprove, 403);
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_APPROVE",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId },
+    },
+    tx,
+  );
+}
+
+/**
+ * Returns a revision to DRAFT — a manager hand-back (from PENDING_APPROVAL) or
+ * un-approve (from APPROVED_TO_SEND). Guards the current status matches `fromStatus`,
+ * clears `approved_by` / `approved_at`, and audits the transition. Once back in DRAFT
+ * the line configs unlock (the two-phase editability gate). Audited in the caller's tx.
+ */
+export async function returnOfferRevisionToDraftWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  fromStatus: "PENDING_APPROVAL" | "APPROVED_TO_SEND",
+  tx: TransactionType,
+): Promise<void> {
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({
+      status: "DRAFT",
+      approved_by: null,
+      approved_at: null,
+      updated_at: new Date(),
+    })
+    .where(
+      and(
+        eq(offerRevisions.id, revisionId),
+        eq(offerRevisions.status, fromStatus),
+      ),
+    )
+    .returning({ id: offerRevisions.id });
+
+  // No row updated ⇒ the revision moved off `fromStatus` under us.
+  if (!updated) throw new QueryError(MSG.offer.cannotReturnToDraft, 403);
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_REJECT",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId, from: fromStatus },
+    },
+    tx,
+  );
+}
+
+/**
+ * Freezes an approved revision as sent: guards it is APPROVED_TO_SEND and non-empty,
+ * sets `status = "SENT"` and `sent_at`, and audits the transition. The lines were
+ * already re-priced at submit (the last DRAFT moment), so no re-pricing happens here —
+ * `repriceOfferLine` no-ops once a revision leaves DRAFT. Audited in the caller's tx.
  */
 export async function markOfferRevisionSentWithAudit(
   offerId: number,
@@ -848,7 +987,7 @@ export async function markOfferRevisionSentWithAudit(
 ): Promise<void> {
   // An empty revision must never freeze as the immutable as-sent record. The guard
   // lives in the freeze primitive itself — not only in the send action — so every
-  // caller (seed, future approval flows) is held to it.
+  // caller (seed, approval flow) is held to it.
   const [lineCount] = await tx
     .select({ count: sql<number>`count(*)` })
     .from(offerRevisionLines)
@@ -863,12 +1002,12 @@ export async function markOfferRevisionSentWithAudit(
     .where(
       and(
         eq(offerRevisions.id, revisionId),
-        eq(offerRevisions.status, "DRAFT"),
+        eq(offerRevisions.status, "APPROVED_TO_SEND"),
       ),
     )
     .returning({ id: offerRevisions.id });
 
-  // No row updated ⇒ the revision moved out of DRAFT under us (concurrent send).
+  // No row updated ⇒ the revision moved out of APPROVED_TO_SEND under us.
   if (!updated) throw new QueryError(MSG.offer.cannotSend, 403);
 
   await insertActivityLog(

@@ -175,6 +175,54 @@ export function canTransition(
 }
 
 /**
+ * Whether a role may move an offer **revision** from one lifecycle status to
+ * another. Pure role × edge logic — ownership/scope (manager → own + direct
+ * reports) is enforced separately by canAccessOffer (db/queries.ts), and the
+ * management-only approval capability by canApproveRevision (lib/access.ts).
+ *
+ * Lifecycle this phase (Phase 5):
+ *   DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT
+ * plus manager hand-back (PENDING_APPROVAL → DRAFT) and un-approve
+ * (APPROVED_TO_SEND → DRAFT). The post-SENT customer outcomes
+ * (ACCEPTED/REJECTED/EXPIRED) are out of scope here.
+ *
+ * Rules:
+ * - DRAFT → PENDING_APPROVAL (submit): any offer-access role (SALES on own).
+ * - PENDING_APPROVAL → APPROVED_TO_SEND (approve): management roles only.
+ * - PENDING_APPROVAL → DRAFT (reject / hand-back): management roles only. SALES
+ *   cannot pull back its own submission — mirrors the config IN_SALES_REVIEW gate.
+ * - APPROVED_TO_SEND → DRAFT (un-approve): management roles only.
+ * - APPROVED_TO_SEND → SENT (send): any offer-access role.
+ *
+ * Fails closed for ENGINEER (no offer access) on every edge, the identity edge
+ * included — a no-op is not a licence for a role with no authority over offers.
+ */
+export function canTransitionRevision(
+  role: Role,
+  from: OfferStatusType,
+  to: OfferStatusType,
+): boolean {
+  const isManagement =
+    role === "SALES_MANAGER" || role === "SALES_DIRECTOR" || role === "ADMIN";
+  const hasOfferAccess = isManagement || role === "SALES";
+
+  // ENGINEER (and any non-offer role) never acts on offer revisions, not even a
+  // same-status no-op. Gate here so the identity short-circuit can't fail open.
+  if (!hasOfferAccess) return false;
+
+  if (from === to) return true;
+
+  if (from === "DRAFT" && to === "PENDING_APPROVAL") return true;
+  if (from === "PENDING_APPROVAL" && to === "APPROVED_TO_SEND")
+    return isManagement;
+  if (from === "PENDING_APPROVAL" && to === "DRAFT") return isManagement;
+  if (from === "APPROVED_TO_SEND" && to === "DRAFT") return isManagement;
+  if (from === "APPROVED_TO_SEND" && to === "SENT") return true;
+
+  return false;
+}
+
+/**
  * Statuses in which the sales side can still edit the configuration and its
  * offer. Everything else is the "frozen zone" where the offer is the immutable
  * as-sold snapshot.

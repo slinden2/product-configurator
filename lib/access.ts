@@ -48,6 +48,15 @@ export const canViewOffer = (role: Role): boolean =>
   SALES_ROLES.includes(role) || role === "ADMIN";
 
 /**
+ * Roles allowed to approve an offer revision for send (and to reject / un-approve it
+ * back to DRAFT). Sales agents capture and submit offers but cannot approve their own —
+ * approval is a management gate. Scope (manager → own + direct reports) is enforced
+ * separately by {@link canAccessOffer}; self-approval within scope is allowed.
+ */
+export const canApproveRevision = (role: Role): boolean =>
+  role === "SALES_MANAGER" || role === "SALES_DIRECTOR" || role === "ADMIN";
+
+/**
  * Offer-side equivalent of {@link canAccessAllConfigs}: roles that see every offer regardless of
  * ownership. Note this deliberately EXCLUDES ENGINEER (who has no offer access at all), so it
  * cannot reuse `ALL_ACCESS_ROLES`.

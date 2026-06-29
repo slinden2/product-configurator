@@ -175,6 +175,9 @@ export const ActivityActions = [
   "OFFER_REVISION_DISCOUNT_SET",
   "OFFER_REVISION_SETTINGS_SET",
   "OFFER_REVISION_CREATE",
+  "OFFER_REVISION_SUBMIT",
+  "OFFER_REVISION_APPROVE",
+  "OFFER_REVISION_REJECT",
   "OFFER_REVISION_SEND",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
@@ -213,6 +216,9 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_REVISION_DISCOUNT_SET: "Impostazione sconto revisione offerta",
   OFFER_REVISION_SETTINGS_SET: "Impostazione opzioni revisione offerta",
   OFFER_REVISION_CREATE: "Creazione revisione offerta",
+  OFFER_REVISION_SUBMIT: "Invio revisione in approvazione",
+  OFFER_REVISION_APPROVE: "Approvazione revisione offerta",
+  OFFER_REVISION_REJECT: "Riporto revisione offerta in bozza",
   OFFER_REVISION_SEND: "Invio revisione offerta",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
@@ -255,6 +261,18 @@ export const OfferStatusLabels: Record<OfferStatusType, string> = {
   REJECTED: "Rifiutata",
   EXPIRED: "Scaduta",
 };
+
+/**
+ * Lifecycle statuses where a revision is still the **active working revision** — not yet
+ * sent. The clone-forward "next revision" can only be created once the latest revision
+ * has left these states (one open working revision at a time), and the line configs are
+ * locked for editing in all of them except DRAFT.
+ */
+export const OPEN_REVISION_STATUSES: OfferStatusType[] = [
+  "DRAFT",
+  "PENDING_APPROVAL",
+  "APPROVED_TO_SEND",
+];
 
 export const BomTags = [
   "FRAME",
