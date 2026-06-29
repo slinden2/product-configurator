@@ -150,6 +150,22 @@ describe("canAccessConfiguration — ENGINEER offer hand-off gate", () => {
       canAccessConfiguration(makeUser("SALES"), makeConfig("OFFER", "DRAFT")),
     ).resolves.toBe(false);
   });
+
+  test("SALES_MANAGER scope additionally requires the report to be SALES", async () => {
+    mockFindFirst.mockResolvedValue({ id: "report" });
+    await canAccessConfiguration(
+      makeUser("SALES_MANAGER", "mgr"),
+      makeConfig("STANDALONE", "DRAFT", "report"),
+    );
+
+    // Defense-in-depth: the report-lookup must filter on role = SALES so a stale
+    // manager_id on a non-SALES profile can never pass the single-record gate.
+    const where = mockFindFirst.mock.calls[0][0].where;
+    const sql = renderSql(where);
+    const params = renderParams(where);
+    expect(sql).toContain('"user_profiles"."role"');
+    expect(params).toContain("SALES");
+  });
 });
 
 describe("getUserConfigurations — technical queue filter", () => {

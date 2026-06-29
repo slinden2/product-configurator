@@ -158,7 +158,13 @@ export function configScopeWhere(user: NonNullable<UserData>) {
         .from(userProfiles)
         .where(
           or(
-            eq(userProfiles.manager_id, user.id),
+            // Defense-in-depth: a direct report only counts while it is still a
+            // SALES profile, so a stale manager_id on a non-SALES user never
+            // leaks that user's configs into this manager's scope.
+            and(
+              eq(userProfiles.manager_id, user.id),
+              eq(userProfiles.role, "SALES"),
+            ),
             eq(userProfiles.id, user.id),
           ),
         ),
@@ -201,11 +207,14 @@ export async function canAccessConfiguration(
     return true;
   }
   // SALES_MANAGER: in scope only if the config owner reports to this manager.
+  // Mirrors configScopeWhere — the `role = SALES` filter is the same
+  // defense-in-depth guard against a stale manager_id on a non-SALES profile.
   if (user.role === "SALES_MANAGER") {
     const report = await db.query.userProfiles.findFirst({
       where: and(
         eq(userProfiles.id, config.user_id),
         eq(userProfiles.manager_id, user.id),
+        eq(userProfiles.role, "SALES"),
       ),
       columns: { id: true },
     });
@@ -2564,12 +2573,43 @@ export async function assignManagerWithAudit(data: {
   changedBy: string;
 }): Promise<void> {
   await db.transaction(async (tx) => {
+    // Re-read AND lock the target row inside the transaction. Selecting `role`
+    // here (not just `manager_id`) and locking with `FOR UPDATE` closes the
+    // TOCTOU window: a concurrent `changeUserRoleWithAudit` UPDATE on this row
+    // blocks until we commit, so the role invariant validated below still holds
+    // at the moment of the write.
     const [targetRow] = await tx
-      .select({ id: userProfiles.id, manager_id: userProfiles.manager_id })
+      .select({
+        id: userProfiles.id,
+        role: userProfiles.role,
+        manager_id: userProfiles.manager_id,
+      })
       .from(userProfiles)
-      .where(eq(userProfiles.id, data.userId));
+      .where(eq(userProfiles.id, data.userId))
+      .for("update");
 
     if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+
+    // Only SALES agents report to a manager. Re-validate inside the locked
+    // transaction so a manager_id can never land on a non-SALES profile and
+    // leak that user's configs into a manager's scope.
+    if (targetRow.role !== "SALES") {
+      throw new QueryError(MSG.users.invalidManager, 400);
+    }
+
+    // The manager must still exist and be a SALES_MANAGER at write time; lock it
+    // too so a concurrent demotion cannot interleave.
+    if (data.managerId !== null) {
+      const [managerRow] = await tx
+        .select({ id: userProfiles.id, role: userProfiles.role })
+        .from(userProfiles)
+        .where(eq(userProfiles.id, data.managerId))
+        .for("update");
+
+      if (!managerRow || managerRow.role !== "SALES_MANAGER") {
+        throw new QueryError(MSG.users.invalidManager, 400);
+      }
+    }
 
     await tx
       .update(userProfiles)
