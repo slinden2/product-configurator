@@ -1,5 +1,10 @@
 import { isEditable } from "@/app/actions/lib/auth-checks";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 
 /** Sales-side roles that capture or review offers. */
 export const SALES_ROLES: Role[] = ["SALES", "SALES_MANAGER", "SALES_DIRECTOR"];
@@ -31,8 +36,35 @@ export const canManageConfigs = (role: Role): boolean =>
 export const canViewBom = (role: Role): boolean =>
   role === "ENGINEER" || role === "ADMIN";
 
+/**
+ * Roles that own the standalone (pure technical) configuration area: the
+ * "Technical" list, creation, and the engineering lifecycle. Sales roles work
+ * from offers instead and never see standalone configs.
+ */
+export const canManageStandaloneConfigs = (role: Role): boolean =>
+  role === "ENGINEER" || role === "ADMIN";
+
 export const canViewOffer = (role: Role): boolean =>
   SALES_ROLES.includes(role) || role === "ADMIN";
+
+/**
+ * Roles allowed to approve an offer revision for send (and to reject / un-approve it
+ * back to DRAFT). Sales agents capture and submit offers but cannot approve their own —
+ * approval is a management gate. Scope (manager → own + direct reports) is enforced
+ * separately by {@link canAccessOffer}; self-approval within scope is allowed.
+ */
+export const canApproveRevision = (role: Role): boolean =>
+  role === "SALES_MANAGER" || role === "SALES_DIRECTOR" || role === "ADMIN";
+
+/**
+ * Offer-side equivalent of {@link canAccessAllConfigs}: roles that see every offer regardless of
+ * ownership. Note this deliberately EXCLUDES ENGINEER (who has no offer access at all), so it
+ * cannot reuse `ALL_ACCESS_ROLES`.
+ */
+export const OFFER_ALL_ACCESS_ROLES: Role[] = ["ADMIN", "SALES_DIRECTOR"];
+
+export const canAccessAllOffers = (role: Role): boolean =>
+  OFFER_ALL_ACCESS_ROLES.includes(role);
 
 /**
  * Roles allowed to view the margin review page, which exposes cost AND the
@@ -41,8 +73,16 @@ export const canViewOffer = (role: Role): boolean =>
 export const canViewMarginReview = (role: Role): boolean =>
   role === "ADMIN" || role === "SALES_DIRECTOR";
 
-/** Returns true when the config cannot be edited (status frozen, unknown role, or unknown status). */
+/**
+ * Returns true when the config cannot be edited (status frozen, unknown role, or
+ * unknown status). `origin` defaults to `"OFFER"`. For an offer-owned config in
+ * the pre-handoff zone, pass `offerRevisionStatus` so the two-phase gate (editable
+ * only while the revision is DRAFT) is applied — otherwise it fails closed.
+ */
 export const isConfigLocked = (
   status: ConfigurationStatusType | undefined,
   role: Role | undefined,
-): boolean => !status || !role || !isEditable(status, role);
+  origin: ConfigOrigin = "OFFER",
+  offerRevisionStatus?: OfferStatusType,
+): boolean =>
+  !status || !role || !isEditable(status, role, origin, offerRevisionStatus);

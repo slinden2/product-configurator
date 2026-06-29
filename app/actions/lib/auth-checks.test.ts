@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
   canTransition,
-  classifyOfferFreezeTransition,
+  canTransitionRevision,
   isEditable,
 } from "@/app/actions/lib/auth-checks";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigurationStatusType, OfferStatusType, Role } from "@/types";
 
 describe("isEditable", () => {
   describe("SALES_APPROVED, TECH_APPROVED and CLOSED are never editable", () => {
@@ -29,48 +29,120 @@ describe("isEditable", () => {
     });
   });
 
-  describe("SALES role", () => {
+  // OFFER pre-handoff (DRAFT/IN_SALES_REVIEW) is a two-phase gate: editable only
+  // while the offer revision is DRAFT. A missing revision status fails closed.
+  describe("OFFER pre-handoff — revision is DRAFT", () => {
+    test("SALES can edit DRAFT only", () => {
+      expect(isEditable("DRAFT", "SALES", "OFFER", "DRAFT")).toBe(true);
+      expect(isEditable("IN_SALES_REVIEW", "SALES", "OFFER", "DRAFT")).toBe(
+        false,
+      );
+    });
+
+    test.each([
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s can edit DRAFT and IN_SALES_REVIEW", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER", "DRAFT")).toBe(true);
+      expect(isEditable("IN_SALES_REVIEW", role, "OFFER", "DRAFT")).toBe(true);
+    });
+
+    test("ENGINEER has no offer access pre-handoff", () => {
+      expect(isEditable("DRAFT", "ENGINEER", "OFFER", "DRAFT")).toBe(false);
+      expect(isEditable("IN_SALES_REVIEW", "ENGINEER", "OFFER", "DRAFT")).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("OFFER pre-handoff — fail closed", () => {
+    const roles: Role[] = [
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ENGINEER",
+      "ADMIN",
+    ];
+
+    test.each(
+      roles,
+    )("%s cannot edit DRAFT when the revision is not DRAFT (SENT)", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER", "SENT")).toBe(false);
+    });
+
+    // The approval states lock the line configs exactly like SENT does.
+    test.each(
+      roles,
+    )("%s cannot edit DRAFT when the revision is PENDING_APPROVAL or APPROVED_TO_SEND", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER", "PENDING_APPROVAL")).toBe(
+        false,
+      );
+      expect(isEditable("DRAFT", role, "OFFER", "APPROVED_TO_SEND")).toBe(
+        false,
+      );
+    });
+
+    test.each(
+      roles,
+    )("%s cannot edit DRAFT when no revision status is supplied", (role) => {
+      expect(isEditable("DRAFT", role, "OFFER")).toBe(false);
+      expect(isEditable("IN_SALES_REVIEW", role, "OFFER")).toBe(false);
+    });
+  });
+
+  describe("OFFER engineering zone (IN_TECH_REVIEW)", () => {
+    test.each([
+      "ENGINEER",
+      "ADMIN",
+    ] as const)("%s can edit IN_TECH_REVIEW regardless of revision", (role) => {
+      expect(isEditable("IN_TECH_REVIEW", role)).toBe(true);
+      expect(isEditable("IN_TECH_REVIEW", role, "OFFER", "SENT")).toBe(true);
+    });
+
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+    ] as const)("%s cannot edit IN_TECH_REVIEW", (role) => {
+      expect(isEditable("IN_TECH_REVIEW", role, "OFFER", "DRAFT")).toBe(false);
+    });
+  });
+});
+
+describe("isEditable — STANDALONE origin", () => {
+  describe.each(["ENGINEER", "ADMIN"] as const)("%s role", (role) => {
     test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", "SALES")).toBe(true);
+      expect(isEditable("DRAFT", role, "STANDALONE")).toBe(true);
     });
 
-    test("cannot edit IN_SALES_REVIEW", () => {
-      expect(isEditable("IN_SALES_REVIEW", "SALES")).toBe(false);
+    test("can edit IN_TECH_REVIEW", () => {
+      expect(isEditable("IN_TECH_REVIEW", role, "STANDALONE")).toBe(true);
     });
 
-    test("cannot edit IN_TECH_REVIEW", () => {
-      expect(isEditable("IN_TECH_REVIEW", "SALES")).toBe(false);
+    test("cannot edit the frozen states", () => {
+      expect(isEditable("TECH_APPROVED", role, "STANDALONE")).toBe(false);
+      expect(isEditable("CLOSED", role, "STANDALONE")).toBe(false);
+    });
+
+    test("the two sales statuses are never editable", () => {
+      expect(isEditable("IN_SALES_REVIEW", role, "STANDALONE")).toBe(false);
+      expect(isEditable("SALES_APPROVED", role, "STANDALONE")).toBe(false);
     });
   });
 
   describe.each([
+    "SALES",
     "SALES_MANAGER",
     "SALES_DIRECTOR",
-  ] as const)("%s role", (role) => {
-    test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", role)).toBe(true);
-    });
-
-    test("can edit IN_SALES_REVIEW", () => {
-      expect(isEditable("IN_SALES_REVIEW", role)).toBe(true);
-    });
-
-    test("cannot edit IN_TECH_REVIEW", () => {
-      expect(isEditable("IN_TECH_REVIEW", role)).toBe(false);
-    });
-  });
-
-  describe.each(["ENGINEER", "ADMIN"] as const)("%s role", (role) => {
-    test("can edit DRAFT", () => {
-      expect(isEditable("DRAFT", role)).toBe(true);
-    });
-
-    test("can edit IN_SALES_REVIEW", () => {
-      expect(isEditable("IN_SALES_REVIEW", role)).toBe(true);
-    });
-
-    test("can edit IN_TECH_REVIEW", () => {
-      expect(isEditable("IN_TECH_REVIEW", role)).toBe(true);
+  ] as const)("%s role can never edit a standalone config", (role) => {
+    test.each([
+      "DRAFT",
+      "IN_SALES_REVIEW",
+      "IN_TECH_REVIEW",
+      "TECH_APPROVED",
+    ] as ConfigurationStatusType[])("not editable in %s", (status) => {
+      expect(isEditable(status, role, "STANDALONE")).toBe(false);
     });
   });
 });
@@ -173,54 +245,209 @@ describe("canTransition", () => {
   });
 });
 
-describe("classifyOfferFreezeTransition", () => {
-  test("freezes on the standard sales approval edge", () => {
-    expect(
-      classifyOfferFreezeTransition("IN_SALES_REVIEW", "SALES_APPROVED"),
-    ).toBe("freeze");
+describe("canTransition — STANDALONE origin", () => {
+  describe("ENGINEER walks the engineering sub-chain", () => {
+    test("can open and reopen review (DRAFT <-> IN_TECH_REVIEW)", () => {
+      expect(
+        canTransition("ENGINEER", "DRAFT", "IN_TECH_REVIEW", "STANDALONE"),
+      ).toBe(true);
+      expect(
+        canTransition("ENGINEER", "IN_TECH_REVIEW", "DRAFT", "STANDALONE"),
+      ).toBe(true);
+    });
+
+    test("can approve and reopen (IN_TECH_REVIEW <-> TECH_APPROVED)", () => {
+      expect(
+        canTransition(
+          "ENGINEER",
+          "IN_TECH_REVIEW",
+          "TECH_APPROVED",
+          "STANDALONE",
+        ),
+      ).toBe(true);
+      expect(
+        canTransition(
+          "ENGINEER",
+          "TECH_APPROVED",
+          "IN_TECH_REVIEW",
+          "STANDALONE",
+        ),
+      ).toBe(true);
+    });
+
+    test("cannot reach the sales statuses", () => {
+      expect(
+        canTransition("ENGINEER", "DRAFT", "IN_SALES_REVIEW", "STANDALONE"),
+      ).toBe(false);
+      expect(
+        canTransition("ENGINEER", "DRAFT", "SALES_APPROVED", "STANDALONE"),
+      ).toBe(false);
+    });
+
+    test("cannot close (ADMIN only)", () => {
+      expect(
+        canTransition("ENGINEER", "TECH_APPROVED", "CLOSED", "STANDALONE"),
+      ).toBe(false);
+    });
   });
 
-  test("thaws on the standard un-approval edge", () => {
-    expect(
-      classifyOfferFreezeTransition("SALES_APPROVED", "IN_SALES_REVIEW"),
-    ).toBe("thaw");
+  describe("ADMIN", () => {
+    test("can make any engineering-chain jump, including closing", () => {
+      const edges: [ConfigurationStatusType, ConfigurationStatusType][] = [
+        ["DRAFT", "IN_TECH_REVIEW"],
+        ["DRAFT", "TECH_APPROVED"],
+        ["TECH_APPROVED", "CLOSED"],
+        ["CLOSED", "IN_TECH_REVIEW"],
+      ];
+      for (const [from, to] of edges) {
+        expect(canTransition("ADMIN", from, to, "STANDALONE")).toBe(true);
+      }
+    });
+
+    test("still cannot route a standalone config through a sales status", () => {
+      expect(
+        canTransition("ADMIN", "DRAFT", "IN_SALES_REVIEW", "STANDALONE"),
+      ).toBe(false);
+      expect(
+        canTransition(
+          "ADMIN",
+          "SALES_APPROVED",
+          "IN_TECH_REVIEW",
+          "STANDALONE",
+        ),
+      ).toBe(false);
+    });
   });
+
+  describe.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("%s cannot transition a standalone config", (role) => {
+    test("DRAFT -> IN_TECH_REVIEW is rejected", () => {
+      expect(canTransition(role, "DRAFT", "IN_TECH_REVIEW", "STANDALONE")).toBe(
+        false,
+      );
+    });
+  });
+});
+
+describe("canTransitionRevision", () => {
+  const management: Role[] = ["SALES_MANAGER", "SALES_DIRECTOR", "ADMIN"];
 
   test.each([
-    ["DRAFT", "SALES_APPROVED"],
-    ["DRAFT", "IN_TECH_REVIEW"],
-    ["IN_SALES_REVIEW", "TECH_APPROVED"],
-    ["IN_SALES_REVIEW", "CLOSED"],
-  ] as [
-    ConfigurationStatusType,
-    ConfigurationStatusType,
-  ][])("freezes on non-adjacent jump %s -> %s (entering frozen zone)", (from, to) => {
-    expect(classifyOfferFreezeTransition(from, to)).toBe("freeze");
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+    "ADMIN",
+  ] as const)("identity transition is allowed for offer-access role %s", (role) => {
+    expect(canTransitionRevision(role, "DRAFT", "DRAFT")).toBe(true);
   });
 
-  test.each([
-    ["SALES_APPROVED", "DRAFT"],
-    ["IN_TECH_REVIEW", "DRAFT"],
-    ["TECH_APPROVED", "IN_SALES_REVIEW"],
-    ["CLOSED", "DRAFT"],
-  ] as [
-    ConfigurationStatusType,
-    ConfigurationStatusType,
-  ][])("thaws on non-adjacent jump %s -> %s (leaving frozen zone)", (from, to) => {
-    expect(classifyOfferFreezeTransition(from, to)).toBe("thaw");
+  test("ENGINEER (no offer access) is rejected even on the identity edge", () => {
+    expect(canTransitionRevision("ENGINEER", "DRAFT", "DRAFT")).toBe(false);
   });
 
-  test.each([
-    ["SALES_APPROVED", "IN_TECH_REVIEW"],
-    ["IN_TECH_REVIEW", "SALES_APPROVED"],
-    ["IN_TECH_REVIEW", "TECH_APPROVED"],
-    ["TECH_APPROVED", "CLOSED"],
-    ["DRAFT", "IN_SALES_REVIEW"],
-    ["IN_SALES_REVIEW", "DRAFT"],
-  ] as [
-    ConfigurationStatusType,
-    ConfigurationStatusType,
-  ][])("is a no-op within a zone %s -> %s", (from, to) => {
-    expect(classifyOfferFreezeTransition(from, to)).toBeNull();
+  describe("DRAFT -> PENDING_APPROVAL (submit)", () => {
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s (offer-access) may submit", (role) => {
+      expect(canTransitionRevision(role, "DRAFT", "PENDING_APPROVAL")).toBe(
+        true,
+      );
+    });
+
+    test("ENGINEER may not submit", () => {
+      expect(
+        canTransitionRevision("ENGINEER", "DRAFT", "PENDING_APPROVAL"),
+      ).toBe(false);
+    });
+  });
+
+  describe("PENDING_APPROVAL -> APPROVED_TO_SEND (approve)", () => {
+    test.each(management)("%s may approve", (role) => {
+      expect(
+        canTransitionRevision(role, "PENDING_APPROVAL", "APPROVED_TO_SEND"),
+      ).toBe(true);
+    });
+
+    test.each(["SALES", "ENGINEER"] as const)("%s may not approve", (role) => {
+      expect(
+        canTransitionRevision(role, "PENDING_APPROVAL", "APPROVED_TO_SEND"),
+      ).toBe(false);
+    });
+  });
+
+  describe("return to DRAFT (reject / un-approve) is management-only", () => {
+    test.each(management)("%s may hand back and un-approve", (role) => {
+      expect(canTransitionRevision(role, "PENDING_APPROVAL", "DRAFT")).toBe(
+        true,
+      );
+      expect(canTransitionRevision(role, "APPROVED_TO_SEND", "DRAFT")).toBe(
+        true,
+      );
+    });
+
+    test("SALES cannot pull back its own submission", () => {
+      expect(canTransitionRevision("SALES", "PENDING_APPROVAL", "DRAFT")).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("APPROVED_TO_SEND -> SENT (send)", () => {
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s (offer-access) may send", (role) => {
+      expect(canTransitionRevision(role, "APPROVED_TO_SEND", "SENT")).toBe(
+        true,
+      );
+    });
+
+    test("ENGINEER may not send", () => {
+      expect(
+        canTransitionRevision("ENGINEER", "APPROVED_TO_SEND", "SENT"),
+      ).toBe(false);
+    });
+  });
+
+  describe("SENT -> ACCEPTED / REJECTED / EXPIRED (record customer outcome)", () => {
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ADMIN",
+    ] as const)("%s (offer-access) may record any outcome", (role) => {
+      expect(canTransitionRevision(role, "SENT", "ACCEPTED")).toBe(true);
+      expect(canTransitionRevision(role, "SENT", "REJECTED")).toBe(true);
+      expect(canTransitionRevision(role, "SENT", "EXPIRED")).toBe(true);
+    });
+
+    test("ENGINEER may not record an outcome", () => {
+      expect(canTransitionRevision("ENGINEER", "SENT", "ACCEPTED")).toBe(false);
+      expect(canTransitionRevision("ENGINEER", "SENT", "REJECTED")).toBe(false);
+      expect(canTransitionRevision("ENGINEER", "SENT", "EXPIRED")).toBe(false);
+    });
+  });
+
+  describe("unsupported edges fail closed", () => {
+    const badEdges: [OfferStatusType, OfferStatusType][] = [
+      ["DRAFT", "APPROVED_TO_SEND"],
+      ["DRAFT", "SENT"],
+      ["PENDING_APPROVAL", "SENT"],
+      ["SENT", "DRAFT"],
+      ["ACCEPTED", "DRAFT"],
+      ["ACCEPTED", "SENT"],
+      ["REJECTED", "SENT"],
+    ];
+    test.each(badEdges)("ADMIN cannot jump %s -> %s", (from, to) => {
+      expect(canTransitionRevision("ADMIN", from, to)).toBe(false);
+    });
   });
 });

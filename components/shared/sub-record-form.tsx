@@ -16,7 +16,12 @@ import { Form, FormDisabledContext } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { isConfigLocked } from "@/lib/access";
 import { MSG } from "@/lib/messages";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 
 // Shared result type for server actions
 interface ActionResult {
@@ -31,6 +36,8 @@ interface SubRecordFormProps<
 > {
   parentId: number; // ID of the parent (e.g., confId)
   parentStatus: ConfigurationStatusType;
+  parentOrigin?: ConfigOrigin;
+  offerRevisionStatus?: OfferStatusType;
   userRole?: Role;
   schema: TFormSchema; // Zod schema for validation
   entityDefaults: TData; // Default values for new entity
@@ -51,7 +58,6 @@ interface SubRecordFormProps<
   ) => Promise<ActionResult>;
   deleteAction: (parentId: number, id: number) => Promise<ActionResult>;
   hasEngineeringBom?: boolean;
-  hasOfferSnapshot?: boolean;
   // Component to render the specific fields
   FieldsComponent: React.ComponentType;
 }
@@ -62,6 +68,8 @@ const SubRecordForm = <
 >({
   parentId,
   parentStatus,
+  parentOrigin,
+  offerRevisionStatus,
   userRole,
   schema,
   entityDefaults,
@@ -77,7 +85,6 @@ const SubRecordForm = <
   editAction,
   deleteAction,
   hasEngineeringBom,
-  hasOfferSnapshot,
   FieldsComponent,
 }: SubRecordFormProps<TData, TFormSchema>) => {
   type FormData = TData;
@@ -91,7 +98,9 @@ const SubRecordForm = <
   const pendingActionRef = useRef<"save" | "delete" | null>(null);
 
   const formIsDisabled =
-    isSubmitting || isDeleting || isConfigLocked(parentStatus, userRole);
+    isSubmitting ||
+    isDeleting ||
+    isConfigLocked(parentStatus, userRole, parentOrigin, offerRevisionStatus);
 
   // Zod v4 defaults Input=unknown in ZodType<O>; cast to ZodType<TData, FieldValues> so
   // zodResolver's overload resolves correctly. All Zod object schemas satisfy this at runtime.
@@ -178,7 +187,7 @@ const SubRecordForm = <
 
   const handleSaveSubmit = useCallback(
     (values: FormData) => {
-      if (hasEngineeringBom || hasOfferSnapshot) {
+      if (hasEngineeringBom) {
         pendingValuesRef.current = values;
         pendingActionRef.current = "save";
         setShowSaveWarning(true);
@@ -186,7 +195,7 @@ const SubRecordForm = <
       }
       executeSave(values);
     },
-    [hasEngineeringBom, hasOfferSnapshot, executeSave],
+    [hasEngineeringBom, executeSave],
   );
 
   const executeDelete = useCallback(() => {
@@ -229,13 +238,13 @@ const SubRecordForm = <
 
   const handleDeleteConfirm = useCallback(() => {
     setShowDeleteConfirm(false);
-    if (hasEngineeringBom || hasOfferSnapshot) {
+    if (hasEngineeringBom) {
       pendingActionRef.current = "delete";
       setShowSaveWarning(true);
       return;
     }
     executeDelete();
-  }, [hasEngineeringBom, hasOfferSnapshot, executeDelete]);
+  }, [hasEngineeringBom, executeDelete]);
 
   const handleSaveWarningConfirm = useCallback(() => {
     setShowSaveWarning(false);
@@ -352,8 +361,6 @@ const SubRecordForm = <
           pendingActionRef.current = null;
         }}
         onConfirm={handleSaveWarningConfirm}
-        hasEngineeringBom={!!hasEngineeringBom}
-        hasOfferSnapshot={!!hasOfferSnapshot}
       />
     </div>
   );

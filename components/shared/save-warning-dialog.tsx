@@ -6,8 +6,6 @@ interface SaveWarningDialogProps {
   onOpenChange: (open: boolean) => void;
   onCancel: () => void;
   onConfirm: () => void;
-  hasEngineeringBom: boolean;
-  hasOfferSnapshot: boolean;
 }
 
 const SaveWarningDialog = ({
@@ -15,15 +13,11 @@ const SaveWarningDialog = ({
   onOpenChange,
   onCancel,
   onConfirm,
-  hasEngineeringBom,
-  hasOfferSnapshot,
 }: SaveWarningDialogProps) => {
-  const messages =
-    hasEngineeringBom && hasOfferSnapshot
-      ? MSG.saveWarning.both
-      : hasEngineeringBom
-        ? MSG.saveWarning.ebomOnly
-        : MSG.saveWarning.offerOnly;
+  // The only save-time warning left is the engineering BOM invalidation — the offer's
+  // commercial figures re-price automatically (or are frozen) and have no separate
+  // snapshot to discard.
+  const messages = MSG.saveWarning.ebomOnly;
 
   return (
     <ConfirmModal

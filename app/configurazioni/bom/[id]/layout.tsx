@@ -11,7 +11,7 @@ export default async function BomLayout({
   await configRouteGuard(
     params,
     canViewBom,
-    (id) => `/configurazioni/offerta/${id}`,
+    (id) => `/configurazioni/visualizza/${id}`,
   );
   return <>{children}</>;
 }

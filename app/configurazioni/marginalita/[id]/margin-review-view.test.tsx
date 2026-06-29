@@ -140,6 +140,36 @@ describe("MarginReviewView", () => {
     });
   });
 
+  describe("as-sold freeze indicator", () => {
+    test("renders the frozen-as-sold note when asSoldFrozenAt is set", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={new Date("2026-01-15T10:30:00Z")}
+        />,
+      );
+
+      expect(
+        screen.getByText(/Configurazione congelata come venduta il/),
+      ).toBeInTheDocument();
+    });
+
+    test("omits the note when asSoldFrozenAt is null/undefined", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={null}
+        />,
+      );
+
+      expect(
+        screen.queryByText(/Configurazione congelata come venduta il/),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe("without an EBOM", () => {
     test("still shows the five stats, with engineering side at 0", () => {
       render(

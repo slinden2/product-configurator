@@ -8,21 +8,22 @@ const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
-const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
-const mockGetOfferFreezeState = vi.fn();
-const mockIsOfferFrozen = vi.fn();
+const mockRepriceOfferLine = vi.fn();
+// STANDALONE configs ignore this; OFFER tests default the revision to DRAFT.
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   canAccessConfiguration: mockCanAccessConfiguration,
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
-  deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
-    mockDeleteOfferSnapshotByConfigurationId(...args),
-  getOfferFreezeState: (...args: unknown[]) => mockGetOfferFreezeState(...args),
   touchConfigurationUpdatedAt: (...args: unknown[]) =>
     mockTouchConfigurationUpdatedAt(...args),
   QueryError: class QueryError extends Error {
@@ -35,8 +36,8 @@ vi.mock("@/db/queries", () => ({
   },
 }));
 
-vi.mock("@/lib/offer", () => ({
-  isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
+vi.mock("@/lib/offer-revision-pricing", () => ({
+  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
 }));
 
 const mockTx = {};
@@ -77,6 +78,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: PARENT_ID,
     user_id: OWNER_ID,
+    // Engineer/admin sub-record edits run on standalone configs; sales-status
+    // tests override origin to OFFER.
+    origin: "STANDALONE",
     status: "DRAFT",
     name: "Test",
     ...overrides,
@@ -109,10 +113,8 @@ describe("handleSubRecordAction", () => {
     mockGetConfiguration.mockResolvedValue(mockConfig());
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
-    mockDeleteOfferSnapshotByConfigurationId.mockResolvedValue(undefined);
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
-    mockGetOfferFreezeState.mockResolvedValue(null);
-    mockIsOfferFrozen.mockReturnValue(false);
+    mockRepriceOfferLine.mockResolvedValue(undefined);
   });
 
   // --- Insert ---
@@ -262,7 +264,7 @@ describe("handleSubRecordAction", () => {
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({
@@ -395,7 +397,7 @@ describe("handleSubRecordAction", () => {
     expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
   });
 
-  test("revalidates BOM and offer paths after sub-record mutation", async () => {
+  test("revalidates BOM and margin paths after sub-record mutation", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
     await handleSubRecordAction(insertOptions());
     const { revalidatePath } = await import("next/cache");
@@ -403,29 +405,31 @@ describe("handleSubRecordAction", () => {
       `/configurazioni/bom/${PARENT_ID}`,
     );
     expect(revalidatePath).toHaveBeenCalledWith(
-      `/configurazioni/offerta/${PARENT_ID}`,
+      `/configurazioni/marginalita/${PARENT_ID}`,
     );
   });
 
-  test("deletes a non-frozen offer snapshot on sub-record mutation", async () => {
-    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: null });
-    mockIsOfferFrozen.mockReturnValue(false);
+  // --- Offer line re-pricing (tanks/bays feed the BOM) ---
+
+  test("reprices the owning line and revalidates the offer route for an OFFER config", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfiguration.mockResolvedValue(mockConfig({ origin: "OFFER" }));
     await handleSubRecordAction(insertOptions());
-    expect(mockDeleteOfferSnapshotByConfigurationId).toHaveBeenCalledWith(
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
       PARENT_ID,
-      expect.anything(),
+      "admin-user",
+      mockTx,
     );
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).toHaveBeenCalledWith("/offerte/[id]", "page");
   });
 
-  test("preserves a frozen offer on sub-record mutation, still invalidating the EBOM", async () => {
-    mockHasEngineeringBom.mockResolvedValue(true);
-    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: new Date() });
-    mockIsOfferFrozen.mockReturnValue(true);
+  test("does not reprice a STANDALONE config", async () => {
     await handleSubRecordAction(insertOptions());
-    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
-      PARENT_ID,
-      expect.anything(),
-    );
-    expect(mockDeleteOfferSnapshotByConfigurationId).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
   });
 });

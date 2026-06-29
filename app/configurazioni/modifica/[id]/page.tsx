@@ -7,11 +7,10 @@ import FormContainer from "@/components/form-container";
 import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
-  getOfferFreezeState,
   getUserData,
   hasEngineeringBom,
+  offerRevisionStatusFor,
 } from "@/db/queries";
-import { isOfferFrozen } from "@/lib/offer";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -31,27 +30,21 @@ const EditConfiguration = async (props: EditConfigProps) => {
   const {
     configuration: validatedConfiguration,
     status,
+    origin,
     waterTanks: validatedWaterTanks,
     washBays: validatedWashBays,
   } = loaded;
 
   // Once a config is frozen (or the user otherwise lacks edit rights) there is
   // nothing to edit here — send them to the read-only view instead of rendering
-  // a disabled form.
-  if (!isEditable(status, user.role)) {
+  // a disabled form. OFFER configs additionally key on the owning revision being
+  // DRAFT.
+  const offerRevisionStatus = await offerRevisionStatusFor({ id, origin });
+  if (!isEditable(status, user.role, origin, offerRevisionStatus)) {
     redirect(`/configurazioni/visualizza/${id}`);
   }
 
-  const [ebomExists, offerFreeze] = await Promise.all([
-    hasEngineeringBom(id),
-    getOfferFreezeState(id),
-  ]);
-
-  // A frozen offer is the immutable as-sold record and survives edits, so the
-  // save warning must not threaten to delete it — only an unfrozen offer is at
-  // risk of being regenerated.
-  const offerWillBeDeleted =
-    offerFreeze !== null && !isOfferFrozen(offerFreeze);
+  const ebomExists = await hasEngineeringBom(id);
 
   return (
     <div>
@@ -76,11 +69,12 @@ const EditConfiguration = async (props: EditConfigProps) => {
         confId={id}
         configuration={validatedConfiguration}
         confStatus={status}
+        origin={origin}
+        offerRevisionStatus={offerRevisionStatus}
         userRole={user.role}
         initialWaterTanks={validatedWaterTanks}
         initialWashBays={validatedWashBays}
         hasEngineeringBom={ebomExists}
-        hasOfferSnapshot={offerWillBeDeleted}
       />
     </div>
   );

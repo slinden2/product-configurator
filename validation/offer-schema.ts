@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   BomTags,
   InstallationItemKinds,
-  OfferSources,
   SurchargeKinds,
   TransportModes,
 } from "@/types";
@@ -80,5 +79,3 @@ export const offerSettingsSchema = z.object({
   ),
 });
 export type OfferSettings = z.infer<typeof offerSettingsSchema>;
-
-export const offerSourceSchema = z.enum(OfferSources);

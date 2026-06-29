@@ -72,6 +72,18 @@ export const MSG = {
     configSavedSubmitHint:
       "Configurazione salvata. Puoi inviarla dalla pagina di visualizzazione.",
     configCreated: "Configurazione creata.",
+    offerCreated: "Offerta creata.",
+    offerLineCreated: "Configurazione aggiunta all'offerta.",
+    offerLineRemoved: "Configurazione rimossa dall'offerta.",
+    offerRevisionSent: "Revisione inviata.",
+    offerRevisionSubmitted: "Revisione inviata in approvazione.",
+    offerRevisionApproved: "Revisione approvata per l'invio.",
+    offerRevisionReturnedToDraft: "Revisione riportata in bozza.",
+    offerRevisionCreated: "Nuova revisione creata.",
+    offerRevisionAccepted:
+      "Offerta accettata: configurazioni in lavorazione tecnica.",
+    offerRevisionDeclined: "Rifiuto del cliente registrato.",
+    offerRevisionExpired: "Revisione segnata come scaduta.",
     configDeleted: "Configurazione eliminata con successo.",
     configDuplicated: "Configurazione duplicata.",
     duplicateError: "Errore durante la duplicazione.",
@@ -145,18 +157,6 @@ export const MSG = {
         "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
       confirm: "Salva e elimina distinta",
     },
-    offerOnly: {
-      title: "Offerta presente",
-      description:
-        "Salvando le modifiche alla configurazione, l'offerta verrà eliminata e dovrà essere rigenerata. Continuare?",
-      confirm: "Salva e elimina offerta",
-    },
-    both: {
-      title: "Distinta e offerta presenti",
-      description:
-        "Salvando le modifiche alla configurazione, la distinta di commessa e l'offerta verranno eliminate e dovranno essere rigenerate. Continuare?",
-      confirm: "Salva e elimina",
-    },
   },
   duplicateConfirm: {
     title: "Conferma duplicazione",
@@ -205,6 +205,11 @@ export const MSG = {
     cannotEdit:
       "Non è possibile modificare l'offerta in questo stato della configurazione.",
     notFound: "Offerta non trovata.",
+    createFailed: "Impossibile creare l'offerta.",
+    numberRetry:
+      "Numero offerta già in uso, riprova. Se il problema persiste, contatta l'amministratore.",
+    lineCannotEdit:
+      "Le configurazioni dell'offerta sono modificabili solo finché la revisione è in bozza.",
     frozenCannotRegenerate:
       "L'offerta è congelata come venduta e non può essere rigenerata.",
     frozenCannotEdit:
@@ -213,6 +218,43 @@ export const MSG = {
       "Sconto non valido (deve essere tra 0% e 40%, multiplo di 0,5%).",
     invalidSettings: "Impostazioni offerta non valide.",
     generateError: "Errore durante la generazione dell'offerta.",
+    cannotSend: "Solo una revisione approvata per l'invio può essere inviata.",
+    cannotSendEmpty:
+      "Aggiungi almeno una configurazione prima di inviare la revisione.",
+    cannotSubmit:
+      "Solo una revisione in bozza può essere inviata in approvazione.",
+    cannotApprove: "Solo una revisione in approvazione può essere approvata.",
+    cannotReturnToDraft:
+      "Solo una revisione in approvazione o approvata può essere riportata in bozza.",
+    unauthorizedApprove:
+      "Solo i responsabili vendite, i direttori vendite e gli ADMIN possono approvare le revisioni.",
+    cannotAccept: "Solo una revisione inviata può essere accettata.",
+    cannotRecordOutcome:
+      "L'esito del cliente può essere registrato solo su una revisione inviata.",
+    alreadyAccepted:
+      "L'offerta è già stata accettata e non può più essere modificata.",
+    workingRevisionExists:
+      "Esiste già una revisione di lavoro non ancora inviata. Completane l'invio prima di crearne una nuova.",
+    submitConfirm:
+      "Inviare questa revisione in approvazione? Le configurazioni si bloccheranno finché un responsabile non la approva o la riporta in bozza.",
+    approveConfirm:
+      "Approvare questa revisione per l'invio? Potrà poi essere inviata al cliente.",
+    rejectConfirm:
+      "Riportare questa revisione in bozza? L'agente potrà modificarla e reinviarla in approvazione.",
+    unapproveConfirm:
+      "Revocare l'approvazione e riportare la revisione in bozza? Le configurazioni torneranno modificabili.",
+    sendConfirm:
+      "Inviare questa revisione? I prezzi verranno congelati e le configurazioni non saranno più modificabili.",
+    acceptConfirm:
+      "Registrare l'accettazione del cliente? Le configurazioni passeranno all'ufficio tecnico (come venduto) e l'offerta verrà bloccata.",
+    declineConfirm:
+      "Registrare il rifiuto del cliente per questa revisione? Potrai creare una nuova revisione per riprovare.",
+    expireConfirm:
+      "Segnare questa revisione come scaduta? Potrai creare una nuova revisione per riprovare.",
+    createRevisionConfirm:
+      "Creare una nuova revisione? Le configurazioni verranno clonate in righe modificabili.",
+    revertConfirm:
+      "Creare una nuova revisione a partire da questa? Le sue configurazioni verranno clonate in righe modificabili.",
     staleness: {
       title: "Prezzi scaduti",
       body: (generatedAt: string, expiredDays: number) =>

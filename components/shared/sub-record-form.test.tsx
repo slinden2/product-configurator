@@ -106,6 +106,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
         />,
@@ -123,6 +124,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           onSaveSuccess={onSaveSuccess}
         />,
@@ -153,6 +155,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -172,6 +175,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -205,6 +209,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -237,6 +242,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -270,6 +276,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
         />,
@@ -294,6 +301,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -351,6 +359,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -372,6 +381,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -396,6 +406,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -422,6 +433,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -453,6 +465,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -487,6 +500,7 @@ describe("SubRecordForm — WaterTankForm", () => {
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           waterTank={makeWaterTank()}
           waterTankIndex={1}
@@ -518,6 +532,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           onSaveSuccess={vi.fn()}
         />,
@@ -532,6 +547,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           onSaveSuccess={onSaveSuccess}
         />,
@@ -558,6 +574,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           washBay={makeWashBay()}
           washBayIndex={1}
@@ -593,6 +610,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           washBay={makeWashBay()}
           washBayIndex={1}
@@ -625,6 +643,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
           washBay={makeWashBay({ has_gantry: true })}
@@ -645,6 +664,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
           washBay={makeWashBay({ has_gantry: false })}
@@ -662,6 +682,7 @@ describe("SubRecordForm — WashBayForm", () => {
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           supplyType="ENERGY_CHAIN"
           washBay={makeWashBay({

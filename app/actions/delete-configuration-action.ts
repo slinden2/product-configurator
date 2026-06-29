@@ -10,6 +10,7 @@ import {
   getConfiguration,
   getUserData,
   insertActivityLog,
+  offerRevisionStatusFor,
   QueryError,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -32,8 +33,17 @@ export const deleteConfigurationAction = async (id: number) => {
     return { success: false as const, error: MSG.auth.unauthorized };
   }
 
-  // Status protection: only allow deletion if user can edit this status
-  if (!isEditable(configuration.status, user.role)) {
+  // Status protection: only allow deletion if user can edit this status. For an
+  // OFFER config pre-handoff this keys on the owning revision being DRAFT.
+  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
+  if (
+    !isEditable(
+      configuration.status,
+      user.role,
+      configuration.origin,
+      offerRevisionStatus,
+    )
+  ) {
     return {
       success: false as const,
       error: MSG.config.cannotDelete,

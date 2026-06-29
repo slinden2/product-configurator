@@ -113,6 +113,51 @@ export const ConfigurationStatus = [
 ] as const;
 export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
 
+/**
+ * Config statuses an OFFER-origin configuration reaches only after the owning offer
+ * revision has been accepted and the config has been handed off to engineering. From
+ * `SALES_APPROVED` onward an offer config is governed by the engineering rules, exactly
+ * like a standalone config, and becomes visible in the engineer/admin technical queue.
+ * The complement (`DRAFT`, `IN_SALES_REVIEW`) is the sales-only pre-handoff zone.
+ */
+export const HANDED_OFF_STATUSES: ConfigurationStatusType[] = [
+  "SALES_APPROVED",
+  "IN_TECH_REVIEW",
+  "TECH_APPROVED",
+  "CLOSED",
+];
+
+/**
+ * The sales-only pre-handoff config statuses for an OFFER-origin configuration. While a
+ * config is in this zone, ENGINEER has no access to it (view or edit) — it belongs to the
+ * sales workflow until the offer revision is accepted.
+ */
+export const PRE_HANDOFF_STATUSES: ConfigurationStatusType[] = [
+  "DRAFT",
+  "IN_SALES_REVIEW",
+];
+
+/**
+ * Discriminates how a configuration came into being and which lifecycle governs it:
+ *
+ * - STANDALONE — a pure technical configuration created directly by Engineer/Admin for
+ *   internal evaluation. It runs only the engineering sub-chain
+ *   `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches the two sales
+ *   statuses (`IN_SALES_REVIEW`, `SALES_APPROVED`).
+ * - OFFER — a configuration owned by a specific offer revision (via offer_revision_lines).
+ *   Before `SALES_APPROVED` its editability is governed by the parent offer revision (editable
+ *   only while the revision is `DRAFT`); at `SALES_APPROVED`+ it is governed by
+ *   `ConfigurationStatus` (the engineering rules), exactly like a standalone config. The offer's
+ *   own lifecycle (see `OfferStatus`) lives on the revision, not on the configuration.
+ */
+export const ConfigOrigins = ["STANDALONE", "OFFER"] as const;
+export type ConfigOrigin = (typeof ConfigOrigins)[number];
+
+export const ConfigOriginLabels: Record<ConfigOrigin, string> = {
+  STANDALONE: "Autonoma",
+  OFFER: "Offerta",
+};
+
 export const Roles = [
   "ADMIN",
   "ENGINEER",
@@ -141,12 +186,21 @@ export const ActivityActions = [
   "COEFFICIENT_DELETE",
   "COEFFICIENT_RESET",
   "COEFFICIENT_SYNC",
-  "OFFER_GENERATE",
-  "OFFER_REGENERATE",
-  "OFFER_FREEZE",
-  "OFFER_THAW",
-  "OFFER_DISCOUNT_SET",
-  "OFFER_SETTINGS_SET",
+  "CONFIG_AS_SOLD_FREEZE",
+  "OFFER_CREATE",
+  "OFFER_LINE_ADD",
+  "OFFER_LINE_REMOVE",
+  "OFFER_LINE_REPRICE",
+  "OFFER_REVISION_DISCOUNT_SET",
+  "OFFER_REVISION_SETTINGS_SET",
+  "OFFER_REVISION_CREATE",
+  "OFFER_REVISION_SUBMIT",
+  "OFFER_REVISION_APPROVE",
+  "OFFER_REVISION_REJECT",
+  "OFFER_REVISION_SEND",
+  "OFFER_REVISION_ACCEPT",
+  "OFFER_REVISION_DECLINE",
+  "OFFER_REVISION_EXPIRE",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
 ] as const;
@@ -171,12 +225,21 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   COEFFICIENT_DELETE: "Eliminazione coefficiente",
   COEFFICIENT_RESET: "Ripristino coefficiente",
   COEFFICIENT_SYNC: "Sincronizzazione coefficienti MaxBOM",
-  OFFER_GENERATE: "Generazione offerta",
-  OFFER_REGENERATE: "Rigenerazione offerta",
-  OFFER_FREEZE: "Congelamento offerta",
-  OFFER_THAW: "Scongelamento offerta",
-  OFFER_DISCOUNT_SET: "Impostazione sconto offerta",
-  OFFER_SETTINGS_SET: "Impostazione opzioni offerta",
+  CONFIG_AS_SOLD_FREEZE: "Congelamento configurazione come venduta",
+  OFFER_CREATE: "Creazione offerta",
+  OFFER_LINE_ADD: "Aggiunta configurazione offerta",
+  OFFER_LINE_REMOVE: "Rimozione configurazione offerta",
+  OFFER_LINE_REPRICE: "Ricalcolo prezzo configurazione offerta",
+  OFFER_REVISION_DISCOUNT_SET: "Impostazione sconto revisione offerta",
+  OFFER_REVISION_SETTINGS_SET: "Impostazione opzioni revisione offerta",
+  OFFER_REVISION_CREATE: "Creazione revisione offerta",
+  OFFER_REVISION_SUBMIT: "Invio revisione in approvazione",
+  OFFER_REVISION_APPROVE: "Approvazione revisione offerta",
+  OFFER_REVISION_REJECT: "Riporto revisione offerta in bozza",
+  OFFER_REVISION_SEND: "Invio revisione offerta",
+  OFFER_REVISION_ACCEPT: "Accettazione revisione offerta",
+  OFFER_REVISION_DECLINE: "Rifiuto revisione offerta",
+  OFFER_REVISION_EXPIRE: "Scadenza revisione offerta",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };
@@ -184,8 +247,49 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
 export type CoefficientSource = (typeof CoefficientSources)[number];
 
-export const OfferSources = ["EBOM", "LIVE"] as const;
-export type OfferSource = (typeof OfferSources)[number];
+/**
+ * Per-revision offer lifecycle. The status is carried by `offer_revisions`, not by the offer
+ * header — each revision is approved and sent independently, so revision 1 can be SENT/REJECTED
+ * while revision 2 is still DRAFT.
+ *
+ * `DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT → ACCEPTED / REJECTED / EXPIRED`
+ *
+ * Manager approval is required on every revision before send (scoped to direct reports). On
+ * ACCEPTED, each line configuration fans out into the existing per-config approval flow
+ * (`SALES_APPROVED` + the as-sold freeze), then engineering proceeds unchanged.
+ */
+export const OfferStatus = [
+  "DRAFT",
+  "PENDING_APPROVAL",
+  "APPROVED_TO_SEND",
+  "SENT",
+  "ACCEPTED",
+  "REJECTED",
+  "EXPIRED",
+] as const;
+export type OfferStatusType = (typeof OfferStatus)[number];
+
+export const OfferStatusLabels: Record<OfferStatusType, string> = {
+  DRAFT: "Bozza",
+  PENDING_APPROVAL: "In approvazione",
+  APPROVED_TO_SEND: "Approvata per invio",
+  SENT: "Inviata",
+  ACCEPTED: "Accettata",
+  REJECTED: "Rifiutata",
+  EXPIRED: "Scaduta",
+};
+
+/**
+ * Lifecycle statuses where a revision is still the **active working revision** — not yet
+ * sent. The clone-forward "next revision" can only be created once the latest revision
+ * has left these states (one open working revision at a time), and the line configs are
+ * locked for editing in all of them except DRAFT.
+ */
+export const OPEN_REVISION_STATUSES: OfferStatusType[] = [
+  "DRAFT",
+  "PENDING_APPROVAL",
+  "APPROVED_TO_SEND",
+];
 
 export const BomTags = [
   "FRAME",

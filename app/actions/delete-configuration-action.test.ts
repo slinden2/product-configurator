@@ -7,12 +7,18 @@ const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
 const mockDeleteConfiguration = vi.fn();
 const mockInsertActivityLog = vi.fn();
+// STANDALONE configs ignore this; OFFER tests default the revision to DRAFT.
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   canAccessConfiguration: mockCanAccessConfiguration,
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
   deleteConfiguration: (...args: unknown[]) => mockDeleteConfiguration(...args),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
@@ -60,6 +66,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: CONF_ID,
     user_id: OWNER_ID,
+    // Engineer/admin deletes run on standalone configs; sales-status tests
+    // override origin to OFFER.
+    origin: "STANDALONE",
     status: "DRAFT",
     name: "Test",
     ...overrides,
@@ -167,7 +176,7 @@ describe("deleteConfigurationAction", () => {
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);

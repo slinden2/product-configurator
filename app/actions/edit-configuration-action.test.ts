@@ -8,12 +8,15 @@ const mockGetConfigurationWithTanksAndBays = vi.fn();
 const mockUpdateConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
-const mockDeleteOfferSnapshotByConfigurationId = vi.fn();
 const mockResetWashBayEnergyChainFields = vi.fn();
 const mockResetWashBayNonEnergyChainFields = vi.fn();
 const mockInsertActivityLog = vi.fn();
-const mockGetOfferFreezeState = vi.fn();
-const mockIsOfferFrozen = vi.fn();
+const mockRepriceOfferLine = vi.fn();
+// STANDALONE configs ignore this; OFFER tests default the revision to DRAFT so
+// the pre-handoff editability gate stays open (impl survives clearAllMocks).
+const mockOfferRevisionStatusFor = vi.fn(
+  async (..._args: unknown[]) => "DRAFT",
+);
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -24,9 +27,8 @@ vi.mock("@/db/queries", () => ({
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
-  deleteOfferSnapshotByConfigurationId: (...args: unknown[]) =>
-    mockDeleteOfferSnapshotByConfigurationId(...args),
-  getOfferFreezeState: (...args: unknown[]) => mockGetOfferFreezeState(...args),
+  offerRevisionStatusFor: (...args: unknown[]) =>
+    mockOfferRevisionStatusFor(...args),
   resetWashBayEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayEnergyChainFields(...args),
   resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
@@ -42,8 +44,8 @@ vi.mock("@/db/queries", () => ({
   },
 }));
 
-vi.mock("@/lib/offer", () => ({
-  isOfferFrozen: (...args: unknown[]) => mockIsOfferFrozen(...args),
+vi.mock("@/lib/offer-revision-pricing", () => ({
+  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
 }));
 
 const mockTx = {};
@@ -73,6 +75,7 @@ vi.mock("pg", () => ({
 import { editConfigurationAction } from "@/app/actions/edit-configuration-action";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
+import { configSchema } from "@/validation/config-schema";
 
 // --- Helpers ---
 
@@ -134,6 +137,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   return {
     id: CONF_ID,
     user_id: OWNER_ID,
+    // Engineer/admin technical edits run on standalone configs (Phase 1); the
+    // sales-status tests below override origin to OFFER.
+    origin: "STANDALONE",
     status: "DRAFT",
     name: "Test",
     supply_type: "STRAIGHT_SHELF",
@@ -155,12 +161,10 @@ describe("editConfigurationAction", () => {
     mockUpdateConfiguration.mockResolvedValue({ id: CONF_ID });
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
-    mockDeleteOfferSnapshotByConfigurationId.mockResolvedValue(undefined);
     mockResetWashBayEnergyChainFields.mockResolvedValue(undefined);
     mockResetWashBayNonEnergyChainFields.mockResolvedValue(undefined);
     mockInsertActivityLog.mockResolvedValue(undefined);
-    mockGetOfferFreezeState.mockResolvedValue(null);
-    mockIsOfferFrozen.mockReturnValue(false);
+    mockRepriceOfferLine.mockResolvedValue(undefined);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
@@ -231,10 +235,84 @@ describe("editConfigurationAction", () => {
       initials: "AU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
+  });
+
+  test("does not reprice a STANDALONE config", async () => {
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+  });
+
+  test("reprices the owning line on an OFFER config edit", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      CONF_ID,
+      "admin-user",
+      mockTx,
+    );
+  });
+
+  test("reprices on a surcharge-only (BOM-exempt) edit, without BOM invalidation", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    // Old config mirrors the *parsed* new form data on every non-exempt field, so
+    // the only change is total_height — a BOM-exempt surcharge driver. The
+    // snapshot/EBOM invalidation must NOT fire, yet the line must still be re-priced.
+    mockHasEngineeringBom.mockResolvedValue(true);
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue({
+      ...configSchema.parse(makeValidFormData()),
+      id: CONF_ID,
+      user_id: OWNER_ID,
+      origin: "OFFER",
+      status: "DRAFT",
+      total_height: 2500,
+    });
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({ total_height: 3000 }),
+    );
+    expect(result).toEqual({ success: true });
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      CONF_ID,
+      "admin-user",
+      mockTx,
+    );
+  });
+
+  test("rolls back the edit when repricing fails", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    mockRepriceOfferLine.mockRejectedValue(
+      new QueryError(MSG.surcharge.priceNotConfigured, 400),
+    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({
+      success: false,
+      error: MSG.surcharge.priceNotConfigured,
+    });
   });
 
   test("SALES cannot edit IN_SALES_REVIEW config", async () => {
@@ -244,7 +322,7 @@ describe("editConfigurationAction", () => {
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW" }),
+      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);
@@ -300,35 +378,6 @@ describe("editConfigurationAction", () => {
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(true);
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
-  });
-
-  // --- Offer snapshot invalidation vs freeze ---
-
-  test("deletes a non-frozen offer on a BOM-relevant edit", async () => {
-    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: null });
-    mockIsOfferFrozen.mockReturnValue(false);
-    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
-    expect(result.success).toBe(true);
-    expect(mockDeleteOfferSnapshotByConfigurationId).toHaveBeenCalledWith(
-      CONF_ID,
-      mockTx,
-    );
-  });
-
-  test("preserves a frozen offer on a BOM-relevant edit, still invalidating the EBOM", async () => {
-    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_TECH_REVIEW" }),
-    );
-    mockHasEngineeringBom.mockResolvedValue(true);
-    mockGetOfferFreezeState.mockResolvedValue({ frozen_at: new Date() });
-    mockIsOfferFrozen.mockReturnValue(true);
-    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
-    expect(result.success).toBe(true);
-    expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
-      CONF_ID,
-      mockTx,
-    );
-    expect(mockDeleteOfferSnapshotByConfigurationId).not.toHaveBeenCalled();
   });
 
   test("revalidates both edit and BOM paths after successful update", async () => {

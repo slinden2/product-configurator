@@ -89,7 +89,7 @@ import { toast } from "sonner";
 import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
 
 // --- Helpers ---
 
@@ -99,6 +99,7 @@ function makeConfiguration(
     status: ConfigurationStatusType;
     name: string;
     description: string;
+    origin: ConfigOrigin;
     created_at: Date;
     updated_at: Date;
     user: { id: string; email: string; initials: string | null };
@@ -109,6 +110,8 @@ function makeConfiguration(
     status: "DRAFT" as ConfigurationStatusType,
     name: "Config Test",
     description: "Descrizione test",
+    // The technical-configurations table lists standalone configs only.
+    origin: "STANDALONE" as ConfigOrigin,
     created_at: new Date("2025-06-15T10:30:00"),
     updated_at: new Date("2025-06-16T14:00:00"),
     user: { id: "user-1", email: "test@example.com", initials: "TE" },
@@ -321,7 +324,7 @@ describe("ConfigurationRow", () => {
       ).toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES owner can delete own DRAFT configuration", async () => {
+    test("SALES cannot delete a standalone configuration (Engineer/Admin only)", async () => {
       renderRow(
         {
           status: "DRAFT",
@@ -334,7 +337,7 @@ describe("ConfigurationRow", () => {
 
       expect(
         screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
-      ).not.toHaveAttribute("aria-disabled", "true");
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
     test("SALES owner cannot delete own IN_SALES_REVIEW configuration", async () => {
@@ -402,7 +405,7 @@ describe("ConfigurationRow", () => {
       );
     });
 
-    test("SALES sees offer item linking to /configurazioni/offerta/{id}", async () => {
+    test("the retired offer link is no longer shown to SALES", async () => {
       renderRow(
         {
           id: 42,
@@ -414,18 +417,15 @@ describe("ConfigurationRow", () => {
       await openActionsMenu();
 
       expect(
+        screen.queryByRole("menuitem", { name: /Visualizza offerta/ }),
+      ).toBeNull();
+      // SALES has no BOM access either.
+      expect(
         screen.queryByRole("menuitem", { name: /Visualizza distinta/ }),
       ).toBeNull();
-      const offerItem = screen.getByRole("menuitem", {
-        name: /Visualizza offerta/,
-      });
-      expect(offerItem.closest("a")).toHaveAttribute(
-        "href",
-        "/configurazioni/offerta/42",
-      );
     });
 
-    test("ADMIN sees both BOM and offer items", async () => {
+    test("ADMIN sees the BOM item and no retired offer item", async () => {
       renderRow(
         {
           id: 42,
@@ -442,10 +442,8 @@ describe("ConfigurationRow", () => {
           .closest("a"),
       ).toHaveAttribute("href", "/configurazioni/bom/42");
       expect(
-        screen
-          .getByRole("menuitem", { name: /Visualizza offerta/ })
-          .closest("a"),
-      ).toHaveAttribute("href", "/configurazioni/offerta/42");
+        screen.queryByRole("menuitem", { name: /Visualizza offerta/ }),
+      ).toBeNull();
     });
   });
 

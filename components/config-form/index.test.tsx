@@ -27,6 +27,11 @@ vi.mock("@/app/actions/edit-configuration-action", () => ({
   editConfigurationAction: (...args: unknown[]) => mockEditAction(...args),
 }));
 
+const mockAddOfferLineAction = vi.fn();
+vi.mock("@/app/actions/offer-line-actions", () => ({
+  addOfferLineAction: (...args: unknown[]) => mockAddOfferLineAction(...args),
+}));
+
 vi.mock("@hookform/devtools", () => ({
   DevTool: () => null,
 }));
@@ -130,13 +135,14 @@ describe("ConfigForm", () => {
       expect(fieldset).toBeDisabled();
     });
 
-    test("enables the fieldset when status is IN_SALES_REVIEW for ENGINEER role", () => {
+    test("enables the fieldset when status is IN_TECH_REVIEW for ENGINEER role", () => {
       const config = makeValidConfig();
       render(
         <ConfigForm
           id={1}
           configuration={config}
-          status="IN_SALES_REVIEW"
+          status="IN_TECH_REVIEW"
+          origin="OFFER"
           userRole="ENGINEER"
         />,
       );
@@ -167,6 +173,8 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="OFFER"
+          offerRevisionStatus="DRAFT"
           userRole="SALES"
         />,
       );
@@ -191,6 +199,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           formKey="config-1"
         />,
@@ -225,6 +234,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -249,6 +259,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -296,6 +307,8 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="OFFER"
+          offerRevisionStatus="DRAFT"
           userRole="SALES"
         />,
       );
@@ -315,6 +328,8 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="OFFER"
+          offerRevisionStatus="DRAFT"
           userRole="SALES"
         />,
       );
@@ -332,6 +347,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -351,6 +367,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -368,6 +385,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
         />,
       );
@@ -385,6 +403,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ADMIN"
         />,
       );
@@ -404,6 +423,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ADMIN"
         />,
       );
@@ -429,6 +449,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}
@@ -454,6 +475,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={vi.fn()}
@@ -479,6 +501,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}
@@ -513,6 +536,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}
@@ -549,6 +573,7 @@ describe("ConfigForm", () => {
           id={1}
           configuration={config}
           status="DRAFT"
+          origin="STANDALONE"
           userRole="ENGINEER"
           formKey="config-1"
           onDirtyChange={onDirtyChange}

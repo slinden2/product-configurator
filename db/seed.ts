@@ -1,15 +1,27 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
+import {
+  acceptOfferRevisionWithAudit,
+  approveOfferRevisionWithAudit,
+  markOfferRevisionSentWithAudit,
+  submitOfferRevisionForApprovalWithAudit,
+} from "@/db/queries";
 import {
   configurations,
   installationItemSettings,
+  offerRevisionLines,
+  offerRevisions,
+  offers,
   surchargeSettings,
   userProfiles,
   washBays,
   waterTanks,
 } from "@/db/schemas";
+import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import {
+  type ConfigOrigin,
   InstallationItemKinds,
   type Role,
   STANDARD_MACHINE_HEIGHT_MM,
@@ -260,11 +272,16 @@ const SEED_USERS: SeedUser[] = [
 ];
 
 // Owner email for each seeded configuration (aligned with confArr order).
+// Config 1 is offer-owned (wrapped by the sample offer below); configs 2 and 3 are
+// standalone technical configs, which per the workflow belong to ENGINEER/ADMIN.
 const CONFIG_OWNER_EMAILS = [
   "agent@itecosrl.com",
-  "manager@itecosrl.com",
-  "director@itecosrl.com",
+  "engineer@itecosrl.com",
+  "admin@itecosrl.com",
 ];
+
+// Origin discriminator per seeded configuration (aligned with confArr order).
+const CONFIG_ORIGINS: ConfigOrigin[] = ["OFFER", "STANDALONE", "STANDALONE"];
 
 // The Playwright E2E account (e2e/auth.setup.ts). Role SALES matches its prior
 // login-created profile. Seeded with DEV_PASSWORD like every other account.
@@ -398,6 +415,10 @@ async function seedDb() {
   if (shouldReset) {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
 
+    // Delete the offer spine before configurations: lines → revisions → offers.
+    await db.delete(offerRevisionLines);
+    await db.delete(offerRevisions);
+    await db.delete(offers);
     await db.delete(surchargeSettings);
     await db.delete(installationItemSettings);
     await db.delete(waterTanks);
@@ -413,6 +434,11 @@ async function seedDb() {
     await db.execute(sql`ALTER SEQUENCE water_tanks_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE wash_bays_id_seq RESTART WITH 1`);
     await db.execute(sql`ALTER SEQUENCE configurations_id_seq RESTART WITH 1`);
+    await db.execute(sql`ALTER SEQUENCE offers_id_seq RESTART WITH 1`);
+    await db.execute(sql`ALTER SEQUENCE offer_revisions_id_seq RESTART WITH 1`);
+    await db.execute(
+      sql`ALTER SEQUENCE offer_revision_lines_id_seq RESTART WITH 1`,
+    );
 
     console.log("🧹 Deleting all auth users (profiles cascade)...");
     await deleteAllAuthUsers(admin);
@@ -431,6 +457,9 @@ async function seedDb() {
 
   console.log("🌱 Starting seeding...");
 
+  // Capture the offer-owned configuration's id so the sample offer can wrap it.
+  let offerConfigId: number | undefined;
+
   for (const [index, conf] of confArr.entries()) {
     const ownerId = userIdByEmail.get(CONFIG_OWNER_EMAILS[index]);
     if (!ownerId) {
@@ -442,14 +471,20 @@ async function seedDb() {
     const dbData = transformConfigToDbInsert(conf, ownerId);
     const [inserted] = await db
       .insert(configurations)
-      .values(dbData)
+      .values({ ...dbData, origin: CONFIG_ORIGINS[index] })
       .returning({ id: configurations.id });
 
     if (conf === configurationComplicated && inserted) {
       await db.insert(washBays).values(getWashBayComplicated(inserted.id));
     }
+
+    if (CONFIG_ORIGINS[index] === "OFFER" && inserted) {
+      offerConfigId = inserted.id;
+    }
   }
 
+  // Pricing settings must exist before the offer so its lines can be priced from the
+  // live BOM (repriceOfferLine reads these).
   console.log("🌱 Seeding surcharge settings...");
   await db
     .insert(surchargeSettings)
@@ -465,6 +500,84 @@ async function seedDb() {
     .insert(installationItemSettings)
     .values(InstallationItemKinds.map((kind) => ({ kind, price: "0.00" })))
     .onConflictDoNothing({ target: installationItemSettings.kind });
+
+  // A sample offer walked through the full lifecycle to ACCEPTED: the agent submits
+  // Rev 1, the manager approves it, the agent sends it, and the customer accepts —
+  // fanning the line config out to SALES_APPROVED with its at-acceptance as-sold freeze
+  // and locking the offer. This leaves an offer-born config in the engineering queue.
+  console.log("🌱 Seeding sample offer (Rev 1 DRAFT → … → ACCEPTED)...");
+  const agentId = userIdByEmail.get("agent@itecosrl.com");
+  const managerId = userIdByEmail.get("manager@itecosrl.com");
+  const adminId = userIdByEmail.get("admin@itecosrl.com");
+  if (agentId && managerId && adminId && offerConfigId !== undefined) {
+    const [offer] = await db
+      .insert(offers)
+      .values({
+        offer_number: "OFF-2026-0001",
+        customer_name: "Cliente 1",
+        user_id: agentId,
+      })
+      .returning({ id: offers.id });
+
+    const [revision] = await db
+      .insert(offerRevisions)
+      .values({
+        offer_id: offer.id,
+        revision_no: 1,
+        status: "DRAFT",
+        discount_pct: "10.00",
+      })
+      .returning({ id: offerRevisions.id });
+
+    await db.insert(offerRevisionLines).values({
+      offer_revision_id: revision.id,
+      configuration_id: offerConfigId,
+      position: 0,
+      quantity: 1,
+      // Placeholder pricing — repriceOfferLine recomputes from the live BOM below.
+      list_price: "0.00",
+      net_price: "0.00",
+    });
+
+    // Load the line config's form-shape for the at-acceptance as-sold freeze, the same
+    // way acceptRevisionAction does (pooled read, before the tx). An ADMIN sees all.
+    const adminUser = {
+      id: adminId,
+      role: "ADMIN" as const,
+      initials: "ADM",
+      manager_id: null,
+    };
+    const loaded = await loadValidatedConfiguration(offerConfigId, adminUser);
+    if (!loaded)
+      throw new Error("Seed: offer config not found for as-sold freeze");
+    const asSoldByConfigId = {
+      [offerConfigId]: {
+        configuration: loaded.configuration,
+        waterTanks: loaded.waterTanks,
+        washBays: loaded.washBays,
+      },
+    };
+
+    await db.transaction(async (tx) => {
+      // Price from the live BOM while DRAFT, submit, approve, send, then accept.
+      await repriceOfferLine(offerConfigId, agentId, tx, { audit: false });
+      await submitOfferRevisionForApprovalWithAudit(
+        offer.id,
+        revision.id,
+        agentId,
+        tx,
+      );
+      await approveOfferRevisionWithAudit(offer.id, revision.id, managerId, tx);
+      await markOfferRevisionSentWithAudit(offer.id, revision.id, agentId, tx);
+      await acceptOfferRevisionWithAudit(
+        offer.id,
+        revision.id,
+        agentId,
+        asSoldByConfigId,
+        tx,
+      );
+    });
+  }
 }
 
 await seedDb();

@@ -3,11 +3,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getConfigurationStatusCounts } from "@/db/queries";
+import { getConfigurationStatusCounts, getUserData } from "@/db/queries";
+import { canViewOffer } from "@/lib/access";
 import { STATUS_CONFIG } from "@/lib/status-config";
 import { ConfigurationStatus } from "@/types";
 
 const Dashboard = async () => {
+  const user = await getUserData();
+  if (!user) redirect("/login");
+
+  // Land each role in its primary workspace. Sales work from offers; engineers
+  // from the technical config queue. ADMIN keeps the cross-status overview below.
+  if (canViewOffer(user.role) && user.role !== "ADMIN") redirect("/offerte");
+  if (user.role === "ENGINEER") redirect("/configurazioni");
+
   const counts = await getConfigurationStatusCounts();
 
   if (!counts) {

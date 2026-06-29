@@ -17,6 +17,7 @@ import {
   BrushTypes,
   ChassisWashSensorTypes,
   ChemPumpPos,
+  ConfigOrigins,
   ConfigurationStatus,
   HpPump15kwOutlets,
   HpPump30kwOutlets,
@@ -79,6 +80,7 @@ export const configurationStatusEnum = pgEnum(
   "configuration_status",
   ConfigurationStatus,
 );
+export const configOriginEnum = pgEnum("config_origin", ConfigOrigins);
 
 export const configurations = pgTable("configurations", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -148,6 +150,9 @@ export const configurations = pgTable("configurations", {
   status: configurationStatusEnum("configuration_status")
     .default("DRAFT")
     .notNull(),
+  // Discriminates a pure technical config (STANDALONE) from one owned by an offer revision
+  // (OFFER). Offer-owned rows set this explicitly; standalone is the safe default.
+  origin: configOriginEnum("origin").notNull().default("STANDALONE"),
   user_id: uuid("user_id")
     .references(() => userProfiles.id, { onDelete: "cascade" })
     .notNull(),

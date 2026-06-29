@@ -7,7 +7,12 @@ import {
   insertWashBayAction,
 } from "@/app/actions/wash-bay-actions";
 import SubRecordForm from "@/components/shared/sub-record-form";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 import {
   type UpdateWashBaySchema,
   washBayDefaults,
@@ -18,6 +23,8 @@ import WashBayFields from "./wash-bay-fields";
 interface WashBayFormProps {
   confId: number;
   confStatus: ConfigurationStatusType;
+  origin?: ConfigOrigin;
+  offerRevisionStatus?: OfferStatusType;
   userRole?: Role;
   supplyType?: string;
   supplyFixingType?: string;
@@ -29,7 +36,6 @@ interface WashBayFormProps {
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
   hasEngineeringBom?: boolean;
-  hasOfferSnapshot?: boolean;
 }
 
 const WashBayForm = (props: WashBayFormProps) => {
@@ -54,6 +60,8 @@ const WashBayForm = (props: WashBayFormProps) => {
       entityIndex={props.washBayIndex}
       parentId={props.confId}
       parentStatus={props.confStatus}
+      parentOrigin={props.origin}
+      offerRevisionStatus={props.offerRevisionStatus}
       userRole={props.userRole}
       onDelete={props.onDelete}
       onSaveSuccess={props.onSaveSuccess}
@@ -65,7 +73,6 @@ const WashBayForm = (props: WashBayFormProps) => {
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}
       hasEngineeringBom={props.hasEngineeringBom}
-      hasOfferSnapshot={props.hasOfferSnapshot}
     />
   );
 };

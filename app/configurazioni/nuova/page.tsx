@@ -1,18 +1,55 @@
 import { redirect } from "next/navigation";
 import FormContainer from "@/components/form-container";
-import { getUserData } from "@/db/queries";
+import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
+import { canManageStandaloneConfigs, canViewOffer } from "@/lib/access";
 
-const NewConfiguration = async () => {
+const NewConfiguration = async (props: {
+  searchParams: Promise<{ offerId?: string }>;
+}) => {
   const user = await getUserData();
   if (!user) redirect("/login");
+
+  const { offerId: offerIdParam } = await props.searchParams;
+  const offerId = offerIdParam ? parseInt(offerIdParam, 10) : undefined;
+
+  // Offer-line creation: open the shared ConfigForm bound to an offer the user
+  // can edit. The created config is parented to the offer (origin=OFFER) on save.
+  if (offerId !== undefined && !Number.isNaN(offerId)) {
+    if (!canViewOffer(user.role)) redirect("/");
+    const offer = await getOfferWithRevisionAndLines(offerId, user);
+    // Out of scope, missing, or the revision is no longer DRAFT → back to offers.
+    if (!offer || offer.revisions[0]?.status !== "DRAFT") {
+      redirect("/offerte");
+    }
+
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">
+            Nuova configurazione offerta
+          </h1>
+          <p className="text-muted-foreground">
+            Compila il form per aggiungere una configurazione all'offerta{" "}
+            {offer.offer_number}.
+          </p>
+        </div>
+        <FormContainer offerId={offerId} />
+      </div>
+    );
+  }
+
+  // Standalone technical config: Engineer/Admin only; sales create from offers.
+  if (!canManageStandaloneConfigs(user.role)) redirect("/");
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Nuova configurazione</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Nuova configurazione tecnica
+        </h1>
         <p className="text-muted-foreground">
-          Compila il form sottostante per creare una nuova configurazione per il
-          tuo cliente.
+          Compila il form sottostante per creare una nuova configurazione
+          tecnica autonoma.
         </p>
       </div>
       <FormContainer />

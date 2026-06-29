@@ -25,79 +25,9 @@ import {
   buildOfferItemsFromLive,
   computeOfferTotals,
   groupItemsForDisplay,
-  isOfferFrozen,
-  isOfferStale,
-  OFFER_STALENESS_DAYS,
 } from "@/lib/offer";
 
-// --- Helpers ---
-
-const NOW = new Date();
-const OLD = new Date(NOW.getTime() - (OFFER_STALENESS_DAYS + 1) * 86400_000);
-const FRESH = new Date(NOW.getTime() - (OFFER_STALENESS_DAYS - 1) * 86400_000);
-
 // --- Tests ---
-
-describe("isOfferFrozen", () => {
-  test("returns false for null snapshot", () => {
-    expect(isOfferFrozen(null)).toBe(false);
-  });
-
-  test("returns false when frozen_at is null", () => {
-    expect(isOfferFrozen({ frozen_at: null })).toBe(false);
-  });
-
-  test("returns true when frozen_at is set", () => {
-    expect(isOfferFrozen({ frozen_at: new Date() })).toBe(true);
-  });
-});
-
-describe("isOfferStale", () => {
-  test("returns false for TECH_APPROVED regardless of age", () => {
-    expect(
-      isOfferStale({ generated_at: OLD, frozen_at: null }, "TECH_APPROVED"),
-    ).toBe(false);
-  });
-
-  test("returns false for CLOSED regardless of age", () => {
-    expect(isOfferStale({ generated_at: OLD, frozen_at: null }, "CLOSED")).toBe(
-      false,
-    );
-  });
-
-  test("returns true when DRAFT and older than threshold", () => {
-    expect(isOfferStale({ generated_at: OLD, frozen_at: null }, "DRAFT")).toBe(
-      true,
-    );
-  });
-
-  test("returns false when DRAFT but within threshold", () => {
-    expect(
-      isOfferStale({ generated_at: FRESH, frozen_at: null }, "DRAFT"),
-    ).toBe(false);
-  });
-
-  test("returns true when IN_SALES_REVIEW and older than threshold", () => {
-    expect(
-      isOfferStale({ generated_at: OLD, frozen_at: null }, "IN_SALES_REVIEW"),
-    ).toBe(true);
-  });
-
-  test("returns true when IN_TECH_REVIEW and older than threshold", () => {
-    expect(
-      isOfferStale({ generated_at: OLD, frozen_at: null }, "IN_TECH_REVIEW"),
-    ).toBe(true);
-  });
-
-  test("returns false when frozen, even if old and config editable", () => {
-    expect(
-      isOfferStale(
-        { generated_at: OLD, frozen_at: new Date() },
-        "IN_TECH_REVIEW",
-      ),
-    ).toBe(false);
-  });
-});
 
 describe("buildOfferItemsFromLive", () => {
   beforeEach(() => {

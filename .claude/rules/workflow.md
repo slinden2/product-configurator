@@ -1,64 +1,134 @@
 # Workflow & Role Permissions
 
 The app manages a hand-off between sales agents, sales management, engineering, and production.
+Two lifecycles run in parallel and meet at acceptance:
 
-## Status Machine
+- The **offer revision lifecycle** (commercial) — per revision, owned by sales. See [Offer Revision Lifecycle](#offer-revision-lifecycle).
+- The **configuration status machine** (engineering) — per config. See [Configuration Status Machine](#configuration-status-machine).
+
+A configuration's `origin` (`db/queries.ts`, `types/index.ts`) decides which lifecycle governs it:
+
+- **STANDALONE** — a pure technical config created directly by Engineer/Admin for internal evaluation. It
+  runs only the engineering sub-chain `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches
+  the two sales statuses.
+- **OFFER** — a config owned by a specific offer revision (via `offer_revision_lines`). Before
+  `SALES_APPROVED` its editability is governed by the parent **offer revision** (sales workflow); once the
+  revision is accepted the config is handed off and is governed by the **config status machine**, exactly
+  like a standalone config.
+
+## Configuration Status Machine
 
 **DRAFT → IN_SALES_REVIEW → SALES_APPROVED → IN_TECH_REVIEW → TECH_APPROVED → CLOSED**
 
-- `IN_SALES_REVIEW` — a sales agent has submitted the offer for sales-management review.
-- `SALES_APPROVED` — sales management approved it; it is a **locked hand-off snapshot** awaiting engineering. Not editable by anyone.
+- `DRAFT` / `IN_SALES_REVIEW` — **sales-only pre-handoff zone** for OFFER configs (engineers have no access
+  here). For an OFFER config these statuses move in lock-step with the owning offer revision.
+- `SALES_APPROVED` — the config has been **handed off to engineering** (set by the acceptance fan-out, see
+  below). A locked hand-off snapshot awaiting engineering; not editable until pulled into `IN_TECH_REVIEW`.
 - `IN_TECH_REVIEW` — an engineer has pulled it in to finalize the BOM / technical specs.
+- `TECH_APPROVED` / `CLOSED` — engineering complete / archived (Admin-only to reach `CLOSED`).
+
+STANDALONE configs skip the two sales statuses entirely (`DRAFT → IN_TECH_REVIEW → …`).
+
+## Offer Revision Lifecycle
+
+Lifecycle lives **per revision** on `offer_revisions.status` (an `offers` header points at many
+`offer_revisions`, each pointing at many `offer_revision_lines`):
+
+**DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT → ACCEPTED / REJECTED / EXPIRED**
+
+- The **latest revision is the working copy**; line configs are editable only while it is `DRAFT`.
+- **Manager approval is required on every revision before send** (`DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND`),
+  scoped to direct reports. `APPROVED_TO_SEND → SENT` freezes the revision (rows + `pricing_snapshot`).
+- **Revisions clone-forward:** creating revision N+1 deep-clones each line's config + water tanks + wash bays
+  into fresh editable rows and recomputes line pricing. Past sent revisions are immutable.
+- **Acceptance hand-off** (`SENT → ACCEPTED`): each line config fans out to `SALES_APPROVED`, the
+  at-acceptance **as-sold freeze** fires (`offer_revision_lines.as_sold_snapshot` + `as_sold_frozen_at`),
+  `offers.accepted_revision_id` is set, and the offer is locked. Engineering then proceeds per config via the
+  config status machine, unchanged.
+- `REJECTED` / `EXPIRED` are the other terminal customer outcomes of a `SENT` revision.
+
+Two distinct snapshots stay linked so commercial and technical can't drift: the per-sent-revision
+`pricing_snapshot` (the quote) and the at-acceptance as-sold freeze (the margin baseline).
 
 ## Roles
 
 1. **SALES (Area Manager or Sales Agent):**
-   - **Primary Goal:** Capture customer requirements in `DRAFT`.
-   - **Access:** Own configurations only.
-   - **Permissions:** Can EDIT in `DRAFT` and submit `DRAFT → IN_SALES_REVIEW`. Submission is one-way: once an offer is in review the agent **cannot** pull it back to `DRAFT` — only a manager can hand it back by rejecting it. This keeps an agent from yanking a config out from under a manager who is mid-review.
-   - **Lockout:** Cannot edit once status moves past `DRAFT`.
+   - **Primary Goal:** Capture customer requirements on offers. Primary workspace: `/offerte`.
+   - **Access:** Own offers (and their line configs) only.
+   - **Permissions:** Create offers; EDIT line configs and commercial terms while the working revision is
+     `DRAFT`; submit a revision for approval (`DRAFT → PENDING_APPROVAL`). Submission is one-way — only a
+     manager can hand it back. Cannot approve their own revision (management gate).
 
 2. **SALES_MANAGER (Responsabile vendite):**
    - **Primary Goal:** Review and approve their team's offers.
-   - **Access:** Own configurations **plus** those of their direct reports (sales agents whose `manager_id` points to them).
-   - **Permissions:** Can create their own offers (like SALES); EDIT in `DRAFT` and `IN_SALES_REVIEW`; approve (`IN_SALES_REVIEW → SALES_APPROVED`), reject (`IN_SALES_REVIEW → DRAFT`), and un-approve (`SALES_APPROVED → IN_SALES_REVIEW`) within scope. Self-approval is allowed.
+   - **Access:** Own offers **plus** those of their direct reports (`manager_id` points to them).
+   - **Permissions:** Everything SALES can do, plus approve / reject / un-approve revisions within scope
+     (`canApproveRevision`, `lib/access.ts`). Self-approval within scope is allowed.
 
 3. **SALES_DIRECTOR (Direttore vendite):**
-   - Same powers as SALES_MANAGER, but **Access: all configurations** (no team restriction).
+   - Same powers as SALES_MANAGER, but **Access: all offers** (no team restriction). Also sees the margin
+     page (`canViewMarginReview`).
 
 4. **ENGINEER (Technical Office or Engineer):**
-   - **Primary Goal:** Finalize the BOM and technical specs.
-   - **Access:** All configurations.
-   - **Permissions:** Can EDIT in `DRAFT`, `IN_SALES_REVIEW`, or `IN_TECH_REVIEW`.
-   - **Transitions:** `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`.
-   - **No offer access:** ENGINEER edits the *config* (BOM/cost side) but cannot view or mutate the offer — that is sales-and-admin only. See [Offer Access](#offer-access).
+   - **Primary Goal:** Finalize the BOM and technical specs. Primary workspace: `/configurazioni`.
+   - **Access:** All STANDALONE configs (any status) + OFFER configs **only once handed off**
+     (`SALES_APPROVED`+). **No access to pre-handoff OFFER configs** (`DRAFT`/`IN_SALES_REVIEW`) — view or
+     edit — and **no offer access at all** (never prices/discount/customer terms). See [Offer Access](#offer-access).
+   - **Permissions:** EDIT in `DRAFT` (standalone) or `IN_TECH_REVIEW`. Transitions:
+     `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`.
 
 5. **ADMIN (Production/System):**
-   - **Permissions:** Same edit rights as ENGINEER. Can transition between any statuses. Only role that can move status to `CLOSED` or revert a `CLOSED` status.
+   - **Permissions:** Same edit rights as ENGINEER plus full offer access. Can transition between any
+     statuses. Only role that can move status to `CLOSED` or revert it.
 
 ## Editable Logic (Immutable States)
 
-Editability is status × role (`isEditable` in `app/actions/lib/auth-checks.ts`); ownership/scope is enforced separately by `canAccessConfiguration` (`db/queries.ts`).
+Editability is a **two-phase gate**: `isEditable(status, role, origin, offerRevisionStatus?)`
+(`app/actions/lib/auth-checks.ts`). Ownership/scope is enforced separately by `canAccessConfiguration`
+(`db/queries.ts`).
 
+- **OFFER config, pre-`SALES_APPROVED`** → governed by the **offer revision**: editable only while the
+  owning revision is `DRAFT` (and only by offer-access roles). **Fail-closed** — a missing revision status
+  means not editable, which also means ENGINEER cannot edit a pre-handoff OFFER config.
+- **OFFER config at `SALES_APPROVED`+**, and **all STANDALONE configs** → governed by `ConfigurationStatus`
+  (the engineering rules), regardless of `origin`.
 - `SALES_APPROVED`, `TECH_APPROVED`, `CLOSED` → **read-only for all roles**.
-- `SALES` → editable only in `DRAFT`.
-- `SALES_MANAGER` / `SALES_DIRECTOR` → editable in `DRAFT`, `IN_SALES_REVIEW`.
-- `ENGINEER` / `ADMIN` → editable in `DRAFT`, `IN_SALES_REVIEW`, `IN_TECH_REVIEW`.
+- `SALES` → editable only in `DRAFT`; `SALES_MANAGER` / `SALES_DIRECTOR` → `DRAFT`, `IN_SALES_REVIEW`
+  (OFFER, revision `DRAFT`); `ENGINEER` / `ADMIN` → `DRAFT` (standalone) and `IN_TECH_REVIEW`.
 
-**Frozen States:** To edit a `SALES_APPROVED` config, a manager un-approves it back to `IN_SALES_REVIEW`, or an engineer pulls it forward to `IN_TECH_REVIEW`. To edit an `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`.
+**Frozen States:** To edit a `SALES_APPROVED` config an engineer pulls it forward to `IN_TECH_REVIEW`. To
+edit a `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`. To
+re-open a sent offer, sales create a new revision (clone-forward).
 
 ## Offer Access
 
-The **offer** is gated separately from the **configuration**: `isEditable` governs the config, `canViewOffer` (`lib/access.ts`) governs the offer — deliberately different role sets.
+The **offer** is gated separately from the **configuration**: `isEditable` governs the config,
+`canViewOffer` (`lib/access.ts`) governs the offer — deliberately different role sets.
 
 - `canViewOffer` = SALES roles + `ADMIN`. **ENGINEER is excluded.**
-- The offer route (`offerta/[id]/layout.tsx`) redirects disallowed roles to the BOM page.
-- Every offer action runs `canViewOffer` first via `authorizeOfferAction` — **before** `isEditable` — so ENGINEER is rejected even where `isEditable` would otherwise allow it.
+- The offer route (`app/offerte/[id]/layout.tsx`) redirects disallowed roles.
+- Every offer action runs `canViewOffer` first via `authorizeOfferAction` — **before** `isEditable` — so
+  ENGINEER is rejected even where `isEditable` would otherwise allow it.
+- Revision transitions are gated by `canTransitionRevision` (`app/actions/lib/auth-checks.ts`); the
+  approval edges additionally require `canApproveRevision`.
 
-Commercial terms (discount/transport/installation) are mutable only in the sales-editable zone (`DRAFT`, `IN_SALES_REVIEW`) by offer-access roles; at `SALES_APPROVED` the offer **freezes** as the immutable as-sold snapshot and rejects all mutations.
+Commercial terms (header discount / transport / installation) are mutable only while the working revision
+is `DRAFT`, by offer-access roles. The margin page (`canViewMarginReview` = ADMIN/SALES_DIRECTOR) reads the
+line `pricing_snapshot` + `net_price` and surfaces the at-acceptance as-sold freeze date.
 
 ## Scope (Visibility)
 
-`configScopeWhere(user)` (`db/queries.ts`) builds the list/count filter; `canAccessConfiguration(user, config)` is the single-record gate. SALES = own; SALES_MANAGER = own + direct reports; SALES_DIRECTOR / ENGINEER / ADMIN = all.
+- **Configs:** `configScopeWhere(user)` builds the list/count filter; `canAccessConfiguration(user, config)`
+  is the single-record gate (now also denies ENGINEER on pre-handoff OFFER configs). SALES = own;
+  SALES_MANAGER = own + direct reports; SALES_DIRECTOR / ENGINEER / ADMIN = all (within the above rule).
+- **Offers:** `offerScopeWhere(user)` — ENGINEER none; SALES own; SALES_MANAGER own + reports;
+  SALES_DIRECTOR / ADMIN all.
+- **Technical queue:** `getUserConfigurations` returns the engineer/admin queue — STANDALONE (all statuses)
+  ∪ OFFER (`SALES_APPROVED`+). Pre-handoff offer configs never appear there.
 
-**Validation:** Every Server Action MUST run `isEditable(status, role)` before any DB update, and `canAccessConfiguration` (or fetch via the scoped `getConfigurationWithTanksAndBays`) for ownership.
+**Landing:** the home page (`app/page.tsx`) redirects each role to its primary workspace — SALES roles →
+`/offerte`, ENGINEER → `/configurazioni`, ADMIN → the cross-status dashboard.
+
+**Validation:** Every Server Action MUST run `isEditable(status, role, origin, offerRevisionStatus?)` before
+any DB update, and `canAccessConfiguration` (or fetch via the scoped `getConfigurationWithTanksAndBays`) for
+ownership; every offer action MUST run `authorizeOfferAction` first.

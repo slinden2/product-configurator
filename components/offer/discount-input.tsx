@@ -2,21 +2,21 @@
 
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { setOfferDiscountAction } from "@/app/actions/offer-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MSG } from "@/lib/messages";
 
 interface Props {
-  confId: number;
   initialDiscount: number;
   disabled?: boolean;
+  /** Persists the new discount — a per-config or per-revision server action. */
+  onSave: (discount: number) => Promise<{ success: boolean; error?: string }>;
 }
 
 export default function DiscountInput({
-  confId,
   initialDiscount,
   disabled,
+  onSave,
 }: Props) {
   const [value, setValue] = useState(initialDiscount.toString());
   const [isPending, startTransition] = useTransition();
@@ -27,7 +27,7 @@ export default function DiscountInput({
     if (Number.isNaN(numeric) || numeric === lastSaved.current) return;
 
     startTransition(async () => {
-      const result = await setOfferDiscountAction(confId, numeric);
+      const result = await onSave(numeric);
       if (result.success) {
         lastSaved.current = numeric;
         toast.success(MSG.toast.offerDiscountSet);

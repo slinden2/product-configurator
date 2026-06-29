@@ -24,12 +24,24 @@ import {
   STATUS_CONFIG,
   STATUS_PIPELINE,
 } from "@/lib/status-config";
-import type { ConfigurationStatusType, Role } from "@/types";
+import type {
+  ConfigOrigin,
+  ConfigurationStatusType,
+  OfferStatusType,
+  Role,
+} from "@/types";
 
 interface StatusControlProps {
   confId: number;
   initialStatus: ConfigurationStatusType;
   userRole: Role;
+  /** Defaults to "OFFER" (the full sales+engineering machine). */
+  origin?: ConfigOrigin;
+  /**
+   * Owning offer revision status (OFFER origin only), so the lockout-warning
+   * editability prediction matches the two-phase gate.
+   */
+  offerRevisionStatus?: OfferStatusType;
 }
 
 /**
@@ -41,10 +53,12 @@ interface StatusControlProps {
 function getValidTransitions(
   role: Role,
   currentStatus: ConfigurationStatusType,
+  origin: ConfigOrigin,
 ): ConfigurationStatusType[] {
   return STATUS_PIPELINE.filter(
     (status) =>
-      status !== currentStatus && canTransition(role, currentStatus, status),
+      status !== currentStatus &&
+      canTransition(role, currentStatus, status, origin),
   );
 }
 
@@ -52,6 +66,8 @@ const StatusControl = ({
   confId,
   initialStatus,
   userRole,
+  origin = "OFFER",
+  offerRevisionStatus,
 }: StatusControlProps) => {
   const [isPending, startTransition] = useTransition();
   // The transition awaiting confirmation; also drives the confirmation modal.
@@ -59,7 +75,7 @@ const StatusControl = ({
     useState<ConfigurationStatusType | null>(null);
 
   const { label } = STATUS_CONFIG[initialStatus];
-  const validTargets = getValidTransitions(userRole, initialStatus);
+  const validTargets = getValidTransitions(userRole, initialStatus, origin);
 
   // Adjacent (±1) moves become buttons; the rest (ADMIN-only jumps) go in the
   // manual dropdown.
@@ -164,8 +180,18 @@ const StatusControl = ({
             <>
               Confermi il passaggio da «{label}» a «
               {STATUS_CONFIG[pendingTarget].label}»?
-              {isEditable(initialStatus, userRole) &&
-                !isEditable(pendingTarget, userRole) &&
+              {isEditable(
+                initialStatus,
+                userRole,
+                origin,
+                offerRevisionStatus,
+              ) &&
+                !isEditable(
+                  pendingTarget,
+                  userRole,
+                  origin,
+                  offerRevisionStatus,
+                ) &&
                 " In questo stato non potrai modificare la configurazione."}
             </>
           )

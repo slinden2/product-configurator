@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { canManageStandaloneConfigs, canViewOffer } from "@/lib/access";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types";
 
@@ -40,11 +41,27 @@ const MainNav = ({ user, role }: MainNavProps) => {
       href: "/",
       active: pathname === "/",
     },
-    {
-      label: "Configurazioni",
-      href: "/configurazioni",
-      active: pathname.startsWith("/configurazioni"),
-    },
+    // Offers are the sales workspace (sales roles + ADMIN); ENGINEER is excluded.
+    ...(role && canViewOffer(role)
+      ? [
+          {
+            label: "Offerte",
+            href: "/offerte",
+            active: pathname.startsWith("/offerte"),
+          },
+        ]
+      : []),
+    // The configurations area is the standalone "Technical" list: Engineer/Admin
+    // only. Sales work from offers (/offerte), not from technical configs.
+    ...(role && canManageStandaloneConfigs(role)
+      ? [
+          {
+            label: "Configurazioni tecniche",
+            href: "/configurazioni",
+            active: pathname.startsWith("/configurazioni"),
+          },
+        ]
+      : []),
     ...(role === "ADMIN"
       ? [
           {

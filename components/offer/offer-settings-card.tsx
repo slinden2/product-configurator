@@ -2,7 +2,6 @@
 
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { setOfferSettingsAction } from "@/app/actions/offer-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -15,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MSG } from "@/lib/messages";
-import type { OfferSnapshotSettings } from "@/lib/offer-settings";
+import type { OfferDisplaySettings } from "@/lib/offer-settings";
 import type { InstallationItemKind, TransportMode } from "@/types";
 import {
   InstallationItemKindLabels,
@@ -26,13 +25,20 @@ import {
 import DiscountInput from "./discount-input";
 
 interface Props {
-  confId: number;
   initialDiscount: number;
-  initialSettings: OfferSnapshotSettings;
+  initialSettings: OfferDisplaySettings;
   disabled?: boolean;
+  /** Persists the discount — a per-config or per-revision server action. */
+  onSaveDiscount: (
+    discount: number,
+  ) => Promise<{ success: boolean; error?: string }>;
+  /** Persists the settings — a per-config or per-revision server action. */
+  onSaveSettings: (
+    settings: OfferDisplaySettings,
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
-function amountDrafts(settings: OfferSnapshotSettings) {
+function amountDrafts(settings: OfferDisplaySettings) {
   return Object.fromEntries(
     settings.installation_items.map((item) => [
       item.kind,
@@ -42,10 +48,11 @@ function amountDrafts(settings: OfferSnapshotSettings) {
 }
 
 export default function OfferSettingsCard({
-  confId,
   initialDiscount,
   initialSettings,
   disabled,
+  onSaveDiscount,
+  onSaveSettings,
 }: Props) {
   const [settings, setSettings] = useState(initialSettings);
   const [transportDraft, setTransportDraft] = useState(
@@ -57,10 +64,10 @@ export default function OfferSettingsCard({
 
   const controlsDisabled = disabled || isPending;
 
-  const persist = (next: OfferSnapshotSettings) => {
+  const persist = (next: OfferDisplaySettings) => {
     setSettings(next);
     startTransition(async () => {
-      const result = await setOfferSettingsAction(confId, next);
+      const result = await onSaveSettings(next);
       if (result.success) {
         lastSaved.current = next;
         toast.success(MSG.toast.offerSettingsSet);
@@ -119,9 +126,9 @@ export default function OfferSettingsCard({
       </CardHeader>
       <CardContent className="space-y-6">
         <DiscountInput
-          confId={confId}
           initialDiscount={initialDiscount}
           disabled={disabled}
+          onSave={onSaveDiscount}
         />
 
         <div className="flex items-center gap-2">
