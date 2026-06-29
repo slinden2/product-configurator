@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
 import {
   canAccessConfiguration,
@@ -126,13 +126,7 @@ export const editConfigurationAction = async (
         tx,
       );
     });
-    revalidatePath(`/configurazioni/modifica/${confId}`);
-    revalidatePath(`/configurazioni/bom/${confId}`);
-    revalidatePath(`/configurazioni/marginalita/${confId}`);
-    // An OFFER line config surfaces on its offer detail page too.
-    if (configuration.origin === "OFFER") {
-      revalidatePath("/offerte/[id]", "page");
-    }
+    revalidateConfigurationRoutes(confId, configuration.origin);
     return { success: true as const };
   } catch (err) {
     console.error("Failed to edit configuration:", err);

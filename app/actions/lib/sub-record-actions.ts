@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { z } from "zod";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
 import {
   canAccessConfiguration,
@@ -30,7 +30,6 @@ type SubRecordActionResult =
 
 interface SubRecordOptionsBase {
   parentId: number;
-  revalidatePathStr: string;
   entityName: string;
 }
 
@@ -83,7 +82,7 @@ type SubRecordOptions<TFormSchema extends z.ZodType> =
 export async function handleSubRecordAction<
   TFormSchema extends z.ZodType = z.ZodType,
 >(options: SubRecordOptions<TFormSchema>): Promise<SubRecordActionResult> {
-  const { actionType, parentId, revalidatePathStr, entityName } = options;
+  const { actionType, parentId, entityName } = options;
 
   // --- 1. Validation (for Insert/Edit) ---
   let validatedData: z.infer<TFormSchema> | undefined;
@@ -195,12 +194,7 @@ export async function handleSubRecordAction<
     });
 
     // --- 5. Cache Revalidation ---
-    revalidatePath(revalidatePathStr);
-    revalidatePath(`/configurazioni/bom/${parentId}`);
-    revalidatePath(`/configurazioni/marginalita/${parentId}`);
-    if (configuration.origin === "OFFER") {
-      revalidatePath("/offerte/[id]", "page");
-    }
+    revalidateConfigurationRoutes(parentId, configuration.origin);
 
     // --- 6. Return Success ---
     return { success: true as const, data: operationResult };

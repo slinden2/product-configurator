@@ -380,12 +380,15 @@ describe("editConfigurationAction", () => {
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
   });
 
-  test("revalidates both edit and BOM paths after successful update", async () => {
+  test("revalidates the edit, view and BOM paths after successful update", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
     await editConfigurationAction(CONF_ID, makeValidFormData());
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/modifica/${CONF_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/visualizza/${CONF_ID}`,
     );
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
