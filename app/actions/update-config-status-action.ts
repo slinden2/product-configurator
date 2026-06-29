@@ -56,6 +56,9 @@ export const updateConfigStatusAction = async (
     // The read-only view also renders status-dependent UI (edit button,
     // transition list) and the StatusForm, so it must be revalidated too.
     revalidatePath(`/configurazioni/visualizza/${updatedId}`);
+    // The BOM page gates Snapshot/Regenerate on editable = isEditable(status, …),
+    // so freezing transitions must invalidate it too.
+    revalidatePath(`/configurazioni/bom/${updatedId}`);
     return { success: true as const, id: updatedId };
   } catch (err) {
     console.error("Failed to update configuration status:", err);

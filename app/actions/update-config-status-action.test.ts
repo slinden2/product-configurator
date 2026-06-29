@@ -87,6 +87,10 @@ describe("updateConfigStatusAction", () => {
       }),
       mockTx,
     );
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/bom/${CONF_ID}`,
+    );
   });
 
   test("returns validation error for invalid status", async () => {
