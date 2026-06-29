@@ -33,6 +33,8 @@ function makeTx(offer: unknown) {
   let nextConfigId = FIRST_CLONED_CONFIG_ID;
 
   const tx = {
+    // The offer row lock (`select ... for update`) runs through tx.execute.
+    execute: vi.fn().mockResolvedValue(undefined),
     query: { offers: { findFirst: vi.fn().mockResolvedValue(offer) } },
     insert: (table: unknown) => ({
       values: (values: Record<string, unknown>) => {
@@ -205,7 +207,12 @@ describe("createOfferRevisionFrom", () => {
     });
 
     // Line points at the new revision + cloned config, preserving position/quantity.
-    expect(valuesFor(offerRevisionLines)[0]).toMatchObject({
+    // Lines are bulk-inserted as an array, like the child tables.
+    const [lineRows] = valuesFor(offerRevisionLines) as unknown as Record<
+      string,
+      unknown
+    >[][];
+    expect(lineRows[0]).toMatchObject({
       offer_revision_id: NEW_REVISION_ID,
       configuration_id: FIRST_CLONED_CONFIG_ID,
       position: 0,
@@ -218,6 +225,42 @@ describe("createOfferRevisionFrom", () => {
       action: "OFFER_REVISION_CREATE",
     });
     expect(mutations).toEqual([]);
+  });
+
+  test("resets valid_until on the clone (validity is a per-send stamp, not carried forward)", async () => {
+    const offer = frozenOffer();
+    // Source revision had an (expired) validity date set.
+    offer.revisions[0].valid_until = new Date(
+      "2020-01-01T00:00:00.000Z",
+    ) as unknown as null;
+    const { tx, valuesFor } = makeTx(offer);
+
+    await createOfferRevisionFrom(5, 2, "actor", tx);
+
+    const [revisionInsert] = valuesFor(offerRevisions);
+    expect(revisionInsert.valid_until).toBeNull();
+  });
+
+  test("defaults the source to the latest revision when no source number is given", async () => {
+    const { tx, valuesFor } = makeTx(frozenOffer());
+
+    const result = await createOfferRevisionFrom(5, undefined, "actor", tx);
+
+    expect(result.revisionNo).toBe(3);
+    // Audit records the resolved source (latest = revision_no 2).
+    expect(valuesFor(activityLogs)[0]).toMatchObject({
+      metadata: expect.objectContaining({ fromRevisionNo: 2, revisionNo: 3 }),
+    });
+  });
+
+  test("takes a row lock on the offer before reading it", async () => {
+    const { tx } = makeTx(frozenOffer());
+
+    await createOfferRevisionFrom(5, 2, "actor", tx);
+
+    expect(
+      (tx as unknown as { execute: ReturnType<typeof vi.fn> }).execute,
+    ).toHaveBeenCalledOnce();
   });
 
   test("rejects when the latest revision is still a DRAFT working copy", async () => {

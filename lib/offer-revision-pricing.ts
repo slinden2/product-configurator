@@ -72,6 +72,51 @@ export async function repriceOfferLine(
   txOrDb: DatabaseType | TransactionType,
   opts: { audit?: boolean } = {},
 ): Promise<void> {
+  // Surcharge settings are read in the caller's tx (consistent with the lines being
+  // priced) rather than on a separate pooled connection.
+  const surchargeSettings = await getSurchargeSettings(txOrDb);
+  await repriceLineWithSettings(
+    configId,
+    userId,
+    surchargeSettings,
+    txOrDb,
+    opts,
+  );
+}
+
+/**
+ * Re-prices every offer line in `configIds` in one pass. Surcharge settings are global
+ * and constant for the pass, so they are fetched **once** (in the caller's tx) and
+ * reused for every line — avoiding the N identical settings queries a per-line loop of
+ * {@link repriceOfferLine} would issue on a clone/send.
+ */
+export async function repriceOfferLines(
+  configIds: number[],
+  userId: string,
+  txOrDb: DatabaseType | TransactionType,
+  opts: { audit?: boolean } = {},
+): Promise<void> {
+  if (configIds.length === 0) return;
+  const surchargeSettings = await getSurchargeSettings(txOrDb);
+  for (const configId of configIds) {
+    await repriceLineWithSettings(
+      configId,
+      userId,
+      surchargeSettings,
+      txOrDb,
+      opts,
+    );
+  }
+}
+
+/** Core re-price of a single line from pre-fetched surcharge settings. */
+async function repriceLineWithSettings(
+  configId: number,
+  userId: string,
+  surchargeSettings: SurchargeSetting[],
+  txOrDb: DatabaseType | TransactionType,
+  opts: { audit?: boolean } = {},
+): Promise<void> {
   const line = await offerRevisionLineForConfig(configId, txOrDb);
   // An OFFER config must own a line; a missing one is data drift, not a no-op.
   if (!line) throw new QueryError(MSG.offer.notFound, 404);
@@ -81,7 +126,6 @@ export async function repriceOfferLine(
   const configuration = await loadConfigForPricing(configId, txOrDb);
   if (!configuration) throw new QueryError(MSG.config.notFound, 404);
 
-  const surchargeSettings = await getSurchargeSettings();
   const result = await computeLinePricing(
     configuration,
     Number(line.discount_pct),

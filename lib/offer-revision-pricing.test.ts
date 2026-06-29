@@ -40,6 +40,7 @@ import { MSG } from "@/lib/messages";
 import {
   computeLinePricing,
   repriceOfferLine,
+  repriceOfferLines,
 } from "@/lib/offer-revision-pricing";
 import { round2 } from "@/lib/utils";
 import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
@@ -249,6 +250,44 @@ describe("repriceOfferLine", () => {
     await expect(repriceOfferLine(CONFIG_ID, "u1", TX)).rejects.toThrow(
       MSG.surcharge.priceNotConfigured,
     );
+    expect(updateOfferRevisionLinePricing).not.toHaveBeenCalled();
+  });
+});
+
+describe("repriceOfferLines", () => {
+  const TX = {} as DatabaseType;
+
+  const settings = (rows: { kind: string; price: string }[]) =>
+    rows as unknown as Awaited<ReturnType<typeof getSurchargeSettings>>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSingleGeneralItem();
+    vi.mocked(offerRevisionLineForConfig).mockResolvedValue({
+      lineId: 7,
+      revisionId: 3,
+      discount_pct: "10.00",
+      status: "DRAFT",
+    });
+    vi.mocked(loadConfigForPricing).mockResolvedValue(configWith({}));
+    vi.mocked(getSurchargeSettings).mockResolvedValue(
+      settings([HEIGHT_SETTING, PAINT_SETTING]),
+    );
+    vi.mocked(updateOfferRevisionLinePricing).mockResolvedValue(undefined);
+    vi.mocked(insertActivityLog).mockResolvedValue(undefined);
+  });
+
+  test("fetches surcharge settings once for the whole pass, then prices each line", async () => {
+    await repriceOfferLines([41, 42, 43], "u1", TX, { audit: false });
+
+    expect(getSurchargeSettings).toHaveBeenCalledOnce();
+    expect(updateOfferRevisionLinePricing).toHaveBeenCalledTimes(3);
+  });
+
+  test("no-ops (and skips the settings query) for an empty config list", async () => {
+    await repriceOfferLines([], "u1", TX);
+
+    expect(getSurchargeSettings).not.toHaveBeenCalled();
     expect(updateOfferRevisionLinePricing).not.toHaveBeenCalled();
   });
 });

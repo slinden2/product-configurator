@@ -5,7 +5,7 @@ import { DatabaseError } from "pg";
 import { db } from "@/db";
 import {
   addOfferLine,
-  getOfferWithRevisionAndLines,
+  getOfferWorkingRevision,
   getUserData,
   QueryError,
   removeOfferLine,
@@ -41,9 +41,11 @@ export const addOfferLineAction = async (
     return { success: false as const, error: MSG.offer.unauthorized };
   }
 
-  // Existence + scope (returns null when out of the user's offer scope).
-  const offer = await getOfferWithRevisionAndLines(offerId, user);
-  if (!offer) {
+  // Existence + scope (returns null when out of the user's offer scope). The
+  // revision-DRAFT gate lives in addOfferLine, so the working revision's status is not
+  // needed here — only that the offer is reachable.
+  const working = await getOfferWorkingRevision(offerId, user);
+  if (!working) {
     return { success: false as const, error: MSG.offer.notFound };
   }
 
@@ -93,8 +95,8 @@ export const removeOfferLineAction = async (
     return { success: false as const, error: MSG.offer.unauthorized };
   }
 
-  const offer = await getOfferWithRevisionAndLines(offerId, user);
-  if (!offer) {
+  const working = await getOfferWorkingRevision(offerId, user);
+  if (!working) {
     return { success: false as const, error: MSG.offer.notFound };
   }
 

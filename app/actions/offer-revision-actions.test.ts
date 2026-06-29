@@ -4,18 +4,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // --- Mocks ---
 
 const mockGetUserData = vi.fn();
-const mockGetOfferWithRevisionAndLines = vi.fn();
+const mockGetOfferWorkingRevision = vi.fn();
 const mockUpdateRevisionDiscountWithAudit = vi.fn();
 const mockUpdateRevisionSettingsWithAudit = vi.fn();
 const mockCreateOfferRevisionFrom = vi.fn();
 const mockGetWorkingRevisionForSend = vi.fn();
 const mockMarkOfferRevisionSentWithAudit = vi.fn();
-const mockRepriceOfferLine = vi.fn();
+const mockRepriceOfferLines = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
-  getOfferWithRevisionAndLines: (...args: unknown[]) =>
-    mockGetOfferWithRevisionAndLines(...args),
+  getOfferWorkingRevision: (...args: unknown[]) =>
+    mockGetOfferWorkingRevision(...args),
   updateRevisionDiscountWithAudit: (...args: unknown[]) =>
     mockUpdateRevisionDiscountWithAudit(...args),
   updateRevisionSettingsWithAudit: (...args: unknown[]) =>
@@ -43,7 +43,7 @@ vi.mock("@/db", () => ({
 }));
 
 vi.mock("@/lib/offer-revision-pricing", () => ({
-  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
+  repriceOfferLines: (...args: unknown[]) => mockRepriceOfferLines(...args),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -88,9 +88,9 @@ describe("setRevisionDiscountAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      revisions: [{ id: REVISION_ID, status: "DRAFT", lines: [] }],
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
     });
     mockUpdateRevisionDiscountWithAudit.mockResolvedValue(undefined);
   });
@@ -113,16 +113,16 @@ describe("setRevisionDiscountAction", () => {
   });
 
   test("returns notFound when the offer is out of scope", async () => {
-    mockGetOfferWithRevisionAndLines.mockResolvedValue(null);
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
     const result = await setRevisionDiscountAction(OFFER_ID, 10);
     expect(result).toEqual({ success: false, error: MSG.offer.notFound });
     expect(mockUpdateRevisionDiscountWithAudit).not.toHaveBeenCalled();
   });
 
   test("rejects a non-DRAFT revision", async () => {
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      revisions: [{ id: REVISION_ID, status: "SENT", lines: [] }],
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
     });
     const result = await setRevisionDiscountAction(OFFER_ID, 10);
     expect(result).toEqual({
@@ -146,9 +146,9 @@ describe("setRevisionSettingsAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES_MANAGER" });
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      revisions: [{ id: REVISION_ID, status: "DRAFT", lines: [] }],
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
     });
     mockUpdateRevisionSettingsWithAudit.mockResolvedValue(undefined);
   });
@@ -166,9 +166,9 @@ describe("setRevisionSettingsAction", () => {
   });
 
   test("rejects a non-DRAFT revision", async () => {
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      revisions: [{ id: REVISION_ID, status: "APPROVED_TO_SEND", lines: [] }],
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "APPROVED_TO_SEND",
     });
     const result = await setRevisionSettingsAction(OFFER_ID, validSettings());
     expect(result).toEqual({
@@ -192,22 +192,25 @@ describe("sendRevisionAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({ id: OFFER_ID });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+    });
     mockGetWorkingRevisionForSend.mockResolvedValue({
       id: REVISION_ID,
       status: "DRAFT",
       configIds: [11, 12],
     });
-    mockRepriceOfferLine.mockResolvedValue(undefined);
+    mockRepriceOfferLines.mockResolvedValue(undefined);
     mockMarkOfferRevisionSentWithAudit.mockResolvedValue(undefined);
   });
 
   test("reprices every line then freezes the revision as sent", async () => {
     const result = await sendRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: true });
-    expect(mockRepriceOfferLine).toHaveBeenCalledTimes(2);
-    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
-      11,
+    expect(mockRepriceOfferLines).toHaveBeenCalledTimes(1);
+    expect(mockRepriceOfferLines).toHaveBeenCalledWith(
+      [11, 12],
       "u1",
       {},
       {
@@ -230,7 +233,7 @@ describe("sendRevisionAction", () => {
   });
 
   test("returns notFound when the offer is out of scope", async () => {
-    mockGetOfferWithRevisionAndLines.mockResolvedValue(null);
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
     const result = await sendRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.notFound });
     expect(mockGetWorkingRevisionForSend).not.toHaveBeenCalled();
@@ -244,7 +247,7 @@ describe("sendRevisionAction", () => {
     });
     const result = await sendRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.cannotSend });
-    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
     expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
   });
 
@@ -259,7 +262,7 @@ describe("sendRevisionAction", () => {
       success: false,
       error: MSG.offer.cannotSendEmpty,
     });
-    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
     expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
   });
 });
@@ -269,29 +272,31 @@ describe("createRevisionAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
     // Latest revision is frozen (SENT) → a new working revision may be cloned.
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      revisions: [{ revision_no: 2, status: "SENT" }],
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
     });
     mockCreateOfferRevisionFrom.mockResolvedValue({
       revisionId: 99,
       revisionNo: 3,
       configIds: [21],
     });
-    mockRepriceOfferLine.mockResolvedValue(undefined);
+    mockRepriceOfferLines.mockResolvedValue(undefined);
   });
 
   test("clones forward from the latest revision by default and reprices", async () => {
     const result = await createRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: true, data: { revisionNo: 3 } });
+    // The default source (latest) is resolved inside createOfferRevisionFrom under
+    // the offer row lock, so the action passes `undefined` straight through.
     expect(mockCreateOfferRevisionFrom).toHaveBeenCalledWith(
       OFFER_ID,
-      2,
+      undefined,
       "u1",
       {},
     );
-    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
-      21,
+    expect(mockRepriceOfferLines).toHaveBeenCalledWith(
+      [21],
       "u1",
       {},
       {

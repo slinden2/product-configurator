@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // --- Mocks ---
 
 const mockGetUserData = vi.fn();
-const mockGetOfferWithRevisionAndLines = vi.fn();
+const mockGetOfferWorkingRevision = vi.fn();
 const mockAddOfferLine = vi.fn();
 const mockRemoveOfferLine = vi.fn();
 const mockRepriceOfferLine = vi.fn();
@@ -19,8 +19,8 @@ vi.mock("@/db", () => ({
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
-  getOfferWithRevisionAndLines: (...args: unknown[]) =>
-    mockGetOfferWithRevisionAndLines(...args),
+  getOfferWorkingRevision: (...args: unknown[]) =>
+    mockGetOfferWorkingRevision(...args),
   addOfferLine: (...args: unknown[]) => mockAddOfferLine(...args),
   removeOfferLine: (...args: unknown[]) => mockRemoveOfferLine(...args),
   QueryError: class QueryError extends Error {
@@ -119,11 +119,7 @@ describe("addOfferLineAction", () => {
       role: "SALES",
       initials: "SX",
     });
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      user_id: "u1",
-      revisions: [{ id: 1, status: "DRAFT", lines: [] }],
-    });
+    mockGetOfferWorkingRevision.mockResolvedValue({ id: 1, status: "DRAFT" });
     mockAddOfferLine.mockResolvedValue({ id: CONFIG_ID });
     mockRepriceOfferLine.mockResolvedValue(undefined);
   });
@@ -165,7 +161,7 @@ describe("addOfferLineAction", () => {
   });
 
   test("returns notFound when the offer is out of scope", async () => {
-    mockGetOfferWithRevisionAndLines.mockResolvedValue(null);
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
     const result = await addOfferLineAction(OFFER_ID, makeValidConfig());
     expect(result).toEqual({ success: false, error: MSG.offer.notFound });
     expect(mockAddOfferLine).not.toHaveBeenCalled();
@@ -197,11 +193,7 @@ describe("removeOfferLineAction", () => {
       role: "SALES_MANAGER",
       initials: "SM",
     });
-    mockGetOfferWithRevisionAndLines.mockResolvedValue({
-      id: OFFER_ID,
-      user_id: "report-1",
-      revisions: [{ id: 1, status: "DRAFT", lines: [{ id: 9 }] }],
-    });
+    mockGetOfferWorkingRevision.mockResolvedValue({ id: 1, status: "DRAFT" });
     mockRemoveOfferLine.mockResolvedValue(undefined);
   });
 
@@ -219,7 +211,7 @@ describe("removeOfferLineAction", () => {
   });
 
   test("returns notFound when the offer is out of scope", async () => {
-    mockGetOfferWithRevisionAndLines.mockResolvedValue(null);
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
     const result = await removeOfferLineAction(OFFER_ID, CONFIG_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.notFound });
     expect(mockRemoveOfferLine).not.toHaveBeenCalled();

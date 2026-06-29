@@ -16,7 +16,10 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
-import { repriceOfferLine } from "@/lib/offer-revision-pricing";
+import {
+  repriceOfferLine,
+  repriceOfferLines,
+} from "@/lib/offer-revision-pricing";
 import {
   type ConfigOrigin,
   InstallationItemKinds,
@@ -545,9 +548,7 @@ async function seedDb() {
         agentId,
         tx,
       );
-      for (const configId of configIds) {
-        await repriceOfferLine(configId, agentId, tx, { audit: false });
-      }
+      await repriceOfferLines(configIds, agentId, tx, { audit: false });
     });
   }
 }

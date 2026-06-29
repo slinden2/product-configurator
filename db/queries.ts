@@ -25,6 +25,7 @@ import {
   installationItemSettings,
   type NewConfiguration,
   type NewEngineeringBomItem,
+  type NewOfferRevisionLine,
   type NewWashBay,
   type NewWaterTank,
   type OfferSnapshot,
@@ -468,6 +469,36 @@ export type OfferWithRevisionAndLines = NonNullable<
 >;
 
 /**
+ * Scoped fetch of an offer's **working revision only** (latest by `revision_no`),
+ * with just its id and status — for the mutation actions that need a scope check and
+ * the working revision's lifecycle state, without eagerly loading the whole revision
+ * history (and every line's `pricing_snapshot`). Returns `null` when the offer is
+ * missing, out of the user's scope, or has no revision yet. Use
+ * {@link getOfferWithRevisionAndLines} only where the full history is actually rendered.
+ */
+export async function getOfferWorkingRevision(
+  offerId: number,
+  user: NonNullable<UserData>,
+): Promise<{ id: number; status: OfferStatusType } | null> {
+  const offer = await db.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { user_id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        limit: 1,
+        columns: { id: true, status: true },
+      },
+    },
+  });
+
+  if (!offer) return null;
+  if (!(await canAccessOffer(user, offer))) return null;
+
+  return offer.revisions[0] ?? null;
+}
+
+/**
  * Adds a new configuration line to an offer's **working revision** (the latest by
  * `revision_no`). Inserts the config with `origin=OFFER` owned by the **offer
  * owner** (not the acting user, so a manager adding to a report's offer doesn't
@@ -620,21 +651,32 @@ export async function updateOfferRevisionLinePricing(
  * untouched (immutable history).
  *
  * Pricing is NOT computed here — the cloned lines start with placeholder pricing and
- * the caller re-prices each one via `repriceOfferLine` in the same transaction (kept in
+ * the caller re-prices each one via `repriceOfferLines` in the same transaction (kept in
  * the action layer to avoid a queries ↔ pricing import cycle). Returns the new
  * revision's id/number and the cloned configuration ids in line order.
  *
+ * `sourceRevisionNo` defaults to the latest revision (the normal "next revision");
+ * pass an earlier number to revert to it. The default is resolved **inside the
+ * transaction** so it can't go stale against a concurrent send/create.
+ *
  * Guards: the offer's latest revision must be frozen (status ≠ DRAFT) — only one
- * working draft exists at a time. Audited in the caller's transaction.
+ * working draft exists at a time. A `FOR UPDATE` lock on the offer row serializes
+ * concurrent creates/sends so two callers can't mint the same `revision_no`. Audited
+ * in the caller's transaction.
  */
 export async function createOfferRevisionFrom(
   offerId: number,
-  sourceRevisionNo: number,
+  sourceRevisionNo: number | undefined,
   userId: string,
   // Required: clone + line inserts + audit must commit atomically with the caller's
   // re-pricing pass.
   tx: TransactionType,
 ): Promise<{ revisionId: number; revisionNo: number; configIds: number[] }> {
+  // Serialize lifecycle mutations on this offer: a concurrent create/send blocks here
+  // until we commit, so both can't read the same latest revision and clash on
+  // revision_no (which would surface only as a generic unique-violation DB error).
+  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
     columns: { id: true, user_id: true },
@@ -667,8 +709,10 @@ export async function createOfferRevisionFrom(
     throw new QueryError(MSG.offer.workingRevisionExists, 409);
   }
 
+  // Default to the latest revision; resolved here (in-tx) so it can't be stale.
+  const resolvedSourceNo = sourceRevisionNo ?? latest.revision_no;
   const source = offer.revisions.find(
-    (r) => r.revision_no === sourceRevisionNo,
+    (r) => r.revision_no === resolvedSourceNo,
   );
   if (!source) throw new QueryError(MSG.offer.notFound, 404);
 
@@ -687,14 +731,20 @@ export async function createOfferRevisionFrom(
       installation_mode: source.installation_mode,
       installation_items: source.installation_items,
       show_net_total_only: source.show_net_total_only,
-      valid_until: source.valid_until,
+      // validity is a per-send commercial stamp, not a structural term: a fresh
+      // working revision must re-establish its own validity rather than inherit the
+      // source's (often already-expired) date.
+      valid_until: null,
       notes: source.notes,
     })
     .returning({ id: offerRevisions.id });
 
   if (!newRevision) throw new QueryError(MSG.offer.createFailed, 500);
 
+  // Each config clone needs its own returning id, but the line rows that reference
+  // them are accumulated and inserted in a single batch after the loop.
   const configIds: number[] = [];
+  const newLines: NewOfferRevisionLine[] = [];
   for (const line of source.lines) {
     const { id: newConfigId } = await cloneConfigurationRows(
       line.configuration,
@@ -708,7 +758,7 @@ export async function createOfferRevisionFrom(
       tx,
     );
 
-    await tx.insert(offerRevisionLines).values({
+    newLines.push({
       offer_revision_id: newRevision.id,
       configuration_id: newConfigId,
       position: line.position,
@@ -722,6 +772,10 @@ export async function createOfferRevisionFrom(
     configIds.push(newConfigId);
   }
 
+  if (newLines.length > 0) {
+    await tx.insert(offerRevisionLines).values(newLines);
+  }
+
   await insertActivityLog(
     {
       userId,
@@ -730,7 +784,7 @@ export async function createOfferRevisionFrom(
       targetId: String(offerId),
       metadata: {
         revisionNo: newRevisionNo,
-        fromRevisionNo: sourceRevisionNo,
+        fromRevisionNo: resolvedSourceNo,
         lineCount: source.lines.length,
       },
     },
@@ -751,13 +805,13 @@ export async function createOfferRevisionFrom(
  */
 export async function getWorkingRevisionForSend(
   offerId: number,
-  tx: DatabaseType | TransactionType = db,
+  txOrDb: DatabaseType | TransactionType = db,
 ): Promise<{
   id: number;
   status: OfferStatusType;
   configIds: number[];
 } | null> {
-  const offer = await tx.query.offers.findFirst({
+  const offer = await txOrDb.query.offers.findFirst({
     where: eq(offers.id, offerId),
     columns: { id: true },
     with: {
@@ -792,6 +846,17 @@ export async function markOfferRevisionSentWithAudit(
   userId: string,
   tx: TransactionType,
 ): Promise<void> {
+  // An empty revision must never freeze as the immutable as-sent record. The guard
+  // lives in the freeze primitive itself — not only in the send action — so every
+  // caller (seed, future approval flows) is held to it.
+  const [lineCount] = await tx
+    .select({ count: sql<number>`count(*)` })
+    .from(offerRevisionLines)
+    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
+  if (Number(lineCount?.count ?? 0) === 0) {
+    throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+  }
+
   const [updated] = await tx
     .update(offerRevisions)
     .set({ status: "SENT", sent_at: new Date(), updated_at: new Date() })
@@ -981,11 +1046,36 @@ export const insertConfiguration = async (
 };
 
 /**
+ * Strips a configuration child row (water tank / wash bay) of its identity and
+ * timestamps and re-points it at `newConfigId`, yielding an insert payload. Every
+ * child table goes through this one contract, so the set of dropped columns can't
+ * drift between them as new child tables are added.
+ */
+function repointChildRow<
+  TRow extends {
+    id: number;
+    created_at: Date;
+    updated_at: Date;
+    configuration_id: number;
+  },
+>(row: TRow, newConfigId: number) {
+  const {
+    id: _id,
+    created_at: _ca,
+    updated_at: _ua,
+    configuration_id: _cid,
+    ...rest
+  } = row;
+  return { ...rest, configuration_id: newConfigId };
+}
+
+/**
  * Tx-capable deep-clone primitive: copies a configuration row plus all of its
  * water tanks and wash bays into brand-new rows, dropping ids/timestamps and the
- * children's `configuration_id` (re-pointed at the new config). The caller supplies
- * the new owner, name and status. Engineering BOM items and offer snapshots are
- * deliberately NOT cloned — a fresh config recomputes its BOM live.
+ * children's `configuration_id` (re-pointed at the new config via
+ * {@link repointChildRow}). The caller supplies the new owner, name and status.
+ * Engineering BOM items and offer snapshots are deliberately NOT cloned — a fresh
+ * config recomputes its BOM live.
  *
  * Shared by {@link duplicateConfigurationRecord} (user-facing duplicate) and
  * {@link createOfferRevisionFrom} (offer clone-forward).
@@ -1031,33 +1121,15 @@ const cloneConfigurationRows = async (
   }
 
   if (source.water_tanks.length > 0) {
-    const newTanks: NewWaterTank[] = source.water_tanks.map(
-      ({
-        id: _id,
-        created_at: _ca,
-        updated_at: _ua,
-        configuration_id: _cid,
-        ...t
-      }) => ({
-        ...t,
-        configuration_id: newConfig.id,
-      }),
+    const newTanks: NewWaterTank[] = source.water_tanks.map((t) =>
+      repointChildRow(t, newConfig.id),
     );
     await tx.insert(waterTanks).values(newTanks);
   }
 
   if (source.wash_bays.length > 0) {
-    const newBays: NewWashBay[] = source.wash_bays.map(
-      ({
-        id: _id,
-        created_at: _ca,
-        updated_at: _ua,
-        configuration_id: _cid,
-        ...b
-      }) => ({
-        ...b,
-        configuration_id: newConfig.id,
-      }),
+    const newBays: NewWashBay[] = source.wash_bays.map((b) =>
+      repointChildRow(b, newConfig.id),
     );
     await tx.insert(washBays).values(newBays);
   }
@@ -2263,8 +2335,10 @@ export async function thawOfferSnapshot(
   );
 }
 
-export async function getSurchargeSettings(): Promise<SurchargeSetting[]> {
-  return db.query.surchargeSettings.findMany({
+export async function getSurchargeSettings(
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<SurchargeSetting[]> {
+  return txOrDb.query.surchargeSettings.findMany({
     orderBy: asc(surchargeSettings.kind),
   });
 }

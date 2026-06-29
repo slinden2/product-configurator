@@ -5,7 +5,7 @@ import { DatabaseError } from "pg";
 import { db } from "@/db";
 import {
   createOfferRevisionFrom,
-  getOfferWithRevisionAndLines,
+  getOfferWorkingRevision,
   getUserData,
   getWorkingRevisionForSend,
   markOfferRevisionSentWithAudit,
@@ -15,7 +15,7 @@ import {
 } from "@/db/queries";
 import { canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
-import { repriceOfferLine } from "@/lib/offer-revision-pricing";
+import { repriceOfferLines } from "@/lib/offer-revision-pricing";
 import {
   type OfferSettings,
   offerDiscountSchema,
@@ -23,29 +23,18 @@ import {
 } from "@/validation/offer-schema";
 
 /**
- * Shared gate for revision header mutations: offer access (ENGINEER excluded),
- * ownership/scope, and the pre-handoff edit window (revision 1 must be DRAFT — once
- * it advances the commercial terms freeze with the offer).
+ * Shared gate for revision header mutations: builds on
+ * {@link authorizeOfferLifecycleAction} (offer access + scope + working revision) and
+ * adds the pre-handoff edit window — the working revision must be DRAFT, since once it
+ * advances the commercial terms freeze with the offer.
  */
 async function authorizeRevisionAction(offerId: number) {
-  const user = await getUserData();
-  if (!user)
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-
-  if (!canViewOffer(user.role)) {
-    return { success: false as const, error: MSG.offer.unauthorized };
-  }
-
-  const offer = await getOfferWithRevisionAndLines(offerId, user);
-  if (!offer) return { success: false as const, error: MSG.offer.notFound };
-
-  const revision = offer.revisions[0];
-  if (!revision) return { success: false as const, error: MSG.offer.notFound };
-  if (revision.status !== "DRAFT") {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  if (auth.revision.status !== "DRAFT") {
     return { success: false as const, error: MSG.offer.lineCannotEdit };
   }
-
-  return { success: true as const, user, revision };
+  return auth;
 }
 
 export async function setRevisionDiscountAction(
@@ -122,7 +111,8 @@ export async function setRevisionSettingsAction(
  * Shared offer-access + scope gate for the revision lifecycle actions (send / create).
  * Unlike {@link authorizeRevisionAction} it does NOT require the working revision to be
  * DRAFT — those actions carry their own state guards (send needs DRAFT, create needs a
- * frozen latest). Returns the scoped offer so the caller can read the latest revision.
+ * frozen latest). Returns the scoped working revision (id + status) without loading the
+ * full revision history.
  */
 async function authorizeOfferLifecycleAction(offerId: number) {
   const user = await getUserData();
@@ -133,10 +123,10 @@ async function authorizeOfferLifecycleAction(offerId: number) {
     return { success: false as const, error: MSG.offer.unauthorized };
   }
 
-  const offer = await getOfferWithRevisionAndLines(offerId, user);
-  if (!offer) return { success: false as const, error: MSG.offer.notFound };
+  const revision = await getOfferWorkingRevision(offerId, user);
+  if (!revision) return { success: false as const, error: MSG.offer.notFound };
 
-  return { success: true as const, user, offer };
+  return { success: true as const, user, revision };
 }
 
 /**
@@ -165,10 +155,8 @@ export async function sendRevisionAction(offerId: number) {
         throw new QueryError(MSG.offer.cannotSendEmpty, 422);
       }
 
-      // Re-price while still DRAFT — repriceOfferLine no-ops once frozen.
-      for (const configId of working.configIds) {
-        await repriceOfferLine(configId, user.id, tx, { audit: false });
-      }
+      // Re-price while still DRAFT — repricing no-ops once frozen.
+      await repriceOfferLines(working.configIds, user.id, tx, { audit: false });
 
       await markOfferRevisionSentWithAudit(offerId, working.id, user.id, tx);
     });
@@ -199,25 +187,21 @@ export async function createRevisionAction(
 ) {
   const auth = await authorizeOfferLifecycleAction(offerId);
   if (!auth.success) return auth;
-  const { user, offer } = auth;
-
-  const latestNo = offer.revisions[0]?.revision_no;
-  if (latestNo === undefined) {
-    return { success: false as const, error: MSG.offer.notFound };
-  }
+  const { user } = auth;
 
   try {
     const newRevisionNo = await db.transaction(async (tx) => {
+      // `sourceRevisionNo` is undefined for the normal "next revision"; the default
+      // (latest) is resolved inside createOfferRevisionFrom under the offer row lock,
+      // so it can't go stale against a concurrent send/create.
       const { revisionNo, configIds } = await createOfferRevisionFrom(
         offerId,
-        sourceRevisionNo ?? latestNo,
+        sourceRevisionNo,
         user.id,
         tx,
       );
 
-      for (const configId of configIds) {
-        await repriceOfferLine(configId, user.id, tx, { audit: false });
-      }
+      await repriceOfferLines(configIds, user.id, tx, { audit: false });
 
       return revisionNo;
     });
