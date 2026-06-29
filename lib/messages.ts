@@ -263,9 +263,5 @@ export const MSG = {
   },
   marginReview: {
     noOffer: "Nessuna offerta presente per questa configurazione.",
-    ebomSourceWarning: {
-      title: "Riferimento prezzo non attendibile",
-      body: "L'offerta è stata rigenerata dalla distinta di progettazione e potrebbe non riflettere il prezzo originale proposto al cliente.",
-    },
   },
 } as const;
