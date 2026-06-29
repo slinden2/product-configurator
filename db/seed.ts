@@ -2,6 +2,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  createOfferRevisionFrom,
+  markOfferRevisionSentWithAudit,
+} from "@/db/queries";
+import {
   configurations,
   installationItemSettings,
   offerRevisionLines,
@@ -12,6 +16,7 @@ import {
   washBays,
   waterTanks,
 } from "@/db/schemas";
+import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import {
   type ConfigOrigin,
   InstallationItemKinds,
@@ -475,7 +480,28 @@ async function seedDb() {
     }
   }
 
-  console.log("🌱 Seeding sample offer (offer → revision → line)...");
+  // Pricing settings must exist before the offer so its lines can be priced from the
+  // live BOM (repriceOfferLine reads these).
+  console.log("🌱 Seeding surcharge settings...");
+  await db
+    .insert(surchargeSettings)
+    .values([
+      { kind: "HEIGHT", price: "1500.00" },
+      { kind: "PAINT", price: "1200.00" },
+    ])
+    .onConflictDoNothing({ target: surchargeSettings.kind });
+
+  console.log("🌱 Seeding installation item settings...");
+  // Real default prices are set by admins via /gestione/installazione.
+  await db
+    .insert(installationItemSettings)
+    .values(InstallationItemKinds.map((kind) => ({ kind, price: "0.00" })))
+    .onConflictDoNothing({ target: installationItemSettings.kind });
+
+  // A sample offer with a revision series: Rev 1 SENT (frozen as-quoted) and Rev 2
+  // DRAFT (the working revision, clone-forwarded from Rev 1) — exercises the real
+  // clone-forward + send path so the history UI has browsable data.
+  console.log("🌱 Seeding sample offer (Rev 1 SENT → Rev 2 DRAFT)...");
   const agentId = userIdByEmail.get("agent@itecosrl.com");
   if (agentId && offerConfigId !== undefined) {
     const [offer] = await db
@@ -497,32 +523,33 @@ async function seedDb() {
       })
       .returning({ id: offerRevisions.id });
 
-    // net_price = list_price × (1 − discount_pct): 50000 × 0.90 = 45000.
     await db.insert(offerRevisionLines).values({
       offer_revision_id: revision.id,
       configuration_id: offerConfigId,
       position: 0,
       quantity: 1,
-      list_price: "50000.00",
-      net_price: "45000.00",
+      // Placeholder pricing — repriceOfferLine recomputes from the live BOM below.
+      list_price: "0.00",
+      net_price: "0.00",
+    });
+
+    await db.transaction(async (tx) => {
+      // Price Rev 1 from the live BOM, freeze it as SENT, then clone it forward into
+      // an editable Rev 2 and price that too.
+      await repriceOfferLine(offerConfigId, agentId, tx, { audit: false });
+      await markOfferRevisionSentWithAudit(offer.id, revision.id, agentId, tx);
+
+      const { configIds } = await createOfferRevisionFrom(
+        offer.id,
+        1,
+        agentId,
+        tx,
+      );
+      for (const configId of configIds) {
+        await repriceOfferLine(configId, agentId, tx, { audit: false });
+      }
     });
   }
-
-  console.log("🌱 Seeding surcharge settings...");
-  await db
-    .insert(surchargeSettings)
-    .values([
-      { kind: "HEIGHT", price: "1500.00" },
-      { kind: "PAINT", price: "1200.00" },
-    ])
-    .onConflictDoNothing({ target: surchargeSettings.kind });
-
-  console.log("🌱 Seeding installation item settings...");
-  // Real default prices are set by admins via /gestione/installazione.
-  await db
-    .insert(installationItemSettings)
-    .values(InstallationItemKinds.map((kind) => ({ kind, price: "0.00" })))
-    .onConflictDoNothing({ target: installationItemSettings.kind });
 }
 
 await seedDb();

@@ -7,6 +7,10 @@ const mockGetUserData = vi.fn();
 const mockGetOfferWithRevisionAndLines = vi.fn();
 const mockUpdateRevisionDiscountWithAudit = vi.fn();
 const mockUpdateRevisionSettingsWithAudit = vi.fn();
+const mockCreateOfferRevisionFrom = vi.fn();
+const mockGetWorkingRevisionForSend = vi.fn();
+const mockMarkOfferRevisionSentWithAudit = vi.fn();
+const mockRepriceOfferLine = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -16,6 +20,12 @@ vi.mock("@/db/queries", () => ({
     mockUpdateRevisionDiscountWithAudit(...args),
   updateRevisionSettingsWithAudit: (...args: unknown[]) =>
     mockUpdateRevisionSettingsWithAudit(...args),
+  createOfferRevisionFrom: (...args: unknown[]) =>
+    mockCreateOfferRevisionFrom(...args),
+  getWorkingRevisionForSend: (...args: unknown[]) =>
+    mockGetWorkingRevisionForSend(...args),
+  markOfferRevisionSentWithAudit: (...args: unknown[]) =>
+    mockMarkOfferRevisionSentWithAudit(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
     constructor(message: string, errorCode: number) {
@@ -24,6 +34,16 @@ vi.mock("@/db/queries", () => ({
       this.errorCode = errorCode;
     }
   },
+}));
+
+// db.transaction simply runs the callback with a stub tx (the query helpers it would
+// call are mocked above / below).
+vi.mock("@/db", () => ({
+  db: { transaction: (cb: (tx: unknown) => unknown) => cb({}) },
+}));
+
+vi.mock("@/lib/offer-revision-pricing", () => ({
+  repriceOfferLine: (...args: unknown[]) => mockRepriceOfferLine(...args),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -40,9 +60,12 @@ vi.mock("pg", () => ({
 // --- Imports (after mocks) ---
 
 import {
+  createRevisionAction,
+  sendRevisionAction,
   setRevisionDiscountAction,
   setRevisionSettingsAction,
 } from "@/app/actions/offer-revision-actions";
+import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 
 const OFFER_ID = 5;
@@ -162,5 +185,146 @@ describe("setRevisionSettingsAction", () => {
     });
     expect(result.success).toBe(false);
     expect(mockUpdateRevisionSettingsWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe("sendRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    mockGetOfferWithRevisionAndLines.mockResolvedValue({ id: OFFER_ID });
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+      configIds: [11, 12],
+    });
+    mockRepriceOfferLine.mockResolvedValue(undefined);
+    mockMarkOfferRevisionSentWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("reprices every line then freezes the revision as sent", async () => {
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockRepriceOfferLine).toHaveBeenCalledTimes(2);
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      11,
+      "u1",
+      {},
+      {
+        audit: false,
+      },
+    );
+    expect(mockMarkOfferRevisionSentWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "u1",
+      {},
+    );
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("returns notFound when the offer is out of scope", async () => {
+    mockGetOfferWithRevisionAndLines.mockResolvedValue(null);
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(mockGetWorkingRevisionForSend).not.toHaveBeenCalled();
+  });
+
+  test("rejects a non-DRAFT working revision", async () => {
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+      configIds: [11],
+    });
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotSend });
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+    expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("refuses to freeze an empty revision as sent", async () => {
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+      configIds: [],
+    });
+    const result = await sendRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotSendEmpty,
+    });
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+    expect(mockMarkOfferRevisionSentWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe("createRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "u1", role: "SALES" });
+    // Latest revision is frozen (SENT) → a new working revision may be cloned.
+    mockGetOfferWithRevisionAndLines.mockResolvedValue({
+      id: OFFER_ID,
+      revisions: [{ revision_no: 2, status: "SENT" }],
+    });
+    mockCreateOfferRevisionFrom.mockResolvedValue({
+      revisionId: 99,
+      revisionNo: 3,
+      configIds: [21],
+    });
+    mockRepriceOfferLine.mockResolvedValue(undefined);
+  });
+
+  test("clones forward from the latest revision by default and reprices", async () => {
+    const result = await createRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true, data: { revisionNo: 3 } });
+    expect(mockCreateOfferRevisionFrom).toHaveBeenCalledWith(
+      OFFER_ID,
+      2,
+      "u1",
+      {},
+    );
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      21,
+      "u1",
+      {},
+      {
+        audit: false,
+      },
+    );
+  });
+
+  test("clones from an earlier revision when reverting", async () => {
+    await createRevisionAction(OFFER_ID, 1);
+    expect(mockCreateOfferRevisionFrom).toHaveBeenCalledWith(
+      OFFER_ID,
+      1,
+      "u1",
+      {},
+    );
+  });
+
+  test("surfaces the working-revision guard error", async () => {
+    mockCreateOfferRevisionFrom.mockRejectedValue(
+      new QueryError(MSG.offer.workingRevisionExists, 409),
+    );
+    const result = await createRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.workingRevisionExists,
+    });
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await createRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockCreateOfferRevisionFrom).not.toHaveBeenCalled();
   });
 });

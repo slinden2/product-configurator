@@ -371,7 +371,8 @@ export async function insertOffer(
 
 /**
  * Offer-side equivalent of {@link getUserConfigurations}: a scoped, paginated list
- * with each offer's revision-1 status and line count.
+ * with each offer's **working revision** (the latest by `revision_no`) status and
+ * line count.
  */
 export async function getUserOffers(
   user: NonNullable<UserData>,
@@ -393,7 +394,8 @@ export async function getUserOffers(
       with: {
         owner: { columns: { id: true, email: true, initials: true } },
         revisions: {
-          where: eq(offerRevisions.revision_no, 1),
+          orderBy: [desc(offerRevisions.revision_no)],
+          limit: 1,
           columns: { id: true, status: true },
           with: { lines: { columns: { id: true } } },
         },
@@ -425,9 +427,11 @@ export async function getUserOffers(
 export type AllOffers = Awaited<ReturnType<typeof getUserOffers>>["data"];
 
 /**
- * Single offer with its revision 1 and that revision's lines (each carrying a
- * lightweight config summary), ordered by position. Returns `null` when the offer
- * doesn't exist or is out of the user's scope.
+ * Single offer with **all** its revisions ordered newest-first (`revision_no`
+ * descending), each carrying its lines (each with a lightweight config summary)
+ * ordered by position. `revisions[0]` is the **working revision** (the latest);
+ * the rest are immutable history. Returns `null` when the offer doesn't exist or
+ * is out of the user's scope.
  */
 export async function getOfferWithRevisionAndLines(
   offerId: number,
@@ -438,7 +442,7 @@ export async function getOfferWithRevisionAndLines(
     with: {
       owner: { columns: { id: true, email: true, initials: true } },
       revisions: {
-        where: eq(offerRevisions.revision_no, 1),
+        orderBy: [desc(offerRevisions.revision_no)],
         with: {
           lines: {
             orderBy: [asc(offerRevisionLines.position)],
@@ -464,12 +468,13 @@ export type OfferWithRevisionAndLines = NonNullable<
 >;
 
 /**
- * Adds a new configuration line to an offer's revision 1. Inserts the config with
- * `origin=OFFER` owned by the **offer owner** (not the acting user, so a manager
- * adding to a report's offer doesn't flip ownership) and an `offer_revision_lines`
- * row at the next position with placeholder pricing — the caller re-prices the
- * line (via `repriceOfferLine`) in the same transaction. Gated on the revision
- * being DRAFT. Audited in the caller's transaction.
+ * Adds a new configuration line to an offer's **working revision** (the latest by
+ * `revision_no`). Inserts the config with `origin=OFFER` owned by the **offer
+ * owner** (not the acting user, so a manager adding to a report's offer doesn't
+ * flip ownership) and an `offer_revision_lines` row at the next position with
+ * placeholder pricing — the caller re-prices the line (via `repriceOfferLine`) in
+ * the same transaction. Gated on the revision being DRAFT. Audited in the caller's
+ * transaction.
  */
 export async function addOfferLine(
   offerId: number,
@@ -484,7 +489,8 @@ export async function addOfferLine(
     columns: { id: true, user_id: true },
     with: {
       revisions: {
-        where: eq(offerRevisions.revision_no, 1),
+        orderBy: [desc(offerRevisions.revision_no)],
+        limit: 1,
         columns: { id: true, status: true },
       },
     },
@@ -607,10 +613,216 @@ export async function updateOfferRevisionLinePricing(
 }
 
 /**
- * Removes a configuration line from an offer's revision 1 by deleting its
- * configuration (the line row cascades via the FK). Gated on the revision being
- * DRAFT and the line actually belonging to this offer's revision 1. Audited
- * in-transaction (delete ⇒ audit in the same tx).
+ * Clone-forward: creates a new offer revision by deep-cloning every line of a source
+ * revision (its configuration + water tanks + wash bays) into fresh editable rows and
+ * carrying the source revision's commercial header forward. The new revision gets the
+ * next `revision_no` and starts in `DRAFT`; the source revision's rows are left
+ * untouched (immutable history).
+ *
+ * Pricing is NOT computed here — the cloned lines start with placeholder pricing and
+ * the caller re-prices each one via `repriceOfferLine` in the same transaction (kept in
+ * the action layer to avoid a queries ↔ pricing import cycle). Returns the new
+ * revision's id/number and the cloned configuration ids in line order.
+ *
+ * Guards: the offer's latest revision must be frozen (status ≠ DRAFT) — only one
+ * working draft exists at a time. Audited in the caller's transaction.
+ */
+export async function createOfferRevisionFrom(
+  offerId: number,
+  sourceRevisionNo: number,
+  userId: string,
+  // Required: clone + line inserts + audit must commit atomically with the caller's
+  // re-pricing pass.
+  tx: TransactionType,
+): Promise<{ revisionId: number; revisionNo: number; configIds: number[] }> {
+  const offer = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true, user_id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        with: {
+          lines: {
+            orderBy: [asc(offerRevisionLines.position)],
+            with: {
+              configuration: {
+                with: {
+                  water_tanks: { orderBy: [asc(waterTanks.id)] },
+                  wash_bays: { orderBy: [asc(washBays.id)] },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+
+  const latest = offer.revisions[0];
+  if (!latest) throw new QueryError(MSG.offer.notFound, 404);
+  // Only one editable working revision at a time: the latest must already be frozen.
+  if (latest.status === "DRAFT") {
+    throw new QueryError(MSG.offer.workingRevisionExists, 409);
+  }
+
+  const source = offer.revisions.find(
+    (r) => r.revision_no === sourceRevisionNo,
+  );
+  if (!source) throw new QueryError(MSG.offer.notFound, 404);
+
+  const newRevisionNo = latest.revision_no + 1;
+
+  const [newRevision] = await tx
+    .insert(offerRevisions)
+    .values({
+      offer_id: offerId,
+      revision_no: newRevisionNo,
+      status: "DRAFT",
+      // Carry the commercial header forward; lifecycle stamps reset.
+      discount_pct: source.discount_pct,
+      transport_amount: source.transport_amount,
+      transport_mode: source.transport_mode,
+      installation_mode: source.installation_mode,
+      installation_items: source.installation_items,
+      show_net_total_only: source.show_net_total_only,
+      valid_until: source.valid_until,
+      notes: source.notes,
+    })
+    .returning({ id: offerRevisions.id });
+
+  if (!newRevision) throw new QueryError(MSG.offer.createFailed, 500);
+
+  const configIds: number[] = [];
+  for (const line of source.lines) {
+    const { id: newConfigId } = await cloneConfigurationRows(
+      line.configuration,
+      {
+        // Offer configs are owned by the offer owner, not the acting user.
+        userId: offer.user_id,
+        name: line.configuration.name,
+        status: "DRAFT",
+        origin: "OFFER",
+      },
+      tx,
+    );
+
+    await tx.insert(offerRevisionLines).values({
+      offer_revision_id: newRevision.id,
+      configuration_id: newConfigId,
+      position: line.position,
+      quantity: line.quantity,
+      list_price: "0.00",
+      net_price: "0.00",
+      line_discount_percent: line.line_discount_percent,
+      pricing_snapshot: null,
+    });
+
+    configIds.push(newConfigId);
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_CREATE",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: {
+        revisionNo: newRevisionNo,
+        fromRevisionNo: sourceRevisionNo,
+        lineCount: source.lines.length,
+      },
+    },
+    tx,
+  );
+
+  return {
+    revisionId: newRevision.id,
+    revisionNo: newRevisionNo,
+    configIds,
+  };
+}
+
+/**
+ * Loads an offer's working revision (latest by `revision_no`) with the configuration
+ * ids of its lines, for the send flow: the caller re-prices each line (while the
+ * revision is still DRAFT) then freezes it via {@link markOfferRevisionSentWithAudit}.
+ */
+export async function getWorkingRevisionForSend(
+  offerId: number,
+  tx: DatabaseType | TransactionType = db,
+): Promise<{
+  id: number;
+  status: OfferStatusType;
+  configIds: number[];
+} | null> {
+  const offer = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        limit: 1,
+        columns: { id: true, status: true },
+        with: { lines: { columns: { configuration_id: true } } },
+      },
+    },
+  });
+
+  const revision = offer?.revisions[0];
+  if (!revision) return null;
+
+  return {
+    id: revision.id,
+    status: revision.status,
+    configIds: revision.lines.map((l) => l.configuration_id),
+  };
+}
+
+/**
+ * Freezes a working revision as sent: guards it is still DRAFT, sets `status = "SENT"`
+ * and `sent_at`, and audits the transition. Re-pricing of the lines (so their
+ * `pricing_snapshot` is the authoritative as-sent figure) must already have run in the
+ * same transaction — once SENT, `repriceOfferLine` no-ops. Audited in the caller's tx.
+ */
+export async function markOfferRevisionSentWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  tx: TransactionType,
+): Promise<void> {
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({ status: "SENT", sent_at: new Date(), updated_at: new Date() })
+    .where(
+      and(
+        eq(offerRevisions.id, revisionId),
+        eq(offerRevisions.status, "DRAFT"),
+      ),
+    )
+    .returning({ id: offerRevisions.id });
+
+  // No row updated ⇒ the revision moved out of DRAFT under us (concurrent send).
+  if (!updated) throw new QueryError(MSG.offer.cannotSend, 403);
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_SEND",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId },
+    },
+    tx,
+  );
+}
+
+/**
+ * Removes a configuration line from an offer's **working revision** (the latest by
+ * `revision_no`) by deleting its configuration (the line row cascades via the FK).
+ * Gated on the revision being DRAFT and the line actually belonging to that working
+ * revision. Audited in-transaction (delete ⇒ audit in the same tx).
  */
 export async function removeOfferLine(
   offerId: number,
@@ -623,7 +835,8 @@ export async function removeOfferLine(
       columns: { id: true },
       with: {
         revisions: {
-          where: eq(offerRevisions.revision_no, 1),
+          orderBy: [desc(offerRevisions.revision_no)],
+          limit: 1,
           columns: { id: true, status: true },
           with: {
             lines: {
@@ -767,72 +980,106 @@ export const insertConfiguration = async (
   return insertedConfiguration;
 };
 
+/**
+ * Tx-capable deep-clone primitive: copies a configuration row plus all of its
+ * water tanks and wash bays into brand-new rows, dropping ids/timestamps and the
+ * children's `configuration_id` (re-pointed at the new config). The caller supplies
+ * the new owner, name and status. Engineering BOM items and offer snapshots are
+ * deliberately NOT cloned — a fresh config recomputes its BOM live.
+ *
+ * Shared by {@link duplicateConfigurationRecord} (user-facing duplicate) and
+ * {@link createOfferRevisionFrom} (offer clone-forward).
+ */
+const cloneConfigurationRows = async (
+  source: ConfigurationWithWaterTanksAndWashBays,
+  options: {
+    userId: string;
+    name: string;
+    status: ConfigurationStatusType;
+    origin?: ConfigOrigin;
+  },
+  tx: DatabaseType | TransactionType,
+): Promise<{ id: number }> => {
+  // `origin` stays in `...rest` so it is preserved from the source by default; an
+  // explicit `options.origin` overrides it (clone-forward pins the clones to OFFER).
+  const {
+    id: _id,
+    created_at: _ca,
+    updated_at: _ua,
+    user_id: _uid,
+    status: _s,
+    water_tanks: _wt,
+    wash_bays: _wb,
+    ...rest
+  } = source;
+
+  const newConfigValues: NewConfiguration = {
+    ...rest,
+    user_id: options.userId,
+    status: options.status,
+    name: options.name.slice(0, 255),
+    ...(options.origin ? { origin: options.origin } : {}),
+  };
+
+  const [newConfig] = await tx
+    .insert(configurations)
+    .values(newConfigValues)
+    .returning({ id: configurations.id });
+
+  if (!newConfig) {
+    throw new QueryError(MSG.config.duplicateFailed, 500);
+  }
+
+  if (source.water_tanks.length > 0) {
+    const newTanks: NewWaterTank[] = source.water_tanks.map(
+      ({
+        id: _id,
+        created_at: _ca,
+        updated_at: _ua,
+        configuration_id: _cid,
+        ...t
+      }) => ({
+        ...t,
+        configuration_id: newConfig.id,
+      }),
+    );
+    await tx.insert(waterTanks).values(newTanks);
+  }
+
+  if (source.wash_bays.length > 0) {
+    const newBays: NewWashBay[] = source.wash_bays.map(
+      ({
+        id: _id,
+        created_at: _ca,
+        updated_at: _ua,
+        configuration_id: _cid,
+        ...b
+      }) => ({
+        ...b,
+        configuration_id: newConfig.id,
+      }),
+    );
+    await tx.insert(washBays).values(newBays);
+  }
+
+  return newConfig;
+};
+
 export const duplicateConfigurationRecord = async (
   source: ConfigurationWithWaterTanksAndWashBays,
   newUserId: string,
 ): Promise<{ id: number }> => {
-  return db.transaction(async (tx) => {
-    const {
-      id: _id,
-      created_at: _ca,
-      updated_at: _ua,
-      user_id: _uid,
-      status: _s,
-      water_tanks: _wt,
-      wash_bays: _wb,
-      ...rest
-    } = source;
-
-    const newConfigValues: NewConfiguration = {
-      ...rest,
-      user_id: newUserId,
-      status: "DRAFT",
-      name: `Copia di ${source.name}`.slice(0, 255),
-    };
-
-    const [newConfig] = await tx
-      .insert(configurations)
-      .values(newConfigValues)
-      .returning({ id: configurations.id });
-
-    if (!newConfig) {
-      throw new QueryError(MSG.config.duplicateFailed, 500);
-    }
-
-    if (source.water_tanks.length > 0) {
-      const newTanks: NewWaterTank[] = source.water_tanks.map(
-        ({
-          id: _id,
-          created_at: _ca,
-          updated_at: _ua,
-          configuration_id: _cid,
-          ...t
-        }) => ({
-          ...t,
-          configuration_id: newConfig.id,
-        }),
-      );
-      await tx.insert(waterTanks).values(newTanks);
-    }
-
-    if (source.wash_bays.length > 0) {
-      const newBays: NewWashBay[] = source.wash_bays.map(
-        ({
-          id: _id,
-          created_at: _ca,
-          updated_at: _ua,
-          configuration_id: _cid,
-          ...b
-        }) => ({
-          ...b,
-          configuration_id: newConfig.id,
-        }),
-      );
-      await tx.insert(washBays).values(newBays);
-    }
-
-    return newConfig;
-  });
+  return db.transaction(async (tx) =>
+    cloneConfigurationRows(
+      source,
+      {
+        userId: newUserId,
+        name: `Copia di ${source.name}`,
+        status: "DRAFT",
+      },
+      tx,
+    ),
+  );
 };
 
 export const deleteConfiguration = async (

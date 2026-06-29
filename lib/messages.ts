@@ -75,6 +75,8 @@ export const MSG = {
     offerCreated: "Offerta creata.",
     offerLineCreated: "Configurazione aggiunta all'offerta.",
     offerLineRemoved: "Configurazione rimossa dall'offerta.",
+    offerRevisionSent: "Revisione inviata.",
+    offerRevisionCreated: "Nuova revisione creata.",
     configDeleted: "Configurazione eliminata con successo.",
     configDuplicated: "Configurazione duplicata.",
     duplicateError: "Errore durante la duplicazione.",
@@ -221,6 +223,17 @@ export const MSG = {
       "Sconto non valido (deve essere tra 0% e 40%, multiplo di 0,5%).",
     invalidSettings: "Impostazioni offerta non valide.",
     generateError: "Errore durante la generazione dell'offerta.",
+    cannotSend: "Solo una revisione in bozza può essere inviata.",
+    cannotSendEmpty:
+      "Aggiungi almeno una configurazione prima di inviare la revisione.",
+    workingRevisionExists:
+      "Esiste già una revisione di lavoro in bozza. Inviala prima di crearne una nuova.",
+    sendConfirm:
+      "Inviare questa revisione? I prezzi verranno congelati e le configurazioni non saranno più modificabili.",
+    createRevisionConfirm:
+      "Creare una nuova revisione? Le configurazioni verranno clonate in righe modificabili.",
+    revertConfirm:
+      "Creare una nuova revisione a partire da questa? Le sue configurazioni verranno clonate in righe modificabili.",
     staleness: {
       title: "Prezzi scaduti",
       body: (generatedAt: string, expiredDays: number) =>

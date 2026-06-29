@@ -14,8 +14,11 @@ import {
 } from "@/components/ui/table";
 import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
 import { OfferStatusLabels } from "@/types";
+import CreateRevisionButton from "./create-revision-button";
 import QuoteView from "./quote-view";
 import RemoveLineButton from "./remove-line-button";
+import RevisionHistory from "./revision-history";
+import SendRevisionButton from "./send-revision-button";
 
 interface OfferDetailProps {
   params: Promise<{ id: string }>;
@@ -33,9 +36,14 @@ const OfferDetail = async (props: OfferDetailProps) => {
   const offer = await getOfferWithRevisionAndLines(offerId, user);
   if (!offer) notFound();
 
+  // revisions[0] is the working revision (the latest by revision_no); the rest are
+  // immutable history.
   const revision = offer.revisions[0];
-  // Offer lines are editable only while the (single, implicit) revision is DRAFT.
+  // Offer lines are editable only while the working revision is DRAFT.
   const editable = revision?.status === "DRAFT";
+  // A new revision can be cloned forward only once the working revision is frozen —
+  // one editable working draft at a time.
+  const canCreateRevision = !!revision && revision.status !== "DRAFT";
   const lines = revision?.lines ?? [];
 
   return (
@@ -58,8 +66,14 @@ const OfferDetail = async (props: OfferDetailProps) => {
           )}
         </div>
         {revision && (
-          <div className="mt-4 sm:mt-0 sm:ml-auto text-sm text-muted-foreground">
-            Stato: {OfferStatusLabels[revision.status]}
+          <div className="mt-4 flex items-center gap-3 sm:mt-0 sm:ml-auto">
+            <span className="text-sm text-muted-foreground">
+              Rev {revision.revision_no} · {OfferStatusLabels[revision.status]}
+            </span>
+            {editable && lines.length > 0 && (
+              <SendRevisionButton offerId={offer.id} />
+            )}
+            {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
           </div>
         )}
       </div>
@@ -142,6 +156,12 @@ const OfferDetail = async (props: OfferDetailProps) => {
       {revision && (
         <QuoteView offerId={offer.id} revision={revision} editable={editable} />
       )}
+
+      <RevisionHistory
+        offerId={offer.id}
+        revisions={offer.revisions}
+        canCreateRevision={canCreateRevision}
+      />
 
       <BackButton fallbackPath="/offerte" />
     </div>

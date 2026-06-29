@@ -174,6 +174,8 @@ export const ActivityActions = [
   "OFFER_LINE_REPRICE",
   "OFFER_REVISION_DISCOUNT_SET",
   "OFFER_REVISION_SETTINGS_SET",
+  "OFFER_REVISION_CREATE",
+  "OFFER_REVISION_SEND",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
 ] as const;
@@ -210,6 +212,8 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_LINE_REPRICE: "Ricalcolo prezzo configurazione offerta",
   OFFER_REVISION_DISCOUNT_SET: "Impostazione sconto revisione offerta",
   OFFER_REVISION_SETTINGS_SET: "Impostazione opzioni revisione offerta",
+  OFFER_REVISION_CREATE: "Creazione revisione offerta",
+  OFFER_REVISION_SEND: "Invio revisione offerta",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };
