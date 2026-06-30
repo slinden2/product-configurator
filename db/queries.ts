@@ -43,6 +43,7 @@ import {
 } from "@/lib/access";
 import { BOM } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
+import { getTransitionDirection } from "@/lib/status-config";
 import type {
   ActivityAction,
   CoefficientSource,
@@ -1601,17 +1602,12 @@ export const updateConfigStatus = async (
   }
 
   // Cross-entity validation: ENERGY_CHAIN requires at least one wash bay with gantry + width
-  const forwardStatuses: ConfigurationStatusType[] = [
-    "IN_SALES_REVIEW",
-    "SALES_APPROVED",
-    "IN_TECH_REVIEW",
-    "TECH_APPROVED",
-    "CLOSED",
-  ];
   if (
     configuration.supply_type === "ENERGY_CHAIN" &&
-    forwardStatuses.indexOf(statusData.status) >
-      forwardStatuses.indexOf(configuration.status as ConfigurationStatusType)
+    getTransitionDirection(
+      configuration.status as ConfigurationStatusType,
+      statusData.status,
+    ) === "forward"
   ) {
     const bays = await getWashBaysByConfigId(confId);
     const hasValidBay = bays.some(
