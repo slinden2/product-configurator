@@ -1,3 +1,4 @@
+import { isRoleAllowedTransition } from "@/lib/status-config";
 import type {
   ConfigOrigin,
   ConfigurationStatusType,
@@ -99,12 +100,18 @@ export function isEditable(
  * Whether a role may move a configuration from one status to another. Pure
  * role × edge × origin logic — ownership/scope is enforced separately by
  * canAccessConfiguration (db/queries.ts). Mirrored client-side by
- * getValidTransitions in components/status-form.tsx; keep them in sync.
+ * getValidTransitions in components/status-form.tsx, which also goes through
+ * this function, so the two cannot drift.
+ *
+ * The role-restricted edges live in the single STATUS_TRANSITIONS edge table
+ * (lib/status-config.ts); this function layers two rules on top:
+ * - ADMIN may make any jump (incl. non-adjacent ones the table cannot enumerate).
+ * - On a STANDALONE config the two sales statuses are off-limits to everyone,
+ *   keeping the technical lifecycle self-contained.
  *
  * `origin` defaults to `"OFFER"` (the full sales+engineering machine). A
  * STANDALONE config runs only the engineering sub-chain
- * `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED`, Engineer/Admin only, and
- * the two sales statuses are never reachable.
+ * `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED`, Engineer/Admin only.
  */
 export function canTransition(
   role: Role,
@@ -114,64 +121,20 @@ export function canTransition(
 ): boolean {
   if (from === to) return true;
 
-  if (origin === "STANDALONE") {
-    // The two sales statuses are out of bounds for standalone configs, whatever
-    // the role (ADMIN included) — keeps the technical lifecycle self-contained.
-    if (SALES_STATUSES.includes(from) || SALES_STATUSES.includes(to)) {
-      return false;
-    }
-    // ADMIN may make any remaining (engineering-chain) jump, incl. closing.
-    if (role === "ADMIN") return true;
-    // ENGINEER walks the engineering sub-chain; CLOSED stays ADMIN-only.
-    if (role === "ENGINEER") {
-      const allowedTransitions = [
-        { from: "DRAFT", to: "IN_TECH_REVIEW" },
-        { from: "IN_TECH_REVIEW", to: "DRAFT" },
-        { from: "IN_TECH_REVIEW", to: "TECH_APPROVED" },
-        { from: "TECH_APPROVED", to: "IN_TECH_REVIEW" },
-      ];
-      return allowedTransitions.some((t) => t.from === from && t.to === to);
-    }
-    // Sales roles never act on standalone configs.
+  // STANDALONE: the two sales statuses are out of bounds for every role (ADMIN
+  // included) — keeps the technical lifecycle self-contained.
+  if (
+    origin === "STANDALONE" &&
+    (SALES_STATUSES.includes(from) || SALES_STATUSES.includes(to))
+  ) {
     return false;
   }
 
+  // ADMIN may make any remaining jump (incl. non-adjacent / closing).
   if (role === "ADMIN") return true;
 
-  // SALES (Area Manager / Sales Agent): can only submit their own offer for
-  // review (DRAFT -> IN_SALES_REVIEW). Once submitted they relinquish control:
-  // they cannot pull it back, so a manager mid-review is never undercut. To
-  // hand it back, a manager rejects it (IN_SALES_REVIEW -> DRAFT).
-  if (role === "SALES") {
-    return from === "DRAFT" && to === "IN_SALES_REVIEW";
-  }
-
-  // SALES_MANAGER / SALES_DIRECTOR: draft toggle plus approve/reject/un-approve
-  // on the sales side (scope is enforced separately via canAccessConfiguration).
-  if (role === "SALES_MANAGER" || role === "SALES_DIRECTOR") {
-    const allowedTransitions = [
-      { from: "DRAFT", to: "IN_SALES_REVIEW" },
-      { from: "IN_SALES_REVIEW", to: "DRAFT" },
-      { from: "IN_SALES_REVIEW", to: "SALES_APPROVED" },
-      { from: "SALES_APPROVED", to: "IN_SALES_REVIEW" },
-    ];
-
-    return allowedTransitions.some((t) => t.from === from && t.to === to);
-  }
-
-  // ENGINEER (Technical Office): Pull sales-approved work into review and approve
-  if (role === "ENGINEER") {
-    const allowedTransitions = [
-      { from: "SALES_APPROVED", to: "IN_TECH_REVIEW" },
-      { from: "IN_TECH_REVIEW", to: "SALES_APPROVED" },
-      { from: "IN_TECH_REVIEW", to: "TECH_APPROVED" },
-      { from: "TECH_APPROVED", to: "IN_TECH_REVIEW" },
-    ];
-
-    return allowedTransitions.some((t) => t.from === from && t.to === to);
-  }
-
-  return false;
+  // Everyone else is restricted to the explicit edge table.
+  return isRoleAllowedTransition(role, from, to, origin);
 }
 
 /**

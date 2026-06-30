@@ -1,11 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { ConfigurationStatus } from "@/types";
+import { ConfigOrigins, ConfigurationStatus, Roles } from "@/types";
 import {
   getTransitionDirection,
   getTransitionLabel,
   isAdjacentTransition,
   STATUS_CONFIG,
   STATUS_PIPELINE,
+  STATUS_TRANSITIONS,
 } from "./status-config";
 
 describe("STATUS_CONFIG", () => {
@@ -89,5 +90,29 @@ describe("getTransitionLabel", () => {
     expect(getTransitionLabel("DRAFT", "CLOSED")).toBe(
       STATUS_CONFIG.CLOSED.label,
     );
+  });
+});
+
+describe("STATUS_TRANSITIONS", () => {
+  test("every row has a non-empty label and a non-identity edge", () => {
+    for (const t of STATUS_TRANSITIONS) {
+      expect(t.label).toBeTruthy();
+      expect(t.from).not.toBe(t.to);
+    }
+  });
+
+  test("every row references only known statuses, roles and origins", () => {
+    for (const t of STATUS_TRANSITIONS) {
+      expect(ConfigurationStatus).toContain(t.from);
+      expect(ConfigurationStatus).toContain(t.to);
+      expect(t.origins.length).toBeGreaterThan(0);
+      for (const role of t.roles) expect(Roles).toContain(role);
+      for (const origin of t.origins) expect(ConfigOrigins).toContain(origin);
+    }
+  });
+
+  test("has no duplicate (from, to) edge", () => {
+    const keys = STATUS_TRANSITIONS.map((t) => `${t.from}->${t.to}`);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });
