@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   canApproveRevision,
   canManageStandaloneConfigs,
+  canViewBom,
   canViewMarginReview,
   canViewOffer,
 } from "@/lib/access";
@@ -36,6 +37,20 @@ describe("canViewOffer", () => {
 
   test("ENGINEER has no offer access", () => {
     expect(canViewOffer("ENGINEER")).toBe(false);
+  });
+});
+
+describe("canViewBom", () => {
+  test.each(["ENGINEER", "ADMIN"] as const)("%s may view the BOM", (role) => {
+    expect(canViewBom(role)).toBe(true);
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as Role[])("%s may not view the BOM", (role) => {
+    expect(canViewBom(role)).toBe(false);
   });
 });
 

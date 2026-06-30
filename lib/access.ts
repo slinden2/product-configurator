@@ -27,6 +27,15 @@ export const CONFIG_MANAGER_ROLES: Role[] = [
   "SALES_DIRECTOR",
 ];
 
+/**
+ * Engineering-side roles: own the standalone technical config area and can view
+ * the BOM. Sales roles work from offers and never touch engineering surfaces.
+ */
+export const ENGINEERING_ROLES: Role[] = ["ENGINEER", "ADMIN"];
+
+/** Roles allowed to view an offer: all sales roles plus ADMIN (ENGINEER excluded). */
+export const OFFER_ROLES: Role[] = [...SALES_ROLES, "ADMIN"];
+
 export const canAccessAllConfigs = (role: Role): boolean =>
   ALL_ACCESS_ROLES.includes(role);
 
@@ -34,7 +43,7 @@ export const canManageConfigs = (role: Role): boolean =>
   CONFIG_MANAGER_ROLES.includes(role);
 
 export const canViewBom = (role: Role): boolean =>
-  role === "ENGINEER" || role === "ADMIN";
+  ENGINEERING_ROLES.includes(role);
 
 /**
  * Roles that own the standalone (pure technical) configuration area: the
@@ -42,10 +51,9 @@ export const canViewBom = (role: Role): boolean =>
  * from offers instead and never see standalone configs.
  */
 export const canManageStandaloneConfigs = (role: Role): boolean =>
-  role === "ENGINEER" || role === "ADMIN";
+  ENGINEERING_ROLES.includes(role);
 
-export const canViewOffer = (role: Role): boolean =>
-  SALES_ROLES.includes(role) || role === "ADMIN";
+export const canViewOffer = (role: Role): boolean => OFFER_ROLES.includes(role);
 
 /**
  * Roles allowed to approve an offer revision for send (and to reject / un-approve it
