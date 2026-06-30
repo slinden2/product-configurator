@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { mockCanAccessConfiguration } from "@/test/access-mocks";
 
 // --- Mocks ---
 
@@ -20,7 +19,6 @@ const mockOfferRevisionStatusFor = vi.fn(
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
-  canAccessConfiguration: mockCanAccessConfiguration,
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
   updateConfiguration: (...args: unknown[]) => mockUpdateConfiguration(...args),
@@ -208,14 +206,17 @@ describe("editConfigurationAction", () => {
     });
   });
 
-  test("SALES user cannot edit another user's config", async () => {
+  test("loader denies out-of-scope SALES user (scope enforced in loader)", async () => {
+    // The action no longer re-checks scope; getConfigurationWithTanksAndBays
+    // returns null for an out-of-scope user, surfacing as notFound.
     mockGetUserData.mockResolvedValue({
       id: "other-user",
       role: "SALES",
       initials: "OU",
     });
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(null);
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
-    expect(result).toEqual({ success: false, error: MSG.auth.unauthorized });
+    expect(result).toEqual({ success: false, error: MSG.config.notFound });
   });
 
   test("ENGINEER user can edit another user's DRAFT config", async () => {

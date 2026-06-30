@@ -5,7 +5,6 @@ import { isEditable } from "@/app/actions/lib/auth-checks";
 import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
 import {
-  canAccessConfiguration,
   deleteAllEngineeringBomItems,
   getConfigurationWithTanksAndBays,
   getUserData,
@@ -42,13 +41,10 @@ export const editConfigurationAction = async (
 
   const configuration = await getConfigurationWithTanksAndBays(confId, user);
 
+  // Scope is enforced by the loader: getConfigurationWithTanksAndBays runs
+  // canAccessConfiguration internally and returns null for out-of-scope users.
   if (!configuration) {
     return { success: false as const, error: MSG.config.notFound };
-  }
-
-  // Authorization: owner, in-scope manager, ENGINEER, ADMIN, or SALES_DIRECTOR
-  if (!(await canAccessConfiguration(user, configuration))) {
-    return { success: false as const, error: MSG.auth.unauthorized };
   }
 
   // Status protection: enforce editable rules per role, origin, and — for an
