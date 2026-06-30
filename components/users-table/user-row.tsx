@@ -77,10 +77,9 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
     });
   };
 
-  // Only SALES agents are assigned to a manager; managers a SALES user can pick
-  // are the SALES_MANAGER users (excluding the user themselves).
+  // Only SALES agents are assigned to a manager; the pickable managers are the
+  // SALES_MANAGER users.
   const canAssignManager = user.role === "SALES";
-  const managerOptions = managers.filter((m) => m.id !== user.id);
 
   const handlePasswordReset = () => {
     startTransition(async () => {
@@ -126,7 +125,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           {canAssignManager ? (
             <Select
               value={user.manager_id ?? NO_MANAGER_VALUE}
-              disabled={isPending || managerOptions.length === 0}
+              disabled={isPending || managers.length === 0}
               onValueChange={handleManagerChange}
             >
               <SelectTrigger className="w-44">
@@ -134,7 +133,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_MANAGER_VALUE}>Nessuno</SelectItem>
-                {managerOptions.map((manager) => (
+                {managers.map((manager) => (
                   <SelectItem key={manager.id} value={manager.id}>
                     {manager.email}
                   </SelectItem>
