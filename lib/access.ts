@@ -5,6 +5,7 @@ import type {
   OfferStatusType,
   Role,
 } from "@/types";
+import { OPEN_REVISION_STATUSES } from "@/types";
 
 /** Sales-side roles that capture or review offers. */
 export const SALES_ROLES: Role[] = ["SALES", "SALES_MANAGER", "SALES_DIRECTOR"];
@@ -54,6 +55,17 @@ export const canManageStandaloneConfigs = (role: Role): boolean =>
   ENGINEERING_ROLES.includes(role);
 
 export const canViewOffer = (role: Role): boolean => OFFER_ROLES.includes(role);
+
+/**
+ * True once an offer revision has left the open working states (`SENT` and
+ * beyond), i.e. its `pricing_snapshot` is frozen. Gates the customer-facing
+ * Excel/PDF export so only sent (manager-approved) quotes can be downloaded —
+ * a DRAFT/in-approval revision is never the deliverable. The complement of
+ * {@link OPEN_REVISION_STATUSES}, mirroring how the offer page derives
+ * `canCreateRevision`.
+ */
+export const canExportOfferRevision = (status: OfferStatusType): boolean =>
+  !OPEN_REVISION_STATUSES.includes(status);
 
 /**
  * Roles allowed to approve an offer revision for send (and to reject / un-approve it

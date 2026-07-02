@@ -13,11 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
-import { canApproveRevision } from "@/lib/access";
+import { canApproveRevision, canExportOfferRevision } from "@/lib/access";
+import { buildOfferRevisionExportData } from "@/lib/offer-export";
 import { OfferStatusLabels, OPEN_REVISION_STATUSES } from "@/types";
 import AcceptRevisionButton from "./accept-revision-button";
 import ApproveRevisionButton from "./approve-revision-button";
 import CreateRevisionButton from "./create-revision-button";
+import OfferExportButtons from "./export-offer-buttons";
 import QuoteView from "./quote-view";
 import RecordOutcomeButton from "./record-outcome-button";
 import RejectRevisionButton from "./reject-revision-button";
@@ -110,6 +112,12 @@ const OfferDetail = async (props: OfferDetailProps) => {
               </>
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
+            {canExportOfferRevision(revision.status) && (
+              <OfferExportButtons
+                data={buildOfferRevisionExportData(offer, revision)}
+                exporterInitials={user.initials ?? ""}
+              />
+            )}
           </div>
         )}
       </div>
@@ -194,9 +202,9 @@ const OfferDetail = async (props: OfferDetailProps) => {
       )}
 
       <RevisionHistory
-        offerId={offer.id}
-        revisions={offer.revisions}
+        offer={offer}
         canCreateRevision={canCreateRevision}
+        exporterInitials={user.initials ?? ""}
       />
 
       <BackButton fallbackPath="/offerte" />

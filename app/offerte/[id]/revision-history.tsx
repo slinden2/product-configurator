@@ -1,18 +1,23 @@
 import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { OfferWithRevisionAndLines } from "@/db/queries";
+import { canExportOfferRevision } from "@/lib/access";
+import { buildOfferRevisionExportData } from "@/lib/offer-export";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { OfferStatusLabels } from "@/types";
 import CreateRevisionButton from "./create-revision-button";
+import OfferExportButtons from "./export-offer-buttons";
 import QuoteView from "./quote-view";
 
 interface RevisionHistoryProps {
-  offerId: number;
-  /** All revisions, newest-first; `revisions[0]` is the working revision. */
-  revisions: OfferWithRevisionAndLines["revisions"];
+  /** Offer header, for building each revision's export payload; also carries
+   * the revisions (newest-first; `revisions[0]` is the working one). */
+  offer: OfferWithRevisionAndLines;
   /** True when a new revision can be created (the working revision is frozen, so no
    * open draft exists). Gates the per-revision "revert" buttons. */
   canCreateRevision: boolean;
+  /** Initials of the viewing user, credited as author on exported documents. */
+  exporterInitials: string;
 }
 
 /**
@@ -21,13 +26,13 @@ interface RevisionHistoryProps {
  * revision from it ("revert"). Renders nothing when there is no history yet.
  */
 const RevisionHistory = ({
-  offerId,
-  revisions,
+  offer,
   canCreateRevision,
+  exporterInitials,
 }: RevisionHistoryProps) => {
   // revisions[0] is the working revision, shown at the top of the page; everything
   // after it is immutable history.
-  const past = revisions.slice(1);
+  const past = offer.revisions.slice(1);
   if (past.length === 0) return null;
 
   return (
@@ -58,19 +63,25 @@ const RevisionHistory = ({
               </span>
             </summary>
             <div className="space-y-4 border-t p-4">
-              {canCreateRevision && (
-                <div className="flex justify-end">
+              <div className="flex flex-wrap justify-end gap-2">
+                {canExportOfferRevision(revision.status) && (
+                  <OfferExportButtons
+                    data={buildOfferRevisionExportData(offer, revision)}
+                    exporterInitials={exporterInitials}
+                  />
+                )}
+                {canCreateRevision && (
                   <CreateRevisionButton
-                    offerId={offerId}
+                    offerId={offer.id}
                     sourceRevisionNo={revision.revision_no}
                     label="Crea nuova revisione da questa"
                     variant="outline"
                     size="sm"
                   />
-                </div>
-              )}
+                )}
+              </div>
               <QuoteView
-                offerId={offerId}
+                offerId={offer.id}
                 revision={revision}
                 editable={false}
               />

@@ -1,12 +1,13 @@
 import { describe, expect, test } from "vitest";
 import {
   canApproveRevision,
+  canExportOfferRevision,
   canManageStandaloneConfigs,
   canViewBom,
   canViewMarginReview,
   canViewOffer,
 } from "@/lib/access";
-import type { Role } from "@/types";
+import type { OfferStatusType, Role } from "@/types";
 
 describe("canApproveRevision", () => {
   test.each([
@@ -37,6 +38,25 @@ describe("canViewOffer", () => {
 
   test("ENGINEER has no offer access", () => {
     expect(canViewOffer("ENGINEER")).toBe(false);
+  });
+});
+
+describe("canExportOfferRevision", () => {
+  test.each([
+    "SENT",
+    "ACCEPTED",
+    "REJECTED",
+    "EXPIRED",
+  ] as const)("%s (frozen) is exportable", (status) => {
+    expect(canExportOfferRevision(status)).toBe(true);
+  });
+
+  test.each([
+    "DRAFT",
+    "PENDING_APPROVAL",
+    "APPROVED_TO_SEND",
+  ] as OfferStatusType[])("%s (open working state) is not exportable", (status) => {
+    expect(canExportOfferRevision(status)).toBe(false);
   });
 });
 
