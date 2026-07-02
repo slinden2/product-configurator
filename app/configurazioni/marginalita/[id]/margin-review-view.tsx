@@ -280,54 +280,61 @@ function AsSoldDiffCard({
             {MSG.marginReview.asSoldNoChanges}
           </p>
         ) : (
-          diff.sections.map((section) => (
-            <div key={section.title}>
-              <div className="text-sm font-medium text-muted-foreground mb-1">
-                {section.title}
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-auto py-1 px-0">Campo</TableHead>
-                    <TableHead className="h-auto py-1 px-0">Venduto</TableHead>
-                    <TableHead className="h-auto py-1 px-0">Attuale</TableHead>
-                    <TableHead className="h-auto py-1 pl-0 pr-4 text-right">
-                      Stato
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {section.rows.map((row) => {
-                    const badge = DIFF_STATUS_BADGES[row.status];
-                    return (
-                      <TableRow
-                        key={`${section.title}:${row.key}`}
-                        className="border-0 hover:bg-muted/40"
-                      >
-                        <TableCell className="py-1.5 px-0">
-                          {row.label}
-                        </TableCell>
-                        <TableCell className="py-1.5 px-0 text-muted-foreground">
-                          {row.asSoldValue ?? "—"}
-                        </TableCell>
-                        <TableCell className="py-1.5 px-0 font-medium">
-                          {row.currentValue ?? "—"}
-                        </TableCell>
-                        <TableCell className="py-1.5 pl-0 pr-4 text-right">
-                          <Badge
-                            variant="outline"
-                            className={cn("text-[10px]", badge.className)}
-                          >
-                            {badge.label}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ))
+          <Table className="table-fixed min-w-[640px]">
+            <colgroup>
+              <col className="w-[34%]" />
+              <col className="w-[22%]" />
+              <col className="w-[22%]" />
+              <col className="w-[22%]" />
+            </colgroup>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-auto py-1 px-0">Campo</TableHead>
+                <TableHead className="h-auto py-1 px-0">Venduto</TableHead>
+                <TableHead className="h-auto py-1 px-0">Attuale</TableHead>
+                <TableHead className="h-auto py-1 pl-0 pr-4 text-right">
+                  Stato
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            {diff.sections.map((section) => (
+              <TableBody key={section.title}>
+                <TableRow className="border-0 hover:bg-transparent">
+                  <TableCell
+                    colSpan={4}
+                    className="pt-5 pb-1 px-0 text-sm font-medium text-muted-foreground"
+                  >
+                    {section.title}
+                  </TableCell>
+                </TableRow>
+                {section.rows.map((row) => {
+                  const badge = DIFF_STATUS_BADGES[row.status];
+                  return (
+                    <TableRow
+                      key={`${section.title}:${row.key}`}
+                      className="border-0 hover:bg-muted/40"
+                    >
+                      <TableCell className="py-1.5 px-0">{row.label}</TableCell>
+                      <TableCell className="py-1.5 px-0 text-muted-foreground">
+                        {row.asSoldValue ?? "—"}
+                      </TableCell>
+                      <TableCell className="py-1.5 px-0 font-medium">
+                        {row.currentValue ?? "—"}
+                      </TableCell>
+                      <TableCell className="py-1.5 pl-0 pr-4 text-right">
+                        <Badge
+                          variant="outline"
+                          className={cn("text-[10px]", badge.className)}
+                        >
+                          {badge.label}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            ))}
+          </Table>
         )}
       </CardContent>
     </Card>
@@ -354,10 +361,10 @@ export default function MarginReviewView({
           </span>
         </div>
       )}
+      <SummaryCard comparison={comparison} discountPct={discountPct} />
       {asSoldFrozenAt && (
         <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />
       )}
-      <SummaryCard comparison={comparison} discountPct={discountPct} />
       <TagBreakdownCard comparison={comparison} />
     </div>
   );
