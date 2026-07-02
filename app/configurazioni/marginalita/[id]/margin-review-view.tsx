@@ -15,11 +15,7 @@ import type {
   AsSoldDiff,
   AsSoldDiffStatus,
 } from "@/lib/configuration/build-as-sold-diff";
-import {
-  type LineDiffRow,
-  type MarginComparison,
-  MIN_MARGIN_PCT,
-} from "@/lib/margin";
+import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import {
   cn,
@@ -84,6 +80,7 @@ function SummaryCard({ comparison, discountPct }: Props) {
     currentMargin,
     marginPctDrop,
     costDelta,
+    thresholdPct,
     belowThreshold,
   } = comparison;
 
@@ -109,7 +106,7 @@ function SummaryCard({ comparison, discountPct }: Props) {
           >
             La marginalità dopo la progettazione (
             {formatPct(currentMargin.marginPct)}) è inferiore alla soglia minima
-            del {formatPct(MIN_MARGIN_PCT)}.
+            del {formatPct(thresholdPct)}.
           </AlertBanner>
         )}
 

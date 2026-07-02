@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import BackButton from "@/components/back-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,7 +14,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
-import { canApproveRevision, canExportOfferRevision } from "@/lib/access";
+import {
+  canApproveRevision,
+  canExportOfferRevision,
+  canViewMarginReview,
+} from "@/lib/access";
+import {
+  computeLineMarginAlerts,
+  type LineMarginAlert,
+} from "@/lib/margin-alerts";
+import { MSG } from "@/lib/messages";
 import { buildOfferRevisionExportData } from "@/lib/offer-export";
 import { OfferStatusLabels, OPEN_REVISION_STATUSES } from "@/types";
 import AcceptRevisionButton from "./accept-revision-button";
@@ -62,6 +72,16 @@ const OfferDetail = async (props: OfferDetailProps) => {
   // scoped fetch above).
   const canApprove = canApproveRevision(user.role);
   const lines = revision?.lines ?? [];
+
+  // Derived margin alerts: only for the accepted revision's frozen lines, and
+  // only computed for roles allowed to see margin data (ADMIN/SALES_DIRECTOR) —
+  // server-side, so margin figures never reach other roles' payloads.
+  const marginAlerts: Map<number, LineMarginAlert> =
+    canViewMarginReview(user.role) &&
+    isAccepted &&
+    revision?.id === offer.accepted_revision_id
+      ? await computeLineMarginAlerts(lines, Number(revision.discount_pct))
+      : new Map();
 
   return (
     <div className="space-y-6">
@@ -157,9 +177,20 @@ const OfferDetail = async (props: OfferDetailProps) => {
                       {line.configuration.name || "Configurazione"}
                     </TableCell>
                     <TableCell>
-                      <ConfigurationStatusBadge
-                        status={line.configuration.status}
-                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ConfigurationStatusBadge
+                          status={line.configuration.status}
+                        />
+                        {marginAlerts.get(line.id)?.belowThreshold && (
+                          <Link
+                            href={`/configurazioni/marginalita/${line.configuration.id}`}
+                          >
+                            <Badge variant="destructive">
+                              {MSG.marginReview.belowThresholdBadge}
+                            </Badge>
+                          </Link>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{line.quantity}</TableCell>
                     <TableCell>

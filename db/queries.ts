@@ -1793,6 +1793,27 @@ export type EngineeringBomItemWithPart = Awaited<
   ReturnType<typeof getEngineeringBomItems>
 >[number];
 
+/**
+ * Batch variant of `getEngineeringBomItems` for margin math across many configs
+ * (one query instead of one per line). Lean select — only the fields cost
+ * computation needs — with no ordering, since the rows are aggregated, not
+ * displayed. Configs without an EBOM simply contribute no rows.
+ */
+export async function getEngineeringBomItemsForConfigs(confIds: number[]) {
+  if (confIds.length === 0) return [];
+  return db
+    .select({
+      configuration_id: engineeringBomItems.configuration_id,
+      pn: engineeringBomItems.pn,
+      description: engineeringBomItems.description,
+      qty: engineeringBomItems.qty,
+      tag: engineeringBomItems.tag,
+      is_deleted: engineeringBomItems.is_deleted,
+    })
+    .from(engineeringBomItems)
+    .where(inArray(engineeringBomItems.configuration_id, confIds));
+}
+
 export async function getAssemblyChildren(parentPn: string) {
   const rows = await db.query.bomLines.findMany({
     where: eq(bomLines.parent_pn, parentPn),

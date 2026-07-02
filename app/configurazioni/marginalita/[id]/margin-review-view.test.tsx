@@ -36,6 +36,7 @@ function makeComparison(
     },
     marginPctDrop: 10,
     costDelta: 100,
+    thresholdPct: 30,
     belowThreshold: false,
     tagBreakdown: [
       {

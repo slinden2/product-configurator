@@ -158,6 +158,15 @@ export const ConfigOriginLabels: Record<ConfigOrigin, string> = {
   OFFER: "Offerta",
 };
 
+/**
+ * Product category of a configuration. The catalog currently holds a single
+ * category (rollover gantry wash systems); per-category business parameters
+ * (e.g. the margin threshold, see `lib/margin.ts`) key off this so new
+ * categories only extend the maps.
+ */
+export const ProductCategories = ["ROLLOVER_GANTRY"] as const;
+export type ProductCategory = (typeof ProductCategories)[number];
+
 export const Roles = [
   "ADMIN",
   "ENGINEER",

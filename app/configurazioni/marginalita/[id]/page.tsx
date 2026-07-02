@@ -80,7 +80,8 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     ? prepareOfferDisplayData(items, discountPct)
     : { displayData: null };
 
-  if (!items || !displayData) return emptyState(MSG.marginReview.noOffer);
+  if (!linePricing || !items || !displayData)
+    return emptyState(MSG.marginReview.noOffer);
 
   // EBOM cost basis: current catalog cost of the non-deleted engineering BOM.
   // When no EBOM exists the engineering side renders as 0 placeholders.
@@ -101,6 +102,8 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     ...displayData.washBays.flatMap((section) => section.items),
   ];
 
+  // The threshold defaults to the configuration's product-category value
+  // (single category today — rollover gantries).
   const comparison = buildMarginComparison(
     displayData.discounted_total,
     offerBomItems,

@@ -1,15 +1,39 @@
-import { type BomTag, BomTagLabels, BomTags } from "@/types";
+import {
+  type BomTag,
+  BomTagLabels,
+  BomTags,
+  type ProductCategory,
+} from "@/types";
 import type { OfferBomLineItem } from "@/validation/offer-schema";
 
 /**
- * Minimum acceptable gross margin, expressed as a percentage (30 = 30%).
- * Below this the deal is flagged on the margin review page so a director/admin
- * can decide whether to send it back to sales for re-negotiation.
+ * Minimum acceptable gross margin per product category, expressed as a
+ * percentage (30 = 30%). The threshold is picked automatically from the
+ * configuration's product category — it is not editable per offer line.
  *
- * NOTE: kept as a code constant for now; a DB-backed, admin-configurable value
- * is a planned fast-follow (same read site).
+ * NOTE: the ROLLOVER_GANTRY value is a placeholder still to be confirmed by
+ * the business; until then it mirrors the previous global MIN_MARGIN_PCT.
  */
-export const MIN_MARGIN_PCT = 30;
+export const MARGIN_THRESHOLD_BY_CATEGORY: Record<ProductCategory, number> = {
+  ROLLOVER_GANTRY: 30,
+};
+
+/** Margin threshold (percentage) for a product category. */
+export function getMarginThresholdForCategory(
+  category: ProductCategory,
+): number {
+  return MARGIN_THRESHOLD_BY_CATEGORY[category];
+}
+
+/**
+ * Resolves a configuration's product category. The catalog currently holds a
+ * single category (rollover gantries), so this is constant; when the catalog
+ * grows, configurations gain a category field and this derives it from the
+ * row — every threshold read site already resolves through here.
+ */
+export function getConfigurationProductCategory(): ProductCategory {
+  return "ROLLOVER_GANTRY";
+}
 
 const TAG_SET = new Set<string>(BomTags);
 
@@ -81,6 +105,8 @@ export interface MarginComparison {
   marginPctDrop: number;
   /** ebomCost − offerCost. */
   costDelta: number;
+  /** The margin threshold the comparison was judged against (percentage). */
+  thresholdPct: number;
   belowThreshold: boolean;
   tagBreakdown: TagCostRow[];
   lineDiff: LineDiffRow[];
@@ -111,6 +137,26 @@ export function computeMargin(revenue: number, cost: number): MarginResult {
   const marginValue = revenue - cost;
   const marginPct = revenue > 0 ? (marginValue / revenue) * 100 : 0;
   return { revenue, cost, marginValue, marginPct };
+}
+
+/**
+ * Derived margin alert: true when the live margin (revenue vs current EBOM
+ * cost) falls below the product category's threshold. False when no EBOM
+ * exists — there is nothing to judge yet. Revenue is the per-unit discounted
+ * offer total (quantity is intentionally ignored, matching the margin review
+ * page). The absorb sign-off (umbrella #81 phase 3) ANDs into this at the
+ * call sites.
+ */
+export function isMarginBelowThreshold(
+  revenue: number,
+  ebomItems: EbomCostItem[],
+  thresholdPct: number,
+): boolean {
+  const hasEbom = ebomItems.some((item) => !item.is_deleted);
+  if (!hasEbom) return false;
+  return (
+    computeMargin(revenue, computeEbomCost(ebomItems)).marginPct < thresholdPct
+  );
 }
 
 /** Per-tag cost comparison (offer vs EBOM). Only tags with any cost are returned, in BomTags order. */
@@ -243,11 +289,15 @@ export function buildLineDiff(
 /**
  * Assembles the full margin comparison view model from a fixed offer revenue,
  * the offer's BOM line items (as quoted) and the current EBOM rows.
+ * `thresholdPct` defaults to the configuration's product-category threshold.
  */
 export function buildMarginComparison(
   revenue: number,
   offerItems: OfferBomLineItem[],
   ebomItems: EbomCostItem[],
+  thresholdPct: number = getMarginThresholdForCategory(
+    getConfigurationProductCategory(),
+  ),
 ): MarginComparison {
   const hasEbom = ebomItems.filter((item) => !item.is_deleted).length > 0;
   const offerCost = computeOfferBomCost(offerItems);
@@ -268,7 +318,8 @@ export function buildMarginComparison(
     currentMargin,
     marginPctDrop: offerMargin.marginPct - currentMargin.marginPct,
     costDelta: ebomCost - offerCost,
-    belowThreshold: hasEbom && currentMargin.marginPct < MIN_MARGIN_PCT,
+    thresholdPct,
+    belowThreshold: isMarginBelowThreshold(revenue, ebomItems, thresholdPct),
     tagBreakdown: buildTagBreakdown(offerItems, ebomItems),
     lineDiff: buildLineDiff(offerItems, ebomItems),
   };

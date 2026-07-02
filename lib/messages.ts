@@ -274,5 +274,6 @@ export const MSG = {
       "Nessuna variazione nella distinta base rispetto al venduto.",
     lineDiffNoChangesQuote:
       "Nessuna variazione nella distinta base rispetto all'offerta.",
+    belowThresholdBadge: "Margine sotto soglia",
   },
 } as const;
