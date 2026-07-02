@@ -162,6 +162,75 @@ describe("buildLineDiff", () => {
     expect(byPn.get("ADDED")?.status).toBe("added");
   });
 
+  it("flags a qty-only change with qtyChanged but not costChanged", () => {
+    // offer: qty 2, aggregated cost 100 — ebom: qty 4 × cost 25 = 100
+    const offer = [
+      makeOfferItem({ pn: "A", coefficient: 2, qty: 2, line_total: 200 }),
+    ];
+    const ebom = [makeEbomItem({ pn: "A", cost: 25, qty: 4 })];
+    const diff = buildLineDiff(offer, ebom);
+    expect(diff[0]).toMatchObject({
+      status: "changed",
+      qtyChanged: true,
+      costChanged: false,
+    });
+  });
+
+  it("flags a cost-only change with costChanged but not qtyChanged", () => {
+    // Same qty, catalog price moved: offer cost 100 vs ebom cost 150.
+    const offer = [
+      makeOfferItem({ pn: "A", coefficient: 2, qty: 1, line_total: 200 }),
+    ];
+    const ebom = [makeEbomItem({ pn: "A", cost: 150, qty: 1 })];
+    const diff = buildLineDiff(offer, ebom);
+    expect(diff[0]).toMatchObject({
+      status: "changed",
+      qtyChanged: false,
+      costChanged: true,
+    });
+  });
+
+  it("flags both when qty and cost differ", () => {
+    const offer = [
+      makeOfferItem({ pn: "A", coefficient: 2, qty: 1, line_total: 200 }),
+    ];
+    const ebom = [makeEbomItem({ pn: "A", cost: 150, qty: 2 })];
+    const diff = buildLineDiff(offer, ebom);
+    expect(diff[0]).toMatchObject({
+      status: "changed",
+      qtyChanged: true,
+      costChanged: true,
+    });
+  });
+
+  it("keeps both change flags false on added, removed and unchanged rows", () => {
+    const offer = [
+      makeOfferItem({ pn: "KEEP", coefficient: 2, qty: 1, line_total: 200 }),
+      makeOfferItem({ pn: "REMOVED", coefficient: 2, qty: 1, line_total: 200 }),
+    ];
+    const ebom = [
+      makeEbomItem({ pn: "KEEP", cost: 100, qty: 1 }),
+      makeEbomItem({ pn: "ADDED", cost: 80, qty: 1 }),
+    ];
+    const diff = buildLineDiff(offer, ebom);
+    for (const row of diff) {
+      expect(row).toMatchObject({ qtyChanged: false, costChanged: false });
+    }
+  });
+
+  it("treats a sub-epsilon cost difference as unchanged", () => {
+    const offer = [
+      makeOfferItem({ pn: "A", coefficient: 2, qty: 1, line_total: 200 }),
+    ];
+    const ebom = [makeEbomItem({ pn: "A", cost: 100.004, qty: 1 })];
+    const diff = buildLineDiff(offer, ebom);
+    expect(diff[0]).toMatchObject({
+      status: "unchanged",
+      qtyChanged: false,
+      costChanged: false,
+    });
+  });
+
   it("aggregates the same pn across categories", () => {
     const offer = [
       makeOfferItem({

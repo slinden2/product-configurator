@@ -263,9 +263,16 @@ export const MSG = {
   },
   marginReview: {
     noOffer: "Nessuna offerta presente per questa configurazione.",
-    asSoldDiffTitle: "Variazioni rispetto al venduto",
-    asSoldNoChanges: "Nessuna variazione rispetto al venduto.",
+    asSoldDiffTitle: "Variazioni di configurazione rispetto al venduto",
+    asSoldNoChanges:
+      "Nessuna variazione di configurazione rispetto al venduto.",
     asSoldDiffUnavailable:
       "Confronto con il venduto non disponibile: snapshot mancante o non leggibile.",
+    lineDiffTitleFrozen: "Variazioni distinta base rispetto al venduto",
+    lineDiffTitleQuote: "Variazioni distinta base rispetto all'offerta",
+    lineDiffNoChangesFrozen:
+      "Nessuna variazione nella distinta base rispetto al venduto.",
+    lineDiffNoChangesQuote:
+      "Nessuna variazione nella distinta base rispetto all'offerta.",
   },
 } as const;

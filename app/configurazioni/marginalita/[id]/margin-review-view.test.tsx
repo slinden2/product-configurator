@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import type { AsSoldDiff } from "@/lib/configuration/build-as-sold-diff";
-import type { MarginComparison } from "@/lib/margin";
+import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { formatDelta, formatEur, formatPct } from "@/lib/utils";
 import MarginReviewView from "./margin-review-view";
@@ -70,6 +70,24 @@ function makeNoEbomComparison(): MarginComparison {
       },
     ],
   });
+}
+
+/** A changed (cost-only) BOM diff row; override for other statuses. */
+function makeLineDiffRow(
+  overrides: Partial<LineDiffRow> & { pn: string },
+): LineDiffRow {
+  return {
+    description: `desc ${overrides.pn}`,
+    offerQty: 1,
+    ebomQty: 1,
+    offerCost: 100,
+    ebomCost: 150,
+    costDelta: 50,
+    qtyChanged: false,
+    costChanged: true,
+    status: "changed",
+    ...overrides,
+  };
 }
 
 /** A drifted diff: one changed field, one removed tank row. */
@@ -287,6 +305,192 @@ describe("MarginReviewView", () => {
       expect(
         screen.queryByText(MSG.marginReview.asSoldDiffTitle),
       ).not.toBeInTheDocument();
+    });
+
+    test("pins the configuration-drift wording of title and empty state", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={makeAsSoldDiff({ hasChanges: false, sections: [] })}
+        />,
+      );
+
+      expect(
+        screen.getByText("Variazioni di configurazione rispetto al venduto"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Nessuna variazione di configurazione rispetto al venduto.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("BOM line diff card", () => {
+    const FROZEN_AT = new Date("2026-01-15T10:30:00Z");
+
+    test("renders added and removed rows with costs, delta and status badges", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            lineDiff: [
+              makeLineDiffRow({
+                pn: "PN-ADD",
+                offerQty: null,
+                ebomQty: 2,
+                offerCost: 0,
+                ebomCost: 80,
+                costDelta: 80,
+                costChanged: false,
+                status: "added",
+              }),
+              makeLineDiffRow({
+                pn: "PN-REM",
+                offerQty: 3,
+                ebomQty: null,
+                offerCost: 120,
+                ebomCost: 0,
+                costDelta: -120,
+                costChanged: false,
+                status: "removed",
+              }),
+            ],
+          })}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={makeAsSoldDiff()}
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.lineDiffTitleFrozen),
+      ).toBeInTheDocument();
+
+      const addedRow = screen.getByText("PN-ADD").closest("tr") as HTMLElement;
+      expect(within(addedRow).getByText("desc PN-ADD")).toBeInTheDocument();
+      expect(within(addedRow).getByText("2")).toBeInTheDocument();
+      expect(within(addedRow).getByText(eur(0))).toBeInTheDocument();
+      expect(within(addedRow).getByText(eur(80))).toBeInTheDocument();
+      expect(within(addedRow).getByText(delta(80))).toBeInTheDocument();
+      expect(within(addedRow).getByText("Aggiunto")).toBeInTheDocument();
+
+      const removedRow = screen
+        .getByText("PN-REM")
+        .closest("tr") as HTMLElement;
+      expect(within(removedRow).getByText("3")).toBeInTheDocument();
+      expect(within(removedRow).getByText(eur(120))).toBeInTheDocument();
+      expect(within(removedRow).getByText(delta(-120))).toBeInTheDocument();
+      expect(within(removedRow).getByText("Rimosso")).toBeInTheDocument();
+    });
+
+    test("distinguishes a qty change from a pure cost change", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            lineDiff: [
+              makeLineDiffRow({
+                pn: "PN-QTY",
+                offerQty: 2,
+                ebomQty: 3,
+                qtyChanged: true,
+                costChanged: true,
+              }),
+              makeLineDiffRow({ pn: "PN-COST", offerQty: 5, ebomQty: 5 }),
+            ],
+          })}
+          discountPct={0}
+        />,
+      );
+
+      const qtyRow = screen.getByText("PN-QTY").closest("tr") as HTMLElement;
+      expect(within(qtyRow).getByText("2 → 3")).toBeInTheDocument();
+      expect(within(qtyRow).getByText("Q.tà modificata")).toBeInTheDocument();
+
+      const costRow = screen.getByText("PN-COST").closest("tr") as HTMLElement;
+      expect(within(costRow).getByText("5")).toBeInTheDocument();
+      expect(within(costRow).queryByText(/→/)).not.toBeInTheDocument();
+      expect(within(costRow).getByText("Costo aggiornato")).toBeInTheDocument();
+    });
+
+    test("filters out unchanged rows", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            lineDiff: [
+              makeLineDiffRow({ pn: "PN-CHANGED" }),
+              makeLineDiffRow({
+                pn: "PN-SAME",
+                offerCost: 100,
+                ebomCost: 100,
+                costDelta: 0,
+                costChanged: false,
+                status: "unchanged",
+              }),
+            ],
+          })}
+          discountPct={0}
+        />,
+      );
+
+      expect(screen.getByText("PN-CHANGED")).toBeInTheDocument();
+      expect(screen.queryByText("PN-SAME")).not.toBeInTheDocument();
+    });
+
+    test("shows the as-sold empty state when nothing drifted after the freeze", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={makeAsSoldDiff({ hasChanges: false, sections: [] })}
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.lineDiffNoChangesFrozen),
+      ).toBeInTheDocument();
+    });
+
+    test("phrases title and empty state against the offer before the freeze", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={null}
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.lineDiffTitleQuote),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(MSG.marginReview.lineDiffNoChangesQuote),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(MSG.marginReview.lineDiffTitleFrozen),
+      ).not.toBeInTheDocument();
+    });
+
+    test("omits the card entirely when there is no EBOM", () => {
+      render(
+        <MarginReviewView
+          comparison={{
+            ...makeNoEbomComparison(),
+            lineDiff: [makeLineDiffRow({ pn: "PN-X" })],
+          }}
+          discountPct={0}
+        />,
+      );
+
+      expect(
+        screen.queryByText(MSG.marginReview.lineDiffTitleQuote),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(MSG.marginReview.lineDiffTitleFrozen),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("PN-X")).not.toBeInTheDocument();
     });
   });
 

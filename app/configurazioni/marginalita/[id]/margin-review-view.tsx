@@ -15,7 +15,11 @@ import type {
   AsSoldDiff,
   AsSoldDiffStatus,
 } from "@/lib/configuration/build-as-sold-diff";
-import { type MarginComparison, MIN_MARGIN_PCT } from "@/lib/margin";
+import {
+  type LineDiffRow,
+  type MarginComparison,
+  MIN_MARGIN_PCT,
+} from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import {
   cn,
@@ -341,6 +345,147 @@ function AsSoldDiffCard({
   );
 }
 
+type LineDiffBadgeKind = "added" | "removed" | "qty" | "cost";
+
+const LINE_DIFF_BADGES: Record<
+  LineDiffBadgeKind,
+  { label: string; className: string }
+> = {
+  added: {
+    label: "Aggiunto",
+    className: "text-green-600 border-green-600 dark:text-green-400",
+  },
+  removed: {
+    label: "Rimosso",
+    className: "text-destructive border-destructive",
+  },
+  qty: {
+    label: "Q.tà modificata",
+    className: "text-amber-600 border-amber-600 dark:text-amber-400",
+  },
+  cost: {
+    label: "Costo aggiornato",
+    className: "text-sky-600 border-sky-600 dark:text-sky-400",
+  },
+};
+
+/** A qty change means engineering changed the machine; a pure cost change means the catalog price moved. */
+function lineDiffBadgeKind(row: LineDiffRow): LineDiffBadgeKind {
+  if (row.status === "added" || row.status === "removed") return row.status;
+  return row.qtyChanged ? "qty" : "cost";
+}
+
+function LineDiffCard({
+  lineDiff,
+  frozen,
+}: {
+  lineDiff: LineDiffRow[];
+  frozen: boolean;
+}) {
+  const rows = lineDiff.filter((row) => row.status !== "unchanged");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">
+          {frozen
+            ? MSG.marginReview.lineDiffTitleFrozen
+            : MSG.marginReview.lineDiffTitleQuote}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {frozen
+              ? MSG.marginReview.lineDiffNoChangesFrozen
+              : MSG.marginReview.lineDiffNoChangesQuote}
+          </p>
+        ) : (
+          <Table className="table-fixed min-w-[880px]">
+            <colgroup>
+              <col className="w-[14%]" />
+              <col className="w-[23%]" />
+              <col className="w-[10%]" />
+              <col className="w-[13%]" />
+              <col className="w-[14%]" />
+              <col className="w-[13%]" />
+              <col className="w-[13%]" />
+            </colgroup>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-auto py-1 px-0">Codice</TableHead>
+                <TableHead className="h-auto py-1 px-0">Descrizione</TableHead>
+                <TableHead className="h-auto py-1 px-0 text-right">
+                  Q.tà
+                </TableHead>
+                <TableHead className="h-auto py-1 px-0 text-right">
+                  Costo offerta
+                </TableHead>
+                <TableHead className="h-auto py-1 px-0 text-right">
+                  Costo progettazione
+                </TableHead>
+                <TableHead className="h-auto py-1 px-0 text-right">
+                  Variazione
+                </TableHead>
+                <TableHead className="h-auto py-1 pl-0 pr-4 text-right">
+                  Stato
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const badge = LINE_DIFF_BADGES[lineDiffBadgeKind(row)];
+                return (
+                  <TableRow key={row.pn} className="border-0 hover:bg-muted/40">
+                    <TableCell className="py-1.5 px-0">{row.pn}</TableCell>
+                    <TableCell className="py-1.5 px-0 truncate">
+                      {row.description}
+                    </TableCell>
+                    <TableCell className="py-1.5 px-0 text-right tabular-nums">
+                      {row.qtyChanged ? (
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          {row.offerQty ?? "—"} → {row.ebomQty ?? "—"}
+                        </span>
+                      ) : (
+                        (row.ebomQty ?? row.offerQty ?? "—")
+                      )}
+                    </TableCell>
+                    <TableCell className="py-1.5 px-0 text-right tabular-nums">
+                      {formatEur(row.offerCost)}
+                    </TableCell>
+                    <TableCell className="py-1.5 px-0 text-right tabular-nums">
+                      {formatEur(row.ebomCost)}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "py-1.5 px-0 text-right tabular-nums font-medium",
+                        deltaClass(row.costDelta),
+                      )}
+                    >
+                      {formatDelta(row.costDelta)}
+                    </TableCell>
+                    <TableCell className="py-1.5 pl-0 pr-4 text-right whitespace-nowrap">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "whitespace-nowrap text-[10px]",
+                          badge.className,
+                        )}
+                      >
+                        {badge.label}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function MarginReviewView({
   comparison,
   discountPct,
@@ -364,6 +509,12 @@ export default function MarginReviewView({
       <SummaryCard comparison={comparison} discountPct={discountPct} />
       {asSoldFrozenAt && (
         <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />
+      )}
+      {comparison.hasEbom && (
+        <LineDiffCard
+          lineDiff={comparison.lineDiff}
+          frozen={!!asSoldFrozenAt}
+        />
       )}
       <TagBreakdownCard comparison={comparison} />
     </div>

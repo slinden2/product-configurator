@@ -62,6 +62,10 @@ export interface LineDiffRow {
   ebomCost: number;
   /** ebomCost − offerCost. */
   costDelta: number;
+  /** True when offer and EBOM quantities differ (always false for added/removed). */
+  qtyChanged: boolean;
+  /** True when the aggregated cost differs beyond epsilon (always false for added/removed). */
+  costChanged: boolean;
   status: LineDiffStatus;
 }
 
@@ -205,11 +209,14 @@ export function buildLineDiff(
     const offerCost = offer?.cost ?? 0;
     const ebomCost = ebom?.cost ?? 0;
 
+    const qtyChanged = !!offer && !!ebom && offer.qty !== ebom.qty;
+    const costChanged =
+      !!offer && !!ebom && Math.abs(offer.cost - ebom.cost) > 0.005;
+
     let status: LineDiffStatus;
     if (!offer) status = "added";
     else if (!ebom) status = "removed";
-    else if (offer.qty !== ebom.qty || Math.abs(offer.cost - ebom.cost) > 0.005)
-      status = "changed";
+    else if (qtyChanged || costChanged) status = "changed";
     else status = "unchanged";
 
     return {
@@ -220,6 +227,8 @@ export function buildLineDiff(
       offerCost,
       ebomCost,
       costDelta: ebomCost - offerCost,
+      qtyChanged,
+      costChanged,
       status,
     };
   });
