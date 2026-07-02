@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import DetailsCard from "@/components/shared/details-card";
+import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
   getConfiguration,
   getEngineeringBomItems,
@@ -9,6 +10,11 @@ import {
 } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
 import { enrichWithCosts } from "@/lib/BOM";
+import {
+  type AsSoldDiff,
+  buildAsSoldDiff,
+  parseAsSoldSnapshot,
+} from "@/lib/configuration/build-as-sold-diff";
 import { buildMarginComparison, type EbomCostItem } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { prepareOfferDisplayData } from "@/lib/offer";
@@ -101,6 +107,24 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     ebomItems,
   );
 
+  // As-sold drift: compare the at-acceptance snapshot with the current
+  // engineering config (same form shape on both sides). Only computed once a
+  // freeze exists — pre-acceptance lines have no as-sold baseline to drift from.
+  const asSoldFrozenAt = linePricing?.as_sold_frozen_at ?? null;
+  let asSoldDiff: AsSoldDiff | null = null;
+  let asSoldDiffUnavailable = false;
+  if (asSoldFrozenAt) {
+    const snapshot = parseAsSoldSnapshot(linePricing?.as_sold_snapshot);
+    const currentConfig = snapshot
+      ? await loadValidatedConfiguration(confId, user)
+      : null;
+    if (snapshot && currentConfig) {
+      asSoldDiff = buildAsSoldDiff(snapshot, currentConfig);
+    } else {
+      asSoldDiffUnavailable = true;
+    }
+  }
+
   return (
     <div className="space-y-6">
       {header}
@@ -108,7 +132,9 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
       <MarginReviewView
         comparison={comparison}
         discountPct={discountPct}
-        asSoldFrozenAt={linePricing?.as_sold_frozen_at ?? null}
+        asSoldFrozenAt={asSoldFrozenAt}
+        asSoldDiff={asSoldDiff}
+        asSoldDiffUnavailable={asSoldDiffUnavailable}
       />
     </div>
   );

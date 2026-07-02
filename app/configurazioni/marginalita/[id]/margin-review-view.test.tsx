@@ -2,7 +2,9 @@
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
+import type { AsSoldDiff } from "@/lib/configuration/build-as-sold-diff";
 import type { MarginComparison } from "@/lib/margin";
+import { MSG } from "@/lib/messages";
 import { formatDelta, formatEur, formatPct } from "@/lib/utils";
 import MarginReviewView from "./margin-review-view";
 
@@ -68,6 +70,40 @@ function makeNoEbomComparison(): MarginComparison {
       },
     ],
   });
+}
+
+/** A drifted diff: one changed field, one removed tank row. */
+function makeAsSoldDiff(overrides: Partial<AsSoldDiff> = {}): AsSoldDiff {
+  return {
+    hasChanges: true,
+    sections: [
+      {
+        title: "Spazzole",
+        rows: [
+          {
+            key: "brush_qty",
+            label: "Numero di spazzole",
+            asSoldValue: "2",
+            currentValue: "3",
+            status: "changed",
+          },
+        ],
+      },
+      {
+        title: "Serbatoio 1 (rimosso)",
+        rows: [
+          {
+            key: "type",
+            label: "Tipo di serbatoio",
+            asSoldValue: "L2000",
+            currentValue: null,
+            status: "removed",
+          },
+        ],
+      },
+    ],
+    ...overrides,
+  };
 }
 
 /**
@@ -166,6 +202,90 @@ describe("MarginReviewView", () => {
 
       expect(
         screen.queryByText(/Configurazione congelata come venduta il/),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("as-sold drift diff card", () => {
+    const FROZEN_AT = new Date("2026-01-15T10:30:00Z");
+
+    test("renders sections, values and status badges alongside the freeze note", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={makeAsSoldDiff()}
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.asSoldDiffTitle),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Configurazione congelata come venduta il/),
+      ).toBeInTheDocument();
+
+      expect(screen.getByText("Spazzole")).toBeInTheDocument();
+      const changedRow = screen
+        .getByText("Numero di spazzole")
+        .closest("tr") as HTMLElement;
+      expect(within(changedRow).getByText("2")).toBeInTheDocument();
+      expect(within(changedRow).getByText("3")).toBeInTheDocument();
+      expect(within(changedRow).getByText("Modificato")).toBeInTheDocument();
+
+      expect(screen.getByText("Serbatoio 1 (rimosso)")).toBeInTheDocument();
+      const removedRow = screen
+        .getByText("Tipo di serbatoio")
+        .closest("tr") as HTMLElement;
+      expect(within(removedRow).getByText("L2000")).toBeInTheDocument();
+      expect(within(removedRow).getByText("—")).toBeInTheDocument();
+      expect(within(removedRow).getByText("Rimosso")).toBeInTheDocument();
+    });
+
+    test("shows the empty state when there is no drift", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={makeAsSoldDiff({ hasChanges: false, sections: [] })}
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.asSoldNoChanges),
+      ).toBeInTheDocument();
+    });
+
+    test("shows the unavailable message when the snapshot cannot be compared", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={null}
+          asSoldDiffUnavailable
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.asSoldDiffUnavailable),
+      ).toBeInTheDocument();
+    });
+
+    test("omits the card entirely when there is no as-sold freeze", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          asSoldFrozenAt={null}
+          asSoldDiff={null}
+        />,
+      );
+
+      expect(
+        screen.queryByText(MSG.marginReview.asSoldDiffTitle),
       ).not.toBeInTheDocument();
     });
   });

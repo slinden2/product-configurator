@@ -1,5 +1,6 @@
 import { AlertTriangle, Lock } from "lucide-react";
 import AlertBanner from "@/components/shared/alert-banner";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,7 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type {
+  AsSoldDiff,
+  AsSoldDiffStatus,
+} from "@/lib/configuration/build-as-sold-diff";
 import { type MarginComparison, MIN_MARGIN_PCT } from "@/lib/margin";
+import { MSG } from "@/lib/messages";
 import {
   cn,
   formatDateDDMMYYYYHHMM,
@@ -28,6 +34,10 @@ interface Props {
    * has not been accepted yet.
    */
   asSoldFrozenAt?: Date | null;
+  /** Field-level drift vs the as-sold snapshot; null when no freeze exists. */
+  asSoldDiff?: AsSoldDiff | null;
+  /** True when a freeze exists but the snapshot could not be compared. */
+  asSoldDiffUnavailable?: boolean;
 }
 
 /** Red when cost grew (delta > 0), green when it shrank. */
@@ -228,10 +238,108 @@ function TagBreakdownCard({ comparison }: { comparison: MarginComparison }) {
   );
 }
 
+const DIFF_STATUS_BADGES: Record<
+  AsSoldDiffStatus,
+  { label: string; className: string }
+> = {
+  changed: {
+    label: "Modificato",
+    className: "text-amber-600 border-amber-600 dark:text-amber-400",
+  },
+  added: {
+    label: "Aggiunto",
+    className: "text-green-600 border-green-600 dark:text-green-400",
+  },
+  removed: {
+    label: "Rimosso",
+    className: "text-destructive border-destructive",
+  },
+};
+
+function AsSoldDiffCard({
+  diff,
+  unavailable,
+}: {
+  diff: AsSoldDiff | null;
+  unavailable: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">
+          {MSG.marginReview.asSoldDiffTitle}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {unavailable || !diff ? (
+          <p className="text-sm text-muted-foreground">
+            {MSG.marginReview.asSoldDiffUnavailable}
+          </p>
+        ) : !diff.hasChanges ? (
+          <p className="text-sm text-muted-foreground">
+            {MSG.marginReview.asSoldNoChanges}
+          </p>
+        ) : (
+          diff.sections.map((section) => (
+            <div key={section.title}>
+              <div className="text-sm font-medium text-muted-foreground mb-1">
+                {section.title}
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-auto py-1 px-0">Campo</TableHead>
+                    <TableHead className="h-auto py-1 px-0">Venduto</TableHead>
+                    <TableHead className="h-auto py-1 px-0">Attuale</TableHead>
+                    <TableHead className="h-auto py-1 pl-0 pr-4 text-right">
+                      Stato
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {section.rows.map((row) => {
+                    const badge = DIFF_STATUS_BADGES[row.status];
+                    return (
+                      <TableRow
+                        key={`${section.title}:${row.key}`}
+                        className="border-0 hover:bg-muted/40"
+                      >
+                        <TableCell className="py-1.5 px-0">
+                          {row.label}
+                        </TableCell>
+                        <TableCell className="py-1.5 px-0 text-muted-foreground">
+                          {row.asSoldValue ?? "—"}
+                        </TableCell>
+                        <TableCell className="py-1.5 px-0 font-medium">
+                          {row.currentValue ?? "—"}
+                        </TableCell>
+                        <TableCell className="py-1.5 pl-0 pr-4 text-right">
+                          <Badge
+                            variant="outline"
+                            className={cn("text-[10px]", badge.className)}
+                          >
+                            {badge.label}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function MarginReviewView({
   comparison,
   discountPct,
   asSoldFrozenAt,
+  asSoldDiff = null,
+  asSoldDiffUnavailable = false,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -245,6 +353,9 @@ export default function MarginReviewView({
             </span>
           </span>
         </div>
+      )}
+      {asSoldFrozenAt && (
+        <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />
       )}
       <SummaryCard comparison={comparison} discountPct={discountPct} />
       <TagBreakdownCard comparison={comparison} />

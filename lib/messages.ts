@@ -263,5 +263,9 @@ export const MSG = {
   },
   marginReview: {
     noOffer: "Nessuna offerta presente per questa configurazione.",
+    asSoldDiffTitle: "Variazioni rispetto al venduto",
+    asSoldNoChanges: "Nessuna variazione rispetto al venduto.",
+    asSoldDiffUnavailable:
+      "Confronto con il venduto non disponibile: snapshot mancante o non leggibile.",
   },
 } as const;
