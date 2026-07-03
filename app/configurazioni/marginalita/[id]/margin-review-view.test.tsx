@@ -233,6 +233,92 @@ describe("MarginReviewView", () => {
     });
   });
 
+  describe("renegotiation entry point", () => {
+    test("shows the renegotiate button next to the alert when no renegotiation is open", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: true,
+          })}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: null }}
+          renegotiation={{ offerId: 5, open: false }}
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", {
+          name: MSG.marginReview.renegotiateButton,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: MSG.marginReview.absorbButton }),
+      ).toBeInTheDocument();
+    });
+
+    test("yields to a link to the offer while a renegotiation is open", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: true,
+          })}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: null }}
+          renegotiation={{ offerId: 5, open: true }}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", {
+          name: MSG.marginReview.renegotiateButton,
+        }),
+      ).not.toBeInTheDocument();
+      const link = screen.getByRole("link", {
+        name: new RegExp(MSG.marginReview.renegotiationOpen),
+      });
+      expect(link).toHaveAttribute("href", "/offerte/5");
+    });
+
+    test("hides the renegotiation entry point when the alert is not active", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: null }}
+          renegotiation={{ offerId: 5, open: false }}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", {
+          name: MSG.marginReview.renegotiateButton,
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("hides the renegotiate button when the renegotiation context is missing", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: true,
+          })}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: null }}
+          renegotiation={null}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", {
+          name: MSG.marginReview.renegotiateButton,
+        }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe("absorb sign-off", () => {
     const SIGN_OFF = {
       byLabel: "director@iteco.it",

@@ -1,0 +1,242 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+// --- Mocks ---
+// We exercise the REAL acceptOfferRevisionWithAudit; a hand-built `tx` answers the
+// two reads (offer row, revision lines) and records every update/insert. Only the
+// db connection module is faked so importing @/db/queries doesn't open a connection.
+vi.mock("@/db", () => ({ db: {} }));
+
+import {
+  acceptOfferRevisionWithAudit,
+  type TransactionType,
+} from "@/db/queries";
+import {
+  activityLogs,
+  configurations,
+  offerRevisionLines,
+  offerRevisions,
+  offers,
+} from "@/db/schemas";
+import { MSG } from "@/lib/messages";
+import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
+
+// --- tx stub ---
+
+interface TxState {
+  offerRow: { accepted_revision_id: number | null } | null;
+  lines: { lineId: number; configId: number; configStatus: string }[];
+  /** Rows returned by the status-guarded revision UPDATE (empty = guard failed). */
+  revisionUpdateReturns: { id: number }[];
+}
+
+function makeTx(state: TxState) {
+  const updates: { table: unknown; set: Record<string, unknown> }[] = [];
+  const inserts: { table: unknown; values: Record<string, unknown> }[] = [];
+
+  const tx = {
+    // The offer row lock (`select ... for update`) runs through tx.execute.
+    execute: vi.fn().mockResolvedValue(undefined),
+    select: () => ({
+      from: (table: unknown) => {
+        if (table === offers) {
+          return {
+            where: () =>
+              Promise.resolve(state.offerRow ? [state.offerRow] : []),
+          };
+        }
+        // The lines read joins configurations.
+        return {
+          innerJoin: () => ({
+            where: () => Promise.resolve(state.lines),
+          }),
+        };
+      },
+    }),
+    update: (table: unknown) => ({
+      set: (set: Record<string, unknown>) => {
+        updates.push({ table, set });
+        const result = Promise.resolve(undefined) as Promise<undefined> & {
+          where: () => Promise<undefined> & {
+            returning: () => Promise<{ id: number }[]>;
+          };
+        };
+        result.where = () => {
+          const whereResult = Promise.resolve(
+            undefined,
+          ) as Promise<undefined> & {
+            returning: () => Promise<{ id: number }[]>;
+          };
+          whereResult.returning = () =>
+            Promise.resolve(
+              table === offerRevisions ? state.revisionUpdateReturns : [],
+            );
+          return whereResult;
+        };
+        return result;
+      },
+    }),
+    insert: (table: unknown) => ({
+      values: (values: Record<string, unknown>) => {
+        inserts.push({ table, values });
+        return Promise.resolve(undefined);
+      },
+    }),
+  };
+
+  const updatesFor = (table: unknown) =>
+    updates.filter((u) => u.table === table).map((u) => u.set);
+  const insertsFor = (table: unknown) =>
+    inserts.filter((i) => i.table === table).map((i) => i.values);
+
+  return { tx: tx as unknown as TransactionType, updatesFor, insertsFor };
+}
+
+const SNAPSHOT = {
+  configuration: { name: "Config A" },
+  waterTanks: [],
+  washBays: [],
+} as unknown as OfferConfigSnapshot;
+
+function baseState(overrides: Partial<TxState> = {}): TxState {
+  return {
+    offerRow: { accepted_revision_id: null },
+    lines: [
+      { lineId: 21, configId: 7, configStatus: "IN_SALES_REVIEW" },
+      { lineId: 22, configId: 8, configStatus: "IN_SALES_REVIEW" },
+    ],
+    revisionUpdateReturns: [{ id: 500 }],
+    ...overrides,
+  };
+}
+
+const AS_SOLD = { 7: SNAPSHOT, 8: SNAPSHOT };
+
+// --- Tests ---
+
+describe("acceptOfferRevisionWithAudit", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  test("first acceptance: hands configs off, freezes as-sold, sets accepted_revision_id", async () => {
+    const { tx, updatesFor, insertsFor } = makeTx(baseState());
+
+    await acceptOfferRevisionWithAudit(5, 500, "actor", AS_SOLD, tx);
+
+    // Revision SENT → ACCEPTED and the offer pointer set.
+    expect(updatesFor(offerRevisions)[0]).toMatchObject({
+      status: "ACCEPTED",
+    });
+    expect(updatesFor(offers)[0]).toMatchObject({
+      accepted_revision_id: 500,
+    });
+
+    // The engineering hand-off: one status update per line config.
+    expect(updatesFor(configurations)).toEqual([
+      { status: "SALES_APPROVED" },
+      { status: "SALES_APPROVED" },
+    ]);
+
+    // As-sold freeze written on both lines (snapshot + marker together).
+    const lineUpdates = updatesFor(offerRevisionLines);
+    expect(lineUpdates).toHaveLength(2);
+    for (const update of lineUpdates) {
+      expect(update.as_sold_snapshot).toBe(SNAPSHOT);
+      expect(update.as_sold_frozen_at).toBeInstanceOf(Date);
+    }
+
+    // Audits: status change + freeze per line, then the acceptance itself.
+    const logs = insertsFor(activityLogs);
+    expect(
+      logs.filter((l) => l.action === "CONFIG_STATUS_CHANGE"),
+    ).toHaveLength(2);
+    expect(
+      logs.filter((l) => l.action === "CONFIG_AS_SOLD_FREEZE"),
+    ).toHaveLength(2);
+    expect(logs.at(-1)).toMatchObject({
+      action: "OFFER_REVISION_ACCEPT",
+      metadata: expect.objectContaining({
+        revisionId: 500,
+        renegotiation: false,
+        previousAcceptedRevisionId: null,
+      }),
+    });
+  });
+
+  test("re-acceptance: re-freezes and moves the pointer WITHOUT touching config statuses", async () => {
+    const { tx, updatesFor, insertsFor } = makeTx(
+      baseState({
+        // The offer is already accepted (rev 500 in force); rev 900 is the SENT
+        // renegotiation being accepted. Its configs live post-handoff.
+        offerRow: { accepted_revision_id: 500 },
+        lines: [
+          { lineId: 41, configId: 7, configStatus: "IN_TECH_REVIEW" },
+          { lineId: 42, configId: 8, configStatus: "TECH_APPROVED" },
+        ],
+        revisionUpdateReturns: [{ id: 900 }],
+      }),
+    );
+
+    await acceptOfferRevisionWithAudit(5, 900, "actor", AS_SOLD, tx);
+
+    // The pointer moves forward to the renegotiation revision.
+    expect(updatesFor(offers)[0]).toMatchObject({
+      accepted_revision_id: 900,
+    });
+
+    // The config fan-out must NOT fire: no configurations update, no status audit.
+    expect(updatesFor(configurations)).toEqual([]);
+    const logs = insertsFor(activityLogs);
+    expect(
+      logs.filter((l) => l.action === "CONFIG_STATUS_CHANGE"),
+    ).toHaveLength(0);
+
+    // The as-sold re-freeze fires on the NEW revision's lines.
+    expect(updatesFor(offerRevisionLines)).toHaveLength(2);
+    expect(
+      logs.filter((l) => l.action === "CONFIG_AS_SOLD_FREEZE"),
+    ).toHaveLength(2);
+
+    expect(logs.at(-1)).toMatchObject({
+      action: "OFFER_REVISION_ACCEPT",
+      metadata: expect.objectContaining({
+        revisionId: 900,
+        renegotiation: true,
+        previousAcceptedRevisionId: 500,
+      }),
+    });
+  });
+
+  test("rejects re-accepting the revision that is already in force", async () => {
+    const { tx } = makeTx(
+      baseState({ offerRow: { accepted_revision_id: 500 } }),
+    );
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 500, "actor", AS_SOLD, tx),
+    ).rejects.toThrow(MSG.offer.alreadyAccepted);
+  });
+
+  test("rejects when the revision is not SENT (guarded update returns no row)", async () => {
+    const { tx } = makeTx(baseState({ revisionUpdateReturns: [] }));
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 500, "actor", AS_SOLD, tx),
+    ).rejects.toThrow(MSG.offer.cannotAccept);
+  });
+
+  test("rejects an empty revision", async () => {
+    const { tx } = makeTx(baseState({ lines: [] }));
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 500, "actor", AS_SOLD, tx),
+    ).rejects.toThrow(MSG.offer.cannotSendEmpty);
+  });
+
+  test("rejects when a line's as-sold snapshot is missing", async () => {
+    const { tx } = makeTx(baseState());
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 500, "actor", { 7: SNAPSHOT }, tx),
+    ).rejects.toThrow(MSG.config.notFound);
+  });
+});

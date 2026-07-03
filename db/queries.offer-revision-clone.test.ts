@@ -264,6 +264,17 @@ describe("createOfferRevisionFrom", () => {
     ).toHaveBeenCalledOnce();
   });
 
+  test("rejects clone-forward on an accepted offer (renegotiation is the only post-acceptance path)", async () => {
+    const offer = frozenOffer();
+    offer.accepted_revision_id = 500 as unknown as null;
+    offer.revisions[0].status = "ACCEPTED";
+    const { tx } = makeTx(offer);
+
+    await expect(createOfferRevisionFrom(5, 2, "actor", tx)).rejects.toThrow(
+      MSG.offer.alreadyAccepted,
+    );
+  });
+
   test("rejects when the latest revision is still a DRAFT working copy", async () => {
     const offer = frozenOffer();
     offer.revisions[0].status = "DRAFT";
