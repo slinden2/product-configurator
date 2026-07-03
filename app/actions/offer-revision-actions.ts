@@ -9,6 +9,7 @@ import {
   acceptOfferRevisionWithAudit,
   approveOfferRevisionWithAudit,
   createOfferRevisionFrom,
+  createRenegotiationRevisionFrom,
   getOfferWorkingRevision,
   getUserData,
   getWorkingRevisionForSend,
@@ -21,7 +22,11 @@ import {
   updateRevisionDiscountWithAudit,
   updateRevisionSettingsWithAudit,
 } from "@/db/queries";
-import { canApproveRevision, canViewOffer } from "@/lib/access";
+import {
+  canApproveRevision,
+  canRenegotiateOffer,
+  canViewOffer,
+} from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
 import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
@@ -320,6 +325,60 @@ export async function createRevisionAction(
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
     return { success: true as const, data: { revisionNo: newRevisionNo } };
+  } catch (err) {
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: MSG.db.error };
+    }
+    return { success: false as const, error: MSG.db.unknown };
+  }
+}
+
+/**
+ * Opens a post-acceptance **renegotiation revision** (#85): a commercial-only working
+ * revision cloned from the in-force accepted revision, whose lines reference the
+ * current engineering configs read-only (no deep-clone) and are re-priced from them —
+ * the customer is re-quoted what engineering says the machine currently is. Gated to
+ * ADMIN / SALES_DIRECTOR (`canRenegotiateOffer`) on top of the offer-access gate;
+ * state guards (offer accepted, no open working revision) live in
+ * `createRenegotiationRevisionFrom`.
+ */
+export async function createRenegotiationRevisionAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user } = auth;
+
+  if (!canRenegotiateOffer(user.role)) {
+    return {
+      success: false as const,
+      error: MSG.offer.renegotiationUnauthorized,
+    };
+  }
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      const { revisionNo, configIds } = await createRenegotiationRevisionFrom(
+        offerId,
+        user.id,
+        tx,
+      );
+
+      // The automatic re-quote: derive the new lines' pricing from the current
+      // engineering configs in the same transaction.
+      await repriceOfferLines(configIds, user.id, tx, { audit: false });
+
+      return { revisionNo, configIds };
+    });
+
+    revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/offerte");
+    // The margin pages show the "renegotiation open" state.
+    for (const configId of result.configIds) {
+      revalidatePath(`/configurazioni/marginalita/${configId}`);
+    }
+    return { success: true as const, data: { revisionNo: result.revisionNo } };
   } catch (err) {
     if (err instanceof QueryError) {
       return { success: false as const, error: err.message };

@@ -118,6 +118,7 @@ function frozenOffer() {
   return {
     id: 5,
     user_id: "owner",
+    accepted_revision_id: null,
     revisions: [
       // Latest (working) revision — frozen, so a new one may be cloned.
       {

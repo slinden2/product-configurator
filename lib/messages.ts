@@ -80,8 +80,11 @@ export const MSG = {
     offerRevisionApproved: "Revisione approvata per l'invio.",
     offerRevisionReturnedToDraft: "Revisione riportata in bozza.",
     offerRevisionCreated: "Nuova revisione creata.",
+    offerRenegotiationCreated: "Rinegoziazione creata.",
     offerRevisionAccepted:
       "Offerta accettata: configurazioni in lavorazione tecnica.",
+    offerRenegotiationAccepted:
+      "Rinegoziazione accettata: venduto ricongelato sui nuovi prezzi.",
     offerRevisionDeclined: "Rifiuto del cliente registrato.",
     offerRevisionExpired: "Revisione segnata come scaduta.",
     configDeleted: "Configurazione eliminata con successo.",
@@ -255,6 +258,18 @@ export const MSG = {
       "Creare una nuova revisione? Le configurazioni verranno clonate in righe modificabili.",
     revertConfirm:
       "Creare una nuova revisione a partire da questa? Le sue configurazioni verranno clonate in righe modificabili.",
+    renegotiationUnauthorized:
+      "Solo i direttori vendite e gli ADMIN possono avviare una rinegoziazione.",
+    renegotiationNotAccepted:
+      "La rinegoziazione è possibile solo su un'offerta accettata.",
+    renegotiationLinesLocked:
+      "Le configurazioni di una rinegoziazione non sono modificabili: solo prezzi e condizioni commerciali.",
+    renegotiateConfirm:
+      "Avviare una rinegoziazione? Verrà creata una nuova revisione con le configurazioni correnti (sola lettura) e i prezzi ricalcolati; le condizioni commerciali saranno modificabili fino all'invio.",
+    renegotiationBadge: "Rinegoziazione",
+    acceptedSupersededBadge: "Accettata (superata)",
+    reacceptConfirm:
+      "Registrare l'accettazione della rinegoziazione? Il venduto verrà ricongelato sui nuovi prezzi; le configurazioni restano all'ufficio tecnico.",
     staleness: {
       title: "Prezzi scaduti",
       body: (generatedAt: string, expiredDays: number) =>
@@ -290,5 +305,7 @@ export const MSG = {
     signOffBody: (by: string, at: string, marginPct: string) =>
       `Accettato da ${by} il ${at} con marginalità ${marginPct}.`,
     signOffNoteLabel: "Nota",
+    renegotiateButton: "Rinegozia",
+    renegotiationOpen: "Rinegoziazione in corso",
   },
 } as const;

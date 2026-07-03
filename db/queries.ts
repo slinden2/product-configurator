@@ -545,7 +545,7 @@ export async function addOfferLine(
 ): Promise<{ id: number }> {
   const offer = await txOrDb.query.offers.findFirst({
     where: eq(offers.id, offerId),
-    columns: { id: true, user_id: true },
+    columns: { id: true, user_id: true, accepted_revision_id: true },
     with: {
       revisions: {
         orderBy: [desc(offerRevisions.revision_no)],
@@ -560,6 +560,11 @@ export async function addOfferLine(
   if (!revision) throw new QueryError(MSG.offer.notFound, 404);
   if (revision.status !== "DRAFT") {
     throw new QueryError(MSG.offer.lineCannotEdit, 403);
+  }
+  // A DRAFT revision on an accepted offer is a renegotiation: commercial-only,
+  // its configuration set is fixed to the accepted revision's.
+  if (offer.accepted_revision_id !== null) {
+    throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
   }
 
   const { id: configId } = await insertConfiguration(
@@ -757,10 +762,12 @@ export async function updateOfferRevisionLinePricing(
  * pass an earlier number to revert to it. The default is resolved **inside the
  * transaction** so it can't go stale against a concurrent send/create.
  *
- * Guards: the offer's latest revision must be frozen (status ≠ DRAFT) — only one
- * working draft exists at a time. A `FOR UPDATE` lock on the offer row serializes
- * concurrent creates/sends so two callers can't mint the same `revision_no`. Audited
- * in the caller's transaction.
+ * Guards: the offer must not be accepted (clone-forward is the pre-acceptance path —
+ * post-acceptance re-quoting goes through `createRenegotiationRevisionFrom`, which
+ * references configs instead of cloning them) and its latest revision must be frozen
+ * (status ≠ DRAFT) — only one working draft exists at a time. A `FOR UPDATE` lock on
+ * the offer row serializes concurrent creates/sends so two callers can't mint the
+ * same `revision_no`. Audited in the caller's transaction.
  */
 export async function createOfferRevisionFrom(
   offerId: number,
@@ -777,7 +784,7 @@ export async function createOfferRevisionFrom(
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
-    columns: { id: true, user_id: true },
+    columns: { id: true, user_id: true, accepted_revision_id: true },
     with: {
       revisions: {
         orderBy: [desc(offerRevisions.revision_no)],
@@ -799,6 +806,9 @@ export async function createOfferRevisionFrom(
   });
 
   if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (offer.accepted_revision_id !== null) {
+    throw new QueryError(MSG.offer.alreadyAccepted, 409);
+  }
 
   const latest = offer.revisions[0];
   if (!latest) throw new QueryError(MSG.offer.notFound, 404);
@@ -886,6 +896,128 @@ export async function createOfferRevisionFrom(
         revisionNo: newRevisionNo,
         fromRevisionNo: resolvedSourceNo,
         lineCount: source.lines.length,
+      },
+    },
+    tx,
+  );
+
+  return {
+    revisionId: newRevision.id,
+    revisionNo: newRevisionNo,
+    configIds,
+  };
+}
+
+/**
+ * Creates a post-acceptance **renegotiation revision**: a commercial-only revision
+ * cloned from the in-force accepted revision (`offers.accepted_revision_id`, not the
+ * latest — a rejected renegotiation may sit between). Unlike `createOfferRevisionFrom`
+ * it does NOT deep-clone configurations / water tanks / wash bays: the new lines
+ * reference the accepted lines' configurations read-only, so the customer is re-quoted
+ * exactly what engineering says the machine currently is, and the configs stay
+ * governed by the engineering status machine.
+ *
+ * Pricing is NOT computed here — lines start with placeholder pricing and the caller
+ * re-prices them via `repriceOfferLines` in the same transaction (deriving the new
+ * quote from the current engineering configs).
+ *
+ * Guards: the offer must be accepted, and its latest revision must be frozen — only
+ * one open renegotiation at a time. A `FOR UPDATE` lock on the offer row serializes
+ * concurrent creates/accepts. Audited in the caller's transaction.
+ */
+export async function createRenegotiationRevisionFrom(
+  offerId: number,
+  userId: string,
+  // Required: revision + line inserts + audit must commit atomically with the
+  // caller's re-pricing pass.
+  tx: TransactionType,
+): Promise<{ revisionId: number; revisionNo: number; configIds: number[] }> {
+  // Serialize lifecycle mutations on this offer (see createOfferRevisionFrom).
+  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+
+  const offer = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true, accepted_revision_id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        with: {
+          lines: { orderBy: [asc(offerRevisionLines.position)] },
+        },
+      },
+    },
+  });
+
+  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (offer.accepted_revision_id === null) {
+    throw new QueryError(MSG.offer.renegotiationNotAccepted, 409);
+  }
+
+  const latest = offer.revisions[0];
+  if (!latest) throw new QueryError(MSG.offer.notFound, 404);
+  if (OPEN_REVISION_STATUSES.includes(latest.status)) {
+    throw new QueryError(MSG.offer.workingRevisionExists, 409);
+  }
+
+  const source = offer.revisions.find(
+    (r) => r.id === offer.accepted_revision_id,
+  );
+  if (!source) throw new QueryError(MSG.offer.notFound, 404);
+
+  const newRevisionNo = latest.revision_no + 1;
+
+  const [newRevision] = await tx
+    .insert(offerRevisions)
+    .values({
+      offer_id: offerId,
+      revision_no: newRevisionNo,
+      status: "DRAFT",
+      // Carry the accepted revision's commercial header forward; lifecycle stamps
+      // reset, and validity is re-established per send (see createOfferRevisionFrom).
+      discount_pct: source.discount_pct,
+      transport_amount: source.transport_amount,
+      transport_mode: source.transport_mode,
+      installation_mode: source.installation_mode,
+      installation_items: source.installation_items,
+      show_net_total_only: source.show_net_total_only,
+      valid_until: null,
+      notes: source.notes,
+    })
+    .returning({ id: offerRevisions.id });
+
+  if (!newRevision) throw new QueryError(MSG.offer.createFailed, 500);
+
+  // Reference the accepted lines' configurations — no clone. Snapshot and absorb
+  // columns start clean: the re-freeze happens at re-acceptance.
+  const configIds = source.lines.map((line) => line.configuration_id);
+  if (source.lines.length > 0) {
+    await tx.insert(offerRevisionLines).values(
+      source.lines.map(
+        (line): NewOfferRevisionLine => ({
+          offer_revision_id: newRevision.id,
+          configuration_id: line.configuration_id,
+          position: line.position,
+          quantity: line.quantity,
+          list_price: "0.00",
+          net_price: "0.00",
+          line_discount_percent: line.line_discount_percent,
+          pricing_snapshot: null,
+        }),
+      ),
+    );
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_CREATE",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: {
+        revisionNo: newRevisionNo,
+        fromRevisionNo: source.revision_no,
+        lineCount: source.lines.length,
+        renegotiation: true,
       },
     },
     tx,
@@ -1293,7 +1425,7 @@ export async function removeOfferLine(
   await db.transaction(async (tx) => {
     const offer = await tx.query.offers.findFirst({
       where: eq(offers.id, offerId),
-      columns: { id: true },
+      columns: { id: true, accepted_revision_id: true },
       with: {
         revisions: {
           orderBy: [desc(offerRevisions.revision_no)],
@@ -1314,6 +1446,11 @@ export async function removeOfferLine(
     if (!revision) throw new QueryError(MSG.offer.notFound, 404);
     if (revision.status !== "DRAFT") {
       throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    }
+    // Renegotiation drafts reference engineering-owned configs read-only: removing
+    // a line would delete the config itself (the line cascades off it).
+    if (offer.accepted_revision_id !== null) {
+      throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
     }
     if (revision.lines.length === 0) {
       throw new QueryError(MSG.offer.notFound, 404);
