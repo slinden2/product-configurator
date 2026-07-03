@@ -7,14 +7,17 @@ import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { formatDelta, formatEur, formatPct } from "@/lib/utils";
 
-// The absorb button imports the server action, which transitively pulls in the
-// db client (throws without DATABASE_URL in jsdom) — mock the action module.
+// The absorb/renegotiate buttons import server actions, which transitively pull
+// in the db client (throws without DATABASE_URL in jsdom) — mock the modules.
 vi.mock("@/app/actions/margin-absorb-actions", () => ({
   absorbLineMarginAction: vi.fn(),
 }));
+vi.mock("@/app/actions/offer-revision-actions", () => ({
+  createRenegotiationRevisionAction: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
 
 import MarginReviewView from "./margin-review-view";

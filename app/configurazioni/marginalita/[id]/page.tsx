@@ -6,6 +6,7 @@ import {
   getConfiguration,
   getEngineeringBomItems,
   getOfferLinePricingForConfig,
+  getOfferWorkingRevision,
   getUserData,
 } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
@@ -18,6 +19,7 @@ import {
 import { buildMarginComparison, type EbomCostItem } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { prepareOfferDisplayData } from "@/lib/offer";
+import { OPEN_REVISION_STATUSES } from "@/types";
 import MarginReviewView from "./margin-review-view";
 
 interface MarginReviewPageProps {
@@ -154,6 +156,25 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
         }
       : null;
 
+  // Renegotiation context (#85), the other arm of the decision point: eligible
+  // exactly when absorb is. `open` marks an offer whose latest revision is an
+  // open working copy (a renegotiation in progress) — the button yields to a
+  // link there. ADMIN/SALES_DIRECTOR see every offer, so the scoped fetch
+  // cannot come back null for an existing offer.
+  let renegotiation: { offerId: number; open: boolean } | null = null;
+  if (absorb) {
+    const workingRevision = await getOfferWorkingRevision(
+      linePricing.offer_id,
+      user,
+    );
+    renegotiation = {
+      offerId: linePricing.offer_id,
+      open:
+        !!workingRevision &&
+        OPEN_REVISION_STATUSES.includes(workingRevision.status),
+    };
+  }
+
   return (
     <div className="space-y-6">
       {header}
@@ -165,6 +186,7 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
         asSoldDiff={asSoldDiff}
         asSoldDiffUnavailable={asSoldDiffUnavailable}
         absorb={absorb}
+        renegotiation={renegotiation}
       />
     </div>
   );

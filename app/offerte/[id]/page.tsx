@@ -17,6 +17,7 @@ import { getOfferWithRevisionAndLines, getUserData } from "@/db/queries";
 import {
   canApproveRevision,
   canExportOfferRevision,
+  canRenegotiateOffer,
   canViewMarginReview,
 } from "@/lib/access";
 import {
@@ -25,6 +26,10 @@ import {
 } from "@/lib/margin-alerts";
 import { MSG } from "@/lib/messages";
 import { buildOfferRevisionExportData } from "@/lib/offer-export";
+import {
+  firstAcceptedRevisionNo,
+  isRenegotiationRevision,
+} from "@/lib/offer-renegotiation";
 import { OfferStatusLabels, OPEN_REVISION_STATUSES } from "@/types";
 import AcceptRevisionButton from "./accept-revision-button";
 import ApproveRevisionButton from "./approve-revision-button";
@@ -34,6 +39,7 @@ import QuoteView from "./quote-view";
 import RecordOutcomeButton from "./record-outcome-button";
 import RejectRevisionButton from "./reject-revision-button";
 import RemoveLineButton from "./remove-line-button";
+import RenegotiateOfferButton from "./renegotiate-offer-button";
 import RevisionHistory from "./revision-history";
 import SendRevisionButton from "./send-revision-button";
 import SubmitForApprovalButton from "./submit-for-approval-button";
@@ -57,10 +63,19 @@ const OfferDetail = async (props: OfferDetailProps) => {
   // revisions[0] is the working revision (the latest by revision_no); the rest are
   // immutable history.
   const revision = offer.revisions[0];
-  // Offer lines are editable only while the working revision is DRAFT.
-  const editable = revision?.status === "DRAFT";
-  // Once a revision is accepted the offer locks — no further revisions.
+  // Once a revision is accepted the offer locks — clone-forward revisions stop;
+  // only commercial-only renegotiation revisions can follow.
   const isAccepted = offer.accepted_revision_id !== null;
+  // A working revision on an accepted offer is a renegotiation: commercial terms
+  // stay editable while DRAFT, but its configuration set is read-only.
+  const firstAcceptedNo = firstAcceptedRevisionNo(offer.revisions);
+  const workingIsRenegotiation =
+    !!revision &&
+    isRenegotiationRevision(revision.revision_no, firstAcceptedNo);
+  // Commercial terms (quote card) are editable only while the working revision is
+  // DRAFT; the configuration set additionally requires a pre-acceptance revision.
+  const commercialEditable = revision?.status === "DRAFT";
+  const configsEditable = commercialEditable && !workingIsRenegotiation;
   // A new revision can be cloned forward only once the working revision has been sent
   // (left the open working states) — one open working revision at a time — and the
   // offer has not been accepted.
@@ -68,6 +83,13 @@ const OfferDetail = async (props: OfferDetailProps) => {
     !!revision &&
     !OPEN_REVISION_STATUSES.includes(revision.status) &&
     !isAccepted;
+  // Renegotiation (post-acceptance re-quote) is the management counterpart: accepted
+  // offer, no open working revision, ADMIN/SALES_DIRECTOR only.
+  const canRenegotiate =
+    !!revision &&
+    !OPEN_REVISION_STATUSES.includes(revision.status) &&
+    isAccepted &&
+    canRenegotiateOffer(user.role);
   // Approve / reject / un-approve are management-only (scope already enforced by the
   // scoped fetch above).
   const canApprove = canApproveRevision(user.role);
@@ -75,13 +97,22 @@ const OfferDetail = async (props: OfferDetailProps) => {
 
   // Derived margin alerts: only for the accepted revision's frozen lines, and
   // only computed for roles allowed to see margin data (ADMIN/SALES_DIRECTOR) —
-  // server-side, so margin figures never reach other roles' payloads.
-  const marginAlerts: Map<number, LineMarginAlert> =
-    canViewMarginReview(user.role) &&
-    isAccepted &&
-    revision?.id === offer.accepted_revision_id
-      ? await computeLineMarginAlerts(lines, Number(revision.discount_pct))
-      : new Map();
+  // server-side, so margin figures never reach other roles' payloads. Keyed by
+  // configuration id so the badges also render on an open renegotiation's rows
+  // (same configs, different lines).
+  const acceptedRevision = offer.revisions.find(
+    (rev) => rev.id === offer.accepted_revision_id,
+  );
+  const marginAlertsByConfig = new Map<number, LineMarginAlert>();
+  if (canViewMarginReview(user.role) && acceptedRevision) {
+    const alerts = await computeLineMarginAlerts(
+      acceptedRevision.lines,
+      Number(acceptedRevision.discount_pct),
+    );
+    for (const alert of alerts.values()) {
+      marginAlertsByConfig.set(alert.configurationId, alert);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -107,6 +138,9 @@ const OfferDetail = async (props: OfferDetailProps) => {
             <span className="text-sm text-muted-foreground">
               Rev {revision.revision_no} · {OfferStatusLabels[revision.status]}
             </span>
+            {workingIsRenegotiation && (
+              <Badge variant="outline">{MSG.offer.renegotiationBadge}</Badge>
+            )}
             {revision.status === "DRAFT" && lines.length > 0 && (
               <SubmitForApprovalButton offerId={offer.id} />
             )}
@@ -126,12 +160,16 @@ const OfferDetail = async (props: OfferDetailProps) => {
             )}
             {revision.status === "SENT" && (
               <>
-                <AcceptRevisionButton offerId={offer.id} />
+                <AcceptRevisionButton
+                  offerId={offer.id}
+                  renegotiation={workingIsRenegotiation}
+                />
                 <RecordOutcomeButton offerId={offer.id} outcome="REJECTED" />
                 <RecordOutcomeButton offerId={offer.id} outcome="EXPIRED" />
               </>
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
+            {canRenegotiate && <RenegotiateOfferButton offerId={offer.id} />}
             {canExportOfferRevision(revision.status) && (
               <OfferExportButtons
                 data={buildOfferRevisionExportData(offer, revision)}
@@ -145,7 +183,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Configurazioni</h2>
-          {editable && (
+          {configsEditable && (
             <Link href={`/configurazioni/nuova?offerId=${offer.id}`}>
               <Button className="flex items-center gap-2">
                 <PlusCircle className="h-4 w-4" />
@@ -181,7 +219,8 @@ const OfferDetail = async (props: OfferDetailProps) => {
                         <ConfigurationStatusBadge
                           status={line.configuration.status}
                         />
-                        {marginAlerts.get(line.id)?.alertActive && (
+                        {marginAlertsByConfig.get(line.configuration.id)
+                          ?.alertActive && (
                           <Link
                             href={`/configurazioni/marginalita/${line.configuration.id}`}
                           >
@@ -200,10 +239,10 @@ const OfferDetail = async (props: OfferDetailProps) => {
                             href={`/configurazioni/modifica/${line.configuration.id}`}
                           >
                             <Pencil className="h-4 w-4" />
-                            {editable ? "Modifica" : "Apri"}
+                            {configsEditable ? "Modifica" : "Apri"}
                           </Link>
                         </Button>
-                        {editable && (
+                        {configsEditable && (
                           <RemoveLineButton
                             offerId={offer.id}
                             configId={line.configuration.id}
@@ -229,13 +268,19 @@ const OfferDetail = async (props: OfferDetailProps) => {
       </div>
 
       {revision && (
-        <QuoteView offerId={offer.id} revision={revision} editable={editable} />
+        <QuoteView
+          offerId={offer.id}
+          revision={revision}
+          editable={commercialEditable}
+        />
       )}
 
       <RevisionHistory
         offer={offer}
         canCreateRevision={canCreateRevision}
         exporterInitials={user.initials ?? ""}
+        acceptedRevisionId={offer.accepted_revision_id}
+        firstAcceptedNo={firstAcceptedNo}
       />
 
       <BackButton fallbackPath="/offerte" />

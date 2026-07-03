@@ -1,4 +1,5 @@
-import { AlertTriangle, Lock, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Handshake, Lock, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import AlertBanner from "@/components/shared/alert-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import {
   formatPct,
 } from "@/lib/utils";
 import AbsorbMarginButton from "./absorb-margin-button";
+import RenegotiateMarginButton from "./renegotiate-margin-button";
 
 interface Props {
   comparison: MarginComparison;
@@ -52,6 +54,16 @@ interface Props {
       marginPct: number;
       note: string | null;
     } | null;
+  } | null;
+  /**
+   * Renegotiation context (#85), the other arm of the margin decision point;
+   * null when the line is not eligible (same eligibility as `absorb`). `open`
+   * is true while the offer already has an open working revision — the
+   * renegotiate button then yields to a link to the offer.
+   */
+  renegotiation?: {
+    offerId: number;
+    open: boolean;
   } | null;
 }
 
@@ -88,7 +100,12 @@ function StatTile({
   );
 }
 
-function SummaryCard({ comparison, discountPct, absorb }: Props) {
+function SummaryCard({
+  comparison,
+  discountPct,
+  absorb,
+  renegotiation,
+}: Props) {
   const {
     hasEbom,
     offerMargin,
@@ -125,13 +142,27 @@ function SummaryCard({ comparison, discountPct, absorb }: Props) {
               {formatPct(currentMargin.marginPct)}) è inferiore alla soglia
               minima del {formatPct(thresholdPct)}.
             </AlertBanner>
-            {absorb && (
-              <AbsorbMarginButton
-                confId={absorb.confId}
-                marginPct={currentMargin.marginPct}
-                thresholdPct={thresholdPct}
-              />
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {absorb && (
+                <AbsorbMarginButton
+                  confId={absorb.confId}
+                  marginPct={currentMargin.marginPct}
+                  thresholdPct={thresholdPct}
+                />
+              )}
+              {renegotiation &&
+                (renegotiation.open ? (
+                  <Link
+                    href={`/offerte/${renegotiation.offerId}`}
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                  >
+                    <Handshake className="h-4 w-4" />
+                    {MSG.marginReview.renegotiationOpen}
+                  </Link>
+                ) : (
+                  <RenegotiateMarginButton offerId={renegotiation.offerId} />
+                ))}
+            </div>
           </div>
         )}
 
@@ -533,6 +564,7 @@ export default function MarginReviewView({
   asSoldDiff = null,
   asSoldDiffUnavailable = false,
   absorb = null,
+  renegotiation = null,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -551,6 +583,7 @@ export default function MarginReviewView({
         comparison={comparison}
         discountPct={discountPct}
         absorb={absorb}
+        renegotiation={renegotiation}
       />
       {asSoldFrozenAt && (
         <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />
