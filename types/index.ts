@@ -105,7 +105,6 @@ export type PressureWasherType = (typeof PressureWashers)[number];
 
 export const ConfigurationStatus = [
   "DRAFT",
-  "IN_SALES_REVIEW",
   "SALES_APPROVED",
   "IN_TECH_REVIEW",
   "TECH_APPROVED",
@@ -118,7 +117,7 @@ export type ConfigurationStatusType = (typeof ConfigurationStatus)[number];
  * revision has been accepted and the config has been handed off to engineering. From
  * `SALES_APPROVED` onward an offer config is governed by the engineering rules, exactly
  * like a standalone config, and becomes visible in the engineer/admin technical queue.
- * The complement (`DRAFT`, `IN_SALES_REVIEW`) is the sales-only pre-handoff zone.
+ * The complement (`DRAFT`) is the sales-only pre-handoff zone.
  */
 export const HANDED_OFF_STATUSES: ConfigurationStatusType[] = [
   "SALES_APPROVED",
@@ -132,18 +131,15 @@ export const HANDED_OFF_STATUSES: ConfigurationStatusType[] = [
  * config is in this zone, ENGINEER has no access to it (view or edit) — it belongs to the
  * sales workflow until the offer revision is accepted.
  */
-export const PRE_HANDOFF_STATUSES: ConfigurationStatusType[] = [
-  "DRAFT",
-  "IN_SALES_REVIEW",
-];
+export const PRE_HANDOFF_STATUSES: ConfigurationStatusType[] = ["DRAFT"];
 
 /**
  * Discriminates how a configuration came into being and which lifecycle governs it:
  *
  * - STANDALONE — a pure technical configuration created directly by Engineer/Admin for
  *   internal evaluation. It runs only the engineering sub-chain
- *   `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches the two sales
- *   statuses (`IN_SALES_REVIEW`, `SALES_APPROVED`).
+ *   `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches the sales
+ *   status (`SALES_APPROVED`).
  * - OFFER — a configuration owned by a specific offer revision (via offer_revision_lines).
  *   Before `SALES_APPROVED` its editability is governed by the parent offer revision (editable
  *   only while the revision is `DRAFT`); at `SALES_APPROVED`+ it is governed by

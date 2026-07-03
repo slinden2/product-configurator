@@ -229,14 +229,14 @@ describe("editConfigurationAction", () => {
     expect(result).toEqual({ success: true });
   });
 
-  test("ADMIN user can edit another user's IN_SALES_REVIEW config", async () => {
+  test("ADMIN user can edit another user's pre-handoff OFFER config", async () => {
     mockGetUserData.mockResolvedValue({
       id: "admin-user",
       role: "ADMIN",
       initials: "AU",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
+      mockConfig({ status: "DRAFT", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
@@ -316,14 +316,14 @@ describe("editConfigurationAction", () => {
     });
   });
 
-  test("SALES cannot edit IN_SALES_REVIEW config", async () => {
+  test("SALES cannot edit a handed-off SALES_APPROVED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "SALES",
       initials: "EX",
     });
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
+      mockConfig({ status: "SALES_APPROVED", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result.success).toBe(false);

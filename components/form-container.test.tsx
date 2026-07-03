@@ -238,13 +238,13 @@ describe("FormContainer", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("hides add buttons when SALES and status is IN_SALES_REVIEW", async () => {
+    test("hides add buttons when SALES and status is SALES_APPROVED", async () => {
       const config = makeValidConfig();
       render(
         <FormContainer
           confId={1}
           configuration={config}
-          confStatus="IN_SALES_REVIEW"
+          confStatus="SALES_APPROVED"
           userRole="SALES"
           initialWaterTanks={[]}
           initialWashBays={[]}

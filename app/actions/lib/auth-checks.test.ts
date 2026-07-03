@@ -29,30 +29,20 @@ describe("isEditable", () => {
     });
   });
 
-  // OFFER pre-handoff (DRAFT/IN_SALES_REVIEW) is a two-phase gate: editable only
-  // while the offer revision is DRAFT. A missing revision status fails closed.
+  // OFFER pre-handoff (DRAFT) is a two-phase gate: editable only while the
+  // offer revision is DRAFT. A missing revision status fails closed.
   describe("OFFER pre-handoff — revision is DRAFT", () => {
-    test("SALES can edit DRAFT only", () => {
-      expect(isEditable("DRAFT", "SALES", "OFFER", "DRAFT")).toBe(true);
-      expect(isEditable("IN_SALES_REVIEW", "SALES", "OFFER", "DRAFT")).toBe(
-        false,
-      );
-    });
-
     test.each([
+      "SALES",
       "SALES_MANAGER",
       "SALES_DIRECTOR",
       "ADMIN",
-    ] as const)("%s can edit DRAFT and IN_SALES_REVIEW", (role) => {
+    ] as const)("%s can edit DRAFT", (role) => {
       expect(isEditable("DRAFT", role, "OFFER", "DRAFT")).toBe(true);
-      expect(isEditable("IN_SALES_REVIEW", role, "OFFER", "DRAFT")).toBe(true);
     });
 
     test("ENGINEER has no offer access pre-handoff", () => {
       expect(isEditable("DRAFT", "ENGINEER", "OFFER", "DRAFT")).toBe(false);
-      expect(isEditable("IN_SALES_REVIEW", "ENGINEER", "OFFER", "DRAFT")).toBe(
-        false,
-      );
     });
   });
 
@@ -87,7 +77,6 @@ describe("isEditable", () => {
       roles,
     )("%s cannot edit DRAFT when no revision status is supplied", (role) => {
       expect(isEditable("DRAFT", role, "OFFER")).toBe(false);
-      expect(isEditable("IN_SALES_REVIEW", role, "OFFER")).toBe(false);
     });
   });
 
@@ -125,8 +114,7 @@ describe("isEditable — STANDALONE origin", () => {
       expect(isEditable("CLOSED", role, "STANDALONE")).toBe(false);
     });
 
-    test("the two sales statuses are never editable", () => {
-      expect(isEditable("IN_SALES_REVIEW", role, "STANDALONE")).toBe(false);
+    test("the sales status is never editable", () => {
       expect(isEditable("SALES_APPROVED", role, "STANDALONE")).toBe(false);
     });
   });
@@ -138,7 +126,6 @@ describe("isEditable — STANDALONE origin", () => {
   ] as const)("%s role can never edit a standalone config", (role) => {
     test.each([
       "DRAFT",
-      "IN_SALES_REVIEW",
       "IN_TECH_REVIEW",
       "TECH_APPROVED",
     ] as ConfigurationStatusType[])("not editable in %s", (status) => {
@@ -152,44 +139,23 @@ describe("canTransition", () => {
     expect(canTransition("SALES", "DRAFT", "DRAFT")).toBe(true);
   });
 
-  describe("SALES", () => {
-    test("can submit DRAFT -> IN_SALES_REVIEW", () => {
-      expect(canTransition("SALES", "DRAFT", "IN_SALES_REVIEW")).toBe(true);
+  // Sales roles have no config transitions at all: approval happens on the
+  // offer revision, and SALES_APPROVED is reachable only via the acceptance
+  // fan-out (db/queries.ts).
+  describe.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("%s has no config transitions", (role) => {
+    test("cannot hand off DRAFT -> SALES_APPROVED", () => {
+      expect(canTransition(role, "DRAFT", "SALES_APPROVED")).toBe(false);
     });
 
-    test("cannot pull a submitted offer back (IN_SALES_REVIEW -> DRAFT)", () => {
-      expect(canTransition("SALES", "IN_SALES_REVIEW", "DRAFT")).toBe(false);
-    });
-
-    test("cannot approve (IN_SALES_REVIEW -> SALES_APPROVED)", () => {
-      expect(canTransition("SALES", "IN_SALES_REVIEW", "SALES_APPROVED")).toBe(
-        false,
-      );
+    test("cannot knock a handed-off config back (SALES_APPROVED -> DRAFT)", () => {
+      expect(canTransition(role, "SALES_APPROVED", "DRAFT")).toBe(false);
     });
 
     test("cannot touch engineering-side statuses", () => {
-      expect(canTransition("SALES", "SALES_APPROVED", "IN_TECH_REVIEW")).toBe(
-        false,
-      );
-      expect(canTransition("SALES", "IN_TECH_REVIEW", "TECH_APPROVED")).toBe(
-        false,
-      );
-    });
-  });
-
-  describe.each(["SALES_MANAGER", "SALES_DIRECTOR"] as const)("%s", (role) => {
-    test("can approve, reject and un-approve", () => {
-      expect(canTransition(role, "DRAFT", "IN_SALES_REVIEW")).toBe(true);
-      expect(canTransition(role, "IN_SALES_REVIEW", "SALES_APPROVED")).toBe(
-        true,
-      );
-      expect(canTransition(role, "IN_SALES_REVIEW", "DRAFT")).toBe(true);
-      expect(canTransition(role, "SALES_APPROVED", "IN_SALES_REVIEW")).toBe(
-        true,
-      );
-    });
-
-    test("cannot move into engineering review or approve", () => {
       expect(canTransition(role, "SALES_APPROVED", "IN_TECH_REVIEW")).toBe(
         false,
       );
@@ -218,11 +184,8 @@ describe("canTransition", () => {
       );
     });
 
-    test("cannot act on the sales side", () => {
-      expect(canTransition("ENGINEER", "DRAFT", "IN_SALES_REVIEW")).toBe(false);
-      expect(
-        canTransition("ENGINEER", "IN_SALES_REVIEW", "SALES_APPROVED"),
-      ).toBe(false);
+    test("cannot hand off a pre-handoff config (DRAFT -> SALES_APPROVED)", () => {
+      expect(canTransition("ENGINEER", "DRAFT", "SALES_APPROVED")).toBe(false);
     });
 
     test("cannot close (ADMIN only)", () => {
@@ -275,10 +238,7 @@ describe("canTransition — STANDALONE origin", () => {
       ).toBe(true);
     });
 
-    test("cannot reach the sales statuses", () => {
-      expect(
-        canTransition("ENGINEER", "DRAFT", "IN_SALES_REVIEW", "STANDALONE"),
-      ).toBe(false);
+    test("cannot reach the sales status", () => {
       expect(
         canTransition("ENGINEER", "DRAFT", "SALES_APPROVED", "STANDALONE"),
       ).toBe(false);
@@ -304,9 +264,9 @@ describe("canTransition — STANDALONE origin", () => {
       }
     });
 
-    test("still cannot route a standalone config through a sales status", () => {
+    test("still cannot route a standalone config through the sales status", () => {
       expect(
-        canTransition("ADMIN", "DRAFT", "IN_SALES_REVIEW", "STANDALONE"),
+        canTransition("ADMIN", "DRAFT", "SALES_APPROVED", "STANDALONE"),
       ).toBe(false);
       expect(
         canTransition(

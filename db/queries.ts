@@ -188,7 +188,7 @@ export async function canAccessConfiguration(
     status: ConfigurationStatusType;
   },
 ): Promise<boolean> {
-  // ENGINEER has no offer access: a pre-handoff OFFER config (DRAFT/IN_SALES_REVIEW)
+  // ENGINEER has no offer access: a pre-handoff OFFER config (DRAFT)
   // belongs to the sales workflow and is invisible to engineers, even by direct URL.
   // Checked before the all-access shortcut since ENGINEER is otherwise all-access.
   // Once handed off (SALES_APPROVED+) the engineer picks it up like any config.
@@ -1491,8 +1491,8 @@ export async function removeOfferLine(
 
 // Builds the engineer/admin "Technical" config queue: every STANDALONE config
 // (all statuses) plus OFFER-origin configs that have been handed off to
-// engineering (`SALES_APPROVED`+). Pre-handoff offer configs (`DRAFT`/
-// `IN_SALES_REVIEW`) stay in the sales workflow and never surface here.
+// engineering (`SALES_APPROVED`+). Pre-handoff offer configs (`DRAFT`)
+// stay in the sales workflow and never surface here.
 // Visibility is further scoped per role via `configScopeWhere`.
 export async function getUserConfigurations(
   user: NonNullable<UserData>,

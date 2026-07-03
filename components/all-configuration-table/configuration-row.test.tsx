@@ -199,9 +199,9 @@ describe("ConfigurationRow", () => {
     });
 
     test("renders status badge with correct status text", () => {
-      renderRow({ status: "IN_SALES_REVIEW" });
+      renderRow({ status: "SALES_APPROVED" });
 
-      expect(screen.getByText("In revisione vendite")).toBeInTheDocument();
+      expect(screen.getByText("Approvato vendite")).toBeInTheDocument();
     });
   });
 
@@ -276,10 +276,10 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user can delete IN_SALES_REVIEW configuration", async () => {
+    test("ENGINEER user can delete IN_TECH_REVIEW configuration", async () => {
       renderRow(
         {
-          status: "IN_SALES_REVIEW",
+          status: "IN_TECH_REVIEW",
           user: { id: "other-user", email: "other@test.com", initials: "OT" },
         },
         { id: "user-1", role: "ENGINEER" },
@@ -340,10 +340,11 @@ describe("ConfigurationRow", () => {
       ).toHaveAttribute("aria-disabled", "true");
     });
 
-    test("SALES owner cannot delete own IN_SALES_REVIEW configuration", async () => {
+    test("SALES owner cannot delete own handed-off SALES_APPROVED configuration", async () => {
       renderRow(
         {
-          status: "IN_SALES_REVIEW",
+          status: "SALES_APPROVED",
+          origin: "OFFER",
           user: { id: "user-1", email: "ext@test.com", initials: "EX" },
         },
         { id: "user-1", role: "SALES" },

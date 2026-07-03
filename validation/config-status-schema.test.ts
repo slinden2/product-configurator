@@ -4,7 +4,6 @@ import { configStatusSchema } from "@/validation/config-status-schema";
 describe("configStatusSchema", () => {
   test.each([
     "DRAFT",
-    "IN_SALES_REVIEW",
     "SALES_APPROVED",
     "IN_TECH_REVIEW",
     "TECH_APPROVED",
@@ -15,6 +14,12 @@ describe("configStatusSchema", () => {
 
   test("should fail with an invalid status value", () => {
     expect(() => configStatusSchema.parse({ status: "PENDING" })).toThrow();
+  });
+
+  test("should fail with the retired IN_SALES_REVIEW status", () => {
+    expect(() =>
+      configStatusSchema.parse({ status: "IN_SALES_REVIEW" }),
+    ).toThrow();
   });
 
   test("should fail when status is undefined", () => {

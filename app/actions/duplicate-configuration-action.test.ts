@@ -59,7 +59,7 @@ function makeSourceConfig(overrides: Record<string, unknown> = {}) {
     id: 10,
     name: "Offerta ABC",
     user_id: "sales-1",
-    status: "IN_SALES_REVIEW",
+    status: "SALES_APPROVED",
     water_tanks: [
       {
         id: 1,
@@ -156,10 +156,10 @@ describe("duplicateConfigurationAction", () => {
     expect(mockDuplicateConfigurationRecord).not.toHaveBeenCalled();
   });
 
-  test("SALES can duplicate own IN_SALES_REVIEW config", async () => {
+  test("SALES can duplicate own SALES_APPROVED config", async () => {
     mockGetUserData.mockResolvedValue(makeSalesUser("sales-1"));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeSourceConfig({ status: "IN_SALES_REVIEW", user_id: "sales-1" }),
+      makeSourceConfig({ status: "SALES_APPROVED", user_id: "sales-1" }),
     );
 
     const result = await duplicateConfigurationAction(10);

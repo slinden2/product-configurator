@@ -1,11 +1,4 @@
-import {
-  BadgeCheck,
-  Eye,
-  FilePen,
-  Lock,
-  type LucideIcon,
-  Send,
-} from "lucide-react";
+import { BadgeCheck, Eye, FilePen, Lock, type LucideIcon } from "lucide-react";
 import {
   type ConfigOrigin,
   ConfigurationStatus,
@@ -18,11 +11,6 @@ export const STATUS_CONFIG: Record<
   { label: string; color: string; icon: LucideIcon }
 > = {
   DRAFT: { label: "Bozza", color: "#94a3b8", icon: FilePen },
-  IN_SALES_REVIEW: {
-    label: "In revisione vendite",
-    color: "#4ade80",
-    icon: Send,
-  },
   SALES_APPROVED: {
     label: "Approvato vendite",
     color: "#34d399",
@@ -99,43 +87,17 @@ export interface StatusTransition {
  *   cannot enumerate), so it is intentionally absent from every row's `roles`.
  *   Rows with an empty `roles` array (the CLOSED edges) are ADMIN-only and exist
  *   here purely to carry the label.
- * - On a STANDALONE config the two sales statuses are off-limits to everyone.
+ * - On a STANDALONE config the sales status (SALES_APPROVED) is off-limits to
+ *   everyone.
  *
  * Direction (forward/backward) is NOT stored — it is derived from
  * STATUS_PIPELINE order via {@link getTransitionDirection}, keeping pipeline
  * order the single source for ordering.
  */
 export const STATUS_TRANSITIONS: readonly StatusTransition[] = [
-  // OFFER sales sub-chain
-  {
-    from: "DRAFT",
-    to: "IN_SALES_REVIEW",
-    label: "Invia in revisione",
-    roles: ["SALES", "SALES_MANAGER", "SALES_DIRECTOR"],
-    origins: ["OFFER"],
-  },
-  {
-    from: "IN_SALES_REVIEW",
-    to: "DRAFT",
-    label: "Rifiuta",
-    roles: ["SALES_MANAGER", "SALES_DIRECTOR"],
-    origins: ["OFFER"],
-  },
-  {
-    from: "IN_SALES_REVIEW",
-    to: "SALES_APPROVED",
-    label: "Approva",
-    roles: ["SALES_MANAGER", "SALES_DIRECTOR"],
-    origins: ["OFFER"],
-  },
-  {
-    from: "SALES_APPROVED",
-    to: "IN_SALES_REVIEW",
-    label: "Riapri vendite",
-    roles: ["SALES_MANAGER", "SALES_DIRECTOR"],
-    origins: ["OFFER"],
-  },
-  // OFFER hand-off + engineering
+  // OFFER hand-off + engineering. There is no sales edge into SALES_APPROVED:
+  // the only route in is the offer-acceptance fan-out (db/queries.ts), so sales
+  // roles have no rows in this table at all.
   {
     from: "SALES_APPROVED",
     to: "IN_TECH_REVIEW",

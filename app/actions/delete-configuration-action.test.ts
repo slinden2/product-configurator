@@ -169,14 +169,14 @@ describe("deleteConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
-  test("SALES cannot delete IN_SALES_REVIEW config", async () => {
+  test("SALES cannot delete a handed-off SALES_APPROVED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "SALES",
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
+      mockConfig({ status: "SALES_APPROVED", origin: "OFFER" }),
     );
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);

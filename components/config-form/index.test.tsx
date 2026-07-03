@@ -120,13 +120,13 @@ describe("ConfigForm", () => {
   });
 
   describe("Disabled state", () => {
-    test("disables the fieldset when status is IN_SALES_REVIEW for SALES role", () => {
+    test("disables the fieldset when status is SALES_APPROVED for SALES role", () => {
       const config = makeValidConfig();
       render(
         <ConfigForm
           id={1}
           configuration={config}
-          status="IN_SALES_REVIEW"
+          status="SALES_APPROVED"
           userRole="SALES"
         />,
       );

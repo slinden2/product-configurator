@@ -63,29 +63,15 @@ describe("StatusControl", () => {
   });
 
   describe("Role-based action buttons", () => {
-    test("SALES at DRAFT sees only the Invia in revisione button", () => {
+    // Sales roles have no config transitions: approval happens on the offer
+    // revision and the hand-off is set by the acceptance fan-out.
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+    ] as const)("%s at DRAFT is read-only (badge, no controls)", (role) => {
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
-      );
-
-      expect(
-        screen.getByRole("button", { name: "Invia in revisione" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: "Approva" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("combobox", { name: "Cambia stato" }),
-      ).not.toBeInTheDocument();
-    });
-
-    test("SALES at IN_SALES_REVIEW is read-only (cannot pull the offer back)", () => {
-      render(
-        <StatusControl
-          confId={1}
-          initialStatus="IN_SALES_REVIEW"
-          userRole="SALES"
-        />,
+        <StatusControl confId={1} initialStatus="DRAFT" userRole={role} />,
       );
 
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
@@ -110,24 +96,7 @@ describe("StatusControl", () => {
       ).not.toBeInTheDocument();
     });
 
-    test("SALES_MANAGER at IN_SALES_REVIEW sees Approva and Rifiuta", () => {
-      render(
-        <StatusControl
-          confId={1}
-          initialStatus="IN_SALES_REVIEW"
-          userRole="SALES_MANAGER"
-        />,
-      );
-
-      expect(
-        screen.getByRole("button", { name: "Approva" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "Rifiuta" }),
-      ).toBeInTheDocument();
-    });
-
-    test("SALES_DIRECTOR at SALES_APPROVED sees only Riapri vendite", () => {
+    test("SALES_DIRECTOR at SALES_APPROVED is read-only (no Riapri vendite trap)", () => {
       render(
         <StatusControl
           confId={1}
@@ -136,9 +105,10 @@ describe("StatusControl", () => {
         />,
       );
 
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Riapri vendite" }),
-      ).toBeInTheDocument();
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
+      ).not.toBeInTheDocument();
     });
 
     test("ENGINEER at IN_TECH_REVIEW sees forward and backward buttons", () => {
@@ -179,9 +149,11 @@ describe("StatusControl", () => {
         <StatusControl confId={1} initialStatus="DRAFT" userRole="ADMIN" />,
       );
 
-      // Adjacent (±1) move is a button.
+      // Adjacent (±1) move is a button. DRAFT -> SALES_APPROVED has no edge
+      // row (ADMIN blanket rule), so the label falls back to the target
+      // status label.
       expect(
-        screen.getByRole("button", { name: "Invia in revisione" }),
+        screen.getByRole("button", { name: "Approvato vendite" }),
       ).toBeInTheDocument();
       // Non-adjacent jumps live in the manual dropdown.
       expect(
@@ -218,10 +190,14 @@ describe("StatusControl", () => {
   describe("Confirmation dialog", () => {
     test("clicking an action opens the confirmation dialog", async () => {
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="SALES_APPROVED"
+          userRole="ENGINEER"
+        />,
       );
 
-      await clickButton("Invia in revisione");
+      await clickButton("Prendi in revisione tecnica");
 
       expect(
         screen.getByRole("dialog", { name: "Conferma cambio di stato" }),
@@ -232,38 +208,43 @@ describe("StatusControl", () => {
       render(
         <StatusControl
           confId={1}
-          initialStatus="DRAFT"
-          userRole="SALES"
-          offerRevisionStatus="DRAFT"
+          initialStatus="IN_TECH_REVIEW"
+          userRole="ENGINEER"
         />,
       );
 
-      await clickButton("Invia in revisione");
+      await clickButton("Approva");
 
       expect(screen.getByText(LOCKOUT_TEXT)).toBeInTheDocument();
     });
 
     test("omits the lockout warning when the config stays editable", async () => {
-      // A manager keeps edit rights in IN_SALES_REVIEW, so no lockout warning.
+      // An engineer keeps edit rights moving a standalone config from DRAFT
+      // into IN_TECH_REVIEW, so no lockout warning.
       render(
         <StatusControl
           confId={1}
           initialStatus="DRAFT"
-          userRole="SALES_MANAGER"
+          userRole="ENGINEER"
+          origin="STANDALONE"
         />,
       );
 
-      await clickButton("Invia in revisione");
+      await selectJump("In revisione tecnica");
 
       expect(screen.queryByText(LOCKOUT_TEXT)).not.toBeInTheDocument();
     });
 
     test("does not call the action until confirmed", async () => {
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="SALES_APPROVED"
+          userRole="ENGINEER"
+        />,
       );
 
-      await clickButton("Invia in revisione");
+      await clickButton("Prendi in revisione tecnica");
       expect(mockUpdateConfigStatus).not.toHaveBeenCalled();
 
       await confirm();
@@ -276,25 +257,33 @@ describe("StatusControl", () => {
   describe("Transition — success", () => {
     test("calls the action with the confId and target status", async () => {
       render(
-        <StatusControl confId={42} initialStatus="DRAFT" userRole="SALES" />,
+        <StatusControl
+          confId={42}
+          initialStatus="SALES_APPROVED"
+          userRole="ENGINEER"
+        />,
       );
 
-      await clickButton("Invia in revisione");
+      await clickButton("Prendi in revisione tecnica");
       await confirm();
 
       await waitFor(() => {
         expect(mockUpdateConfigStatus).toHaveBeenCalledWith(42, {
-          status: "IN_SALES_REVIEW",
+          status: "IN_TECH_REVIEW",
         });
       });
     });
 
     test("shows the success toast", async () => {
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="SALES_APPROVED"
+          userRole="ENGINEER"
+        />,
       );
 
-      await clickButton("Invia in revisione");
+      await clickButton("Prendi in revisione tecnica");
       await confirm();
 
       await waitFor(() => {
@@ -311,10 +300,14 @@ describe("StatusControl", () => {
       });
 
       render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="SALES" />,
+        <StatusControl
+          confId={1}
+          initialStatus="SALES_APPROVED"
+          userRole="ENGINEER"
+        />,
       );
 
-      await clickButton("Invia in revisione");
+      await clickButton("Prendi in revisione tecnica");
       await confirm();
 
       await waitFor(() => {
@@ -322,7 +315,7 @@ describe("StatusControl", () => {
       });
       // The badge reflects the prop, never an optimistic target, so it must
       // still show the original status after a failed transition.
-      expect(screen.getByText("Bozza")).toBeInTheDocument();
+      expect(screen.getByText("Approvato vendite")).toBeInTheDocument();
     });
 
     test("shows a generic error toast on exception", async () => {

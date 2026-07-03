@@ -83,17 +83,11 @@ describe("configScopeWhere", () => {
 });
 
 describe("canAccessConfiguration — ENGINEER offer hand-off gate", () => {
-  test("ENGINEER is denied pre-handoff OFFER configs (DRAFT / IN_SALES_REVIEW)", async () => {
+  test("ENGINEER is denied pre-handoff OFFER configs (DRAFT)", async () => {
     await expect(
       canAccessConfiguration(
         makeUser("ENGINEER"),
         makeConfig("OFFER", "DRAFT"),
-      ),
-    ).resolves.toBe(false);
-    await expect(
-      canAccessConfiguration(
-        makeUser("ENGINEER"),
-        makeConfig("OFFER", "IN_SALES_REVIEW"),
       ),
     ).resolves.toBe(false);
     expect(mockFindFirst).not.toHaveBeenCalled();
@@ -197,9 +191,8 @@ describe("getUserConfigurations — technical queue filter", () => {
         "CLOSED",
       ]),
     );
-    // Pre-handoff statuses must NOT be part of the filter.
+    // The pre-handoff status must NOT be part of the filter.
     expect(params).not.toContain("DRAFT");
-    expect(params).not.toContain("IN_SALES_REVIEW");
   });
 
   test("composes the technical-queue filter with the per-role scope (SALES_MANAGER)", async () => {

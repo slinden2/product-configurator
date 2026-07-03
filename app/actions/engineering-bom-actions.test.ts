@@ -251,10 +251,10 @@ describe("snapshotEngineeringBomAction", () => {
     expect(result.error).toBe(MSG.bom.unauthorizedState);
   });
 
-  test("ADMIN can snapshot IN_SALES_REVIEW config", async () => {
+  test("ADMIN can snapshot a pre-handoff OFFER config (revision DRAFT)", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "ADMIN" }));
     mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
+      mockConfig({ status: "DRAFT", origin: "OFFER" }),
     );
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);

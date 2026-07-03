@@ -7,15 +7,6 @@ import type {
 } from "@/types";
 
 /**
- * The two sales-side statuses an OFFER-origin config passes through. A
- * STANDALONE config never enters either: it runs only the engineering sub-chain.
- */
-const SALES_STATUSES: ConfigurationStatusType[] = [
-  "IN_SALES_REVIEW",
-  "SALES_APPROVED",
-];
-
-/**
  * Determines whether a configuration is currently in an editable state based on
  * the User's Role, the Record's Status, its `origin`, and — for an offer-owned
  * config in the pre-handoff zone — the status of its offer revision.
@@ -23,24 +14,22 @@ const SALES_STATUSES: ConfigurationStatusType[] = [
  * `origin` defaults to `"OFFER"`; standalone callers must pass `"STANDALONE"`.
  *
  * Two-phase gate for OFFER-origin configs:
- * - Before SALES_APPROVED (DRAFT/IN_SALES_REVIEW) the config is governed by its
- *   offer revision: editable only while the revision is `DRAFT`. This is a
- *   fail-closed gate — a missing `offerRevisionStatus` (no offer wired up, or a
- *   non-DRAFT lifecycle state) means not editable. ENGINEER has no offer access
- *   here and is excluded.
+ * - Before SALES_APPROVED (DRAFT) the config is governed by its offer revision:
+ *   editable only while the revision is `DRAFT`. This is a fail-closed gate — a
+ *   missing `offerRevisionStatus` (no offer wired up, or a non-DRAFT lifecycle
+ *   state) means not editable. ENGINEER has no offer access here and is excluded.
  * - At SALES_APPROVED+ the config is governed by ConfigurationStatus (engineering
  *   rules), regardless of the revision; the offer is already frozen.
  *
  * Rules:
  * - SALES_APPROVED/TECH_APPROVED/CLOSED: Never editable by anyone (both origins).
- *   SALES_APPROVED is a locked hand-off snapshot; to edit it a manager un-approves
- *   it back to IN_SALES_REVIEW, or an engineer pulls it forward to IN_TECH_REVIEW.
- * - STANDALONE: Engineer/Admin only, editable in DRAFT or IN_TECH_REVIEW. The two
- *   sales statuses never apply.
+ *   SALES_APPROVED is a locked hand-off snapshot; to edit it an engineer pulls it
+ *   forward to IN_TECH_REVIEW.
+ * - STANDALONE: Engineer/Admin only, editable in DRAFT or IN_TECH_REVIEW. The
+ *   sales status never applies.
  * - OFFER · IN_TECH_REVIEW: Engineer/Admin (post-handoff engineering zone).
- * - OFFER · DRAFT/IN_SALES_REVIEW: offer-access roles only, and only while the
- *   offer revision is DRAFT — SALES in DRAFT, SALES_MANAGER/SALES_DIRECTOR/ADMIN
- *   in DRAFT or IN_SALES_REVIEW.
+ * - OFFER · DRAFT: offer-access roles only (SALES/SALES_MANAGER/SALES_DIRECTOR/
+ *   ADMIN), and only while the offer revision is DRAFT.
  *
  * Status × role × origin × revision only — ownership/scope is enforced separately
  * via canAccessConfiguration (db/queries.ts).
@@ -61,7 +50,7 @@ export function isEditable(
   }
 
   // 2. Standalone configs are pure technical work: Engineer/Admin only, confined
-  // to the engineering sub-chain (the two sales statuses never apply).
+  // to the engineering sub-chain (the sales status never applies).
   if (origin === "STANDALONE") {
     if (role !== "ENGINEER" && role !== "ADMIN") {
       return false;
@@ -75,25 +64,19 @@ export function isEditable(
     return role === "ENGINEER" || role === "ADMIN";
   }
 
-  // 4. OFFER · pre-handoff (DRAFT/IN_SALES_REVIEW): governed by the offer revision.
-  // Fail closed — editable only while the revision is DRAFT; a missing or non-DRAFT
-  // revision status means not editable.
+  // 4. OFFER · pre-handoff (DRAFT — the only status left here): governed by the
+  // offer revision. Fail closed — editable only while the revision is DRAFT; a
+  // missing or non-DRAFT revision status means not editable.
   if (offerRevisionStatus !== "DRAFT") {
     return false;
   }
   // Offer-access roles only — ENGINEER has no offer access pre-handoff.
-  if (role === "SALES") {
-    return status === "DRAFT";
-  }
-  if (
+  return (
+    role === "SALES" ||
     role === "SALES_MANAGER" ||
     role === "SALES_DIRECTOR" ||
     role === "ADMIN"
-  ) {
-    return status === "DRAFT" || status === "IN_SALES_REVIEW";
-  }
-
-  return false;
+  );
 }
 
 /**
@@ -106,8 +89,9 @@ export function isEditable(
  * The role-restricted edges live in the single STATUS_TRANSITIONS edge table
  * (lib/status-config.ts); this function layers two rules on top:
  * - ADMIN may make any jump (incl. non-adjacent ones the table cannot enumerate).
- * - On a STANDALONE config the two sales statuses are off-limits to everyone,
- *   keeping the technical lifecycle self-contained.
+ * - On a STANDALONE config the sales status (SALES_APPROVED) is off-limits to
+ *   everyone — standalone configs are engineering-only, keeping the technical
+ *   lifecycle self-contained.
  *
  * `origin` defaults to `"OFFER"` (the full sales+engineering machine). A
  * STANDALONE config runs only the engineering sub-chain
@@ -121,11 +105,11 @@ export function canTransition(
 ): boolean {
   if (from === to) return true;
 
-  // STANDALONE: the two sales statuses are out of bounds for every role (ADMIN
-  // included) — keeps the technical lifecycle self-contained.
+  // STANDALONE: the sales status is out of bounds for every role (ADMIN
+  // included) — standalone configs are engineering-only.
   if (
     origin === "STANDALONE" &&
-    (SALES_STATUSES.includes(from) || SALES_STATUSES.includes(to))
+    (from === "SALES_APPROVED" || to === "SALES_APPROVED")
   ) {
     return false;
   }
@@ -153,7 +137,7 @@ export function canTransition(
  * - DRAFT → PENDING_APPROVAL (submit): any offer-access role (SALES on own).
  * - PENDING_APPROVAL → APPROVED_TO_SEND (approve): management roles only.
  * - PENDING_APPROVAL → DRAFT (reject / hand-back): management roles only. SALES
- *   cannot pull back its own submission — mirrors the config IN_SALES_REVIEW gate.
+ *   cannot pull back its own submission.
  * - APPROVED_TO_SEND → DRAFT (un-approve): management roles only.
  * - APPROVED_TO_SEND → SENT (send): any offer-access role.
  * - SENT → ACCEPTED / REJECTED / EXPIRED (record customer outcome): any

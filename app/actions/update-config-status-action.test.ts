@@ -69,13 +69,13 @@ describe("updateConfigStatusAction", () => {
 
   test("returns success with config id on valid status update", async () => {
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "IN_SALES_REVIEW",
+      status: "IN_TECH_REVIEW",
     });
     expect(result).toEqual({ success: true, id: CONF_ID });
     expect(mockUpdateConfigStatus).toHaveBeenCalledWith(
       CONF_ID,
       { id: "user-1", role: "ENGINEER", initials: "TU" },
-      { status: "IN_SALES_REVIEW" },
+      { status: "IN_TECH_REVIEW" },
       mockTx,
     );
     expect(mockInsertActivityLog).toHaveBeenCalledWith(
@@ -83,7 +83,7 @@ describe("updateConfigStatusAction", () => {
         action: "CONFIG_STATUS_CHANGE",
         targetEntity: "configuration",
         targetId: CONF_ID.toString(),
-        metadata: { from: "DRAFT", to: "IN_SALES_REVIEW" },
+        metadata: { from: "DRAFT", to: "IN_TECH_REVIEW" },
       }),
       mockTx,
     );
@@ -111,7 +111,7 @@ describe("updateConfigStatusAction", () => {
   test("returns error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "IN_SALES_REVIEW",
+      status: "IN_TECH_REVIEW",
     });
     expect(result).toEqual({
       success: false,
@@ -150,7 +150,7 @@ describe("updateConfigStatusAction", () => {
       new QueryError(MSG.config.energyChainRequiresGantry, 400),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "IN_SALES_REVIEW",
+      status: "IN_TECH_REVIEW",
     });
     expect(result).toEqual({
       success: false,
@@ -161,7 +161,7 @@ describe("updateConfigStatusAction", () => {
   test("returns generic error on unknown exceptions", async () => {
     mockUpdateConfigStatus.mockRejectedValue(new TypeError("unexpected"));
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "IN_SALES_REVIEW",
+      status: "IN_TECH_REVIEW",
     });
     expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
@@ -171,7 +171,7 @@ describe("updateConfigStatusAction", () => {
       new QueryError("audit failure", 500),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
-      status: "IN_SALES_REVIEW",
+      status: "IN_TECH_REVIEW",
     });
     expect(result.success).toBe(false);
     const { revalidatePath } = await import("next/cache");

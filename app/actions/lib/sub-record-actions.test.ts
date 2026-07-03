@@ -254,14 +254,14 @@ describe("handleSubRecordAction", () => {
     });
   });
 
-  test("SALES cannot modify sub-records of IN_SALES_REVIEW config", async () => {
+  test("SALES cannot modify sub-records of a handed-off SALES_APPROVED config", async () => {
     mockGetUserData.mockResolvedValue({
       id: OWNER_ID,
       role: "SALES",
       initials: "EX",
     });
     mockGetConfiguration.mockResolvedValue(
-      mockConfig({ status: "IN_SALES_REVIEW", origin: "OFFER" }),
+      mockConfig({ status: "SALES_APPROVED", origin: "OFFER" }),
     );
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({

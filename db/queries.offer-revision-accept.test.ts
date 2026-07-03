@@ -102,8 +102,8 @@ function baseState(overrides: Partial<TxState> = {}): TxState {
   return {
     offerRow: { accepted_revision_id: null },
     lines: [
-      { lineId: 21, configId: 7, configStatus: "IN_SALES_REVIEW" },
-      { lineId: 22, configId: 8, configStatus: "IN_SALES_REVIEW" },
+      { lineId: 21, configId: 7, configStatus: "DRAFT" },
+      { lineId: 22, configId: 8, configStatus: "DRAFT" },
     ],
     revisionUpdateReturns: [{ id: 500 }],
     ...overrides,
