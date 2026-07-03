@@ -43,12 +43,41 @@ Lifecycle lives **per revision** on `offer_revisions.status` (an `offers` header
   into fresh editable rows and recomputes line pricing. Past sent revisions are immutable.
 - **Acceptance hand-off** (`SENT → ACCEPTED`): each line config fans out to `SALES_APPROVED`, the
   at-acceptance **as-sold freeze** fires (`offer_revision_lines.as_sold_snapshot` + `as_sold_frozen_at`),
-  `offers.accepted_revision_id` is set, and the offer is locked. Engineering then proceeds per config via the
-  config status machine, unchanged.
+  `offers.accepted_revision_id` is set, and the offer is locked — no further clone-forward revisions; only
+  a commercial-only **renegotiation revision** (below) can follow. Engineering then proceeds per config via
+  the config status machine, unchanged.
 - `REJECTED` / `EXPIRED` are the other terminal customer outcomes of a `SENT` revision.
 
 Two distinct snapshots stay linked so commercial and technical can't drift: the per-sent-revision
 `pricing_snapshot` (the quote) and the at-acceptance as-sold freeze (the margin baseline).
+
+### Renegotiation (post-acceptance)
+
+Post-acceptance, engineering edits can erode a line's margin below its category threshold. The margin page
+(`canViewMarginReview`) raises a **margin alert** and offers the management decision point
+(ADMIN / SALES_DIRECTOR): **absorb** the lower margin (logged sign-off, `absorbLineMarginAction`) or
+**renegotiate** with the customer.
+
+- A renegotiation is a revision created **from the in-force accepted revision** while
+  `offers.accepted_revision_id` is set, by `canRenegotiateOffer` roles (ADMIN / SALES_DIRECTOR) via
+  `createRenegotiationRevisionAction`. Renegotiation-ness is **derived, never stored**
+  (`lib/offer-renegotiation.ts`, anchored on the first as-sold freeze).
+- Its lines **reference the current engineering configs read-only** — no deep-clone. Configs stay governed
+  by the engineering status machine (`isEditable` unchanged) and engineering work does **not** pause. Line
+  pricing is re-derived from the current configs; only commercial terms (header discount / transport /
+  installation) are editable while `DRAFT`. Adding/removing configurations is blocked
+  (`renegotiationLinesLocked`). One line per config **per revision** — post-acceptance a config can own its
+  frozen accepted line plus one line per renegotiation revision.
+- It rides the **same lifecycle and gates**, manager approval included:
+  `DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT → ACCEPTED / REJECTED`.
+- **Re-acceptance** (`SENT → ACCEPTED`): the as-sold freeze re-fires on the new revision's lines and
+  `accepted_revision_id` moves forward — one transaction, **without touching config statuses** (the
+  hand-off fired at first acceptance). The superseded revision keeps its immutable `ACCEPTED` status;
+  `accepted_revision_id` disambiguates. New lines start with clean absorb columns, so the margin baseline
+  resets to the renegotiated prices.
+- **Rejection**: the original accepted revision stays in force; no side effects beyond the recorded
+  outcome. The decision point returns (in practice: absorb, documented) or a new renegotiation can be
+  opened.
 
 ## Roles
 
@@ -67,7 +96,8 @@ Two distinct snapshots stay linked so commercial and technical can't drift: the 
 
 3. **SALES_DIRECTOR (Direttore vendite):**
    - Same powers as SALES_MANAGER, but **Access: all offers** (no team restriction). Also sees the margin
-     page (`canViewMarginReview`).
+     page (`canViewMarginReview`) and owns the post-acceptance margin decision point: absorb sign-off and
+     opening renegotiation revisions (`canRenegotiateOffer`, shared with ADMIN).
 
 4. **ENGINEER (Technical Office or Engineer):**
    - **Primary Goal:** Finalize the BOM and technical specs. Primary workspace: `/configurazioni`.
@@ -98,7 +128,8 @@ Editability is a **two-phase gate**: `isEditable(status, role, origin, offerRevi
 
 **Frozen States:** To edit a `SALES_APPROVED` config an engineer pulls it forward to `IN_TECH_REVIEW`. To
 edit a `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`. To
-re-open a sent offer, sales create a new revision (clone-forward).
+re-open a sent offer, sales create a new revision (clone-forward); to re-quote an **accepted** offer,
+ADMIN/SALES_DIRECTOR open a renegotiation revision (commercial-only, configs untouched).
 
 ## Offer Access
 

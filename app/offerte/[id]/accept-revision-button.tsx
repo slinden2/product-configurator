@@ -8,13 +8,20 @@ import { MSG } from "@/lib/messages";
 
 interface AcceptRevisionButtonProps {
   offerId: number;
+  /** True when the SENT revision is a renegotiation: acceptance re-freezes the
+   * as-sold baseline instead of handing the configs off to engineering. */
+  renegotiation?: boolean;
 }
 
 /**
  * Records customer acceptance of the SENT revision: the line configs hand off to
- * engineering (SALES_APPROVED + as-sold freeze) and the offer locks.
+ * engineering (SALES_APPROVED + as-sold freeze) and the offer locks. For a
+ * renegotiation revision the copy reflects the re-freeze (configs untouched).
  */
-const AcceptRevisionButton = ({ offerId }: AcceptRevisionButtonProps) => {
+const AcceptRevisionButton = ({
+  offerId,
+  renegotiation = false,
+}: AcceptRevisionButtonProps) => {
   const router = useRouter();
 
   return (
@@ -25,10 +32,16 @@ const AcceptRevisionButton = ({ offerId }: AcceptRevisionButtonProps) => {
         if (!res.success) throw new Error(res.error);
         router.refresh();
       }}
-      successMsg={MSG.toast.offerRevisionAccepted}
+      successMsg={
+        renegotiation
+          ? MSG.toast.offerRenegotiationAccepted
+          : MSG.toast.offerRevisionAccepted
+      }
       confirm={{
         title: "Registrare l'accettazione?",
-        description: MSG.offer.acceptConfirm,
+        description: renegotiation
+          ? MSG.offer.reacceptConfirm
+          : MSG.offer.acceptConfirm,
         confirmLabel: "Accetta offerta",
         confirmVariant: "default",
       }}

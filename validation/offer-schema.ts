@@ -55,6 +55,20 @@ export const offerDiscountSchema = z.object({
 
 export type OfferDiscount = z.infer<typeof offerDiscountSchema>;
 
+/**
+ * Input for the margin absorb sign-off (#84). The absorbed margin itself is
+ * never client-supplied — the server recomputes the live margin at sign-off.
+ */
+export const marginAbsorbSchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .max(500, "La nota non può superare 500 caratteri.")
+    .optional(),
+});
+
+export type MarginAbsorbInput = z.infer<typeof marginAbsorbSchema>;
+
 export const offerInstallationItemSchema = z.object({
   kind: z.enum(InstallationItemKinds),
   amount: z.number().min(0, "L'importo non può essere negativo."),

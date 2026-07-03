@@ -158,6 +158,15 @@ export const ConfigOriginLabels: Record<ConfigOrigin, string> = {
   OFFER: "Offerta",
 };
 
+/**
+ * Product category of a configuration. The catalog currently holds a single
+ * category (rollover gantry wash systems); per-category business parameters
+ * (e.g. the margin threshold, see `lib/margin.ts`) key off this so new
+ * categories only extend the maps.
+ */
+export const ProductCategories = ["ROLLOVER_GANTRY"] as const;
+export type ProductCategory = (typeof ProductCategories)[number];
+
 export const Roles = [
   "ADMIN",
   "ENGINEER",
@@ -201,6 +210,7 @@ export const ActivityActions = [
   "OFFER_REVISION_ACCEPT",
   "OFFER_REVISION_DECLINE",
   "OFFER_REVISION_EXPIRE",
+  "OFFER_LINE_MARGIN_ABSORB",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
 ] as const;
@@ -240,6 +250,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_REVISION_ACCEPT: "Accettazione revisione offerta",
   OFFER_REVISION_DECLINE: "Rifiuto revisione offerta",
   OFFER_REVISION_EXPIRE: "Scadenza revisione offerta",
+  OFFER_LINE_MARGIN_ABSORB: "Presa d'atto margine ridotto",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };

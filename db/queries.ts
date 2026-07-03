@@ -302,10 +302,11 @@ export async function canAccessOffer(
 }
 
 /**
- * Status of the offer revision that owns this configuration, or `null` if the
- * config is not an offer line (standalone, or no line yet). Threaded into
+ * Status of the latest offer revision that owns this configuration, or `null` if
+ * the config is not an offer line (standalone, or no line yet). Threaded into
  * {@link isEditable} so an OFFER config's pre-handoff edit gate keys on the
- * revision lifecycle (editable only while the revision is DRAFT).
+ * revision lifecycle (editable only while the revision is DRAFT). Post-acceptance
+ * a config can sit on multiple revisions (renegotiations); the latest one governs.
  */
 export async function getOfferRevisionStatusForConfig(
   configId: number,
@@ -319,6 +320,7 @@ export async function getOfferRevisionStatusForConfig(
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
     .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(desc(offerRevisions.revision_no))
     .limit(1);
 
   return row?.status ?? null;
@@ -543,7 +545,7 @@ export async function addOfferLine(
 ): Promise<{ id: number }> {
   const offer = await txOrDb.query.offers.findFirst({
     where: eq(offers.id, offerId),
-    columns: { id: true, user_id: true },
+    columns: { id: true, user_id: true, accepted_revision_id: true },
     with: {
       revisions: {
         orderBy: [desc(offerRevisions.revision_no)],
@@ -558,6 +560,11 @@ export async function addOfferLine(
   if (!revision) throw new QueryError(MSG.offer.notFound, 404);
   if (revision.status !== "DRAFT") {
     throw new QueryError(MSG.offer.lineCannotEdit, 403);
+  }
+  // A DRAFT revision on an accepted offer is a renegotiation: commercial-only,
+  // its configuration set is fixed to the accepted revision's.
+  if (offer.accepted_revision_id !== null) {
+    throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
   }
 
   const { id: configId } = await insertConfiguration(
@@ -618,8 +625,11 @@ export async function loadConfigForPricing(
 }
 
 /**
- * Resolves the offer revision line owning `configId`, with the revision's discount
- * and status, for re-pricing. Returns null for a config that is not an offer line.
+ * Resolves the offer revision line owning `configId` on the **latest** owning
+ * revision, with the revision's discount and status, for re-pricing. Returns null
+ * for a config that is not an offer line. A config referenced by renegotiation
+ * revisions has one line per revision; the latest is the only possibly-DRAFT one
+ * (older lines are frozen, and re-pricing no-ops on non-DRAFT revisions).
  */
 export async function offerRevisionLineForConfig(
   configId: number,
@@ -643,6 +653,7 @@ export async function offerRevisionLineForConfig(
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
     .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(desc(offerRevisions.revision_no))
     .limit(1);
 
   return row ?? null;
@@ -651,11 +662,17 @@ export async function offerRevisionLineForConfig(
 /**
  * Reads the offer revision line pricing for a configuration, for the margin page:
  * the as-sent `pricing_snapshot` (revenue reference) plus the derived net/list prices,
- * the revision discount/status, and the at-acceptance as-sold freeze. Returns null for
- * a config that is not an offer line (e.g. standalone). The unique on
- * `configuration_id` means at most one line per config.
+ * the revision discount/status, the at-acceptance as-sold freeze and the absorb
+ * sign-off (with the absorber's email for display). Returns null for a config that
+ * is not an offer line (e.g. standalone). A config referenced by renegotiation
+ * revisions has one line per revision: the line on the **in-force accepted**
+ * revision (`offers.accepted_revision_id`) is authoritative for the margin
+ * baseline; pre-acceptance it falls back to the latest revision's line.
  */
 export async function getOfferLinePricingForConfig(confId: number): Promise<{
+  id: number;
+  offer_id: number;
+  revision_id: number;
   pricing_snapshot: OfferLineItem[] | null;
   net_price: string;
   list_price: string;
@@ -663,9 +680,17 @@ export async function getOfferLinePricingForConfig(confId: number): Promise<{
   revisionStatus: OfferStatusType;
   as_sold_snapshot: unknown;
   as_sold_frozen_at: Date | null;
+  absorbed_by: string | null;
+  absorbed_by_email: string | null;
+  absorbed_at: Date | null;
+  absorbed_margin_percent: string | null;
+  absorbed_note: string | null;
 } | null> {
   const [row] = await db
     .select({
+      id: offerRevisionLines.id,
+      offer_id: offerRevisions.offer_id,
+      revision_id: offerRevisions.id,
       pricing_snapshot: offerRevisionLines.pricing_snapshot,
       net_price: offerRevisionLines.net_price,
       list_price: offerRevisionLines.list_price,
@@ -673,13 +698,24 @@ export async function getOfferLinePricingForConfig(confId: number): Promise<{
       revisionStatus: offerRevisions.status,
       as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
       as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+      absorbed_by: offerRevisionLines.absorbed_by,
+      absorbed_by_email: userProfiles.email,
+      absorbed_at: offerRevisionLines.absorbed_at,
+      absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
+      absorbed_note: offerRevisionLines.absorbed_note,
     })
     .from(offerRevisionLines)
     .innerJoin(
       offerRevisions,
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
+    .leftJoin(userProfiles, eq(offerRevisionLines.absorbed_by, userProfiles.id))
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
     .where(eq(offerRevisionLines.configuration_id, confId))
+    .orderBy(
+      sql`(${offerRevisions.id} = ${offers.accepted_revision_id}) DESC NULLS LAST`,
+      desc(offerRevisions.revision_no),
+    )
     .limit(1);
 
   if (!row) return null;
@@ -726,10 +762,12 @@ export async function updateOfferRevisionLinePricing(
  * pass an earlier number to revert to it. The default is resolved **inside the
  * transaction** so it can't go stale against a concurrent send/create.
  *
- * Guards: the offer's latest revision must be frozen (status ≠ DRAFT) — only one
- * working draft exists at a time. A `FOR UPDATE` lock on the offer row serializes
- * concurrent creates/sends so two callers can't mint the same `revision_no`. Audited
- * in the caller's transaction.
+ * Guards: the offer must not be accepted (clone-forward is the pre-acceptance path —
+ * post-acceptance re-quoting goes through `createRenegotiationRevisionFrom`, which
+ * references configs instead of cloning them) and its latest revision must be frozen
+ * (status ≠ DRAFT) — only one working draft exists at a time. A `FOR UPDATE` lock on
+ * the offer row serializes concurrent creates/sends so two callers can't mint the
+ * same `revision_no`. Audited in the caller's transaction.
  */
 export async function createOfferRevisionFrom(
   offerId: number,
@@ -746,7 +784,7 @@ export async function createOfferRevisionFrom(
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
-    columns: { id: true, user_id: true },
+    columns: { id: true, user_id: true, accepted_revision_id: true },
     with: {
       revisions: {
         orderBy: [desc(offerRevisions.revision_no)],
@@ -768,6 +806,9 @@ export async function createOfferRevisionFrom(
   });
 
   if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (offer.accepted_revision_id !== null) {
+    throw new QueryError(MSG.offer.alreadyAccepted, 409);
+  }
 
   const latest = offer.revisions[0];
   if (!latest) throw new QueryError(MSG.offer.notFound, 404);
@@ -855,6 +896,128 @@ export async function createOfferRevisionFrom(
         revisionNo: newRevisionNo,
         fromRevisionNo: resolvedSourceNo,
         lineCount: source.lines.length,
+      },
+    },
+    tx,
+  );
+
+  return {
+    revisionId: newRevision.id,
+    revisionNo: newRevisionNo,
+    configIds,
+  };
+}
+
+/**
+ * Creates a post-acceptance **renegotiation revision**: a commercial-only revision
+ * cloned from the in-force accepted revision (`offers.accepted_revision_id`, not the
+ * latest — a rejected renegotiation may sit between). Unlike `createOfferRevisionFrom`
+ * it does NOT deep-clone configurations / water tanks / wash bays: the new lines
+ * reference the accepted lines' configurations read-only, so the customer is re-quoted
+ * exactly what engineering says the machine currently is, and the configs stay
+ * governed by the engineering status machine.
+ *
+ * Pricing is NOT computed here — lines start with placeholder pricing and the caller
+ * re-prices them via `repriceOfferLines` in the same transaction (deriving the new
+ * quote from the current engineering configs).
+ *
+ * Guards: the offer must be accepted, and its latest revision must be frozen — only
+ * one open renegotiation at a time. A `FOR UPDATE` lock on the offer row serializes
+ * concurrent creates/accepts. Audited in the caller's transaction.
+ */
+export async function createRenegotiationRevisionFrom(
+  offerId: number,
+  userId: string,
+  // Required: revision + line inserts + audit must commit atomically with the
+  // caller's re-pricing pass.
+  tx: TransactionType,
+): Promise<{ revisionId: number; revisionNo: number; configIds: number[] }> {
+  // Serialize lifecycle mutations on this offer (see createOfferRevisionFrom).
+  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+
+  const offer = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true, accepted_revision_id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        with: {
+          lines: { orderBy: [asc(offerRevisionLines.position)] },
+        },
+      },
+    },
+  });
+
+  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (offer.accepted_revision_id === null) {
+    throw new QueryError(MSG.offer.renegotiationNotAccepted, 409);
+  }
+
+  const latest = offer.revisions[0];
+  if (!latest) throw new QueryError(MSG.offer.notFound, 404);
+  if (OPEN_REVISION_STATUSES.includes(latest.status)) {
+    throw new QueryError(MSG.offer.workingRevisionExists, 409);
+  }
+
+  const source = offer.revisions.find(
+    (r) => r.id === offer.accepted_revision_id,
+  );
+  if (!source) throw new QueryError(MSG.offer.notFound, 404);
+
+  const newRevisionNo = latest.revision_no + 1;
+
+  const [newRevision] = await tx
+    .insert(offerRevisions)
+    .values({
+      offer_id: offerId,
+      revision_no: newRevisionNo,
+      status: "DRAFT",
+      // Carry the accepted revision's commercial header forward; lifecycle stamps
+      // reset, and validity is re-established per send (see createOfferRevisionFrom).
+      discount_pct: source.discount_pct,
+      transport_amount: source.transport_amount,
+      transport_mode: source.transport_mode,
+      installation_mode: source.installation_mode,
+      installation_items: source.installation_items,
+      show_net_total_only: source.show_net_total_only,
+      valid_until: null,
+      notes: source.notes,
+    })
+    .returning({ id: offerRevisions.id });
+
+  if (!newRevision) throw new QueryError(MSG.offer.createFailed, 500);
+
+  // Reference the accepted lines' configurations — no clone. Snapshot and absorb
+  // columns start clean: the re-freeze happens at re-acceptance.
+  const configIds = source.lines.map((line) => line.configuration_id);
+  if (source.lines.length > 0) {
+    await tx.insert(offerRevisionLines).values(
+      source.lines.map(
+        (line): NewOfferRevisionLine => ({
+          offer_revision_id: newRevision.id,
+          configuration_id: line.configuration_id,
+          position: line.position,
+          quantity: line.quantity,
+          list_price: "0.00",
+          net_price: "0.00",
+          line_discount_percent: line.line_discount_percent,
+          pricing_snapshot: null,
+        }),
+      ),
+    );
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_CREATE",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: {
+        revisionNo: newRevisionNo,
+        fromRevisionNo: source.revision_no,
+        lineCount: source.lines.length,
+        renegotiation: true,
       },
     },
     tx,
@@ -1089,15 +1252,19 @@ export async function markOfferRevisionSentWithAudit(
 }
 
 /**
- * Records customer acceptance of a SENT revision and hands every line config off to
- * engineering. In one transaction it:
- *  - locks the offer row, then guards the offer is not already accepted and the
- *    revision is SENT;
- *  - moves the revision SENT → ACCEPTED and sets `offers.accepted_revision_id`
- *    (locking the offer — no further revisions);
- *  - for each line: flips its config to `SALES_APPROVED`, writes the at-acceptance
- *    as-sold freeze (`as_sold_snapshot` + `as_sold_frozen_at`) onto the line, and
- *    audits the status change and the freeze.
+ * Records customer acceptance of a SENT revision. In one transaction it:
+ *  - locks the offer row, then guards the revision is SENT (the status-guarded
+ *    update) and is not the already-in-force accepted revision;
+ *  - moves the revision SENT → ACCEPTED and points `offers.accepted_revision_id`
+ *    at it (first acceptance locks the offer; a re-acceptance moves the pointer
+ *    forward — the superseded revision keeps its immutable ACCEPTED status);
+ *  - for each line: writes the at-acceptance as-sold freeze (`as_sold_snapshot` +
+ *    `as_sold_frozen_at`) onto the line and audits it. On **first acceptance** it
+ *    also flips the line's config to `SALES_APPROVED` (the engineering hand-off);
+ *    on **re-acceptance** (a renegotiation revision, #85) config statuses are left
+ *    untouched — the configs were handed off at first acceptance and stay governed
+ *    by the engineering status machine. The new lines' clean absorb columns reset
+ *    the margin baseline to the renegotiated prices.
  *
  * `asSoldByConfigId` carries each line config's form-shaped snapshot, loaded by the
  * caller (the action layer can build it without the circular import a load here would
@@ -1118,7 +1285,12 @@ export async function acceptOfferRevisionWithAudit(
     .from(offers)
     .where(eq(offers.id, offerId));
   if (!offerRow) throw new QueryError(MSG.offer.notFound, 404);
-  if (offerRow.accepted_revision_id !== null) {
+  // A set pointer means this acceptance is a renegotiation re-acceptance. Only the
+  // in-force revision itself can't be accepted again; any other target must be SENT,
+  // which the status-guarded update below enforces (a past accepted revision can
+  // never be SENT again).
+  const isReacceptance = offerRow.accepted_revision_id !== null;
+  if (offerRow.accepted_revision_id === revisionId) {
     throw new QueryError(MSG.offer.alreadyAccepted, 409);
   }
 
@@ -1160,10 +1332,29 @@ export async function acceptOfferRevisionWithAudit(
     const asSold = asSoldByConfigId[line.configId];
     if (!asSold) throw new QueryError(MSG.config.notFound, 404);
 
-    await tx
-      .update(configurations)
-      .set({ status: "SALES_APPROVED" })
-      .where(eq(configurations.id, line.configId));
+    // The engineering hand-off fires only at first acceptance: on re-acceptance the
+    // configs are already SALES_APPROVED+ and must stay engineering-governed.
+    if (!isReacceptance) {
+      await tx
+        .update(configurations)
+        .set({ status: "SALES_APPROVED" })
+        .where(eq(configurations.id, line.configId));
+
+      await insertActivityLog(
+        {
+          userId,
+          action: "CONFIG_STATUS_CHANGE",
+          targetEntity: "configuration",
+          targetId: line.configId.toString(),
+          metadata: {
+            from: line.configStatus,
+            to: "SALES_APPROVED",
+            via: "OFFER_ACCEPT",
+          },
+        },
+        tx,
+      );
+    }
 
     await tx
       .update(offerRevisionLines)
@@ -1174,20 +1365,6 @@ export async function acceptOfferRevisionWithAudit(
       })
       .where(eq(offerRevisionLines.id, line.lineId));
 
-    await insertActivityLog(
-      {
-        userId,
-        action: "CONFIG_STATUS_CHANGE",
-        targetEntity: "configuration",
-        targetId: line.configId.toString(),
-        metadata: {
-          from: line.configStatus,
-          to: "SALES_APPROVED",
-          via: "OFFER_ACCEPT",
-        },
-      },
-      tx,
-    );
     await insertActivityLog(
       {
         userId,
@@ -1206,7 +1383,11 @@ export async function acceptOfferRevisionWithAudit(
       action: "OFFER_REVISION_ACCEPT",
       targetEntity: "offer",
       targetId: String(offerId),
-      metadata: { revisionId },
+      metadata: {
+        revisionId,
+        renegotiation: isReacceptance,
+        previousAcceptedRevisionId: offerRow.accepted_revision_id,
+      },
     },
     tx,
   );
@@ -1262,7 +1443,7 @@ export async function removeOfferLine(
   await db.transaction(async (tx) => {
     const offer = await tx.query.offers.findFirst({
       where: eq(offers.id, offerId),
-      columns: { id: true },
+      columns: { id: true, accepted_revision_id: true },
       with: {
         revisions: {
           orderBy: [desc(offerRevisions.revision_no)],
@@ -1283,6 +1464,11 @@ export async function removeOfferLine(
     if (!revision) throw new QueryError(MSG.offer.notFound, 404);
     if (revision.status !== "DRAFT") {
       throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    }
+    // Renegotiation drafts reference engineering-owned configs read-only: removing
+    // a line would delete the config itself (the line cascades off it).
+    if (offer.accepted_revision_id !== null) {
+      throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
     }
     if (revision.lines.length === 0) {
       throw new QueryError(MSG.offer.notFound, 404);
@@ -1792,6 +1978,27 @@ export async function getEngineeringBomItems(confId: number) {
 export type EngineeringBomItemWithPart = Awaited<
   ReturnType<typeof getEngineeringBomItems>
 >[number];
+
+/**
+ * Batch variant of `getEngineeringBomItems` for margin math across many configs
+ * (one query instead of one per line). Lean select — only the fields cost
+ * computation needs — with no ordering, since the rows are aggregated, not
+ * displayed. Configs without an EBOM simply contribute no rows.
+ */
+export async function getEngineeringBomItemsForConfigs(confIds: number[]) {
+  if (confIds.length === 0) return [];
+  return db
+    .select({
+      configuration_id: engineeringBomItems.configuration_id,
+      pn: engineeringBomItems.pn,
+      description: engineeringBomItems.description,
+      qty: engineeringBomItems.qty,
+      tag: engineeringBomItems.tag,
+      is_deleted: engineeringBomItems.is_deleted,
+    })
+    .from(engineeringBomItems)
+    .where(inArray(engineeringBomItems.configuration_id, confIds));
+}
 
 export async function getAssemblyChildren(parentPn: string) {
   const rows = await db.query.bomLines.findMany({
@@ -2465,6 +2672,86 @@ export async function updateSurchargeSettingWithAudit(data: {
         targetEntity: "surcharge_setting",
         targetId: data.kind,
         metadata: { old_value: existing.price, new_value: data.price },
+      },
+      tx,
+    );
+  });
+}
+
+/**
+ * Persists a margin absorb sign-off on an offer revision line and writes the
+ * audit log in a single transaction. The line row is locked and the state
+ * gates (revision ACCEPTED, as-sold freeze present) re-checked inside the
+ * transaction — the action's pre-checks run outside it and could race. A
+ * re-absorb overwrites the previous decision; the audit metadata carries the
+ * prior values so the history stays reconstructable.
+ */
+export async function absorbOfferLineMarginWithAudit(data: {
+  lineId: number;
+  offerId: number;
+  configId: number;
+  revisionId: number;
+  absorbedBy: string;
+  /** Server-computed live margin at sign-off, already fixed to 2 decimals. */
+  absorbedMarginPct: string;
+  thresholdPct: number;
+  note: string | null;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [line] = await tx
+      .select({
+        revision_status: offerRevisions.status,
+        as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+        absorbed_by: offerRevisionLines.absorbed_by,
+        absorbed_at: offerRevisionLines.absorbed_at,
+        absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
+      })
+      .from(offerRevisionLines)
+      .innerJoin(
+        offerRevisions,
+        eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+      )
+      .where(eq(offerRevisionLines.id, data.lineId))
+      .for("update", { of: offerRevisionLines });
+
+    if (
+      !line ||
+      line.revision_status !== "ACCEPTED" ||
+      line.as_sold_frozen_at === null
+    ) {
+      throw new QueryError(MSG.marginReview.absorbNotAccepted, 409);
+    }
+
+    await tx
+      .update(offerRevisionLines)
+      .set({
+        absorbed_by: data.absorbedBy,
+        absorbed_at: new Date(),
+        absorbed_margin_percent: data.absorbedMarginPct,
+        absorbed_note: data.note,
+        updated_at: new Date(),
+      })
+      .where(eq(offerRevisionLines.id, data.lineId));
+
+    await insertActivityLog(
+      {
+        userId: data.absorbedBy,
+        action: "OFFER_LINE_MARGIN_ABSORB",
+        targetEntity: "offer_revision_line",
+        targetId: data.lineId.toString(),
+        metadata: {
+          offerId: data.offerId,
+          revisionId: data.revisionId,
+          configId: data.configId,
+          absorbedMarginPct: data.absorbedMarginPct,
+          thresholdPct: data.thresholdPct,
+          note: data.note,
+          previous: {
+            absorbedBy: line.absorbed_by,
+            absorbedAt: line.absorbed_at,
+            absorbedMarginPct: line.absorbed_margin_percent,
+          },
+        },
       },
       tx,
     );

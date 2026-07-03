@@ -94,6 +94,14 @@ export const canViewMarginReview = (role: Role): boolean =>
   role === "ADMIN" || role === "SALES_DIRECTOR";
 
 /**
+ * Roles allowed to open a post-acceptance commercial renegotiation on an accepted
+ * offer (#85) — the "renegotiate" arm of the margin decision point, alongside the
+ * absorb sign-off. Deliberately the same set as {@link canViewMarginReview}.
+ */
+export const canRenegotiateOffer = (role: Role): boolean =>
+  role === "ADMIN" || role === "SALES_DIRECTOR";
+
+/**
  * Returns true when the config cannot be edited (status frozen, unknown role, or
  * unknown status). `origin` defaults to `"OFFER"`. For an offer-owned config in
  * the pre-handoff zone, pass `offerRevisionStatus` so the two-phase gate (editable

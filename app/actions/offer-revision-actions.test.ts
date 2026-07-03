@@ -8,6 +8,7 @@ const mockGetOfferWorkingRevision = vi.fn();
 const mockUpdateRevisionDiscountWithAudit = vi.fn();
 const mockUpdateRevisionSettingsWithAudit = vi.fn();
 const mockCreateOfferRevisionFrom = vi.fn();
+const mockCreateRenegotiationRevisionFrom = vi.fn();
 const mockGetWorkingRevisionForSend = vi.fn();
 const mockMarkOfferRevisionSentWithAudit = vi.fn();
 const mockSubmitOfferRevisionForApprovalWithAudit = vi.fn();
@@ -32,6 +33,8 @@ vi.mock("@/db/queries", () => ({
     mockUpdateRevisionSettingsWithAudit(...args),
   createOfferRevisionFrom: (...args: unknown[]) =>
     mockCreateOfferRevisionFrom(...args),
+  createRenegotiationRevisionFrom: (...args: unknown[]) =>
+    mockCreateRenegotiationRevisionFrom(...args),
   getWorkingRevisionForSend: (...args: unknown[]) =>
     mockGetWorkingRevisionForSend(...args),
   markOfferRevisionSentWithAudit: (...args: unknown[]) =>
@@ -83,6 +86,7 @@ vi.mock("pg", () => ({
 import {
   acceptRevisionAction,
   approveRevisionAction,
+  createRenegotiationRevisionAction,
   createRevisionAction,
   recordRevisionOutcomeAction,
   rejectRevisionAction,
@@ -540,6 +544,97 @@ describe("createRevisionAction", () => {
     const result = await createRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
     expect(mockCreateOfferRevisionFrom).not.toHaveBeenCalled();
+  });
+});
+
+describe("createRenegotiationRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "d1", role: "SALES_DIRECTOR" });
+    // Latest revision is the in-force accepted one → a renegotiation may open.
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "ACCEPTED",
+    });
+    mockCreateRenegotiationRevisionFrom.mockResolvedValue({
+      revisionId: 99,
+      revisionNo: 3,
+      configIds: [21, 22],
+    });
+    mockRepriceOfferLines.mockResolvedValue(undefined);
+  });
+
+  test("creates the renegotiation revision and re-prices its lines in-tx", async () => {
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true, data: { revisionNo: 3 } });
+    expect(mockCreateRenegotiationRevisionFrom).toHaveBeenCalledWith(
+      OFFER_ID,
+      "d1",
+      {},
+    );
+    expect(mockRepriceOfferLines).toHaveBeenCalledWith(
+      [21, 22],
+      "d1",
+      {},
+      {
+        audit: false,
+      },
+    );
+  });
+
+  test("ADMIN may open a renegotiation", async () => {
+    mockGetUserData.mockResolvedValue({ id: "a1", role: "ADMIN" });
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true, data: { revisionNo: 3 } });
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+  ] as const)("rejects %s (management decision, not a sales one)", async (role) => {
+    mockGetUserData.mockResolvedValue({ id: "s1", role });
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.renegotiationUnauthorized,
+    });
+    expect(mockCreateRenegotiationRevisionFrom).not.toHaveBeenCalled();
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockCreateRenegotiationRevisionFrom).not.toHaveBeenCalled();
+  });
+
+  test("surfaces the not-accepted guard error", async () => {
+    mockCreateRenegotiationRevisionFrom.mockRejectedValue(
+      new QueryError(MSG.offer.renegotiationNotAccepted, 409),
+    );
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.renegotiationNotAccepted,
+    });
+  });
+
+  test("surfaces the open-working-revision guard error", async () => {
+    mockCreateRenegotiationRevisionFrom.mockRejectedValue(
+      new QueryError(MSG.offer.workingRevisionExists, 409),
+    );
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.workingRevisionExists,
+    });
+  });
+
+  test("returns notFound for an offer out of scope", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(mockCreateRenegotiationRevisionFrom).not.toHaveBeenCalled();
   });
 });
 

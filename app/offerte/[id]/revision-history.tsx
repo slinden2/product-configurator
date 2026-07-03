@@ -2,7 +2,9 @@ import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { OfferWithRevisionAndLines } from "@/db/queries";
 import { canExportOfferRevision } from "@/lib/access";
+import { MSG } from "@/lib/messages";
 import { buildOfferRevisionExportData } from "@/lib/offer-export";
+import { isRenegotiationRevision } from "@/lib/offer-renegotiation";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { OfferStatusLabels } from "@/types";
 import CreateRevisionButton from "./create-revision-button";
@@ -18,6 +20,12 @@ interface RevisionHistoryProps {
   canCreateRevision: boolean;
   /** Initials of the viewing user, credited as author on exported documents. */
   exporterInitials: string;
+  /** The in-force accepted revision id: a past ACCEPTED revision that is no longer
+   * pointed at has been superseded by an accepted renegotiation. */
+  acceptedRevisionId: number | null;
+  /** `revision_no` of the first-accepted revision (see `lib/offer-renegotiation`);
+   * every later revision is marked as a renegotiation. */
+  firstAcceptedNo: number | null;
 }
 
 /**
@@ -29,6 +37,8 @@ const RevisionHistory = ({
   offer,
   canCreateRevision,
   exporterInitials,
+  acceptedRevisionId,
+  firstAcceptedNo,
 }: RevisionHistoryProps) => {
   // revisions[0] is the working revision, shown at the top of the page; everything
   // after it is immutable history.
@@ -48,8 +58,17 @@ const RevisionHistory = ({
               <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
               <span className="font-semibold">Rev {revision.revision_no}</span>
               <Badge variant="secondary">
-                {OfferStatusLabels[revision.status]}
+                {revision.status === "ACCEPTED" &&
+                revision.id !== acceptedRevisionId
+                  ? MSG.offer.acceptedSupersededBadge
+                  : OfferStatusLabels[revision.status]}
               </Badge>
+              {isRenegotiationRevision(
+                revision.revision_no,
+                firstAcceptedNo,
+              ) && (
+                <Badge variant="outline">{MSG.offer.renegotiationBadge}</Badge>
+              )}
               {revision.sent_at && (
                 <span className="text-muted-foreground">
                   Inviata il {formatDateDDMMYYYYHHMM(revision.sent_at)}
