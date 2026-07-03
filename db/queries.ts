@@ -1252,15 +1252,19 @@ export async function markOfferRevisionSentWithAudit(
 }
 
 /**
- * Records customer acceptance of a SENT revision and hands every line config off to
- * engineering. In one transaction it:
- *  - locks the offer row, then guards the offer is not already accepted and the
- *    revision is SENT;
- *  - moves the revision SENT → ACCEPTED and sets `offers.accepted_revision_id`
- *    (locking the offer — no further revisions);
- *  - for each line: flips its config to `SALES_APPROVED`, writes the at-acceptance
- *    as-sold freeze (`as_sold_snapshot` + `as_sold_frozen_at`) onto the line, and
- *    audits the status change and the freeze.
+ * Records customer acceptance of a SENT revision. In one transaction it:
+ *  - locks the offer row, then guards the revision is SENT (the status-guarded
+ *    update) and is not the already-in-force accepted revision;
+ *  - moves the revision SENT → ACCEPTED and points `offers.accepted_revision_id`
+ *    at it (first acceptance locks the offer; a re-acceptance moves the pointer
+ *    forward — the superseded revision keeps its immutable ACCEPTED status);
+ *  - for each line: writes the at-acceptance as-sold freeze (`as_sold_snapshot` +
+ *    `as_sold_frozen_at`) onto the line and audits it. On **first acceptance** it
+ *    also flips the line's config to `SALES_APPROVED` (the engineering hand-off);
+ *    on **re-acceptance** (a renegotiation revision, #85) config statuses are left
+ *    untouched — the configs were handed off at first acceptance and stay governed
+ *    by the engineering status machine. The new lines' clean absorb columns reset
+ *    the margin baseline to the renegotiated prices.
  *
  * `asSoldByConfigId` carries each line config's form-shaped snapshot, loaded by the
  * caller (the action layer can build it without the circular import a load here would
@@ -1281,7 +1285,12 @@ export async function acceptOfferRevisionWithAudit(
     .from(offers)
     .where(eq(offers.id, offerId));
   if (!offerRow) throw new QueryError(MSG.offer.notFound, 404);
-  if (offerRow.accepted_revision_id !== null) {
+  // A set pointer means this acceptance is a renegotiation re-acceptance. Only the
+  // in-force revision itself can't be accepted again; any other target must be SENT,
+  // which the status-guarded update below enforces (a past accepted revision can
+  // never be SENT again).
+  const isReacceptance = offerRow.accepted_revision_id !== null;
+  if (offerRow.accepted_revision_id === revisionId) {
     throw new QueryError(MSG.offer.alreadyAccepted, 409);
   }
 
@@ -1323,10 +1332,29 @@ export async function acceptOfferRevisionWithAudit(
     const asSold = asSoldByConfigId[line.configId];
     if (!asSold) throw new QueryError(MSG.config.notFound, 404);
 
-    await tx
-      .update(configurations)
-      .set({ status: "SALES_APPROVED" })
-      .where(eq(configurations.id, line.configId));
+    // The engineering hand-off fires only at first acceptance: on re-acceptance the
+    // configs are already SALES_APPROVED+ and must stay engineering-governed.
+    if (!isReacceptance) {
+      await tx
+        .update(configurations)
+        .set({ status: "SALES_APPROVED" })
+        .where(eq(configurations.id, line.configId));
+
+      await insertActivityLog(
+        {
+          userId,
+          action: "CONFIG_STATUS_CHANGE",
+          targetEntity: "configuration",
+          targetId: line.configId.toString(),
+          metadata: {
+            from: line.configStatus,
+            to: "SALES_APPROVED",
+            via: "OFFER_ACCEPT",
+          },
+        },
+        tx,
+      );
+    }
 
     await tx
       .update(offerRevisionLines)
@@ -1337,20 +1365,6 @@ export async function acceptOfferRevisionWithAudit(
       })
       .where(eq(offerRevisionLines.id, line.lineId));
 
-    await insertActivityLog(
-      {
-        userId,
-        action: "CONFIG_STATUS_CHANGE",
-        targetEntity: "configuration",
-        targetId: line.configId.toString(),
-        metadata: {
-          from: line.configStatus,
-          to: "SALES_APPROVED",
-          via: "OFFER_ACCEPT",
-        },
-      },
-      tx,
-    );
     await insertActivityLog(
       {
         userId,
@@ -1369,7 +1383,11 @@ export async function acceptOfferRevisionWithAudit(
       action: "OFFER_REVISION_ACCEPT",
       targetEntity: "offer",
       targetId: String(offerId),
-      metadata: { revisionId },
+      metadata: {
+        revisionId,
+        renegotiation: isReacceptance,
+        previousAcceptedRevisionId: offerRow.accepted_revision_id,
+      },
     },
     tx,
   );

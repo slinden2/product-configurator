@@ -443,11 +443,14 @@ export async function acceptRevisionAction(offerId: number) {
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
     // The line configs are now SALES_APPROVED — refresh the engineering surfaces.
+    // The margin pages re-baseline on the newly frozen lines (relevant on a
+    // renegotiation re-acceptance, where the new prices can clear the alert).
     revalidatePath("/configurazioni");
     for (const configId of working.configIds) {
       revalidatePath(`/configurazioni/modifica/${configId}`);
       revalidatePath(`/configurazioni/visualizza/${configId}`);
       revalidatePath(`/configurazioni/bom/${configId}`);
+      revalidatePath(`/configurazioni/marginalita/${configId}`);
     }
     return { success: true as const };
   } catch (err) {
