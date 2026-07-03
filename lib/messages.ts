@@ -275,5 +275,20 @@ export const MSG = {
     lineDiffNoChangesQuote:
       "Nessuna variazione nella distinta base rispetto all'offerta.",
     belowThresholdBadge: "Margine sotto soglia",
+    absorbButton: "Accetta margine ridotto",
+    absorbConfirmTitle: "Accettare il margine ridotto?",
+    absorbConfirmBody: (marginPct: string, thresholdPct: string) =>
+      `La marginalità attuale (${marginPct}) è inferiore alla soglia minima del ${thresholdPct}. Confermando, la decisione verrà registrata e l'avviso rimosso finché la marginalità non scenderà sotto il valore accettato.`,
+    absorbNoteLabel: "Nota (facoltativa)",
+    absorbSuccess: "Margine ridotto accettato.",
+    absorbUnauthorized: "Non autorizzato ad accettare il margine ridotto.",
+    absorbNotAccepted:
+      "Nessuna riga d'offerta accettata e congelata per questa configurazione.",
+    absorbNotActive:
+      "La marginalità non è sotto soglia: nessuna decisione da registrare.",
+    signOffTitle: "Margine ridotto accettato",
+    signOffBody: (by: string, at: string, marginPct: string) =>
+      `Accettato da ${by} il ${at} con marginalità ${marginPct}.`,
+    signOffNoteLabel: "Nota",
   },
 } as const;

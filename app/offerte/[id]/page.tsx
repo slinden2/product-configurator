@@ -181,7 +181,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
                         <ConfigurationStatusBadge
                           status={line.configuration.status}
                         />
-                        {marginAlerts.get(line.id)?.belowThreshold && (
+                        {marginAlerts.get(line.id)?.alertActive && (
                           <Link
                             href={`/configurazioni/marginalita/${line.configuration.id}`}
                           >

@@ -651,11 +651,15 @@ export async function offerRevisionLineForConfig(
 /**
  * Reads the offer revision line pricing for a configuration, for the margin page:
  * the as-sent `pricing_snapshot` (revenue reference) plus the derived net/list prices,
- * the revision discount/status, and the at-acceptance as-sold freeze. Returns null for
- * a config that is not an offer line (e.g. standalone). The unique on
- * `configuration_id` means at most one line per config.
+ * the revision discount/status, the at-acceptance as-sold freeze and the absorb
+ * sign-off (with the absorber's email for display). Returns null for a config that
+ * is not an offer line (e.g. standalone). The unique on `configuration_id` means
+ * at most one line per config.
  */
 export async function getOfferLinePricingForConfig(confId: number): Promise<{
+  id: number;
+  offer_id: number;
+  revision_id: number;
   pricing_snapshot: OfferLineItem[] | null;
   net_price: string;
   list_price: string;
@@ -663,9 +667,17 @@ export async function getOfferLinePricingForConfig(confId: number): Promise<{
   revisionStatus: OfferStatusType;
   as_sold_snapshot: unknown;
   as_sold_frozen_at: Date | null;
+  absorbed_by: string | null;
+  absorbed_by_email: string | null;
+  absorbed_at: Date | null;
+  absorbed_margin_percent: string | null;
+  absorbed_note: string | null;
 } | null> {
   const [row] = await db
     .select({
+      id: offerRevisionLines.id,
+      offer_id: offerRevisions.offer_id,
+      revision_id: offerRevisions.id,
       pricing_snapshot: offerRevisionLines.pricing_snapshot,
       net_price: offerRevisionLines.net_price,
       list_price: offerRevisionLines.list_price,
@@ -673,12 +685,18 @@ export async function getOfferLinePricingForConfig(confId: number): Promise<{
       revisionStatus: offerRevisions.status,
       as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
       as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+      absorbed_by: offerRevisionLines.absorbed_by,
+      absorbed_by_email: userProfiles.email,
+      absorbed_at: offerRevisionLines.absorbed_at,
+      absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
+      absorbed_note: offerRevisionLines.absorbed_note,
     })
     .from(offerRevisionLines)
     .innerJoin(
       offerRevisions,
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
+    .leftJoin(userProfiles, eq(offerRevisionLines.absorbed_by, userProfiles.id))
     .where(eq(offerRevisionLines.configuration_id, confId))
     .limit(1);
 
@@ -2486,6 +2504,86 @@ export async function updateSurchargeSettingWithAudit(data: {
         targetEntity: "surcharge_setting",
         targetId: data.kind,
         metadata: { old_value: existing.price, new_value: data.price },
+      },
+      tx,
+    );
+  });
+}
+
+/**
+ * Persists a margin absorb sign-off on an offer revision line and writes the
+ * audit log in a single transaction. The line row is locked and the state
+ * gates (revision ACCEPTED, as-sold freeze present) re-checked inside the
+ * transaction — the action's pre-checks run outside it and could race. A
+ * re-absorb overwrites the previous decision; the audit metadata carries the
+ * prior values so the history stays reconstructable.
+ */
+export async function absorbOfferLineMarginWithAudit(data: {
+  lineId: number;
+  offerId: number;
+  configId: number;
+  revisionId: number;
+  absorbedBy: string;
+  /** Server-computed live margin at sign-off, already fixed to 2 decimals. */
+  absorbedMarginPct: string;
+  thresholdPct: number;
+  note: string | null;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [line] = await tx
+      .select({
+        revision_status: offerRevisions.status,
+        as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+        absorbed_by: offerRevisionLines.absorbed_by,
+        absorbed_at: offerRevisionLines.absorbed_at,
+        absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
+      })
+      .from(offerRevisionLines)
+      .innerJoin(
+        offerRevisions,
+        eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+      )
+      .where(eq(offerRevisionLines.id, data.lineId))
+      .for("update", { of: offerRevisionLines });
+
+    if (
+      !line ||
+      line.revision_status !== "ACCEPTED" ||
+      line.as_sold_frozen_at === null
+    ) {
+      throw new QueryError(MSG.marginReview.absorbNotAccepted, 409);
+    }
+
+    await tx
+      .update(offerRevisionLines)
+      .set({
+        absorbed_by: data.absorbedBy,
+        absorbed_at: new Date(),
+        absorbed_margin_percent: data.absorbedMarginPct,
+        absorbed_note: data.note,
+        updated_at: new Date(),
+      })
+      .where(eq(offerRevisionLines.id, data.lineId));
+
+    await insertActivityLog(
+      {
+        userId: data.absorbedBy,
+        action: "OFFER_LINE_MARGIN_ABSORB",
+        targetEntity: "offer_revision_line",
+        targetId: data.lineId.toString(),
+        metadata: {
+          offerId: data.offerId,
+          revisionId: data.revisionId,
+          configId: data.configId,
+          absorbedMarginPct: data.absorbedMarginPct,
+          thresholdPct: data.thresholdPct,
+          note: data.note,
+          previous: {
+            absorbedBy: line.absorbed_by,
+            absorbedAt: line.absorbed_at,
+            absorbedMarginPct: line.absorbed_margin_percent,
+          },
+        },
       },
       tx,
     );

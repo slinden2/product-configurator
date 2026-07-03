@@ -103,11 +103,18 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   ];
 
   // The threshold defaults to the configuration's product-category value
-  // (single category today — rollover gantries).
+  // (single category today — rollover gantries). The absorbed margin, when a
+  // sign-off exists, silences the alert until the live margin drops below it.
+  const absorbedMarginPct =
+    linePricing.absorbed_margin_percent === null
+      ? null
+      : Number(linePricing.absorbed_margin_percent);
   const comparison = buildMarginComparison(
     displayData.discounted_total,
     offerBomItems,
     ebomItems,
+    undefined,
+    absorbedMarginPct,
   );
 
   // As-sold drift: compare the at-acceptance snapshot with the current
@@ -128,6 +135,25 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     }
   }
 
+  // Absorb sign-off context: only post-acceptance frozen lines are eligible.
+  // The recorded decision (who/when/margin/note) stays visible regardless of
+  // whether the alert is currently active.
+  const absorb =
+    linePricing.revisionStatus === "ACCEPTED" && asSoldFrozenAt
+      ? {
+          confId,
+          signOff:
+            linePricing.absorbed_at !== null && absorbedMarginPct !== null
+              ? {
+                  byLabel: linePricing.absorbed_by_email ?? "—",
+                  at: linePricing.absorbed_at,
+                  marginPct: absorbedMarginPct,
+                  note: linePricing.absorbed_note,
+                }
+              : null,
+        }
+      : null;
+
   return (
     <div className="space-y-6">
       {header}
@@ -138,6 +164,7 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
         asSoldFrozenAt={asSoldFrozenAt}
         asSoldDiff={asSoldDiff}
         asSoldDiffUnavailable={asSoldDiffUnavailable}
+        absorb={absorb}
       />
     </div>
   );

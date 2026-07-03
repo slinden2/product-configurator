@@ -1,11 +1,22 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import type { AsSoldDiff } from "@/lib/configuration/build-as-sold-diff";
 import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { formatDelta, formatEur, formatPct } from "@/lib/utils";
+
+// The absorb button imports the server action, which transitively pulls in the
+// db client (throws without DATABASE_URL in jsdom) — mock the action module.
+vi.mock("@/app/actions/margin-absorb-actions", () => ({
+  absorbLineMarginAction: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 import MarginReviewView from "./margin-review-view";
 
 // --- Helpers ---
@@ -38,6 +49,8 @@ function makeComparison(
     costDelta: 100,
     thresholdPct: 30,
     belowThreshold: false,
+    absorbedMarginPct: null,
+    alertActive: false,
     tagBreakdown: [
       {
         tag: "FRAME",
@@ -175,11 +188,12 @@ describe("MarginReviewView", () => {
       expect(screen.getAllByText(delta(100)).length).toBeGreaterThan(0);
     });
 
-    test("fires the below-threshold banner when belowThreshold is set", () => {
+    test("fires the below-threshold banner when the alert is active", () => {
       render(
         <MarginReviewView
           comparison={makeComparison({
             belowThreshold: true,
+            alertActive: true,
             currentMargin: {
               revenue: 1000,
               cost: 800,
@@ -192,6 +206,133 @@ describe("MarginReviewView", () => {
       );
 
       expect(screen.getByText(BELOW_THRESHOLD_TITLE)).toBeInTheDocument();
+    });
+
+    test("hides the banner when below threshold but absorbed (alert not active)", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: false,
+            absorbedMarginPct: 20,
+            currentMargin: {
+              revenue: 1000,
+              cost: 800,
+              marginValue: 200,
+              marginPct: 20,
+            },
+          })}
+          discountPct={0}
+        />,
+      );
+
+      expect(screen.queryByText(BELOW_THRESHOLD_TITLE)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("absorb sign-off", () => {
+    const SIGN_OFF = {
+      byLabel: "director@iteco.it",
+      at: new Date("2026-06-01T09:00:00Z"),
+      marginPct: 22.5,
+      note: "Cliente strategico",
+    };
+
+    test("shows the absorb button only when the alert is active and absorb is set", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: true,
+          })}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: null }}
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: MSG.marginReview.absorbButton }),
+      ).toBeInTheDocument();
+    });
+
+    test("hides the absorb button when absorb context is missing", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: true,
+          })}
+          discountPct={0}
+          absorb={null}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", { name: MSG.marginReview.absorbButton }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("hides the absorb button when the alert is not active", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: SIGN_OFF }}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", { name: MSG.marginReview.absorbButton }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("renders the sign-off (who / when / margin / note) even without an active alert", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: SIGN_OFF }}
+        />,
+      );
+
+      expect(
+        screen.getByText(MSG.marginReview.signOffTitle),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/director@iteco\.it/)).toBeInTheDocument();
+      expect(screen.getByText(/Cliente strategico/)).toBeInTheDocument();
+    });
+
+    test("keeps the sign-off visible alongside a re-alert", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison({
+            belowThreshold: true,
+            alertActive: true,
+            absorbedMarginPct: 22.5,
+          })}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: SIGN_OFF }}
+        />,
+      );
+
+      expect(screen.getByText(BELOW_THRESHOLD_TITLE)).toBeInTheDocument();
+      expect(
+        screen.getByText(MSG.marginReview.signOffTitle),
+      ).toBeInTheDocument();
+    });
+
+    test("omits the sign-off block when no decision was recorded", () => {
+      render(
+        <MarginReviewView
+          comparison={makeComparison()}
+          discountPct={0}
+          absorb={{ confId: 1, signOff: null }}
+        />,
+      );
+
+      expect(
+        screen.queryByText(MSG.marginReview.signOffTitle),
+      ).not.toBeInTheDocument();
     });
   });
 

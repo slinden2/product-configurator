@@ -210,6 +210,7 @@ export const ActivityActions = [
   "OFFER_REVISION_ACCEPT",
   "OFFER_REVISION_DECLINE",
   "OFFER_REVISION_EXPIRE",
+  "OFFER_LINE_MARGIN_ABSORB",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
 ] as const;
@@ -249,6 +250,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_REVISION_ACCEPT: "Accettazione revisione offerta",
   OFFER_REVISION_DECLINE: "Rifiuto revisione offerta",
   OFFER_REVISION_EXPIRE: "Scadenza revisione offerta",
+  OFFER_LINE_MARGIN_ABSORB: "Presa d'atto margine ridotto",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
 };

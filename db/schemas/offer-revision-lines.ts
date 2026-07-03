@@ -5,11 +5,14 @@ import {
   jsonb,
   numeric,
   pgTable,
+  text,
   timestamp,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { configurations } from "@/db/schemas/configurations";
 import { offerRevisions } from "@/db/schemas/offer-revisions";
+import { userProfiles } from "@/db/schemas/user-profiles";
 
 export type OfferRevisionLine = typeof offerRevisionLines.$inferSelect;
 export type NewOfferRevisionLine = typeof offerRevisionLines.$inferInsert;
@@ -56,6 +59,22 @@ export const offerRevisionLines = pgTable(
       precision: 3,
     }),
     as_sold_snapshot: jsonb("as_sold_snapshot"),
+    // Absorb sign-off: a management decision (ADMIN/SALES_DIRECTOR) to accept a
+    // post-acceptance margin below threshold. absorbed_margin_percent is the live
+    // margin at sign-off and becomes the re-alert baseline: the line re-alerts only
+    // if the live margin drops below it. Overwritten on re-absorb; the activity log
+    // keeps the decision history.
+    absorbed_by: uuid("absorbed_by").references(() => userProfiles.id, {
+      onDelete: "set null",
+    }),
+    absorbed_at: timestamp("absorbed_at", { mode: "date", precision: 3 }),
+    // numeric(6,2), not (5,2): the margin percentage is signed and can fall far
+    // below -100% when the EBOM cost outgrows the as-sold revenue.
+    absorbed_margin_percent: numeric("absorbed_margin_percent", {
+      precision: 6,
+      scale: 2,
+    }),
+    absorbed_note: text("absorbed_note"),
     created_at: timestamp("created_at", { mode: "date", precision: 3 })
       .notNull()
       .defaultNow(),
@@ -71,6 +90,14 @@ export const offerRevisionLines = pgTable(
     check(
       "offer_revision_lines_as_sold_consistency",
       sql`(${table.as_sold_frozen_at} IS NULL) = (${table.as_sold_snapshot} IS NULL)`,
+    ),
+    // The sign-off timestamp and margin are written together; absorber and note
+    // exist only alongside a sign-off (absorbed_by may be nulled by user deletion).
+    check(
+      "offer_revision_lines_absorb_consistency",
+      sql`((${table.absorbed_at} IS NULL) = (${table.absorbed_margin_percent} IS NULL))
+        AND (${table.absorbed_by} IS NULL OR ${table.absorbed_at} IS NOT NULL)
+        AND (${table.absorbed_note} IS NULL OR ${table.absorbed_at} IS NOT NULL)`,
     ),
   ],
 ).enableRLS();

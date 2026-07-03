@@ -107,7 +107,12 @@ export interface MarginComparison {
   costDelta: number;
   /** The margin threshold the comparison was judged against (percentage). */
   thresholdPct: number;
+  /** Raw threshold fact — true whenever the live margin sits below the threshold. */
   belowThreshold: boolean;
+  /** The sign-off margin baseline, when an absorb decision exists. */
+  absorbedMarginPct: number | null;
+  /** `belowThreshold` AND the absorb rule — the actual alert condition. */
+  alertActive: boolean;
   tagBreakdown: TagCostRow[];
   lineDiff: LineDiffRow[];
 }
@@ -144,8 +149,8 @@ export function computeMargin(revenue: number, cost: number): MarginResult {
  * cost) falls below the product category's threshold. False when no EBOM
  * exists — there is nothing to judge yet. Revenue is the per-unit discounted
  * offer total (quantity is intentionally ignored, matching the margin review
- * page). The absorb sign-off (umbrella #81 phase 3) ANDs into this at the
- * call sites.
+ * page). This is the raw threshold fact; whether the alert is actually raised
+ * (absorb sign-off considered) is `isMarginAlertActive`.
  */
 export function isMarginBelowThreshold(
   revenue: number,
@@ -157,6 +162,31 @@ export function isMarginBelowThreshold(
   return (
     computeMargin(revenue, computeEbomCost(ebomItems)).marginPct < thresholdPct
   );
+}
+
+/**
+ * Rounding guard for the re-alert comparison: the absorbed margin persists at
+ * 2 decimals while the live margin is full precision, so without a tolerance a
+ * line absorbed at 24.126% (stored 24.13) would re-alert immediately.
+ */
+export const MARGIN_EPSILON = 0.005;
+
+/**
+ * Whether the margin alert is raised for a line: the live margin is below the
+ * category threshold AND — if a sign-off exists — has dropped below the
+ * absorbed margin. An absorb sign-off silences the alert at its margin level;
+ * only further drift re-opens the question.
+ */
+export function isMarginAlertActive(
+  revenue: number,
+  ebomItems: EbomCostItem[],
+  thresholdPct: number,
+  absorbedMarginPct: number | null,
+): boolean {
+  if (!isMarginBelowThreshold(revenue, ebomItems, thresholdPct)) return false;
+  if (absorbedMarginPct === null) return true;
+  const { marginPct } = computeMargin(revenue, computeEbomCost(ebomItems));
+  return marginPct < absorbedMarginPct - MARGIN_EPSILON;
 }
 
 /** Per-tag cost comparison (offer vs EBOM). Only tags with any cost are returned, in BomTags order. */
@@ -290,6 +320,7 @@ export function buildLineDiff(
  * Assembles the full margin comparison view model from a fixed offer revenue,
  * the offer's BOM line items (as quoted) and the current EBOM rows.
  * `thresholdPct` defaults to the configuration's product-category threshold.
+ * `absorbedMarginPct` is the line's absorb sign-off baseline, if any.
  */
 export function buildMarginComparison(
   revenue: number,
@@ -298,6 +329,7 @@ export function buildMarginComparison(
   thresholdPct: number = getMarginThresholdForCategory(
     getConfigurationProductCategory(),
   ),
+  absorbedMarginPct: number | null = null,
 ): MarginComparison {
   const hasEbom = ebomItems.filter((item) => !item.is_deleted).length > 0;
   const offerCost = computeOfferBomCost(offerItems);
@@ -320,6 +352,13 @@ export function buildMarginComparison(
     costDelta: ebomCost - offerCost,
     thresholdPct,
     belowThreshold: isMarginBelowThreshold(revenue, ebomItems, thresholdPct),
+    absorbedMarginPct,
+    alertActive: isMarginAlertActive(
+      revenue,
+      ebomItems,
+      thresholdPct,
+      absorbedMarginPct,
+    ),
     tagBreakdown: buildTagBreakdown(offerItems, ebomItems),
     lineDiff: buildLineDiff(offerItems, ebomItems),
   };

@@ -6,7 +6,7 @@ import {
   type EbomCostItem,
   getConfigurationProductCategory,
   getMarginThresholdForCategory,
-  isMarginBelowThreshold,
+  isMarginAlertActive,
 } from "@/lib/margin";
 import { prepareOfferDisplayData } from "@/lib/offer";
 
@@ -16,7 +16,12 @@ export interface LineMarginAlert {
   /** Live gross margin percentage of the current EBOM vs the as-sold revenue. */
   marginPct: number;
   thresholdPct: number;
-  belowThreshold: boolean;
+  /**
+   * True when the alert is raised: margin below threshold AND not covered by
+   * an absorb sign-off (an absorbed line re-alerts only when the live margin
+   * drops below the absorbed margin).
+   */
+  alertActive: boolean;
 }
 
 type AlertInputLine = {
@@ -24,6 +29,7 @@ type AlertInputLine = {
   configuration_id: number;
   pricing_snapshot: unknown;
   as_sold_frozen_at: Date | null;
+  absorbed_margin_percent: string | null;
 };
 
 /**
@@ -85,7 +91,14 @@ export async function computeLineMarginAlerts(
       configurationId: line.configuration_id,
       marginPct: computeMargin(revenue, computeEbomCost(ebomItems)).marginPct,
       thresholdPct,
-      belowThreshold: isMarginBelowThreshold(revenue, ebomItems, thresholdPct),
+      alertActive: isMarginAlertActive(
+        revenue,
+        ebomItems,
+        thresholdPct,
+        line.absorbed_margin_percent === null
+          ? null
+          : Number(line.absorbed_margin_percent),
+      ),
     });
   }
 

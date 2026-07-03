@@ -1,4 +1,4 @@
-import { AlertTriangle, Lock } from "lucide-react";
+import { AlertTriangle, Lock, ShieldCheck } from "lucide-react";
 import AlertBanner from "@/components/shared/alert-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import {
   formatEur,
   formatPct,
 } from "@/lib/utils";
+import AbsorbMarginButton from "./absorb-margin-button";
 
 interface Props {
   comparison: MarginComparison;
@@ -38,6 +39,20 @@ interface Props {
   asSoldDiff?: AsSoldDiff | null;
   /** True when a freeze exists but the snapshot could not be compared. */
   asSoldDiffUnavailable?: boolean;
+  /**
+   * Absorb sign-off context (#84); null when the line is not eligible (no
+   * accepted/frozen offer line). `signOff` carries the recorded decision, if
+   * any — it stays visible even when a re-alert is active.
+   */
+  absorb?: {
+    confId: number;
+    signOff: {
+      byLabel: string;
+      at: Date;
+      marginPct: number;
+      note: string | null;
+    } | null;
+  } | null;
 }
 
 /** Red when cost grew (delta > 0), green when it shrank. */
@@ -73,7 +88,7 @@ function StatTile({
   );
 }
 
-function SummaryCard({ comparison, discountPct }: Props) {
+function SummaryCard({ comparison, discountPct, absorb }: Props) {
   const {
     hasEbom,
     offerMargin,
@@ -82,6 +97,7 @@ function SummaryCard({ comparison, discountPct }: Props) {
     costDelta,
     thresholdPct,
     belowThreshold,
+    alertActive,
   } = comparison;
 
   // Color the post-engineering margin only once an EBOM exists; until then it
@@ -98,15 +114,42 @@ function SummaryCard({ comparison, discountPct }: Props) {
         <CardTitle className="text-2xl">Riepilogo marginalità</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {belowThreshold && (
+        {alertActive && (
+          <div className="space-y-3">
+            <AlertBanner
+              variant="error"
+              icon={<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />}
+              title="Marginalità sotto la soglia minima"
+            >
+              La marginalità dopo la progettazione (
+              {formatPct(currentMargin.marginPct)}) è inferiore alla soglia
+              minima del {formatPct(thresholdPct)}.
+            </AlertBanner>
+            {absorb && (
+              <AbsorbMarginButton
+                confId={absorb.confId}
+                marginPct={currentMargin.marginPct}
+                thresholdPct={thresholdPct}
+              />
+            )}
+          </div>
+        )}
+
+        {absorb?.signOff && (
           <AlertBanner
-            variant="error"
-            icon={<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />}
-            title="Marginalità sotto la soglia minima"
+            icon={<ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />}
+            title={MSG.marginReview.signOffTitle}
           >
-            La marginalità dopo la progettazione (
-            {formatPct(currentMargin.marginPct)}) è inferiore alla soglia minima
-            del {formatPct(thresholdPct)}.
+            {MSG.marginReview.signOffBody(
+              absorb.signOff.byLabel,
+              formatDateDDMMYYYYHHMM(absorb.signOff.at),
+              formatPct(absorb.signOff.marginPct),
+            )}
+            {absorb.signOff.note && (
+              <span className="block mt-1">
+                {MSG.marginReview.signOffNoteLabel}: {absorb.signOff.note}
+              </span>
+            )}
           </AlertBanner>
         )}
 
@@ -489,6 +532,7 @@ export default function MarginReviewView({
   asSoldFrozenAt,
   asSoldDiff = null,
   asSoldDiffUnavailable = false,
+  absorb = null,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -503,7 +547,11 @@ export default function MarginReviewView({
           </span>
         </div>
       )}
-      <SummaryCard comparison={comparison} discountPct={discountPct} />
+      <SummaryCard
+        comparison={comparison}
+        discountPct={discountPct}
+        absorb={absorb}
+      />
       {asSoldFrozenAt && (
         <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />
       )}

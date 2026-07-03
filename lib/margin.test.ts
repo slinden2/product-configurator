@@ -11,7 +11,9 @@ import {
   type EbomCostItem,
   getConfigurationProductCategory,
   getMarginThresholdForCategory,
+  isMarginAlertActive,
   isMarginBelowThreshold,
+  MARGIN_EPSILON,
   offerLineCost,
 } from "./margin";
 
@@ -325,6 +327,67 @@ describe("buildMarginComparison", () => {
     const lenient = buildMarginComparison(1000, offer, ebom, 15);
     expect(lenient.thresholdPct).toBe(15);
     expect(lenient.belowThreshold).toBe(false);
+  });
+
+  it("raises alertActive without a sign-off and defaults absorbedMarginPct to null", () => {
+    // revenue 1000, ebom cost 800 → 20% margin < 30%
+    const ebom = [makeEbomItem({ pn: "A", tag: "FRAME", cost: 800, qty: 1 })];
+    const result = buildMarginComparison(1000, offer, ebom);
+    expect(result.absorbedMarginPct).toBeNull();
+    expect(result.alertActive).toBe(true);
+  });
+
+  it("silences alertActive when a sign-off covers the live margin, keeping belowThreshold true", () => {
+    // live margin 20%, absorbed at 20% → below threshold but no active alert
+    const ebom = [makeEbomItem({ pn: "A", tag: "FRAME", cost: 800, qty: 1 })];
+    const result = buildMarginComparison(1000, offer, ebom, undefined, 20);
+    expect(result.belowThreshold).toBe(true);
+    expect(result.absorbedMarginPct).toBe(20);
+    expect(result.alertActive).toBe(false);
+  });
+
+  it("re-raises alertActive when the live margin drops below the absorbed margin", () => {
+    // live margin 15%, absorbed at 20% → further drift re-opens the question
+    const ebom = [makeEbomItem({ pn: "A", tag: "FRAME", cost: 850, qty: 1 })];
+    const result = buildMarginComparison(1000, offer, ebom, undefined, 20);
+    expect(result.alertActive).toBe(true);
+  });
+});
+
+describe("isMarginAlertActive", () => {
+  // revenue 1000, cost 800 → 20% live margin, threshold 30
+  const ebom = [makeEbomItem({ pn: "A", cost: 800, qty: 1 })];
+
+  it("is active below threshold without a sign-off", () => {
+    expect(isMarginAlertActive(1000, ebom, 30, null)).toBe(true);
+  });
+
+  it("is inactive at or above the threshold regardless of any sign-off", () => {
+    const healthy = [makeEbomItem({ pn: "A", cost: 600, qty: 1 })]; // 40%
+    expect(isMarginAlertActive(1000, healthy, 30, null)).toBe(false);
+    expect(isMarginAlertActive(1000, healthy, 30, 45)).toBe(false);
+  });
+
+  it("is silenced by a sign-off at the live margin", () => {
+    expect(isMarginAlertActive(1000, ebom, 30, 20)).toBe(false);
+  });
+
+  it("tolerates the 2-decimal rounding of the stored absorbed margin", () => {
+    // live 24.126% stored as 24.13: live < stored but within epsilon → silenced
+    const rounded = [makeEbomItem({ pn: "A", cost: 758.74, qty: 1 })]; // 24.126%
+    expect(isMarginAlertActive(1000, rounded, 30, 24.13)).toBe(false);
+  });
+
+  it("re-alerts when the live margin drops below the absorbed margin beyond epsilon", () => {
+    expect(isMarginAlertActive(1000, ebom, 30, 20 + MARGIN_EPSILON * 2)).toBe(
+      true,
+    );
+    // absorbed at 25%, live at 20% → clearly re-alerts
+    expect(isMarginAlertActive(1000, ebom, 30, 25)).toBe(true);
+  });
+
+  it("never alerts without a live EBOM, even with a stale sign-off", () => {
+    expect(isMarginAlertActive(1000, [], 30, 20)).toBe(false);
   });
 });
 
