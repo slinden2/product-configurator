@@ -23,10 +23,8 @@ export const configurationsRelations = relations(
     water_tanks: many(waterTanks),
     wash_bays: many(washBays),
     engineering_bom_items: many(engineeringBomItems),
-    offer_revision_line: one(offerRevisionLines, {
-      fields: [configurations.id],
-      references: [offerRevisionLines.configuration_id],
-    }),
+    // One line per revision: the frozen accepted line plus one per renegotiation revision.
+    offer_revision_lines: many(offerRevisionLines),
   }),
 );
 

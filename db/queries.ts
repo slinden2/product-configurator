@@ -302,10 +302,11 @@ export async function canAccessOffer(
 }
 
 /**
- * Status of the offer revision that owns this configuration, or `null` if the
- * config is not an offer line (standalone, or no line yet). Threaded into
+ * Status of the latest offer revision that owns this configuration, or `null` if
+ * the config is not an offer line (standalone, or no line yet). Threaded into
  * {@link isEditable} so an OFFER config's pre-handoff edit gate keys on the
- * revision lifecycle (editable only while the revision is DRAFT).
+ * revision lifecycle (editable only while the revision is DRAFT). Post-acceptance
+ * a config can sit on multiple revisions (renegotiations); the latest one governs.
  */
 export async function getOfferRevisionStatusForConfig(
   configId: number,
@@ -319,6 +320,7 @@ export async function getOfferRevisionStatusForConfig(
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
     .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(desc(offerRevisions.revision_no))
     .limit(1);
 
   return row?.status ?? null;
@@ -618,8 +620,11 @@ export async function loadConfigForPricing(
 }
 
 /**
- * Resolves the offer revision line owning `configId`, with the revision's discount
- * and status, for re-pricing. Returns null for a config that is not an offer line.
+ * Resolves the offer revision line owning `configId` on the **latest** owning
+ * revision, with the revision's discount and status, for re-pricing. Returns null
+ * for a config that is not an offer line. A config referenced by renegotiation
+ * revisions has one line per revision; the latest is the only possibly-DRAFT one
+ * (older lines are frozen, and re-pricing no-ops on non-DRAFT revisions).
  */
 export async function offerRevisionLineForConfig(
   configId: number,
@@ -643,6 +648,7 @@ export async function offerRevisionLineForConfig(
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
     .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(desc(offerRevisions.revision_no))
     .limit(1);
 
   return row ?? null;
@@ -653,8 +659,10 @@ export async function offerRevisionLineForConfig(
  * the as-sent `pricing_snapshot` (revenue reference) plus the derived net/list prices,
  * the revision discount/status, the at-acceptance as-sold freeze and the absorb
  * sign-off (with the absorber's email for display). Returns null for a config that
- * is not an offer line (e.g. standalone). The unique on `configuration_id` means
- * at most one line per config.
+ * is not an offer line (e.g. standalone). A config referenced by renegotiation
+ * revisions has one line per revision: the line on the **in-force accepted**
+ * revision (`offers.accepted_revision_id`) is authoritative for the margin
+ * baseline; pre-acceptance it falls back to the latest revision's line.
  */
 export async function getOfferLinePricingForConfig(confId: number): Promise<{
   id: number;
@@ -697,7 +705,12 @@ export async function getOfferLinePricingForConfig(confId: number): Promise<{
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
     .leftJoin(userProfiles, eq(offerRevisionLines.absorbed_by, userProfiles.id))
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
     .where(eq(offerRevisionLines.configuration_id, confId))
+    .orderBy(
+      sql`(${offerRevisions.id} = ${offers.accepted_revision_id}) DESC NULLS LAST`,
+      desc(offerRevisions.revision_no),
+    )
     .limit(1);
 
   if (!row) return null;

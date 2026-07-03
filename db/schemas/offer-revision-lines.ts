@@ -23,8 +23,11 @@ export type NewOfferRevisionLine = typeof offerRevisionLines.$inferInsert;
  * revision's header discount; `line_discount_percent` is a nullable future hook for per-line
  * overrides. `pricing_snapshot` captures the as-sent quote figures when the revision is sent.
  *
- * Each revision deep-clones its configurations, so a configuration belongs to exactly one line
- * (enforced by the unique on configuration_id).
+ * A configuration belongs to exactly one line **per revision** (unique on
+ * (offer_revision_id, configuration_id)). Pre-acceptance revisions deep-clone their
+ * configurations, so there the mapping is 1:1 globally; post-acceptance renegotiation
+ * revisions instead reference the accepted revision's configurations read-only, so a
+ * configuration can own its frozen accepted line plus one line per renegotiation revision.
  *
  * `as_sold_snapshot` / `as_sold_frozen_at` capture the configuration exactly as sold at the
  * moment the customer accepts this revision (the technical counterpart to the commercial
@@ -40,7 +43,6 @@ export const offerRevisionLines = pgTable(
       .notNull(),
     configuration_id: integer("configuration_id")
       .references(() => configurations.id, { onDelete: "cascade" })
-      .unique()
       .notNull(),
     position: integer("position").notNull(),
     quantity: integer("quantity").notNull().default(1),
@@ -85,6 +87,7 @@ export const offerRevisionLines = pgTable(
   },
   (table) => [
     unique().on(table.offer_revision_id, table.position),
+    unique().on(table.offer_revision_id, table.configuration_id),
     // The as-sold freeze marker and capture are set together at acceptance, never one
     // without the other (mirrors the consistency invariant the old offer_snapshots had).
     check(
