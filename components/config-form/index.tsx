@@ -19,6 +19,7 @@ import SupplySection from "@/components/config-form/supply-section";
 import TouchSection from "@/components/config-form/touch-section";
 import WaterSupplySection from "@/components/config-form/water-supply-section";
 import Fieldset from "@/components/fieldset";
+import { DevFillButton } from "@/components/shared/dev-fill-button";
 import SaveWarningDialog from "@/components/shared/save-warning-dialog";
 import { SubmitButton } from "@/components/shared/submit-button";
 import TextareaField from "@/components/textarea-field";
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormDisabledContext } from "@/components/ui/form";
 import { isConfigLocked } from "@/lib/access";
 import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
+import { makeDummyConfig } from "@/lib/dev/dummy-config";
 import { MSG } from "@/lib/messages";
 import type {
   ConfigOrigin,
@@ -185,6 +187,12 @@ const ConfigForm = ({
     executeSubmit(values);
   }
 
+  function handleDevFill() {
+    form.reset(makeDummyConfig(), { keepDefaultValues: true });
+    // Edit mode validates on mount; re-trigger so stale field errors clear.
+    void form.trigger();
+  }
+
   function handleSaveWarningConfirm() {
     setShowSaveWarning(false);
     if (pendingValuesRef.current) {
@@ -240,6 +248,7 @@ const ConfigForm = ({
                     }
                   />
                 )}
+                {!formIsDisabled && <DevFillButton onFill={handleDevFill} />}
                 <Button
                   type="button"
                   className="ml-auto"
