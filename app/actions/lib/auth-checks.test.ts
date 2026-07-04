@@ -423,6 +423,21 @@ describe("canTransitionRevision", () => {
     });
   });
 
+  describe("ACCEPTED -> SENT (undo a mistaken acceptance): ADMIN only", () => {
+    test("ADMIN may undo an acceptance", () => {
+      expect(canTransitionRevision("ADMIN", "ACCEPTED", "SENT")).toBe(true);
+    });
+
+    test.each([
+      "SALES",
+      "SALES_MANAGER",
+      "SALES_DIRECTOR",
+      "ENGINEER",
+    ] as const)("%s may not undo an acceptance", (role) => {
+      expect(canTransitionRevision(role, "ACCEPTED", "SENT")).toBe(false);
+    });
+  });
+
   describe("unsupported edges fail closed", () => {
     const badEdges: [OfferStatusType, OfferStatusType][] = [
       ["DRAFT", "APPROVED_TO_SEND"],
@@ -430,7 +445,6 @@ describe("canTransitionRevision", () => {
       ["PENDING_APPROVAL", "SENT"],
       ["SENT", "DRAFT"],
       ["ACCEPTED", "DRAFT"],
-      ["ACCEPTED", "SENT"],
       ["REJECTED", "SENT"],
     ];
     test.each(badEdges)("ADMIN cannot jump %s -> %s", (from, to) => {

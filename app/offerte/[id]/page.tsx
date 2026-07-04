@@ -43,6 +43,7 @@ import RenegotiateOfferButton from "./renegotiate-offer-button";
 import RevisionHistory from "./revision-history";
 import SendRevisionButton from "./send-revision-button";
 import SubmitForApprovalButton from "./submit-for-approval-button";
+import UnacceptRevisionButton from "./unaccept-revision-button";
 
 interface OfferDetailProps {
   params: Promise<{ id: string }>;
@@ -90,6 +91,15 @@ const OfferDetail = async (props: OfferDetailProps) => {
     !OPEN_REVISION_STATUSES.includes(revision.status) &&
     isAccepted &&
     canRenegotiateOffer(user.role);
+  // ADMIN-only correction: undo a mistaken acceptance. Offered only on the in-force
+  // first-acceptance revision (a renegotiation re-acceptance is out of scope, blocked
+  // server-side too); the action re-checks role, state, and the engineering guard.
+  const canUnaccept =
+    user.role === "ADMIN" &&
+    !!revision &&
+    revision.status === "ACCEPTED" &&
+    revision.id === offer.accepted_revision_id &&
+    !workingIsRenegotiation;
   // Approve / reject / un-approve are management-only (scope already enforced by the
   // scoped fetch above).
   const canApprove = canApproveRevision(user.role);
@@ -170,6 +180,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
             {canRenegotiate && <RenegotiateOfferButton offerId={offer.id} />}
+            {canUnaccept && <UnacceptRevisionButton offerId={offer.id} />}
             {canExportOfferRevision(revision.status) && (
               <OfferExportButtons
                 data={buildOfferRevisionExportData(offer, revision)}

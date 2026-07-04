@@ -20,6 +20,7 @@ import {
   returnOfferRevisionToDraftWithAudit,
   submitOfferRevisionForApprovalWithAudit,
   type TransactionType,
+  unacceptOfferRevisionWithAudit,
   updateRevisionDiscountWithAudit,
   updateRevisionSettingsWithAudit,
 } from "@/db/queries";
@@ -459,6 +460,58 @@ export async function acceptRevisionAction(offerId: number) {
     // The line configs are now SALES_APPROVED — refresh the engineering surfaces.
     // The margin pages re-baseline on the newly frozen lines (relevant on a
     // renegotiation re-acceptance, where the new prices can clear the alert).
+    revalidatePath("/configurazioni");
+    for (const configId of working.configIds) {
+      revalidatePath(`/configurazioni/modifica/${configId}`);
+      revalidatePath(`/configurazioni/visualizza/${configId}`);
+      revalidatePath(`/configurazioni/bom/${configId}`);
+      revalidatePath(`/configurazioni/marginalita/${configId}`);
+    }
+    return { success: true as const };
+  } catch (err) {
+    if (err instanceof QueryError) {
+      return { success: false as const, error: err.message };
+    }
+    if (err instanceof DatabaseError) {
+      return { success: false as const, error: MSG.db.error };
+    }
+    return { success: false as const, error: MSG.db.unknown };
+  }
+}
+
+/**
+ * ADMIN-only correction for a mistaken acceptance: reverts the in-force accepted
+ * revision ACCEPTED → SENT, unlocks the offer (`accepted_revision_id` → null), unwinds
+ * the per-line as-sold freeze, and returns each line config to DRAFT (out of the
+ * engineering queue). Refused if any config has already advanced past SALES_APPROVED or
+ * if the acceptance was a renegotiation re-acceptance — both guarded in
+ * `unacceptOfferRevisionWithAudit`. The ADMIN-only ACCEPTED → SENT edge lives in
+ * `canTransitionRevision`.
+ */
+export async function unacceptRevisionAction(offerId: number) {
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  if (!canTransitionRevision(user.role, revision.status, "SENT")) {
+    return { success: false as const, error: MSG.offer.cannotUnaccept };
+  }
+
+  const working = await getWorkingRevisionForSend(offerId);
+  if (!working) return { success: false as const, error: MSG.offer.notFound };
+  if (working.status !== "ACCEPTED") {
+    return { success: false as const, error: MSG.offer.cannotUnaccept };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await unacceptOfferRevisionWithAudit(offerId, working.id, user.id, tx);
+    });
+
+    revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/offerte");
+    // The line configs are back to DRAFT and out of the engineering queue — refresh
+    // the same surfaces the acceptance touched.
     revalidatePath("/configurazioni");
     for (const configId of working.configIds) {
       revalidatePath(`/configurazioni/modifica/${configId}`);

@@ -87,6 +87,7 @@ export const MSG = {
       "Offerta accettata: configurazioni in lavorazione tecnica.",
     offerRenegotiationAccepted:
       "Rinegoziazione accettata: venduto ricongelato sui nuovi prezzi.",
+    offerRevisionUnaccepted: "Accettazione annullata.",
     offerRevisionDeclined: "Rifiuto del cliente registrato.",
     offerRevisionExpired: "Revisione segnata come scaduta.",
     configDeleted: "Configurazione eliminata con successo.",
@@ -240,6 +241,14 @@ export const MSG = {
       "L'esito del cliente può essere registrato solo su una revisione inviata.",
     alreadyAccepted:
       "L'offerta è già stata accettata e non può più essere modificata.",
+    cannotUnaccept:
+      "Solo un ADMIN può annullare l'accettazione di una revisione accettata.",
+    unacceptEngineeringStarted:
+      "Impossibile annullare l'accettazione: l'ufficio tecnico ha già preso in carico almeno una configurazione.",
+    unacceptRenegotiation:
+      "L'annullamento non è disponibile su una riaccettazione di rinegoziazione.",
+    unacceptConfirm:
+      "Annullare l'accettazione? La revisione tornerà «Inviata», l'offerta si sbloccherà e le configurazioni torneranno in bozza (uscendo dall'ufficio tecnico). Usa solo per correggere un'accettazione errata.",
     workingRevisionExists:
       "Esiste già una revisione di lavoro non ancora inviata. Completane l'invio prima di crearne una nuova.",
     submitConfirm:

@@ -15,6 +15,7 @@ const mockSubmitOfferRevisionForApprovalWithAudit = vi.fn();
 const mockApproveOfferRevisionWithAudit = vi.fn();
 const mockReturnOfferRevisionToDraftWithAudit = vi.fn();
 const mockAcceptOfferRevisionWithAudit = vi.fn();
+const mockUnacceptOfferRevisionWithAudit = vi.fn();
 const mockRecordOfferRevisionOutcomeWithAudit = vi.fn();
 const mockRepriceOfferLines = vi.fn();
 const mockLoadValidatedConfiguration = vi.fn();
@@ -26,6 +27,8 @@ vi.mock("@/db/queries", () => ({
     mockGetOfferWorkingRevision(...args),
   acceptOfferRevisionWithAudit: (...args: unknown[]) =>
     mockAcceptOfferRevisionWithAudit(...args),
+  unacceptOfferRevisionWithAudit: (...args: unknown[]) =>
+    mockUnacceptOfferRevisionWithAudit(...args),
   recordOfferRevisionOutcomeWithAudit: (...args: unknown[]) =>
     mockRecordOfferRevisionOutcomeWithAudit(...args),
   updateRevisionDiscountWithAudit: (...args: unknown[]) =>
@@ -97,6 +100,7 @@ import {
   setRevisionDiscountAction,
   setRevisionSettingsAction,
   submitRevisionForApprovalAction,
+  unacceptRevisionAction,
 } from "@/app/actions/offer-revision-actions";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -774,6 +778,88 @@ describe("acceptRevisionAction", () => {
     expect(result).toEqual({
       success: false,
       error: MSG.offer.alreadyAccepted,
+    });
+  });
+});
+
+describe("unacceptRevisionAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "a1", role: "ADMIN" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "ACCEPTED",
+    });
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "ACCEPTED",
+      configIds: [11, 12],
+    });
+    mockUnacceptOfferRevisionWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("ADMIN undoes an accepted revision back to SENT", async () => {
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockUnacceptOfferRevisionWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "a1",
+      expect.anything(),
+    );
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("rejects %s (undo is ADMIN-only)", async (role) => {
+    mockGetUserData.mockResolvedValue({ id: "s1", role });
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotUnaccept,
+    });
+    expect(mockUnacceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockUnacceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("returns notFound when the offer is out of scope", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(mockUnacceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the working revision is not ACCEPTED", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+    });
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+      configIds: [11],
+    });
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotUnaccept });
+    expect(mockUnacceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("propagates the engineering-started guard error from the helper", async () => {
+    mockUnacceptOfferRevisionWithAudit.mockRejectedValue(
+      new QueryError(MSG.offer.unacceptEngineeringStarted, 409),
+    );
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.unacceptEngineeringStarted,
     });
   });
 });

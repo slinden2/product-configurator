@@ -147,6 +147,9 @@ export function canTransition(
  * - SENT → ACCEPTED / REJECTED / EXPIRED (record customer outcome): any
  *   offer-access role. Recording what the customer decided is not a management
  *   gate — approval already happened before send.
+ * - ACCEPTED → SENT (undo a mistaken acceptance): ADMIN only. The single edge
+ *   out of the otherwise-terminal ACCEPTED state, an admin correction tool; the
+ *   action layer unwinds the as-sold freeze and the config hand-off.
  *
  * Fails closed for ENGINEER (no offer access) on every edge, the identity edge
  * included — a no-op is not a licence for a role with no authority over offers.
@@ -177,6 +180,8 @@ export function canTransitionRevision(
     (to === "ACCEPTED" || to === "REJECTED" || to === "EXPIRED")
   )
     return true;
+  // ADMIN-only correction: undo a mistaken acceptance back to SENT.
+  if (from === "ACCEPTED" && to === "SENT") return role === "ADMIN";
 
   return false;
 }

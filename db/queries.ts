@@ -44,6 +44,7 @@ import {
 import { BOM } from "@/lib/BOM";
 import { hasQualifyingEnergyChainBay } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
+import { firstAcceptedRevisionNo } from "@/lib/offer-renegotiation";
 import { getTransitionDirection } from "@/lib/status-config";
 import type {
   ActivityAction,
@@ -1389,6 +1390,178 @@ export async function acceptOfferRevisionWithAudit(
         renegotiation: isReacceptance,
         previousAcceptedRevisionId: offerRow.accepted_revision_id,
       },
+    },
+    tx,
+  );
+}
+
+/**
+ * ADMIN-only correction: undoes a mistaken acceptance, the exact inverse of
+ * {@link acceptOfferRevisionWithAudit}. In one `FOR UPDATE`-locked transaction it:
+ *  - guards that `revisionId` is the offer's **in-force** accepted revision;
+ *  - guards this is a **first acceptance**, not a renegotiation re-acceptance (out of
+ *    scope): if any earlier revision carries an as-sold-frozen line, throws;
+ *  - guards **no engineering work has started**: every line config must still be
+ *    exactly `SALES_APPROVED` (the clean hand-off) — else throws, so no technical
+ *    work is ever destroyed;
+ *  - moves the revision ACCEPTED → SENT (status-guarded) and clears
+ *    `offers.accepted_revision_id`, unlocking the offer;
+ *  - for each line: clears the as-sold freeze (`as_sold_snapshot` + `as_sold_frozen_at`,
+ *    both together for the CHECK constraint) and reverts the config `SALES_APPROVED →
+ *    DRAFT`, unwinding the engineering hand-off. Each step is audited.
+ */
+export async function unacceptOfferRevisionWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  tx: TransactionType,
+): Promise<void> {
+  // Serialize against concurrent lifecycle mutations on this offer.
+  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+
+  const offer = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true, accepted_revision_id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        with: {
+          lines: { columns: { as_sold_frozen_at: true } },
+        },
+      },
+    },
+  });
+  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  // Only the in-force accepted revision can be un-accepted.
+  if (offer.accepted_revision_id !== revisionId) {
+    throw new QueryError(MSG.offer.cannotUnaccept, 403);
+  }
+
+  const target = offer.revisions.find((rev) => rev.id === revisionId);
+  if (!target) throw new QueryError(MSG.offer.notFound, 404);
+
+  // No later revision may exist. A renegotiation revision opened after this acceptance
+  // (serialized by the offer lock above, but possibly created between the action's
+  // pre-check and this tx) would be orphaned and misclassified as an ordinary editable
+  // revision once the first as-sold freeze is cleared. `revisions` is desc by
+  // revision_no, so [0] is the latest — refuse if it is past the target.
+  const latest = offer.revisions[0];
+  if (latest && latest.revision_no > target.revision_no) {
+    throw new QueryError(MSG.offer.cannotUnaccept, 409);
+  }
+
+  // First-acceptance only: a renegotiation re-acceptance (a revision accepted after an
+  // earlier one) is out of scope — the configs were handed off at first acceptance and
+  // must not be dragged back. Anchored on the as-sold freeze, like the renegotiation
+  // derivation (lib/offer-renegotiation.ts).
+  const firstAcceptedNo = firstAcceptedRevisionNo(offer.revisions);
+  if (firstAcceptedNo !== null && target.revision_no > firstAcceptedNo) {
+    throw new QueryError(MSG.offer.unacceptRenegotiation, 409);
+  }
+
+  const lines = await tx
+    .select({
+      lineId: offerRevisionLines.id,
+      configId: offerRevisionLines.configuration_id,
+      configStatus: configurations.status,
+    })
+    .from(offerRevisionLines)
+    .innerJoin(
+      configurations,
+      eq(offerRevisionLines.configuration_id, configurations.id),
+    )
+    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
+
+  // Engineering-started guard: the hand-off must still be clean. Any config past
+  // SALES_APPROVED means the technical office has taken it in — refuse.
+  if (lines.some((line) => line.configStatus !== "SALES_APPROVED")) {
+    throw new QueryError(MSG.offer.unacceptEngineeringStarted, 409);
+  }
+
+  // ACCEPTED → SENT, guarded so a concurrent mutation can't slip past us.
+  const [updated] = await tx
+    .update(offerRevisions)
+    .set({ status: "SENT", updated_at: new Date() })
+    .where(
+      and(
+        eq(offerRevisions.id, revisionId),
+        eq(offerRevisions.status, "ACCEPTED"),
+      ),
+    )
+    .returning({ id: offerRevisions.id });
+  if (!updated) throw new QueryError(MSG.offer.cannotUnaccept, 403);
+
+  const now = new Date();
+
+  await tx
+    .update(offers)
+    .set({ accepted_revision_id: null, updated_at: now })
+    .where(eq(offers.id, offerId));
+
+  for (const line of lines) {
+    // Clear the as-sold freeze — both columns together (CHECK constraint).
+    await tx
+      .update(offerRevisionLines)
+      .set({
+        as_sold_snapshot: null,
+        as_sold_frozen_at: null,
+        updated_at: now,
+      })
+      .where(eq(offerRevisionLines.id, line.lineId));
+
+    await insertActivityLog(
+      {
+        userId,
+        action: "CONFIG_AS_SOLD_UNFREEZE",
+        targetEntity: "offer_revision_line",
+        targetId: line.lineId.toString(),
+        metadata: { configId: line.configId, revisionId },
+      },
+      tx,
+    );
+
+    // Revert the engineering hand-off: SALES_APPROVED → DRAFT. Status-guarded so a
+    // concurrent engineer transition (SALES_APPROVED → IN_TECH_REVIEW) that commits
+    // between the read above and here can't be silently clobbered: if the row is no
+    // longer SALES_APPROVED the guarded update matches nothing and we abort the whole
+    // un-acceptance, preserving the engineering work (mirrors the revision guard above).
+    const [reverted] = await tx
+      .update(configurations)
+      .set({ status: "DRAFT" })
+      .where(
+        and(
+          eq(configurations.id, line.configId),
+          eq(configurations.status, "SALES_APPROVED"),
+        ),
+      )
+      .returning({ id: configurations.id });
+    if (!reverted) {
+      throw new QueryError(MSG.offer.unacceptEngineeringStarted, 409);
+    }
+
+    await insertActivityLog(
+      {
+        userId,
+        action: "CONFIG_STATUS_CHANGE",
+        targetEntity: "configuration",
+        targetId: line.configId.toString(),
+        metadata: {
+          from: line.configStatus,
+          to: "DRAFT",
+          via: "OFFER_UNACCEPT",
+        },
+      },
+      tx,
+    );
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_UNACCEPT",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: { revisionId },
     },
     tx,
   );
