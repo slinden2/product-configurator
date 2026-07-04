@@ -20,7 +20,7 @@ import { MSG } from "@/lib/messages";
 import {
   getTransitionDirection,
   getTransitionLabel,
-  isAdjacentTransition,
+  isWorkflowEdge,
   STATUS_CONFIG,
   STATUS_PIPELINE,
 } from "@/lib/status-config";
@@ -48,7 +48,8 @@ interface StatusControlProps {
  * Valid target statuses a role can move to from the current status, derived from
  * the server-side `canTransition` guard (app/actions/lib/auth-checks.ts) so the
  * client buttons and the server gate cannot drift. Ordering follows
- * STATUS_PIPELINE, which drives the button-vs-dropdown split below.
+ * STATUS_PIPELINE; the button-vs-dropdown split below is driven by the
+ * STATUS_TRANSITIONS edge table.
  */
 function getValidTransitions(
   role: Role,
@@ -77,14 +78,18 @@ const StatusControl = ({
   const { label } = STATUS_CONFIG[initialStatus];
   const validTargets = getValidTransitions(userRole, initialStatus, origin);
 
-  // Adjacent (±1) moves become buttons; the rest (ADMIN-only jumps) go in the
-  // manual dropdown.
+  // Named workflow edges become buttons; everything else a role may still
+  // perform (ADMIN arbitrary jumps) goes in the ADMIN-only manual dropdown.
+  // The role guard is belt-and-braces: non-ADMIN valid targets are always
+  // table edges, but the dropdown being ADMIN-only is an invariant we want
+  // explicit rather than emergent.
   const buttonTargets = validTargets.filter((t) =>
-    isAdjacentTransition(initialStatus, t),
+    isWorkflowEdge(initialStatus, t, origin),
   );
-  const jumpTargets = validTargets.filter(
-    (t) => !isAdjacentTransition(initialStatus, t),
-  );
+  const jumpTargets =
+    userRole === "ADMIN"
+      ? validTargets.filter((t) => !isWorkflowEdge(initialStatus, t, origin))
+      : [];
 
   const runTransition = (target: ConfigurationStatusType) => {
     startTransition(async () => {

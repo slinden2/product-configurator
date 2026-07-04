@@ -3,7 +3,7 @@ import { ConfigOrigins, ConfigurationStatus, Roles } from "@/types";
 import {
   getTransitionDirection,
   getTransitionLabel,
-  isAdjacentTransition,
+  isWorkflowEdge,
   STATUS_CONFIG,
   STATUS_PIPELINE,
   STATUS_TRANSITIONS,
@@ -51,17 +51,29 @@ describe("getTransitionDirection", () => {
   });
 });
 
-describe("isAdjacentTransition", () => {
-  test("is true only for single-step moves in either direction", () => {
-    expect(isAdjacentTransition("DRAFT", "SALES_APPROVED")).toBe(true);
-    expect(isAdjacentTransition("SALES_APPROVED", "DRAFT")).toBe(true);
-    expect(isAdjacentTransition("TECH_APPROVED", "CLOSED")).toBe(true);
+describe("isWorkflowEdge", () => {
+  test("is true for named edges of the matching origin", () => {
+    expect(isWorkflowEdge("DRAFT", "IN_TECH_REVIEW", "STANDALONE")).toBe(true);
+    expect(isWorkflowEdge("IN_TECH_REVIEW", "DRAFT", "STANDALONE")).toBe(true);
+    expect(isWorkflowEdge("SALES_APPROVED", "IN_TECH_REVIEW", "OFFER")).toBe(
+      true,
+    );
+    expect(isWorkflowEdge("TECH_APPROVED", "CLOSED", "OFFER")).toBe(true);
   });
 
-  test("is false for multi-step jumps", () => {
-    expect(isAdjacentTransition("DRAFT", "IN_TECH_REVIEW")).toBe(false);
-    expect(isAdjacentTransition("DRAFT", "CLOSED")).toBe(false);
-    expect(isAdjacentTransition("SALES_APPROVED", "TECH_APPROVED")).toBe(false);
+  test("is false when the edge does not exist for the origin", () => {
+    expect(isWorkflowEdge("DRAFT", "IN_TECH_REVIEW", "OFFER")).toBe(false);
+    expect(
+      isWorkflowEdge("IN_TECH_REVIEW", "SALES_APPROVED", "STANDALONE"),
+    ).toBe(false);
+  });
+
+  test("is false for jumps with no row in the table", () => {
+    expect(isWorkflowEdge("DRAFT", "SALES_APPROVED", "OFFER")).toBe(false);
+    expect(isWorkflowEdge("DRAFT", "CLOSED", "STANDALONE")).toBe(false);
+    expect(isWorkflowEdge("SALES_APPROVED", "TECH_APPROVED", "OFFER")).toBe(
+      false,
+    );
   });
 });
 
@@ -77,7 +89,7 @@ describe("getTransitionLabel", () => {
     expect(getTransitionLabel(from, to)).toBe(expected);
   });
 
-  test("falls back to the target status label for non-adjacent jumps", () => {
+  test("falls back to the target status label for jumps without a row", () => {
     // No dedicated edge label exists for a DRAFT -> CLOSED jump (ADMIN only),
     // so it falls back to the target status' own label.
     expect(getTransitionLabel("DRAFT", "CLOSED")).toBe(

@@ -50,19 +50,6 @@ export function getTransitionDirection(
     : "backward";
 }
 
-/**
- * Whether two statuses are one step apart in the pipeline. Adjacent transitions
- * are surfaced as action buttons; non-adjacent ADMIN jumps use the dropdown.
- */
-export function isAdjacentTransition(
-  from: ConfigurationStatusType,
-  to: ConfigurationStatusType,
-): boolean {
-  return (
-    Math.abs(STATUS_PIPELINE.indexOf(to) - STATUS_PIPELINE.indexOf(from)) === 1
-  );
-}
-
 export interface StatusTransition {
   from: ConfigurationStatusType;
   to: ConfigurationStatusType;
@@ -112,9 +99,8 @@ export const STATUS_TRANSITIONS: readonly StatusTransition[] = [
     roles: ["ENGINEER"],
     origins: ["OFFER"],
   },
-  // STANDALONE engineering entry. These are non-adjacent jumps, so they only
-  // ever surface in the dropdown (which uses the target status label) — the
-  // label here is for completeness and is not shown today.
+  // STANDALONE engineering entry (SALES_APPROVED never appears in the
+  // standalone chain, so DRAFT connects straight to IN_TECH_REVIEW).
   {
     from: "DRAFT",
     to: "IN_TECH_REVIEW",
@@ -175,15 +161,29 @@ function findTransition(
 }
 
 /**
- * Human-facing action label for a workflow edge. Adjacent (±1) edges are
- * reachable via buttons and carry a dedicated label; non-adjacent ADMIN jumps
- * have no row and fall back to the target status label.
+ * Human-facing action label for a workflow edge. Named edges carry a dedicated
+ * label; ADMIN jumps have no row and fall back to the target status label.
  */
 export function getTransitionLabel(
   from: ConfigurationStatusType,
   to: ConfigurationStatusType,
 ): string {
   return findTransition(from, to)?.label ?? STATUS_CONFIG[to].label;
+}
+
+/**
+ * Whether `from -> to` is a named workflow edge for `origin` (has a row in
+ * STATUS_TRANSITIONS). Named edges surface as action buttons; anything else a
+ * role can still perform (ADMIN jumps) goes in the manual dropdown.
+ */
+export function isWorkflowEdge(
+  from: ConfigurationStatusType,
+  to: ConfigurationStatusType,
+  origin: ConfigOrigin,
+): boolean {
+  return STATUS_TRANSITIONS.some(
+    (t) => t.from === from && t.to === to && t.origins.includes(origin),
+  );
 }
 
 /**

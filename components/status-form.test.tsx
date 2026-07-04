@@ -141,21 +141,79 @@ describe("StatusControl", () => {
         screen.getByRole("button", { name: "Prendi in revisione tecnica" }),
       ).toBeInTheDocument();
     });
+
+    // Regression: the standalone DRAFT -> IN_TECH_REVIEW edge is non-adjacent
+    // in STATUS_PIPELINE (SALES_APPROVED sits between), so an adjacency-based
+    // split hid the button and leaked the dropdown to the engineer.
+    test("ENGINEER at standalone DRAFT sees the Avvia revisione tecnica button and no dropdown", () => {
+      render(
+        <StatusControl
+          confId={1}
+          initialStatus="DRAFT"
+          userRole="ENGINEER"
+          origin="STANDALONE"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Avvia revisione tecnica" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("ENGINEER at standalone IN_TECH_REVIEW sees forward and backward buttons and no dropdown", () => {
+      render(
+        <StatusControl
+          confId={1}
+          initialStatus="IN_TECH_REVIEW"
+          userRole="ENGINEER"
+          origin="STANDALONE"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Approva" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Riporta in bozza" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe("ADMIN manual dropdown", () => {
-    test("ADMIN at DRAFT sees the adjacent button plus a jump dropdown", () => {
+    test("ADMIN at OFFER DRAFT sees only the jump dropdown", () => {
       render(
         <StatusControl confId={1} initialStatus="DRAFT" userRole="ADMIN" />,
       );
 
-      // Adjacent (±1) move is a button. DRAFT -> SALES_APPROVED has no edge
-      // row (ADMIN blanket rule), so the label falls back to the target
-      // status label.
+      // No named edge leaves DRAFT on an OFFER config (SALES_APPROVED is only
+      // reachable via the acceptance fan-out), so every ADMIN move is a manual
+      // jump in the dropdown and no button renders.
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Approvato vendite" }),
+        screen.getByRole("combobox", { name: "Cambia stato" }),
       ).toBeInTheDocument();
-      // Non-adjacent jumps live in the manual dropdown.
+    });
+
+    test("ADMIN at standalone DRAFT sees the named-edge button plus the jump dropdown", () => {
+      render(
+        <StatusControl
+          confId={1}
+          initialStatus="DRAFT"
+          userRole="ADMIN"
+          origin="STANDALONE"
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Avvia revisione tecnica" }),
+      ).toBeInTheDocument();
+      // Remaining jumps (TECH_APPROVED, CLOSED) live in the manual dropdown.
       expect(
         screen.getByRole("combobox", { name: "Cambia stato" }),
       ).toBeInTheDocument();
@@ -230,7 +288,7 @@ describe("StatusControl", () => {
         />,
       );
 
-      await selectJump("In revisione tecnica");
+      await clickButton("Avvia revisione tecnica");
 
       expect(screen.queryByText(LOCKOUT_TEXT)).not.toBeInTheDocument();
     });
