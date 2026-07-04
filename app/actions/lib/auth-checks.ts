@@ -1,4 +1,4 @@
-import { isRoleAllowedTransition } from "@/lib/status-config";
+import { isRoleAllowedTransition, isWorkflowEdge } from "@/lib/status-config";
 import type {
   ConfigOrigin,
   ConfigurationStatusType,
@@ -88,7 +88,9 @@ export function isEditable(
  *
  * The role-restricted edges live in the single STATUS_TRANSITIONS edge table
  * (lib/status-config.ts); this function layers two rules on top:
- * - ADMIN may make any jump (incl. non-adjacent ones the table cannot enumerate).
+ * - ADMIN may perform any DEFINED workflow edge for the origin — including the
+ *   ADMIN-only CLOSED edges (Chiudi / Riapri) that carry an empty `roles` array —
+ *   but NOT arbitrary non-adjacent jumps. There is no status override.
  * - On a STANDALONE config the sales status (SALES_APPROVED) is off-limits to
  *   everyone — standalone configs are engineering-only, keeping the technical
  *   lifecycle self-contained.
@@ -114,8 +116,10 @@ export function canTransition(
     return false;
   }
 
-  // ADMIN may make any remaining jump (incl. non-adjacent / closing).
-  if (role === "ADMIN") return true;
+  // ADMIN is confined to the defined workflow edges — this is how the ADMIN-only
+  // CLOSED edges (empty `roles`) are reached — but cannot make arbitrary
+  // non-adjacent jumps. There is no status override.
+  if (role === "ADMIN") return isWorkflowEdge(from, to, origin);
 
   // Everyone else is restricted to the explicit edge table.
   return isRoleAllowedTransition(role, from, to, origin);

@@ -34,11 +34,6 @@ async function confirm() {
   await userEvent.click(screen.getByRole("button", { name: "Conferma" }));
 }
 
-async function selectJump(optionText: string) {
-  await userEvent.click(screen.getByRole("combobox", { name: "Cambia stato" }));
-  await userEvent.click(screen.getByRole("option", { name: optionText }));
-}
-
 // --- Setup ---
 
 afterEach(cleanup);
@@ -185,22 +180,22 @@ describe("StatusControl", () => {
     });
   });
 
-  describe("ADMIN manual dropdown", () => {
-    test("ADMIN at OFFER DRAFT sees only the jump dropdown", () => {
+  describe("ADMIN transitions (no arbitrary status jumps)", () => {
+    test("ADMIN at OFFER DRAFT has no transition controls", () => {
       render(
         <StatusControl confId={1} initialStatus="DRAFT" userRole="ADMIN" />,
       );
 
       // No named edge leaves DRAFT on an OFFER config (SALES_APPROVED is only
-      // reachable via the acceptance fan-out), so every ADMIN move is a manual
-      // jump in the dropdown and no button renders.
+      // reachable via the acceptance fan-out), and arbitrary jumps were removed,
+      // so ADMIN sees the badge alone — no buttons, no status dropdown.
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
       expect(
-        screen.getByRole("combobox", { name: "Cambia stato" }),
-      ).toBeInTheDocument();
+        screen.queryByRole("combobox", { name: "Cambia stato" }),
+      ).not.toBeInTheDocument();
     });
 
-    test("ADMIN at standalone DRAFT sees the named-edge button plus the jump dropdown", () => {
+    test("ADMIN at standalone DRAFT sees only the named-edge button, no dropdown", () => {
       render(
         <StatusControl
           confId={1}
@@ -213,35 +208,47 @@ describe("StatusControl", () => {
       expect(
         screen.getByRole("button", { name: "Avvia revisione tecnica" }),
       ).toBeInTheDocument();
-      // Remaining jumps (TECH_APPROVED, CLOSED) live in the manual dropdown.
-      expect(
-        screen.getByRole("combobox", { name: "Cambia stato" }),
-      ).toBeInTheDocument();
-    });
-
-    test("dropdown is not shown for SALES or ENGINEER", () => {
-      render(
-        <StatusControl confId={1} initialStatus="DRAFT" userRole="ENGINEER" />,
-      );
-
+      // The arbitrary-jump dropdown is gone: no remaining moves hide behind it.
       expect(
         screen.queryByRole("combobox", { name: "Cambia stato" }),
       ).not.toBeInTheDocument();
     });
 
-    test("ADMIN can jump to a non-adjacent status via the dropdown", async () => {
+    test("ADMIN retains the ADMIN-only close edge as a button", async () => {
       render(
-        <StatusControl confId={7} initialStatus="DRAFT" userRole="ADMIN" />,
+        <StatusControl
+          confId={5}
+          initialStatus="TECH_APPROVED"
+          userRole="ADMIN"
+        />,
       );
 
-      await selectJump("Chiuso");
+      // Chiudi (TECH_APPROVED -> CLOSED) is an ADMIN-only defined edge and still
+      // works as a normal button after the arbitrary-jump removal.
+      await clickButton("Chiudi");
       await confirm();
 
       await waitFor(() => {
-        expect(mockUpdateConfigStatus).toHaveBeenCalledWith(7, {
+        expect(mockUpdateConfigStatus).toHaveBeenCalledWith(5, {
           status: "CLOSED",
         });
       });
+    });
+
+    test("no status dropdown is rendered for any role", () => {
+      for (const role of ["ADMIN", "ENGINEER", "SALES"] as const) {
+        const { unmount } = render(
+          <StatusControl
+            confId={1}
+            initialStatus="IN_TECH_REVIEW"
+            userRole={role}
+          />,
+        );
+        expect(
+          screen.queryByRole("combobox", { name: "Cambia stato" }),
+        ).not.toBeInTheDocument();
+        unmount();
+      }
     });
   });
 

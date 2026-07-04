@@ -194,15 +194,29 @@ describe("canTransition", () => {
   });
 
   describe("ADMIN", () => {
-    test("can make any transition, including closing and reverting", () => {
+    test("can perform the defined workflow edges, including close and reopen", () => {
       const edges: [ConfigurationStatusType, ConfigurationStatusType][] = [
-        ["DRAFT", "CLOSED"],
+        ["SALES_APPROVED", "IN_TECH_REVIEW"],
+        ["IN_TECH_REVIEW", "TECH_APPROVED"],
         ["TECH_APPROVED", "CLOSED"],
         ["CLOSED", "TECH_APPROVED"],
-        ["SALES_APPROVED", "DRAFT"],
       ];
       for (const [from, to] of edges) {
         expect(canTransition("ADMIN", from, to)).toBe(true);
+      }
+    });
+
+    // The arbitrary status-jump capability was removed: ADMIN is confined to the
+    // defined edges, no non-adjacent overrides.
+    test("cannot make arbitrary non-adjacent jumps", () => {
+      const jumps: [ConfigurationStatusType, ConfigurationStatusType][] = [
+        ["DRAFT", "CLOSED"],
+        ["DRAFT", "TECH_APPROVED"],
+        ["SALES_APPROVED", "DRAFT"],
+        ["SALES_APPROVED", "CLOSED"],
+      ];
+      for (const [from, to] of jumps) {
+        expect(canTransition("ADMIN", from, to)).toBe(false);
       }
     });
   });
@@ -252,15 +266,28 @@ describe("canTransition — STANDALONE origin", () => {
   });
 
   describe("ADMIN", () => {
-    test("can make any engineering-chain jump, including closing", () => {
+    test("can perform the defined engineering-chain edges, including close and reopen", () => {
       const edges: [ConfigurationStatusType, ConfigurationStatusType][] = [
         ["DRAFT", "IN_TECH_REVIEW"],
-        ["DRAFT", "TECH_APPROVED"],
+        ["IN_TECH_REVIEW", "TECH_APPROVED"],
         ["TECH_APPROVED", "CLOSED"],
-        ["CLOSED", "IN_TECH_REVIEW"],
+        ["CLOSED", "TECH_APPROVED"],
       ];
       for (const [from, to] of edges) {
         expect(canTransition("ADMIN", from, to, "STANDALONE")).toBe(true);
+      }
+    });
+
+    // No arbitrary jumps: non-adjacent moves the table does not enumerate are
+    // rejected for ADMIN too.
+    test("cannot make arbitrary non-adjacent jumps", () => {
+      const jumps: [ConfigurationStatusType, ConfigurationStatusType][] = [
+        ["DRAFT", "TECH_APPROVED"],
+        ["DRAFT", "CLOSED"],
+        ["CLOSED", "IN_TECH_REVIEW"],
+      ];
+      for (const [from, to] of jumps) {
+        expect(canTransition("ADMIN", from, to, "STANDALONE")).toBe(false);
       }
     });
 

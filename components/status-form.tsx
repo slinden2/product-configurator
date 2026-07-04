@@ -8,19 +8,11 @@ import { updateConfigStatusAction } from "@/app/actions/update-config-status-act
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { MSG } from "@/lib/messages";
 import {
   getTransitionDirection,
   getTransitionLabel,
-  isWorkflowEdge,
   STATUS_CONFIG,
   STATUS_PIPELINE,
 } from "@/lib/status-config";
@@ -48,8 +40,8 @@ interface StatusControlProps {
  * Valid target statuses a role can move to from the current status, derived from
  * the server-side `canTransition` guard (app/actions/lib/auth-checks.ts) so the
  * client buttons and the server gate cannot drift. Ordering follows
- * STATUS_PIPELINE; the button-vs-dropdown split below is driven by the
- * STATUS_TRANSITIONS edge table.
+ * STATUS_PIPELINE. Every valid target is a defined STATUS_TRANSITIONS edge, so
+ * they all render as action buttons (there are no arbitrary status jumps).
  */
 function getValidTransitions(
   role: Role,
@@ -76,20 +68,9 @@ const StatusControl = ({
     useState<ConfigurationStatusType | null>(null);
 
   const { label } = STATUS_CONFIG[initialStatus];
-  const validTargets = getValidTransitions(userRole, initialStatus, origin);
-
-  // Named workflow edges become buttons; everything else a role may still
-  // perform (ADMIN arbitrary jumps) goes in the ADMIN-only manual dropdown.
-  // The role guard is belt-and-braces: non-ADMIN valid targets are always
-  // table edges, but the dropdown being ADMIN-only is an invariant we want
-  // explicit rather than emergent.
-  const buttonTargets = validTargets.filter((t) =>
-    isWorkflowEdge(initialStatus, t, origin),
-  );
-  const jumpTargets =
-    userRole === "ADMIN"
-      ? validTargets.filter((t) => !isWorkflowEdge(initialStatus, t, origin))
-      : [];
+  // Every valid transition is a defined workflow edge — canTransition grants no
+  // arbitrary jumps to any role, ADMIN included — so they all render as buttons.
+  const targets = getValidTransitions(userRole, initialStatus, origin);
 
   const runTransition = (target: ConfigurationStatusType) => {
     startTransition(async () => {
@@ -113,9 +94,7 @@ const StatusControl = ({
     });
   };
 
-  // The current user can act if there is at least one valid transition. Frozen
-  // states (e.g. TECH_APPROVED for a SALES user) render the badge with no controls.
-  const hasControls = buttonTargets.length > 0 || jumpTargets.length > 0;
+  const hasControls = targets.length > 0;
 
   return (
     <div className="inline-flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border bg-card px-3 py-1.5">
@@ -128,7 +107,7 @@ const StatusControl = ({
         <>
           <Separator orientation="vertical" className="hidden h-6 sm:block" />
           <div className="flex flex-wrap items-center gap-2">
-            {buttonTargets.map((target) => {
+            {targets.map((target) => {
               const direction = getTransitionDirection(initialStatus, target);
               return (
                 <Button
@@ -142,30 +121,6 @@ const StatusControl = ({
                 </Button>
               );
             })}
-
-            {jumpTargets.length > 0 && (
-              <Select
-                value=""
-                disabled={isPending}
-                onValueChange={(value) =>
-                  setPendingTarget(value as ConfigurationStatusType)
-                }
-              >
-                <SelectTrigger
-                  className="h-8 w-auto text-xs"
-                  aria-label="Cambia stato"
-                >
-                  <SelectValue placeholder="Cambia stato…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jumpTargets.map((target) => (
-                    <SelectItem key={target} value={target}>
-                      {STATUS_CONFIG[target].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
 
             {isPending && (
               <Loader2 className="h-4 w-4 animate-spin text-primary" />

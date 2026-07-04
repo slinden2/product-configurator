@@ -90,8 +90,8 @@ describe("getTransitionLabel", () => {
   });
 
   test("falls back to the target status label for jumps without a row", () => {
-    // No dedicated edge label exists for a DRAFT -> CLOSED jump (ADMIN only),
-    // so it falls back to the target status' own label.
+    // A rowless pair like DRAFT -> CLOSED is not a defined edge for anyone, so
+    // getTransitionLabel falls back to the target status' own label.
     expect(getTransitionLabel("DRAFT", "CLOSED")).toBe(
       STATUS_CONFIG.CLOSED.label,
     );

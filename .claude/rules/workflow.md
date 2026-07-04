@@ -111,8 +111,10 @@ Post-acceptance, engineering edits can erode a line's margin below its category 
      `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`.
 
 5. **ADMIN (Production/System):**
-   - **Permissions:** Same edit rights as ENGINEER plus full offer access. Can transition between any
-     statuses. Only role that can move status to `CLOSED` or revert it.
+   - **Permissions:** Same edit rights as ENGINEER plus full offer access. May perform any **defined**
+     workflow edge (including the ADMIN-only `TECH_APPROVED ↔ CLOSED` close/reopen), but **not** arbitrary
+     non-adjacent status jumps — there is no status override. Only role that can move status to `CLOSED` or
+     revert it.
 
 ## Editable Logic (Immutable States)
 

@@ -55,7 +55,9 @@ export interface StatusTransition {
   to: ConfigurationStatusType;
   /** Italian UI button label. */
   label: string;
-  /** Non-ADMIN roles permitted to perform this edge. ADMIN may make any jump. */
+  /** Non-ADMIN roles permitted to perform this edge. ADMIN may perform any
+   * defined edge (see canTransition); an empty array means the edge is
+   * ADMIN-only. */
   roles: readonly Role[];
   /** Origins this edge applies to. */
   origins: readonly ConfigOrigin[];
@@ -70,10 +72,10 @@ export interface StatusTransition {
  * new stage/role/edge is a single-row change.
  *
  * Two rules are layered on top in `canTransition` rather than encoded here:
- * - ADMIN may make ANY transition (including non-adjacent jumps this table
- *   cannot enumerate), so it is intentionally absent from every row's `roles`.
- *   Rows with an empty `roles` array (the CLOSED edges) are ADMIN-only and exist
- *   here purely to carry the label.
+ * - ADMIN may perform any DEFINED edge in this table for the origin, but NOT
+ *   arbitrary non-adjacent jumps. ADMIN is intentionally absent from every row's
+ *   `roles`; rows with an empty `roles` array (the CLOSED edges) are ADMIN-only
+ *   and exist here to carry both the label and that ADMIN-only grant.
  * - On a STANDALONE config the sales status (SALES_APPROVED) is off-limits to
  *   everyone.
  *
@@ -130,8 +132,8 @@ export const STATUS_TRANSITIONS: readonly StatusTransition[] = [
     roles: ["ENGINEER"],
     origins: ["OFFER", "STANDALONE"],
   },
-  // ADMIN-only closing edges (empty roles → the row exists only to carry the
-  // label; ADMIN reaches them via the blanket rule in canTransition).
+  // ADMIN-only closing edges (empty roles → ADMIN-only; ADMIN reaches them via
+  // canTransition, which grants ADMIN any defined workflow edge).
   {
     from: "TECH_APPROVED",
     to: "CLOSED",
@@ -162,7 +164,7 @@ function findTransition(
 
 /**
  * Human-facing action label for a workflow edge. Named edges carry a dedicated
- * label; ADMIN jumps have no row and fall back to the target status label.
+ * label; a rowless pair falls back to the target status label.
  */
 export function getTransitionLabel(
   from: ConfigurationStatusType,
@@ -173,8 +175,9 @@ export function getTransitionLabel(
 
 /**
  * Whether `from -> to` is a named workflow edge for `origin` (has a row in
- * STATUS_TRANSITIONS). Named edges surface as action buttons; anything else a
- * role can still perform (ADMIN jumps) goes in the manual dropdown.
+ * STATUS_TRANSITIONS). Named edges surface as action buttons in the status
+ * control, and are the complete set of transitions ADMIN may perform — there are
+ * no arbitrary jumps.
  */
 export function isWorkflowEdge(
   from: ConfigurationStatusType,
@@ -188,8 +191,9 @@ export function isWorkflowEdge(
 
 /**
  * Whether `role` may perform the `from -> to` edge for `origin` per the edge
- * table. ADMIN's blanket power and the STANDALONE sales-status guard are layered
- * on top in `canTransition` (app/actions/lib/auth-checks.ts).
+ * table. ADMIN's defined-edge grant (via isWorkflowEdge) and the STANDALONE
+ * sales-status guard are layered on top in `canTransition`
+ * (app/actions/lib/auth-checks.ts).
  */
 export function isRoleAllowedTransition(
   role: Role,
