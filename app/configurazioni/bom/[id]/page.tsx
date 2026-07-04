@@ -9,7 +9,13 @@ import RegenerateButton from "@/app/configurazioni/bom/[id]/regenerate-button";
 import SnapshotButton from "@/app/configurazioni/bom/[id]/snapshot-button";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import DetailsCard from "@/components/shared/details-card";
-import { getBOM, getConfiguration, getUserData } from "@/db/queries";
+import {
+  getBOM,
+  getConfiguration,
+  getUserData,
+  offerRefFor,
+} from "@/db/queries";
+import { canViewOffer } from "@/lib/access";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import ExportCostsButton from "./export-costs-button";
@@ -47,9 +53,18 @@ const BOMView = async (props: BOMViewProps) => {
     ebomRulesVersion,
   } = await prepareBOMPageData(confId, bom, configuration, user.role);
 
+  const offer = canViewOffer(user.role)
+    ? await offerRefFor({ id: confId, origin: configuration.origin })
+    : null;
+
   return (
     <div className="space-y-6">
-      <ConfigNavigationBar confId={confId} activePage="bom" role={user.role} />
+      <ConfigNavigationBar
+        confId={confId}
+        activePage="bom"
+        role={user.role}
+        offer={offer}
+      />
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="inline-block">Distinta</h1>
         <div className="flex flex-wrap items-center gap-2">

@@ -345,6 +345,50 @@ export async function offerRevisionStatusFor(
 }
 
 /**
+ * The offer that owns this configuration — its id (for navigation) and display
+ * `offer_number` — or `null` if the config is not an offer line (standalone, or no
+ * line yet). Mirrors {@link getOfferLinePricingForConfig}'s ordering so the
+ * in-force accepted revision (`offers.accepted_revision_id`) wins, falling back to
+ * the latest revision; only `offer_id` drives the link, so the exact revision
+ * chosen is immaterial. Used to render a "back to offer" link on config pages.
+ */
+export async function getOfferRefForConfig(
+  configId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<{ offerId: number; offerNumber: string } | null> {
+  const [row] = await txOrDb
+    .select({ offerId: offers.id, offerNumber: offers.offer_number })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
+    .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(
+      sql`(${offerRevisions.id} = ${offers.accepted_revision_id}) DESC NULLS LAST`,
+      desc(offerRevisions.revision_no),
+    )
+    .limit(1);
+
+  return row ?? null;
+}
+
+/**
+ * Resolves the owning offer reference for a config: the offer id + number for an
+ * OFFER config, or `null` for a STANDALONE config (which owns no offer line).
+ * Parallels {@link offerRevisionStatusFor} — centralises the short-circuit so
+ * call sites stay consistent.
+ */
+export async function offerRefFor(
+  config: { id: number; origin: ConfigOrigin },
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<{ offerId: number; offerNumber: string } | null> {
+  if (config.origin !== "OFFER") return null;
+  return getOfferRefForConfig(config.id, txOrDb);
+}
+
+/**
  * Next offer number for the current year, formatted `OFF-{year}-{NNNN}`. Derived
  * from the max existing number for the year; relies on the `offer_number` UNIQUE
  * to reject the rare concurrent collision (caller surfaces a retry message).

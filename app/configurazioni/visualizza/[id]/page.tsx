@@ -7,7 +7,8 @@ import ConfigView from "@/components/config-view";
 import StatusControl from "@/components/status-form";
 import { Button } from "@/components/ui/button";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
-import { getUserData, offerRevisionStatusFor } from "@/db/queries";
+import { getUserData, offerRefFor, offerRevisionStatusFor } from "@/db/queries";
+import { canViewOffer } from "@/lib/access";
 import ExportConfigPdfButton from "./export-config-pdf-button";
 
 interface ViewConfigProps {
@@ -28,10 +29,18 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
   const { configuration, status, origin, waterTanks, washBays } = loaded;
   const offerRevisionStatus = await offerRevisionStatusFor({ id, origin });
   const editable = isEditable(status, user.role, origin, offerRevisionStatus);
+  const offer = canViewOffer(user.role)
+    ? await offerRefFor({ id, origin })
+    : null;
 
   return (
     <div>
-      <ConfigNavigationBar confId={id} activePage="config" role={user.role} />
+      <ConfigNavigationBar
+        confId={id}
+        activePage="config"
+        role={user.role}
+        offer={offer}
+      />
       <div className="mb-6 sm:flex sm:gap-2">
         <div className="mb-6 sm:mb-0">
           <h1 className="text-3xl font-bold mb-2">Visualizza configurazione</h1>

@@ -9,8 +9,10 @@ import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
   getUserData,
   hasEngineeringBom,
+  offerRefFor,
   offerRevisionStatusFor,
 } from "@/db/queries";
+import { canViewOffer } from "@/lib/access";
 
 interface EditConfigProps {
   params: Promise<{ id: string }>;
@@ -45,10 +47,18 @@ const EditConfiguration = async (props: EditConfigProps) => {
   }
 
   const ebomExists = await hasEngineeringBom(id);
+  const offer = canViewOffer(user.role)
+    ? await offerRefFor({ id, origin })
+    : null;
 
   return (
     <div>
-      <ConfigNavigationBar confId={id} activePage="config" role={user.role} />
+      <ConfigNavigationBar
+        confId={id}
+        activePage="config"
+        role={user.role}
+        offer={offer}
+      />
       <div className="mb-6 sm:flex sm:gap-2">
         <div className="mb-6 sm:mb-0">
           <h1 className="text-3xl font-bold mb-2">Modifica configurazione</h1>

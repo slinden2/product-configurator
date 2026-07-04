@@ -6,6 +6,7 @@ import {
   getConfiguration,
   getEngineeringBomItems,
   getOfferLinePricingForConfig,
+  getOfferRefForConfig,
   getOfferWorkingRevision,
   getUserData,
 } from "@/db/queries";
@@ -39,10 +40,14 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   // who has no offer access — must never reach it, even by direct URL.
   if (!canViewMarginReview(user.role)) notFound();
 
-  const [configuration, linePricing, ebomRows] = await Promise.all([
+  // The margin page is ADMIN/SALES_DIRECTOR-only, both of which have offer access,
+  // so the "back to offer" ref is always appropriate here (null only for the rare
+  // standalone config reaching this page).
+  const [configuration, linePricing, ebomRows, offer] = await Promise.all([
     getConfiguration(confId),
     getOfferLinePricingForConfig(confId),
     getEngineeringBomItems(confId),
+    getOfferRefForConfig(confId),
   ]);
 
   if (!configuration) notFound();
@@ -53,6 +58,7 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
         confId={confId}
         activePage="marginalita"
         role={user.role}
+        offer={offer}
       />
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="inline-block">Marginalità</h1>
