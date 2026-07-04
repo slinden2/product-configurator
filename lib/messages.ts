@@ -35,6 +35,8 @@ export const MSG = {
       "Configurazione non trovata o non autorizzata per l'aggiornamento.",
     energyChainRequiresGantry:
       "Con alimentazione a catena portacavi, è obbligatoria almeno una pista con portale e larghezza catena configurata.",
+    energyChainBayGuard:
+      "Operazione non consentita: con alimentazione a catena portacavi deve rimanere almeno una pista con portale e larghezza catena configurata.",
     approvedRequiresBom:
       "Per approvare la configurazione è obbligatoria creare la distinta di commessa.",
     salesReviewRequiresOffer:
@@ -224,6 +226,8 @@ export const MSG = {
     cannotSend: "Solo una revisione approvata per l'invio può essere inviata.",
     cannotSendEmpty:
       "Aggiungi almeno una configurazione prima di inviare la revisione.",
+    lineEnergyChainInvalid: (name: string) =>
+      `La configurazione «${name}» richiede almeno una pista con portale e larghezza catena configurata (alimentazione a catena portacavi).`,
     cannotSubmit:
       "Solo una revisione in bozza può essere inviata in approvazione.",
     cannotApprove: "Solo una revisione in approvazione può essere approvata.",

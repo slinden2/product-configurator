@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { getConfigurationWithTanksAndBays, getUserData } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
+import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
 import { washBaySchema } from "@/validation/wash-bay-schema";
@@ -41,8 +42,15 @@ export const checkConfigurationValidityAction = async (sourceId: unknown) => {
     (b) => washBaySchema.safeParse(transformDbNullToUndefined(b)).success,
   );
 
+  // Cross-entity invariant: ENERGY_CHAIN requires at least one qualifying bay.
+  const energyChainValid = !violatesEnergyChainInvariant(
+    config.supply_type,
+    wash_bays,
+  );
+
   return {
     success: true as const,
-    hasValidationIssues: !configValid || !tanksValid || !baysValid,
+    hasValidationIssues:
+      !configValid || !tanksValid || !baysValid || !energyChainValid,
   };
 };

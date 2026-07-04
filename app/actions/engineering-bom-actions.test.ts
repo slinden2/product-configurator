@@ -342,6 +342,31 @@ describe("snapshotEngineeringBomAction", () => {
     );
   });
 
+  test("refuses an ENERGY_CHAIN config without a qualifying bay", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({
+        supply_type: "ENERGY_CHAIN",
+        wash_bays: [{ has_gantry: true, energy_chain_width: null }],
+      }),
+    );
+    const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.energyChainRequiresGantry);
+    expect(mockInsertEngineeringBomItems).not.toHaveBeenCalled();
+  });
+
+  test("snapshots an ENERGY_CHAIN config with a qualifying bay", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({
+        supply_type: "ENERGY_CHAIN",
+        wash_bays: [{ has_gantry: true, energy_chain_width: "L200" }],
+      }),
+    );
+    const result = await snapshotEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(true);
+    expect(mockInsertEngineeringBomItems).toHaveBeenCalled();
+  });
+
   test("returns generic error on DB failure", async () => {
     mockInsertEngineeringBomItems.mockRejectedValue(new Error("DB down"));
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
@@ -410,6 +435,29 @@ describe("regenerateEngineeringBomAction", () => {
     const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe(MSG.db.unknown);
+  });
+
+  test("refuses an ENERGY_CHAIN config without a qualifying bay", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ supply_type: "ENERGY_CHAIN", wash_bays: [] }),
+    );
+    const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.energyChainRequiresGantry);
+    expect(mockTransaction).not.toHaveBeenCalled();
+    expect(mockTxDelete).not.toHaveBeenCalled();
+  });
+
+  test("regenerates an ENERGY_CHAIN config with a qualifying bay", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({
+        supply_type: "ENERGY_CHAIN",
+        wash_bays: [{ has_gantry: true, energy_chain_width: "L150" }],
+      }),
+    );
+    const result = await regenerateEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(true);
+    expect(mockTxInsert).toHaveBeenCalled();
   });
 
   test("does not revalidate when audit log insert fails (BOM_REGENERATE rolls back)", async () => {

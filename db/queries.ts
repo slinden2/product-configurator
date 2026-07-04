@@ -42,6 +42,7 @@ import {
   canViewOffer,
 } from "@/lib/access";
 import { BOM } from "@/lib/BOM";
+import { hasQualifyingEnergyChainBay } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
 import { getTransitionDirection } from "@/lib/status-config";
 import type {
@@ -1583,6 +1584,26 @@ export async function getWashBaysByConfigId(configId: number) {
   });
 }
 
+/**
+ * Minimal load of configs + bay energy-chain fields for the ENERGY_CHAIN
+ * cross-entity invariant check on offer revision submission.
+ */
+export async function getConfigsForEnergyChainCheck(
+  configIds: number[],
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  if (configIds.length === 0) return [];
+  return txOrDb.query.configurations.findMany({
+    where: inArray(configurations.id, configIds),
+    columns: { id: true, name: true, supply_type: true },
+    with: {
+      wash_bays: {
+        columns: { has_gantry: true, energy_chain_width: true },
+      },
+    },
+  });
+}
+
 export const insertConfiguration = async (
   newConfiguration: ConfigSchema,
   userId: string,
@@ -1796,10 +1817,7 @@ export const updateConfigStatus = async (
     ) === "forward"
   ) {
     const bays = await getWashBaysByConfigId(confId);
-    const hasValidBay = bays.some(
-      (wb) => wb.has_gantry && wb.energy_chain_width,
-    );
-    if (!hasValidBay) {
+    if (!hasQualifyingEnergyChainBay(bays)) {
       throw new QueryError(MSG.config.energyChainRequiresGantry, 400);
     }
   }

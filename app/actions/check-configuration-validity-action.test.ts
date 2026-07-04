@@ -252,6 +252,59 @@ describe("checkConfigurationValidityAction", () => {
     expect(result).toEqual({ success: true, hasValidationIssues: true });
   });
 
+  test("ENERGY_CHAIN config with schema-valid but non-qualifying bay → hasValidationIssues: true", async () => {
+    // Config passes configSchema (rail_length ≥ 25, fixing type set) and the bay
+    // passes washBaySchema — only the cross-entity invariant is violated.
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeValidDbConfig({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+        rail_length: 25,
+        wash_bays: [makeValidDbWashBay()],
+      }),
+    );
+
+    const result = await checkConfigurationValidityAction(10);
+
+    expect(result).toEqual({ success: true, hasValidationIssues: true });
+  });
+
+  test("ENERGY_CHAIN config with no bays at all → hasValidationIssues: true", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeValidDbConfig({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+        rail_length: 25,
+      }),
+    );
+
+    const result = await checkConfigurationValidityAction(10);
+
+    expect(result).toEqual({ success: true, hasValidationIssues: true });
+  });
+
+  test("ENERGY_CHAIN config with a qualifying bay → hasValidationIssues: false", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      makeValidDbConfig({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+        rail_length: 25,
+        wash_bays: [
+          makeValidDbWashBay({
+            has_gantry: true,
+            energy_chain_width: "L200",
+            ec_signal_cable_qty: 1,
+            ec_water_1_tube_qty: 1,
+          }),
+        ],
+      }),
+    );
+
+    const result = await checkConfigurationValidityAction(10);
+
+    expect(result).toEqual({ success: true, hasValidationIssues: false });
+  });
+
   test("returns error for invalid sourceId (string)", async () => {
     const result = await checkConfigurationValidityAction("not-a-number");
 

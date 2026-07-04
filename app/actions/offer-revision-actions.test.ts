@@ -18,6 +18,7 @@ const mockAcceptOfferRevisionWithAudit = vi.fn();
 const mockRecordOfferRevisionOutcomeWithAudit = vi.fn();
 const mockRepriceOfferLines = vi.fn();
 const mockLoadValidatedConfiguration = vi.fn();
+const mockGetConfigsForEnergyChainCheck = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -37,6 +38,8 @@ vi.mock("@/db/queries", () => ({
     mockCreateRenegotiationRevisionFrom(...args),
   getWorkingRevisionForSend: (...args: unknown[]) =>
     mockGetWorkingRevisionForSend(...args),
+  getConfigsForEnergyChainCheck: (...args: unknown[]) =>
+    mockGetConfigsForEnergyChainCheck(...args),
   markOfferRevisionSentWithAudit: (...args: unknown[]) =>
     mockMarkOfferRevisionSentWithAudit(...args),
   submitOfferRevisionForApprovalWithAudit: (...args: unknown[]) =>
@@ -233,6 +236,21 @@ describe("submitRevisionForApprovalAction", () => {
     });
     mockRepriceOfferLines.mockResolvedValue(undefined);
     mockSubmitOfferRevisionForApprovalWithAudit.mockResolvedValue(undefined);
+    // Default: no line violates the ENERGY_CHAIN invariant.
+    mockGetConfigsForEnergyChainCheck.mockResolvedValue([
+      {
+        id: 11,
+        name: "Config 11",
+        supply_type: "STRAIGHT_SHELF",
+        wash_bays: [],
+      },
+      {
+        id: 12,
+        name: "Config 12",
+        supply_type: "ENERGY_CHAIN",
+        wash_bays: [{ has_gantry: true, energy_chain_width: "L200" }],
+      },
+    ]);
   });
 
   test("reprices the lines (last DRAFT moment) then submits for approval", async () => {
@@ -282,6 +300,39 @@ describe("submitRevisionForApprovalAction", () => {
     expect(result).toEqual({
       success: false,
       error: MSG.offer.cannotSendEmpty,
+    });
+    expect(mockRepriceOfferLines).not.toHaveBeenCalled();
+    expect(mockSubmitOfferRevisionForApprovalWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("checks the line configs for the ENERGY_CHAIN invariant with the tx", async () => {
+    const result = await submitRevisionForApprovalAction(OFFER_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockGetConfigsForEnergyChainCheck).toHaveBeenCalledWith(
+      [11, 12],
+      {},
+    );
+  });
+
+  test("blocks submission when a line's ENERGY_CHAIN config has no qualifying bay", async () => {
+    mockGetConfigsForEnergyChainCheck.mockResolvedValue([
+      {
+        id: 11,
+        name: "Config 11",
+        supply_type: "STRAIGHT_SHELF",
+        wash_bays: [],
+      },
+      {
+        id: 12,
+        name: "Impianto Catena",
+        supply_type: "ENERGY_CHAIN",
+        wash_bays: [{ has_gantry: true, energy_chain_width: null }],
+      },
+    ]);
+    const result = await submitRevisionForApprovalAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.lineEnergyChainInvalid("Impianto Catena"),
     });
     expect(mockRepriceOfferLines).not.toHaveBeenCalled();
     expect(mockSubmitOfferRevisionForApprovalWithAudit).not.toHaveBeenCalled();

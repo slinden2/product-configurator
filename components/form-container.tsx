@@ -23,6 +23,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useMediaQuery from "@/hooks/use-media-query";
 import { isConfigLocked } from "@/lib/access";
+import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
+import { MSG } from "@/lib/messages";
 import type {
   ConfigOrigin,
   ConfigurationStatusType,
@@ -305,11 +307,12 @@ const FormContainer = ({
             showAddButton={showAddEntityButton}
             addButtonLabel="Aggiungi pista"
             warning={
-              configuration?.supply_type === "ENERGY_CHAIN" &&
-              !washBays.some((wb) => wb.has_gantry && wb.energy_chain_width) ? (
+              violatesEnergyChainInvariant(
+                configuration?.supply_type,
+                washBays,
+              ) ? (
                 <p className="text-sm text-destructive border border-destructive/40 rounded-md px-3 py-2">
-                  Con la catena portacavi è obbligatoria almeno una pista con
-                  portale e larghezza catena configurata.
+                  {MSG.config.energyChainRequiresGantry}
                 </p>
               ) : undefined
             }

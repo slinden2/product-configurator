@@ -270,6 +270,94 @@ describe("handleSubRecordAction", () => {
     });
   });
 
+  // --- Cross-entity guard hook ---
+
+  test("edit: guard rejection returns its error without mutating", async () => {
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const guard = vi.fn().mockResolvedValue("Operazione non consentita.");
+    const result = await handleSubRecordAction({
+      actionType: "edit",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      formData: { value: "test" },
+      schema: testSchema,
+      queryFn,
+      entityName: "TestEntity",
+      guard,
+    });
+    expect(result).toEqual({
+      success: false,
+      error: "Operazione non consentita.",
+    });
+    expect(guard).toHaveBeenCalledWith(mockConfig(), { value: "test" });
+    expect(queryFn).not.toHaveBeenCalled();
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+  });
+
+  test("delete: guard rejection returns its error without mutating", async () => {
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const guard = vi.fn().mockResolvedValue("Operazione non consentita.");
+    const result = await handleSubRecordAction({
+      actionType: "delete",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      queryFn,
+      entityName: "TestEntity",
+      guard,
+    });
+    expect(result).toEqual({
+      success: false,
+      error: "Operazione non consentita.",
+    });
+    expect(guard).toHaveBeenCalledWith(mockConfig());
+    expect(queryFn).not.toHaveBeenCalled();
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+  });
+
+  test("edit: guard returning null lets the mutation proceed", async () => {
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const guard = vi.fn().mockResolvedValue(null);
+    const result = await handleSubRecordAction({
+      actionType: "edit",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      formData: { value: "test" },
+      schema: testSchema,
+      queryFn,
+      entityName: "TestEntity",
+      guard,
+    });
+    expect(result.success).toBe(true);
+    expect(queryFn).toHaveBeenCalled();
+  });
+
+  test("guard runs only after auth and status checks", async () => {
+    const guard = vi.fn().mockResolvedValue("blocked");
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "TECH_APPROVED" }),
+    );
+    const result = await handleSubRecordAction({
+      actionType: "delete",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      queryFn: vi.fn(),
+      entityName: "TestEntity",
+      guard,
+    });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.cannotEditSubRecord,
+    });
+    expect(guard).not.toHaveBeenCalled();
+  });
+
   // --- Engineering BOM auto-invalidation ---
 
   test("deletes engineering BOM when it exists after successful insert", async () => {

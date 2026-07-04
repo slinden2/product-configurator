@@ -17,6 +17,7 @@ import {
   type TransactionType,
   touchConfigurationUpdatedAt,
 } from "@/db/queries";
+import type { Configuration } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 
@@ -57,6 +58,14 @@ interface EditSubRecordOptions<TFormSchema extends z.ZodType>
     data: z.infer<TFormSchema>,
     tx: DatabaseType | TransactionType,
   ) => Promise<QueryResult>;
+  /**
+   * Optional cross-entity guard, run after auth/status checks and before the
+   * mutation. Returns an Italian error message to reject, or null to proceed.
+   */
+  guard?: (
+    configuration: Configuration,
+    data: z.infer<TFormSchema>,
+  ) => Promise<string | null>;
 }
 
 interface DeleteSubRecordOptions extends SubRecordOptionsBase {
@@ -67,6 +76,11 @@ interface DeleteSubRecordOptions extends SubRecordOptionsBase {
     recordId: number,
     tx: DatabaseType | TransactionType,
   ) => Promise<QueryResult>;
+  /**
+   * Optional cross-entity guard, run after auth/status checks and before the
+   * mutation. Returns an Italian error message to reject, or null to proceed.
+   */
+  guard?: (configuration: Configuration) => Promise<string | null>;
 }
 
 type SubRecordOptions<TFormSchema extends z.ZodType> =
@@ -139,6 +153,23 @@ export async function handleSubRecordAction<
       success: false as const,
       error: MSG.config.cannotEditSubRecord,
     };
+  }
+
+  // --- 3.5 Entity-specific cross-entity guard (edit/delete only) ---
+  if (options.actionType === "edit" && options.guard) {
+    const guardError = await options.guard(
+      configuration,
+      validatedData as z.infer<TFormSchema>,
+    );
+    if (guardError) {
+      return { success: false as const, error: guardError };
+    }
+  }
+  if (options.actionType === "delete" && options.guard) {
+    const guardError = await options.guard(configuration);
+    if (guardError) {
+      return { success: false as const, error: guardError };
+    }
   }
 
   // --- 4. Database Operation (atomic transaction) ---

@@ -10,6 +10,7 @@ import {
   approveOfferRevisionWithAudit,
   createOfferRevisionFrom,
   createRenegotiationRevisionFrom,
+  getConfigsForEnergyChainCheck,
   getOfferWorkingRevision,
   getUserData,
   getWorkingRevisionForSend,
@@ -27,6 +28,7 @@ import {
   canRenegotiateOffer,
   canViewOffer,
 } from "@/lib/access";
+import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
 import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
@@ -196,6 +198,18 @@ export async function submitRevisionForApprovalAction(offerId: number) {
     // UI hides Submit with no lines, but the action is the real boundary.
     if (working.configIds.length === 0) {
       throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+    }
+
+    // Cross-entity invariant gate: no line may enter approval while an
+    // ENERGY_CHAIN config lacks a qualifying bay (gantry + chain width).
+    const lineConfigs = await getConfigsForEnergyChainCheck(
+      working.configIds,
+      tx,
+    );
+    for (const cfg of lineConfigs) {
+      if (violatesEnergyChainInvariant(cfg.supply_type, cfg.wash_bays)) {
+        throw new QueryError(MSG.offer.lineEnergyChainInvalid(cfg.name), 422);
+      }
     }
 
     // Re-price while still DRAFT — repricing no-ops once it leaves DRAFT.

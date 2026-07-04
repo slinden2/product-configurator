@@ -21,6 +21,7 @@ import { engineeringBomItems, type NewEngineeringBomItem } from "@/db/schemas";
 import { canViewBom } from "@/lib/access";
 import { BOM, type BOMItemWithDescription } from "@/lib/BOM";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
+import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
 import { engineeringBomItemSchema } from "@/validation/engineering-bom-item-schema";
 
@@ -166,6 +167,19 @@ export async function snapshotEngineeringBomAction(confId: number) {
     };
   }
 
+  // A violating ENERGY_CHAIN config would yield a BOM missing all chain hardware.
+  if (
+    violatesEnergyChainInvariant(
+      auth.configuration.supply_type,
+      auth.configuration.wash_bays,
+    )
+  ) {
+    return {
+      success: false as const,
+      error: MSG.config.energyChainRequiresGantry,
+    };
+  }
+
   try {
     const items = await prepareBomItems(auth.configuration);
     await db.transaction(async (tx) => {
@@ -200,6 +214,19 @@ export async function regenerateEngineeringBomAction(confId: number) {
   const auth = await authorizeEngineeringBomAction(confId);
   if (!auth.success) {
     return auth;
+  }
+
+  // A violating ENERGY_CHAIN config would yield a BOM missing all chain hardware.
+  if (
+    violatesEnergyChainInvariant(
+      auth.configuration.supply_type,
+      auth.configuration.wash_bays,
+    )
+  ) {
+    return {
+      success: false as const,
+      error: MSG.config.energyChainRequiresGantry,
+    };
   }
 
   try {

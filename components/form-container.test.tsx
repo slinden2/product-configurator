@@ -55,6 +55,7 @@ vi.mock("@/hooks/use-media-query", () => ({
 // --- Imports (after mocks) ---
 
 import FormContainer from "@/components/form-container";
+import { MSG } from "@/lib/messages";
 import { makeValidConfig } from "@/test/form-test-utils";
 
 // --- Test Data ---
@@ -299,7 +300,7 @@ describe("FormContainer", () => {
       );
 
       expect(
-        screen.getByText(/catena portacavi è obbligatoria almeno una pista/),
+        screen.getByText(MSG.config.energyChainRequiresGantry),
       ).toBeInTheDocument();
     });
 
@@ -321,7 +322,7 @@ describe("FormContainer", () => {
       );
 
       expect(
-        screen.queryByText(/catena portacavi è obbligatoria almeno una pista/),
+        screen.queryByText(MSG.config.energyChainRequiresGantry),
       ).not.toBeInTheDocument();
     });
   });
