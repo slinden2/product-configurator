@@ -6,7 +6,7 @@ Two lifecycles run in parallel and meet at acceptance:
 - The **offer revision lifecycle** (commercial) — per revision, owned by sales. See [Offer Revision Lifecycle](#offer-revision-lifecycle).
 - The **configuration status machine** (engineering) — per config. See [Configuration Status Machine](#configuration-status-machine).
 
-A configuration's `origin` (`db/queries.ts`, `types/index.ts`) decides which lifecycle governs it:
+A configuration's `origin` (`db/queries/`, `types/index.ts`) decides which lifecycle governs it:
 
 - **STANDALONE** — a pure technical config created directly by Engineer/Admin for internal evaluation. It
   runs only the engineering sub-chain `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches
@@ -120,7 +120,7 @@ Post-acceptance, engineering edits can erode a line's margin below its category 
 
 Editability is a **two-phase gate**: `isEditable(status, role, origin, offerRevisionStatus?)`
 (`app/actions/lib/auth-checks.ts`). Ownership/scope is enforced separately by `canAccessConfiguration`
-(`db/queries.ts`).
+(`db/queries/configurations.ts`).
 
 - **OFFER config, pre-`SALES_APPROVED`** → governed by the **offer revision**: editable only while the
   owning revision is `DRAFT` (and only by offer-access roles). **Fail-closed** — a missing revision status

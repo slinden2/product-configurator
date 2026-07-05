@@ -85,7 +85,7 @@ export interface StatusTransition {
  */
 export const STATUS_TRANSITIONS: readonly StatusTransition[] = [
   // OFFER hand-off + engineering. There is no sales edge into SALES_APPROVED:
-  // the only route in is the offer-acceptance fan-out (db/queries.ts), so sales
+  // the only route in is the offer-acceptance fan-out (db/queries/offers.ts), so sales
   // roles have no rows in this table at all.
   {
     from: "SALES_APPROVED",

@@ -41,7 +41,7 @@ User-facing UI strings are Italian; everything else is English.
 - `components/shared/` — SubRecordForm: generic form wrapper for water tanks & wash bays
 - `components/ui/` — shadcn/ui primitives
 - `db/schemas/` — Drizzle ORM table definitions
-- `db/queries.ts` — Database query functions
+- `db/queries/` — Database query functions, split into domain modules (`errors`, `users`, `configurations`, `offers`, `ebom`, `coefficients`, `settings`, `activity`) re-exported by the `index.ts` barrel; always import via `@/db/queries`
 - `db/transformations.ts` — Bridge between Zod validation schemas and DB format
 - `validation/` — Zod schemas; sub-schemas in `validation/configuration/` compose into `config-schema.ts`. All Zod schemas live under `validation/`.
 - `types/index.ts` — All enums and shared types (BrushType, WaterType, ConfigurationStatus, etc.)

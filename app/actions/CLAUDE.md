@@ -20,7 +20,7 @@ Actions must always return an object with this structure:
 5. **Execution:** Wrap the `db` mutation in a `try/catch` block.
 6. **Invalidation:** Call `revalidatePath` for all affected routes (e.g., list and detail pages).
 7. **Error Handling:** Catch `QueryError` and `DatabaseError` **separately**:
-   - `QueryError` → return `err.message` (controlled Italian messages from `db/queries.ts`)
+   - `QueryError` → return `err.message` (controlled Italian messages from `db/queries/`)
    - `DatabaseError` → return `"Errore del database."` (never expose raw pg error strings)
    - Default → return `"Errore sconosciuto."`
 
@@ -49,7 +49,7 @@ This applies to `editConfigurationAction` and any new action that changes config
 
 Use `db.transaction(async (tx) => { ... })` when a mutation involves multiple dependent DB operations that must succeed or fail atomically. Example: BOM regenerate (delete all items + insert new items). Use `tx` (not `db`) for all operations inside the callback.
 
-**Activity log placement.** When a mutation's pre-state cannot be reconstructed from surviving rows (deletes, status changes, role changes, pricing updates, BOM/offer regenerations), the audit insert MUST be in the same `db.transaction` as the mutation, using `insertActivityLog(params, tx)` — never `logActivity`. Use `logActivity` only for create/duplicate paths where the new row itself is sufficient evidence. When unsure, prefer strict. See `updateSurchargeSettingWithAudit` in `db/queries.ts` as the canonical reference.
+**Activity log placement.** When a mutation's pre-state cannot be reconstructed from surviving rows (deletes, status changes, role changes, pricing updates, BOM/offer regenerations), the audit insert MUST be in the same `db.transaction` as the mutation, using `insertActivityLog(params, tx)` — never `logActivity`. Use `logActivity` only for create/duplicate paths where the new row itself is sufficient evidence. When unsure, prefer strict. See `updateSurchargeSettingWithAudit` in `db/queries/settings.ts` as the canonical reference.
 
 ## Standard revalidatePath Targets
 

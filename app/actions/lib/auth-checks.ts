@@ -32,7 +32,7 @@ import type {
  *   ADMIN), and only while the offer revision is DRAFT.
  *
  * Status × role × origin × revision only — ownership/scope is enforced separately
- * via canAccessConfiguration (db/queries.ts).
+ * via canAccessConfiguration (db/queries/configurations.ts).
  */
 export function isEditable(
   status: ConfigurationStatusType,
@@ -82,7 +82,7 @@ export function isEditable(
 /**
  * Whether a role may move a configuration from one status to another. Pure
  * role × edge × origin logic — ownership/scope is enforced separately by
- * canAccessConfiguration (db/queries.ts). Mirrored client-side by
+ * canAccessConfiguration (db/queries/configurations.ts). Mirrored client-side by
  * getValidTransitions in components/status-form.tsx, which also goes through
  * this function, so the two cannot drift.
  *
@@ -128,7 +128,7 @@ export function canTransition(
 /**
  * Whether a role may move an offer **revision** from one lifecycle status to
  * another. Pure role × edge logic — ownership/scope (manager → own + direct
- * reports) is enforced separately by canAccessOffer (db/queries.ts), and the
+ * reports) is enforced separately by canAccessOffer (db/queries/offers.ts), and the
  * management-only approval capability by canApproveRevision (lib/access.ts).
  *
  * Lifecycle:

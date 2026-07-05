@@ -1,6 +1,6 @@
 /**
  * Shared mock of `canAccessConfiguration` for server-action tests. Mirrors the
- * real scope rule in `db/queries.ts`: ADMIN/ENGINEER/SALES_DIRECTOR see every
+ * real scope rule in `db/queries/configurations.ts`: ADMIN/ENGINEER/SALES_DIRECTOR see every
  * configuration, everyone else (SALES, SALES_MANAGER) only their own. The
  * SALES_MANAGER-with-reports branch isn't modeled here because action tests
  * exercise owner/non-owner configs, not the reporting hierarchy.

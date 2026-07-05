@@ -141,7 +141,7 @@ describe("canTransition", () => {
 
   // Sales roles have no config transitions at all: approval happens on the
   // offer revision, and SALES_APPROVED is reachable only via the acceptance
-  // fan-out (db/queries.ts).
+  // fan-out (db/queries/offers.ts).
   describe.each([
     "SALES",
     "SALES_MANAGER",
