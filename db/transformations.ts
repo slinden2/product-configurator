@@ -135,9 +135,8 @@ export function transformWaterTankSchemaToDbData(values: WaterTankSchema) {
 export function transformWashBaySchemaToDbData(values: WashBaySchema) {
   return {
     ...values,
-    pressure_washer_type: values.pressure_washer_type as
-      | "L21_150BAR"
-      | "L21_200BAR",
+    pressure_washer_type: values.pressure_washer_type ?? null,
+    pressure_washer_qty: values.pressure_washer_qty ?? null,
     energy_chain_width: values.energy_chain_width ?? null,
     has_shelf_extension: values.has_shelf_extension ?? false,
     ec_signal_cable_qty: values.ec_signal_cable_qty ?? null,
