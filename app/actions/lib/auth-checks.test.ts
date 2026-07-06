@@ -105,17 +105,14 @@ describe("isEditable — STANDALONE origin", () => {
       expect(isEditable("DRAFT", role, "STANDALONE")).toBe(true);
     });
 
-    test("can edit IN_TECH_REVIEW", () => {
-      expect(isEditable("IN_TECH_REVIEW", role, "STANDALONE")).toBe(true);
-    });
-
     test("cannot edit the frozen states", () => {
       expect(isEditable("TECH_APPROVED", role, "STANDALONE")).toBe(false);
       expect(isEditable("CLOSED", role, "STANDALONE")).toBe(false);
     });
 
-    test("the sales status is never editable", () => {
+    test("the hand-off statuses are never editable", () => {
       expect(isEditable("SALES_APPROVED", role, "STANDALONE")).toBe(false);
+      expect(isEditable("IN_TECH_REVIEW", role, "STANDALONE")).toBe(false);
     });
   });
 
@@ -223,17 +220,20 @@ describe("canTransition", () => {
 });
 
 describe("canTransition — STANDALONE origin", () => {
-  describe("ENGINEER walks the engineering sub-chain", () => {
-    test("can open and reopen review (DRAFT <-> IN_TECH_REVIEW)", () => {
+  describe("ENGINEER walks the two-state working/approved machine", () => {
+    test("can approve and reopen (DRAFT <-> TECH_APPROVED)", () => {
       expect(
-        canTransition("ENGINEER", "DRAFT", "IN_TECH_REVIEW", "STANDALONE"),
+        canTransition("ENGINEER", "DRAFT", "TECH_APPROVED", "STANDALONE"),
       ).toBe(true);
       expect(
-        canTransition("ENGINEER", "IN_TECH_REVIEW", "DRAFT", "STANDALONE"),
+        canTransition("ENGINEER", "TECH_APPROVED", "DRAFT", "STANDALONE"),
       ).toBe(true);
     });
 
-    test("can approve and reopen (IN_TECH_REVIEW <-> TECH_APPROVED)", () => {
+    test("cannot route through IN_TECH_REVIEW (not a standalone state)", () => {
+      expect(
+        canTransition("ENGINEER", "DRAFT", "IN_TECH_REVIEW", "STANDALONE"),
+      ).toBe(false);
       expect(
         canTransition(
           "ENGINEER",
@@ -241,7 +241,7 @@ describe("canTransition — STANDALONE origin", () => {
           "TECH_APPROVED",
           "STANDALONE",
         ),
-      ).toBe(true);
+      ).toBe(false);
       expect(
         canTransition(
           "ENGINEER",
@@ -249,7 +249,7 @@ describe("canTransition — STANDALONE origin", () => {
           "IN_TECH_REVIEW",
           "STANDALONE",
         ),
-      ).toBe(true);
+      ).toBe(false);
     });
 
     test("cannot reach the sales status", () => {
@@ -266,10 +266,10 @@ describe("canTransition — STANDALONE origin", () => {
   });
 
   describe("ADMIN", () => {
-    test("can perform the defined engineering-chain edges, including close and reopen", () => {
+    test("can perform the defined working/approved edges, including close and reopen", () => {
       const edges: [ConfigurationStatusType, ConfigurationStatusType][] = [
-        ["DRAFT", "IN_TECH_REVIEW"],
-        ["IN_TECH_REVIEW", "TECH_APPROVED"],
+        ["DRAFT", "TECH_APPROVED"],
+        ["TECH_APPROVED", "DRAFT"],
         ["TECH_APPROVED", "CLOSED"],
         ["CLOSED", "TECH_APPROVED"],
       ];
@@ -282,16 +282,15 @@ describe("canTransition — STANDALONE origin", () => {
     // rejected for ADMIN too.
     test("cannot make arbitrary non-adjacent jumps", () => {
       const jumps: [ConfigurationStatusType, ConfigurationStatusType][] = [
-        ["DRAFT", "TECH_APPROVED"],
         ["DRAFT", "CLOSED"],
-        ["CLOSED", "IN_TECH_REVIEW"],
+        ["CLOSED", "DRAFT"],
       ];
       for (const [from, to] of jumps) {
         expect(canTransition("ADMIN", from, to, "STANDALONE")).toBe(false);
       }
     });
 
-    test("still cannot route a standalone config through the sales status", () => {
+    test("still cannot route a standalone config through the hand-off statuses", () => {
       expect(
         canTransition("ADMIN", "DRAFT", "SALES_APPROVED", "STANDALONE"),
       ).toBe(false);
@@ -303,6 +302,15 @@ describe("canTransition — STANDALONE origin", () => {
           "STANDALONE",
         ),
       ).toBe(false);
+      expect(
+        canTransition("ADMIN", "DRAFT", "IN_TECH_REVIEW", "STANDALONE"),
+      ).toBe(false);
+      expect(
+        canTransition("ADMIN", "IN_TECH_REVIEW", "TECH_APPROVED", "STANDALONE"),
+      ).toBe(false);
+      expect(
+        canTransition("ADMIN", "CLOSED", "IN_TECH_REVIEW", "STANDALONE"),
+      ).toBe(false);
     });
   });
 
@@ -311,8 +319,8 @@ describe("canTransition — STANDALONE origin", () => {
     "SALES_MANAGER",
     "SALES_DIRECTOR",
   ] as const)("%s cannot transition a standalone config", (role) => {
-    test("DRAFT -> IN_TECH_REVIEW is rejected", () => {
-      expect(canTransition(role, "DRAFT", "IN_TECH_REVIEW", "STANDALONE")).toBe(
+    test("DRAFT -> TECH_APPROVED is rejected", () => {
+      expect(canTransition(role, "DRAFT", "TECH_APPROVED", "STANDALONE")).toBe(
         false,
       );
     });

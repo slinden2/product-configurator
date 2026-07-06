@@ -25,8 +25,8 @@ import type {
  * - SALES_APPROVED/TECH_APPROVED/CLOSED: Never editable by anyone (both origins).
  *   SALES_APPROVED is a locked hand-off snapshot; to edit it an engineer pulls it
  *   forward to IN_TECH_REVIEW.
- * - STANDALONE: Engineer/Admin only, editable in DRAFT or IN_TECH_REVIEW. The
- *   sales status never applies.
+ * - STANDALONE: Engineer/Admin only, editable in DRAFT. The hand-off statuses
+ *   (SALES_APPROVED, IN_TECH_REVIEW) never apply.
  * - OFFER · IN_TECH_REVIEW: Engineer/Admin (post-handoff engineering zone).
  * - OFFER · DRAFT: offer-access roles only (SALES/SALES_MANAGER/SALES_DIRECTOR/
  *   ADMIN), and only while the offer revision is DRAFT.
@@ -49,13 +49,13 @@ export function isEditable(
     return false;
   }
 
-  // 2. Standalone configs are pure technical work: Engineer/Admin only, confined
-  // to the engineering sub-chain (the sales status never applies).
+  // 2. Standalone configs are pure technical work: Engineer/Admin only, editable
+  // in DRAFT only (the hand-off statuses never apply — there is no hand-off).
   if (origin === "STANDALONE") {
     if (role !== "ENGINEER" && role !== "ADMIN") {
       return false;
     }
-    return status === "DRAFT" || status === "IN_TECH_REVIEW";
+    return status === "DRAFT";
   }
 
   // 3. OFFER · engineering zone (post-handoff): governed by config status, not the
@@ -91,13 +91,13 @@ export function isEditable(
  * - ADMIN may perform any DEFINED workflow edge for the origin — including the
  *   ADMIN-only CLOSED edges (Chiudi / Riapri) that carry an empty `roles` array —
  *   but NOT arbitrary non-adjacent jumps. There is no status override.
- * - On a STANDALONE config the sales status (SALES_APPROVED) is off-limits to
- *   everyone — standalone configs are engineering-only, keeping the technical
- *   lifecycle self-contained.
+ * - On a STANDALONE config the hand-off statuses (SALES_APPROVED and
+ *   IN_TECH_REVIEW) are off-limits to everyone — standalone configs have no
+ *   sales→engineering hand-off, keeping the technical lifecycle self-contained.
  *
  * `origin` defaults to `"OFFER"` (the full sales+engineering machine). A
- * STANDALONE config runs only the engineering sub-chain
- * `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED`, Engineer/Admin only.
+ * STANDALONE config runs only the two-state working/approved machine
+ * `DRAFT ↔ TECH_APPROVED → CLOSED`, Engineer/Admin only.
  */
 export function canTransition(
   role: Role,
@@ -107,11 +107,14 @@ export function canTransition(
 ): boolean {
   if (from === to) return true;
 
-  // STANDALONE: the sales status is out of bounds for every role (ADMIN
-  // included) — standalone configs are engineering-only.
+  // STANDALONE: the hand-off statuses are out of bounds for every role (ADMIN
+  // included) — standalone configs have no sales→engineering hand-off.
   if (
     origin === "STANDALONE" &&
-    (from === "SALES_APPROVED" || to === "SALES_APPROVED")
+    (from === "SALES_APPROVED" ||
+      to === "SALES_APPROVED" ||
+      from === "IN_TECH_REVIEW" ||
+      to === "IN_TECH_REVIEW")
   ) {
     return false;
   }

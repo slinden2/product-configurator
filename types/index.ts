@@ -137,9 +137,9 @@ export const PRE_HANDOFF_STATUSES: ConfigurationStatusType[] = ["DRAFT"];
  * Discriminates how a configuration came into being and which lifecycle governs it:
  *
  * - STANDALONE — a pure technical configuration created directly by Engineer/Admin for
- *   internal evaluation. It runs only the engineering sub-chain
- *   `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches the sales
- *   status (`SALES_APPROVED`).
+ *   internal evaluation. It runs only the two-state working/approved machine
+ *   `DRAFT ↔ TECH_APPROVED → CLOSED` and never touches the hand-off statuses
+ *   (`SALES_APPROVED`, `IN_TECH_REVIEW`) — there is no sales→engineering hand-off.
  * - OFFER — a configuration owned by a specific offer revision (via offer_revision_lines).
  *   Before `SALES_APPROVED` its editability is governed by the parent offer revision (editable
  *   only while the revision is `DRAFT`); at `SALES_APPROVED`+ it is governed by

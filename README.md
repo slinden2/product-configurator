@@ -7,7 +7,7 @@ The UI is in Italian.
 ## What It Does
 
 - Create and manage wash system configurations through a structured form (brushes, pumps, water supply, rails, touch components, HP pumps, wash bays, water tanks)
-- Role-based workflow: sales work on **offers** (`DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT → ACCEPTED`); accepted line configs are handed off to engineering (`DRAFT → SALES_APPROVED → IN_TECH_REVIEW → TECH_APPROVED → CLOSED`)
+- Role-based workflow: sales work on **offers** (`DRAFT → PENDING_APPROVAL → APPROVED_TO_SEND → SENT → ACCEPTED`); accepted line configs are handed off to engineering (`DRAFT → SALES_APPROVED → IN_TECH_REVIEW → TECH_APPROVED → CLOSED`); standalone technical configs run a two-state machine (`DRAFT ↔ TECH_APPROVED → CLOSED`)
 - Generate a **Bill of Materials (BOM)** from configuration rules, snapshot it for engineering review, allow manual adjustments, and export to Excel
 - Sync product data from the TSE ERP (SQL Server)
 
@@ -31,10 +31,10 @@ The UI is in Italian.
 | **SALES** | Own offer configs while the revision is `DRAFT` | Own offers/configs | None — approval happens on the offer revision |
 | **SALES_MANAGER** | Same as SALES | Own + direct reports | None — approves offer revisions instead |
 | **SALES_DIRECTOR** | Same as SALES | All | None — approves offer revisions instead |
-| **ENGINEER** | Standalone configs in `DRAFT`; any config in `IN_TECH_REVIEW` | Standalone + handed-off configs (`SALES_APPROVED`+) | `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED` |
+| **ENGINEER** | Standalone configs in `DRAFT`; offer configs in `IN_TECH_REVIEW` | Standalone + handed-off configs (`SALES_APPROVED`+) | OFFER: `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`; STANDALONE: `DRAFT ↔ TECH_APPROVED` |
 | **ADMIN** | Same as ENGINEER, plus full offer access | All | Any transition, including `→ CLOSED` |
 
-`SALES_APPROVED` is a locked hand-off snapshot set only by the offer-acceptance fan-out; `TECH_APPROVED` and `CLOSED` configurations are read-only for all roles. To edit, an ENGINEER/ADMIN moves the config to `IN_TECH_REVIEW`.
+`SALES_APPROVED` is a locked hand-off snapshot set only by the offer-acceptance fan-out; `TECH_APPROVED` and `CLOSED` configurations are read-only for all roles. To edit, an ENGINEER/ADMIN moves an offer config to `IN_TECH_REVIEW`, or reopens a standalone config to `DRAFT`.
 
 ## Local Setup
 

@@ -276,10 +276,13 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user can delete IN_TECH_REVIEW configuration", async () => {
+    test("ENGINEER user can delete a handed-off OFFER configuration in IN_TECH_REVIEW", async () => {
+      // IN_TECH_REVIEW exists only on OFFER configs — the standalone chain is
+      // DRAFT <-> TECH_APPROVED.
       renderRow(
         {
           status: "IN_TECH_REVIEW",
+          origin: "OFFER",
           user: { id: "other-user", email: "other@test.com", initials: "OT" },
         },
         { id: "user-1", role: "ENGINEER" },

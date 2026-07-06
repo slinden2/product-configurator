@@ -9,8 +9,8 @@ Two lifecycles run in parallel and meet at acceptance:
 A configuration's `origin` (`db/queries/`, `types/index.ts`) decides which lifecycle governs it:
 
 - **STANDALONE** — a pure technical config created directly by Engineer/Admin for internal evaluation. It
-  runs only the engineering sub-chain `DRAFT → IN_TECH_REVIEW → TECH_APPROVED → CLOSED` and never touches
-  `SALES_APPROVED`.
+  runs only the two-state working/approved machine `DRAFT ↔ TECH_APPROVED → CLOSED` and never touches the
+  hand-off statuses (`SALES_APPROVED`, `IN_TECH_REVIEW`).
 - **OFFER** — a config owned by a specific offer revision (via `offer_revision_lines`). Before
   `SALES_APPROVED` its editability is governed by the parent **offer revision** (sales workflow); once the
   revision is accepted the config is handed off and is governed by the **config status machine**, exactly
@@ -29,8 +29,9 @@ A configuration's `origin` (`db/queries/`, `types/index.ts`) decides which lifec
 - `IN_TECH_REVIEW` — an engineer has pulled it in to finalize the BOM / technical specs.
 - `TECH_APPROVED` / `CLOSED` — engineering complete / archived (Admin-only to reach `CLOSED`).
 
-STANDALONE configs skip `SALES_APPROVED` entirely (`DRAFT → IN_TECH_REVIEW → …`) — it is out of bounds for
-every role on them, ADMIN included.
+STANDALONE configs skip the hand-off statuses entirely (`DRAFT ↔ TECH_APPROVED → CLOSED`) — both
+`SALES_APPROVED` and `IN_TECH_REVIEW` are out of bounds for every role on them, ADMIN included. There is
+no hand-off to mark, so the working/approved pair is the whole machine.
 
 ## Offer Revision Lifecycle
 
@@ -107,8 +108,9 @@ Post-acceptance, engineering edits can erode a line's margin below its category 
    - **Access:** All STANDALONE configs (any status) + OFFER configs **only once handed off**
      (`SALES_APPROVED`+). **No access to pre-handoff OFFER configs** (`DRAFT`) — view or
      edit — and **no offer access at all** (never prices/discount/customer terms). See [Offer Access](#offer-access).
-   - **Permissions:** EDIT in `DRAFT` (standalone) or `IN_TECH_REVIEW`. Transitions:
-     `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`.
+   - **Permissions:** EDIT in `DRAFT` (standalone) or `IN_TECH_REVIEW` (OFFER). Transitions:
+     OFFER `SALES_APPROVED ↔ IN_TECH_REVIEW`, `IN_TECH_REVIEW ↔ TECH_APPROVED`; STANDALONE
+     `DRAFT ↔ TECH_APPROVED`.
 
 5. **ADMIN (Production/System):**
    - **Permissions:** Same edit rights as ENGINEER plus full offer access. May perform any **defined**
@@ -129,10 +131,11 @@ Editability is a **two-phase gate**: `isEditable(status, role, origin, offerRevi
   (the engineering rules), regardless of `origin`.
 - `SALES_APPROVED`, `TECH_APPROVED`, `CLOSED` → **read-only for all roles**.
 - `SALES` / `SALES_MANAGER` / `SALES_DIRECTOR` → editable only in `DRAFT` (OFFER, revision `DRAFT`);
-  `ENGINEER` / `ADMIN` → `DRAFT` (standalone) and `IN_TECH_REVIEW`.
+  `ENGINEER` / `ADMIN` → `DRAFT` (standalone) and `IN_TECH_REVIEW` (OFFER).
 
 **Frozen States:** To edit a `SALES_APPROVED` config an engineer pulls it forward to `IN_TECH_REVIEW`. To
-edit a `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`. To
+edit a `TECH_APPROVED`/`CLOSED` config, an ENGINEER/ADMIN must transition it back to `IN_TECH_REVIEW`
+(OFFER) or reopen it to `DRAFT` (standalone). To
 re-open a sent offer, sales create a new revision (clone-forward); to re-quote an **accepted** offer,
 ADMIN/SALES_DIRECTOR open a renegotiation revision (commercial-only, configs untouched).
 

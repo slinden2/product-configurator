@@ -137,10 +137,11 @@ describe("StatusControl", () => {
       ).toBeInTheDocument();
     });
 
-    // Regression: the standalone DRAFT -> IN_TECH_REVIEW edge is non-adjacent
-    // in STATUS_PIPELINE (SALES_APPROVED sits between), so an adjacency-based
-    // split hid the button and leaked the dropdown to the engineer.
-    test("ENGINEER at standalone DRAFT sees the Avvia revisione tecnica button and no dropdown", () => {
+    // Regression: the standalone DRAFT -> TECH_APPROVED edge is non-adjacent
+    // in STATUS_PIPELINE (SALES_APPROVED and IN_TECH_REVIEW sit between), so an
+    // adjacency-based split hid the button and leaked the dropdown to the
+    // engineer.
+    test("ENGINEER at standalone DRAFT sees the Approva button and no dropdown", () => {
       render(
         <StatusControl
           confId={1}
@@ -151,29 +152,28 @@ describe("StatusControl", () => {
       );
 
       expect(
-        screen.getByRole("button", { name: "Avvia revisione tecnica" }),
+        screen.getByRole("button", { name: "Approva" }),
       ).toBeInTheDocument();
       expect(
         screen.queryByRole("combobox", { name: "Cambia stato" }),
       ).not.toBeInTheDocument();
     });
 
-    test("ENGINEER at standalone IN_TECH_REVIEW sees forward and backward buttons and no dropdown", () => {
+    test("ENGINEER at standalone TECH_APPROVED sees only the Riapri button and no dropdown", () => {
       render(
         <StatusControl
           confId={1}
-          initialStatus="IN_TECH_REVIEW"
+          initialStatus="TECH_APPROVED"
           userRole="ENGINEER"
           origin="STANDALONE"
         />,
       );
 
       expect(
-        screen.getByRole("button", { name: "Approva" }),
+        screen.getByRole("button", { name: "Riapri" }),
       ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "Riporta in bozza" }),
-      ).toBeInTheDocument();
+      // Chiudi is ADMIN-only; IN_TECH_REVIEW is no longer a standalone state.
+      expect(screen.getAllByRole("button")).toHaveLength(1);
       expect(
         screen.queryByRole("combobox", { name: "Cambia stato" }),
       ).not.toBeInTheDocument();
@@ -206,7 +206,7 @@ describe("StatusControl", () => {
       );
 
       expect(
-        screen.getByRole("button", { name: "Avvia revisione tecnica" }),
+        screen.getByRole("button", { name: "Approva" }),
       ).toBeInTheDocument();
       // The arbitrary-jump dropdown is gone: no remaining moves hide behind it.
       expect(
@@ -284,18 +284,18 @@ describe("StatusControl", () => {
     });
 
     test("omits the lockout warning when the config stays editable", async () => {
-      // An engineer keeps edit rights moving a standalone config from DRAFT
-      // into IN_TECH_REVIEW, so no lockout warning.
+      // An engineer keeps edit rights reopening a standalone config from
+      // TECH_APPROVED back to DRAFT, so no lockout warning.
       render(
         <StatusControl
           confId={1}
-          initialStatus="DRAFT"
+          initialStatus="TECH_APPROVED"
           userRole="ENGINEER"
           origin="STANDALONE"
         />,
       );
 
-      await clickButton("Avvia revisione tecnica");
+      await clickButton("Riapri");
 
       expect(screen.queryByText(LOCKOUT_TEXT)).not.toBeInTheDocument();
     });

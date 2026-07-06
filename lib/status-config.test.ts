@@ -53,16 +53,27 @@ describe("getTransitionDirection", () => {
 
 describe("isWorkflowEdge", () => {
   test("is true for named edges of the matching origin", () => {
-    expect(isWorkflowEdge("DRAFT", "IN_TECH_REVIEW", "STANDALONE")).toBe(true);
-    expect(isWorkflowEdge("IN_TECH_REVIEW", "DRAFT", "STANDALONE")).toBe(true);
+    expect(isWorkflowEdge("DRAFT", "TECH_APPROVED", "STANDALONE")).toBe(true);
+    expect(isWorkflowEdge("TECH_APPROVED", "DRAFT", "STANDALONE")).toBe(true);
     expect(isWorkflowEdge("SALES_APPROVED", "IN_TECH_REVIEW", "OFFER")).toBe(
+      true,
+    );
+    expect(isWorkflowEdge("IN_TECH_REVIEW", "TECH_APPROVED", "OFFER")).toBe(
       true,
     );
     expect(isWorkflowEdge("TECH_APPROVED", "CLOSED", "OFFER")).toBe(true);
   });
 
   test("is false when the edge does not exist for the origin", () => {
-    expect(isWorkflowEdge("DRAFT", "IN_TECH_REVIEW", "OFFER")).toBe(false);
+    expect(isWorkflowEdge("DRAFT", "TECH_APPROVED", "OFFER")).toBe(false);
+    expect(isWorkflowEdge("DRAFT", "IN_TECH_REVIEW", "STANDALONE")).toBe(false);
+    expect(isWorkflowEdge("IN_TECH_REVIEW", "DRAFT", "STANDALONE")).toBe(false);
+    expect(
+      isWorkflowEdge("IN_TECH_REVIEW", "TECH_APPROVED", "STANDALONE"),
+    ).toBe(false);
+    expect(
+      isWorkflowEdge("TECH_APPROVED", "IN_TECH_REVIEW", "STANDALONE"),
+    ).toBe(false);
     expect(
       isWorkflowEdge("IN_TECH_REVIEW", "SALES_APPROVED", "STANDALONE"),
     ).toBe(false);
@@ -83,6 +94,8 @@ describe("getTransitionLabel", () => {
     ["IN_TECH_REVIEW", "SALES_APPROVED", "Rimanda a vendite"],
     ["IN_TECH_REVIEW", "TECH_APPROVED", "Approva"],
     ["TECH_APPROVED", "IN_TECH_REVIEW", "Riapri"],
+    ["DRAFT", "TECH_APPROVED", "Approva"],
+    ["TECH_APPROVED", "DRAFT", "Riapri"],
     ["TECH_APPROVED", "CLOSED", "Chiudi"],
     ["CLOSED", "TECH_APPROVED", "Riapri"],
   ] as const)("labels the %s -> %s edge '%s'", (from, to, expected) => {

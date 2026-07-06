@@ -76,8 +76,8 @@ export interface StatusTransition {
  *   arbitrary non-adjacent jumps. ADMIN is intentionally absent from every row's
  *   `roles`; rows with an empty `roles` array (the CLOSED edges) are ADMIN-only
  *   and exist here to carry both the label and that ADMIN-only grant.
- * - On a STANDALONE config the sales status (SALES_APPROVED) is off-limits to
- *   everyone.
+ * - On a STANDALONE config the hand-off statuses (SALES_APPROVED and
+ *   IN_TECH_REVIEW) are off-limits to everyone.
  *
  * Direction (forward/backward) is NOT stored — it is derived from
  * STATUS_PIPELINE order via {@link getTransitionDirection}, keeping pipeline
@@ -101,36 +101,37 @@ export const STATUS_TRANSITIONS: readonly StatusTransition[] = [
     roles: ["ENGINEER"],
     origins: ["OFFER"],
   },
-  // STANDALONE engineering entry (SALES_APPROVED never appears in the
-  // standalone chain, so DRAFT connects straight to IN_TECH_REVIEW).
+  // STANDALONE working/approved machine (neither SALES_APPROVED nor
+  // IN_TECH_REVIEW appears in the standalone chain — there is no hand-off, so
+  // DRAFT connects straight to TECH_APPROVED).
   {
     from: "DRAFT",
-    to: "IN_TECH_REVIEW",
-    label: "Avvia revisione tecnica",
+    to: "TECH_APPROVED",
+    label: "Approva",
     roles: ["ENGINEER"],
     origins: ["STANDALONE"],
   },
   {
-    from: "IN_TECH_REVIEW",
+    from: "TECH_APPROVED",
     to: "DRAFT",
-    label: "Riporta in bozza",
+    label: "Riapri",
     roles: ["ENGINEER"],
     origins: ["STANDALONE"],
   },
-  // Engineering approval (both origins)
+  // OFFER engineering approval
   {
     from: "IN_TECH_REVIEW",
     to: "TECH_APPROVED",
     label: "Approva",
     roles: ["ENGINEER"],
-    origins: ["OFFER", "STANDALONE"],
+    origins: ["OFFER"],
   },
   {
     from: "TECH_APPROVED",
     to: "IN_TECH_REVIEW",
     label: "Riapri",
     roles: ["ENGINEER"],
-    origins: ["OFFER", "STANDALONE"],
+    origins: ["OFFER"],
   },
   // ADMIN-only closing edges (empty roles → ADMIN-only; ADMIN reaches them via
   // canTransition, which grants ADMIN any defined workflow edge).
