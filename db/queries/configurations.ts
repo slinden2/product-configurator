@@ -211,15 +211,21 @@ export async function getConfigurationWithTanksAndBays(
   return response;
 }
 
-export async function getConfiguration(id: number) {
-  const response = await db.query.configurations.findFirst({
+export async function getConfiguration(
+  id: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  const response = await txOrDb.query.configurations.findFirst({
     where: eq(configurations.id, id),
   });
   return response;
 }
 
-export async function getWashBaysByConfigId(configId: number) {
-  return db.query.washBays.findMany({
+export async function getWashBaysByConfigId(
+  configId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) {
+  return txOrDb.query.washBays.findMany({
     where: eq(washBays.configuration_id, configId),
     columns: { id: true, has_gantry: true, energy_chain_width: true },
   });
@@ -417,7 +423,7 @@ export const updateConfigStatus = async (
   statusData: ConfigStatusSchema,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
-  const configuration = await getConfiguration(confId);
+  const configuration = await getConfiguration(confId, txOrDb);
 
   if (!configuration) {
     throw new QueryError(MSG.config.notFound, 404);
@@ -443,7 +449,7 @@ export const updateConfigStatus = async (
   }
 
   if (statusData.status === "TECH_APPROVED") {
-    const bomExists = await hasEngineeringBom(confId);
+    const bomExists = await hasEngineeringBom(confId, txOrDb);
     if (!bomExists) {
       throw new QueryError(MSG.config.approvedRequiresBom, 400);
     }
@@ -457,7 +463,7 @@ export const updateConfigStatus = async (
       statusData.status,
     ) === "forward"
   ) {
-    const bays = await getWashBaysByConfigId(confId);
+    const bays = await getWashBaysByConfigId(confId, txOrDb);
     if (!hasQualifyingEnergyChainBay(bays)) {
       throw new QueryError(MSG.config.energyChainRequiresGantry, 400);
     }
@@ -468,11 +474,15 @@ export const updateConfigStatus = async (
   const [response] = await txOrDb
     .update(configurations)
     .set({ status: statusData.status })
-    .where(eq(configurations.id, confId))
+    .where(
+      and(eq(configurations.id, confId), eq(configurations.status, fromStatus)),
+    )
     .returning({ id: configurations.id });
 
+  // The pre-read already proved the row exists and is authorized, so a zero-row
+  // write means the status moved under us — a concurrency conflict, not "not found".
   if (!response) {
-    throw new QueryError(MSG.config.updateNotFoundOrUnauthorized, 404);
+    throw new QueryError(MSG.config.statusConflict, 409);
   }
 
   return { id: response.id, fromStatus };

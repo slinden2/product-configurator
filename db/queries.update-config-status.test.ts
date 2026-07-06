@@ -110,6 +110,23 @@ describe("updateConfigStatus — standalone DRAFT -> TECH_APPROVED edge", () => 
   });
 });
 
+describe("updateConfigStatus — concurrent transition guard", () => {
+  test("throws a 409 conflict when the from-status guard matches zero rows", async () => {
+    mockConfigFindFirst.mockResolvedValue(makeConfig("DRAFT"));
+    // Another transaction committed a status change first: the from-status
+    // guarded UPDATE now matches no rows.
+    mockUpdate.mockReturnValue({
+      set: () => ({
+        where: () => ({ returning: () => [] }),
+      }),
+    });
+
+    await expect(
+      updateConfigStatus(CONF_ID, engineer, { status: "TECH_APPROVED" }),
+    ).rejects.toThrow(new QueryError(MSG.config.statusConflict, 409));
+  });
+});
+
 describe("updateConfigStatus — IN_TECH_REVIEW is out of bounds for STANDALONE", () => {
   test.each([
     ["DRAFT", "IN_TECH_REVIEW"],

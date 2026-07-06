@@ -33,6 +33,8 @@ export const MSG = {
     statusUnauthorized: "Stato non autorizzato.",
     updateNotFoundOrUnauthorized:
       "Configurazione non trovata o non autorizzata per l'aggiornamento.",
+    statusConflict:
+      "Lo stato della configurazione è stato modificato da un altro utente. Ricarica la pagina e riprova.",
     energyChainRequiresGantry:
       "Con alimentazione a catena portacavi, è obbligatoria almeno una pista con portale e larghezza catena configurata.",
     energyChainBayGuard:
