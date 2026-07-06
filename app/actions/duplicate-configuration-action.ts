@@ -1,16 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import { z } from "zod";
 import {
   duplicateConfigurationRecord,
   getConfigurationWithTanksAndBays,
   getUserData,
   logActivity,
-  QueryError,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
+import { mapActionError } from "./lib/map-action-error";
 
 export const duplicateConfigurationAction = async (sourceId: unknown) => {
   // 1. Input validation — no configSchema, deliberate bypass (see GH #2)
@@ -51,13 +50,6 @@ export const duplicateConfigurationAction = async (sourceId: unknown) => {
 
     return { success: true as const, id: newConfig.id };
   } catch (err) {
-    console.error("Failed to duplicate configuration:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to duplicate configuration:");
   }
 };

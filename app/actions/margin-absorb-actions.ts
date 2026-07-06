@@ -1,13 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import {
   absorbOfferLineMarginWithAudit,
   getEngineeringBomItems,
   getOfferLinePricingForConfig,
   getUserData,
-  QueryError,
 } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
 import { enrichWithCosts } from "@/lib/BOM";
@@ -25,6 +23,7 @@ import {
   type MarginAbsorbInput,
   marginAbsorbSchema,
 } from "@/validation/offer-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 /**
  * Absorb sign-off (#84): a management decision to accept a post-acceptance
@@ -135,10 +134,6 @@ export async function absorbLineMarginAction(
     revalidatePath("/offerte");
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to absorb line margin:");
   }
 }

@@ -1,19 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import { db } from "@/db";
 import {
   addOfferLine,
   getOfferWorkingRevision,
   getUserData,
-  QueryError,
   removeOfferLine,
 } from "@/db/queries";
 import { canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import { configSchema } from "@/validation/config-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 /**
  * Adds a new machine configuration line to an offer's revision 1. The config is
@@ -66,14 +65,7 @@ export const addOfferLineAction = async (
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const, id };
   } catch (err) {
-    console.error("Failed to add offer line:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to add offer line:");
   }
 };
 
@@ -105,13 +97,6 @@ export const removeOfferLineAction = async (
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to remove offer line:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to remove offer line:");
   }
 };

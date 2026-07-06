@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import { db } from "@/db";
 import {
   createPriceCoefficientWithAudit,
@@ -11,7 +10,6 @@ import {
   getUserData,
   insertActivityLog,
   insertMissingMaxBomCoefficients,
-  QueryError,
   resetPriceCoefficientWithAudit,
   updatePriceCoefficientByPnWithAudit,
 } from "@/db/queries";
@@ -21,6 +19,7 @@ import {
   coefficientSchema,
   coefficientUpdateSchema,
 } from "@/validation/coefficient-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 const REVALIDATE_PATH = "/gestione/coefficienti";
 
@@ -73,11 +72,7 @@ export async function createCoefficientAction(formData: {
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to create coefficient:");
   }
 }
 
@@ -112,11 +107,7 @@ export async function updateCoefficientAction(formData: {
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to update coefficient:");
   }
 }
 
@@ -146,11 +137,7 @@ export async function deleteCoefficientAction(pn: string) {
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to delete coefficient:");
   }
 }
 
@@ -178,11 +165,7 @@ export async function resetCoefficientAction(pn: string) {
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to reset coefficient:");
   }
 }
 
@@ -220,10 +203,6 @@ export async function syncMaxBomCoefficientsAction() {
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const, data: { inserted } };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to sync MAXBOM coefficients:");
   }
 }

@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import { canTransitionRevision } from "@/app/actions/lib/auth-checks";
+import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
@@ -77,13 +77,7 @@ export async function setRevisionDiscountAction(
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to set revision discount:");
   }
 }
 
@@ -114,13 +108,7 @@ export async function setRevisionSettingsAction(
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to set revision settings:");
   }
 }
 
@@ -163,13 +151,7 @@ async function runRevisionTransition(
     revalidatePath("/offerte");
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Offer revision transition failed:");
   }
 }
 
@@ -341,13 +323,7 @@ export async function createRevisionAction(
     revalidatePath("/offerte");
     return { success: true as const, data: { revisionNo: newRevisionNo } };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to create offer revision:");
   }
 }
 
@@ -395,13 +371,7 @@ export async function createRenegotiationRevisionAction(offerId: number) {
     }
     return { success: true as const, data: { revisionNo: result.revisionNo } };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to create renegotiation revision:");
   }
 }
 
@@ -469,13 +439,7 @@ export async function acceptRevisionAction(offerId: number) {
     }
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to accept offer revision:");
   }
 }
 
@@ -521,13 +485,7 @@ export async function unacceptRevisionAction(offerId: number) {
     }
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to unaccept offer revision:");
   }
 }
 

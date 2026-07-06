@@ -3,14 +3,12 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { DatabaseError } from "pg";
 import { db } from "@/db";
 import {
   assignManagerWithAudit,
   changeUserRoleWithAudit,
   getUserData,
   logActivity,
-  QueryError,
 } from "@/db/queries";
 import { userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
@@ -20,6 +18,7 @@ import {
   changeRoleSchema,
   sendPasswordResetSchema,
 } from "@/validation/user-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 export async function changeUserRoleAction(formData: unknown) {
   const validation = changeRoleSchema.safeParse(formData);
@@ -65,14 +64,7 @@ export async function changeUserRoleAction(formData: unknown) {
     revalidatePath("/gestione/utenti");
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to change user role:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to change user role:");
   }
 }
 
@@ -129,14 +121,7 @@ export async function assignManagerAction(formData: unknown) {
     revalidatePath("/gestione/utenti");
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to assign manager:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to assign manager:");
   }
 }
 
@@ -191,13 +176,6 @@ export async function sendPasswordResetAction(formData: unknown) {
 
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to send password reset:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to send password reset:");
   }
 }

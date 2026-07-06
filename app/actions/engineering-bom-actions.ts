@@ -2,8 +2,8 @@
 
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
 import {
   getConfigurationWithTanksAndBays,
@@ -199,14 +199,7 @@ export async function snapshotEngineeringBomAction(confId: number) {
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to snapshot engineering BOM:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to snapshot engineering BOM:");
   }
 }
 
@@ -253,14 +246,7 @@ export async function regenerateEngineeringBomAction(confId: number) {
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to regenerate engineering BOM:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to regenerate engineering BOM:");
   }
 }
 
@@ -323,14 +309,7 @@ export async function addEngineeringBomItemAction(
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to add BOM item:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to add BOM item:");
   }
 }
 
@@ -397,14 +376,7 @@ export async function updateEngineeringBomItemQtyAction(
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to update BOM item qty:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to update BOM item qty:");
   }
 }
 
@@ -463,14 +435,7 @@ export async function toggleDeleteEngineeringBomItemAction(
     revalidatePath(`/configurazioni/bom/${confId}`);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to toggle delete BOM item:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to toggle delete BOM item:");
   }
 }
 
@@ -488,13 +453,6 @@ export async function searchPartNumbersAction(query: string) {
     const results = await searchPartNumbers(query.trim(), 20);
     return { success: true as const, data: results };
   } catch (err) {
-    console.error("Failed to search part numbers:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to search part numbers:");
   }
 }

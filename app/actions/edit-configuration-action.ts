@@ -1,7 +1,7 @@
 "use server";
 
-import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
 import {
@@ -11,7 +11,6 @@ import {
   hasEngineeringBom,
   insertActivityLog,
   offerRevisionStatusFor,
-  QueryError,
   resetWashBayEnergyChainFields,
   resetWashBayNonEnergyChainFields,
   updateConfiguration,
@@ -125,13 +124,6 @@ export const editConfigurationAction = async (
     revalidateConfigurationRoutes(confId, configuration.origin);
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to edit configuration:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to edit configuration:");
   }
 };

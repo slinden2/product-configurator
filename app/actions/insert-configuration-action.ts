@@ -1,16 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
-import {
-  getUserData,
-  insertConfiguration,
-  logActivity,
-  QueryError,
-} from "@/db/queries";
+import { getUserData, insertConfiguration, logActivity } from "@/db/queries";
 import { canManageStandaloneConfigs } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 export const insertConfigurationAction = async (formData: unknown) => {
   const validation = configSchema.safeParse(formData);
@@ -42,13 +37,6 @@ export const insertConfigurationAction = async (formData: unknown) => {
     revalidatePath("/configurazioni");
     return { success: true as const, id: newConfig.id };
   } catch (err) {
-    console.error("Failed to insert configuration:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to insert configuration:");
   }
 };

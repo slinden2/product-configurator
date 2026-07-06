@@ -326,8 +326,7 @@ describe("editConfigurationAction", () => {
       mockConfig({ status: "SALES_APPROVED", origin: "OFFER" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotEdit);
+    expect(result).toEqual({ success: false, error: MSG.config.cannotEdit });
   });
 
   test("nobody can edit TECH_APPROVED config", async () => {
@@ -335,8 +334,7 @@ describe("editConfigurationAction", () => {
       mockConfig({ status: "TECH_APPROVED" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotEdit);
+    expect(result).toEqual({ success: false, error: MSG.config.cannotEdit });
   });
 
   test("nobody can edit CLOSED config", async () => {
@@ -344,8 +342,7 @@ describe("editConfigurationAction", () => {
       mockConfig({ status: "CLOSED" }),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotEdit);
+    expect(result).toEqual({ success: false, error: MSG.config.cannotEdit });
   });
 
   test("returns error message on QueryError", async () => {

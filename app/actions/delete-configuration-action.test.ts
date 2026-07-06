@@ -158,15 +158,13 @@ describe("deleteConfigurationAction", () => {
       mockConfig({ status: "TECH_APPROVED" }),
     );
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotDelete);
+    expect(result).toEqual({ success: false, error: MSG.config.cannotDelete });
   });
 
   test("cannot delete CLOSED config", async () => {
     mockGetConfiguration.mockResolvedValue(mockConfig({ status: "CLOSED" }));
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotDelete);
+    expect(result).toEqual({ success: false, error: MSG.config.cannotDelete });
   });
 
   test("SALES cannot delete a handed-off SALES_APPROVED config", async () => {
@@ -179,8 +177,7 @@ describe("deleteConfigurationAction", () => {
       mockConfig({ status: "SALES_APPROVED", origin: "OFFER" }),
     );
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotDelete);
+    expect(result).toEqual({ success: false, error: MSG.config.cannotDelete });
   });
 
   test("SALES cannot delete an OFFER config on a DRAFT revision (line is offer-owned)", async () => {
@@ -194,8 +191,10 @@ describe("deleteConfigurationAction", () => {
     );
     mockOfferRevisionStatusFor.mockResolvedValue("DRAFT");
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotDeleteOfferOwned);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.cannotDeleteOfferOwned,
+    });
     expect(mockDeleteConfiguration).not.toHaveBeenCalled();
   });
 
@@ -205,8 +204,10 @@ describe("deleteConfigurationAction", () => {
     );
     mockOfferRevisionStatusFor.mockResolvedValue("ACCEPTED");
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotDeleteOfferOwned);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.cannotDeleteOfferOwned,
+    });
     expect(mockDeleteConfiguration).not.toHaveBeenCalled();
   });
 
@@ -220,8 +221,10 @@ describe("deleteConfigurationAction", () => {
     (fkError as unknown as { code: string }).code = "23503";
     mockDeleteConfiguration.mockRejectedValue(fkError);
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.cannotDeleteOfferOwned);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.cannotDeleteOfferOwned,
+    });
   });
 
   test("revalidates both /configurazioni and / after deletion", async () => {
@@ -234,8 +237,7 @@ describe("deleteConfigurationAction", () => {
   test("returns error on db failure", async () => {
     mockDeleteConfiguration.mockRejectedValue(new Error("DB error"));
     const result = await deleteConfigurationAction(CONF_ID);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.db.unknown);
+    expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 
   test("does not revalidate when audit log insert fails (CONFIG_DELETE rolls back)", async () => {

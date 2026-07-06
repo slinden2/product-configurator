@@ -142,8 +142,7 @@ describe("insertConfigurationAction", () => {
       new QueryError("Impossibile creare la configurazione.", 500),
     );
     const result = await insertConfigurationAction(makeValidFormData());
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(MSG.config.createFailed);
+    expect(result).toEqual({ success: false, error: MSG.config.createFailed });
   });
 
   test("returns generic error on unknown exceptions", async () => {

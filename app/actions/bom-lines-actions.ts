@@ -1,10 +1,10 @@
 "use server";
 
-import { DatabaseError } from "pg";
-import { getAssemblyChildren, getUserData, QueryError } from "@/db/queries";
+import { getAssemblyChildren, getUserData } from "@/db/queries";
 import type { BOMItemWithCost } from "@/lib/BOM";
 import { explodeBomsToLeaves } from "@/lib/BOM/explode-bom";
 import { MSG } from "@/lib/messages";
+import { mapActionError } from "./lib/map-action-error";
 
 type BOMData = {
   generalBOM: BOMItemWithCost[];
@@ -22,14 +22,7 @@ export async function explodeBomToLeavesAction(data: BOMData) {
     const exploded = await explodeBomsToLeaves(data);
     return { success: true as const, data: exploded };
   } catch (err) {
-    console.error("Failed to explode BOM to leaves:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to explode BOM to leaves:");
   }
 }
 
@@ -48,13 +41,6 @@ export async function getAssemblyChildrenAction(parentPn: string) {
     const data = await getAssemblyChildren(pn);
     return { success: true as const, data };
   } catch (err) {
-    console.error("Failed to fetch assembly children:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to fetch assembly children:");
   }
 }

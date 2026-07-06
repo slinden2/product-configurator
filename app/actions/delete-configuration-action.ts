@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
 import {
   canAccessConfiguration,
@@ -11,7 +12,6 @@ import {
   getUserData,
   insertActivityLog,
   offerRevisionStatusFor,
-  QueryError,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 
@@ -79,20 +79,14 @@ export const deleteConfigurationAction = async (id: number) => {
     revalidatePath("/");
     return { success: true as const };
   } catch (err) {
-    console.error("Failed to delete configuration:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
+    // FK restrict violation — an offer line still references this config.
+    if (err instanceof DatabaseError && err.code === "23503") {
+      console.error("Failed to delete configuration:", err);
+      return {
+        success: false as const,
+        error: MSG.config.cannotDeleteOfferOwned,
+      };
     }
-    if (err instanceof DatabaseError) {
-      // FK restrict violation — an offer line still references this config.
-      if (err.code === "23503") {
-        return {
-          success: false as const,
-          error: MSG.config.cannotDeleteOfferOwned,
-        };
-      }
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to delete configuration:");
   }
 };

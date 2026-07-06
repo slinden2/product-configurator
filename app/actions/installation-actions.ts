@@ -1,15 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import {
   getUserData,
-  QueryError,
   updateInstallationItemSettingWithAudit,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import type { InstallationItemKind } from "@/types";
 import { installationItemSettingsSchema } from "@/validation/installation-item-settings-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 const REVALIDATE_PATH = "/gestione/installazione";
 
@@ -49,10 +48,6 @@ export async function updateInstallationItemSettingAction(formData: {
     revalidatePath(REVALIDATE_PATH);
     return { success: true as const };
   } catch (err) {
-    if (err instanceof QueryError)
-      return { success: false as const, error: err.message };
-    if (err instanceof DatabaseError)
-      return { success: false as const, error: MSG.db.error };
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to update installation item setting:");
   }
 }

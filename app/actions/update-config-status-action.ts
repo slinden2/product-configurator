@@ -1,16 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DatabaseError } from "pg";
 import { db } from "@/db";
 import {
   getUserData,
   insertActivityLog,
-  QueryError,
   updateConfigStatus,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { configStatusSchema } from "@/validation/config-status-schema";
+import { mapActionError } from "./lib/map-action-error";
 
 export const updateConfigStatusAction = async (
   confId: number,
@@ -61,13 +60,6 @@ export const updateConfigStatusAction = async (
     revalidatePath(`/configurazioni/bom/${updatedId}`);
     return { success: true as const, id: updatedId };
   } catch (err) {
-    console.error("Failed to update configuration status:", err);
-    if (err instanceof QueryError) {
-      return { success: false as const, error: err.message };
-    }
-    if (err instanceof DatabaseError) {
-      return { success: false as const, error: MSG.db.error };
-    }
-    return { success: false as const, error: MSG.db.unknown };
+    return mapActionError(err, "Failed to update configuration status:");
   }
 };
