@@ -17,9 +17,10 @@ export const activityActionEnum = pgEnum("activity_action", ActivityActions);
 
 export const activityLogs = pgTable("activity_logs", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  // restrict: the audit trail must survive user deletion.
   user_id: uuid()
     .notNull()
-    .references(() => userProfiles.id, { onDelete: "cascade" }),
+    .references(() => userProfiles.id, { onDelete: "restrict" }),
   action: activityActionEnum().notNull(),
   target_entity: varchar({ length: 100 }).notNull(),
   target_id: varchar({ length: 100 }).notNull(),

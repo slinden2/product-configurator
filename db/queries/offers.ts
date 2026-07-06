@@ -1450,9 +1450,10 @@ export async function recordOfferRevisionOutcomeWithAudit(
 
 /**
  * Removes a configuration line from an offer's **working revision** (the latest by
- * `revision_no`) by deleting its configuration (the line row cascades via the FK).
- * Gated on the revision being DRAFT and the line actually belonging to that working
- * revision. Audited in-transaction (delete ⇒ audit in the same tx).
+ * `revision_no`), deleting the line row and then its configuration (the FK is
+ * `restrict`, so the line must go first). Gated on the revision being DRAFT and the
+ * line actually belonging to that working revision. Audited in-transaction
+ * (delete ⇒ audit in the same tx).
  */
 export async function removeOfferLine(
   offerId: number,
@@ -1485,14 +1486,20 @@ export async function removeOfferLine(
       throw new QueryError(MSG.offer.lineCannotEdit, 403);
     }
     // Renegotiation drafts reference engineering-owned configs read-only: removing
-    // a line would delete the config itself (the line cascades off it).
+    // a line would delete the config itself (the line's config is deleted with it).
     if (offer.accepted_revision_id !== null) {
       throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
     }
-    if (revision.lines.length === 0) {
+    const line = revision.lines[0];
+    if (!line) {
       throw new QueryError(MSG.offer.notFound, 404);
     }
 
+    // Line first: configuration_id is onDelete restrict, so the config delete would
+    // fail while the line still references it.
+    await tx
+      .delete(offerRevisionLines)
+      .where(eq(offerRevisionLines.id, line.id));
     await tx.delete(configurations).where(eq(configurations.id, configId));
 
     await insertActivityLog(

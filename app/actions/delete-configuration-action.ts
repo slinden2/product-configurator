@@ -50,6 +50,17 @@ export const deleteConfigurationAction = async (id: number) => {
     };
   }
 
+  // A defined revision status means an offer_revision_lines row references this
+  // config (possibly a frozen accepted line). Lines are removed from the offer page
+  // (removeOfferLineAction), never by deleting the config out from under them; the
+  // FK is onDelete restrict as backstop.
+  if (configuration.origin === "OFFER" && offerRevisionStatus !== undefined) {
+    return {
+      success: false as const,
+      error: MSG.config.cannotDeleteOfferOwned,
+    };
+  }
+
   try {
     await db.transaction(async (tx) => {
       await deleteConfiguration(id, tx);
@@ -73,6 +84,13 @@ export const deleteConfigurationAction = async (id: number) => {
       return { success: false as const, error: err.message };
     }
     if (err instanceof DatabaseError) {
+      // FK restrict violation — an offer line still references this config.
+      if (err.code === "23503") {
+        return {
+          success: false as const,
+          error: MSG.config.cannotDeleteOfferOwned,
+        };
+      }
       return { success: false as const, error: MSG.db.error };
     }
     return { success: false as const, error: MSG.db.unknown };

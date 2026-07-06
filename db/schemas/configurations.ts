@@ -153,8 +153,10 @@ export const configurations = pgTable("configurations", {
   // Discriminates a pure technical config (STANDALONE) from one owned by an offer revision
   // (OFFER). Offer-owned rows set this explicitly; standalone is the safe default.
   origin: configOriginEnum("origin").notNull().default("STANDALONE"),
+  // restrict: deleting a user must never destroy their configurations (a config may
+  // back a frozen offer_revision_lines row — the immutable as-sold record).
   user_id: uuid("user_id")
-    .references(() => userProfiles.id, { onDelete: "cascade" })
+    .references(() => userProfiles.id, { onDelete: "restrict" })
     .notNull(),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })
     .notNull()

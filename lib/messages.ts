@@ -25,6 +25,8 @@ export const MSG = {
       "Non è possibile modificare una configurazione in questo stato.",
     cannotDelete:
       "Non è possibile eliminare una configurazione in questo stato.",
+    cannotDeleteOfferOwned:
+      "Non è possibile eliminare una configurazione collegata a un'offerta. Le righe si gestiscono dalla pagina dell'offerta.",
     cannotEditSubRecord:
       "Non è possibile modificare i record di una configurazione in questo stato.",
     createFailed: "Impossibile creare la configurazione.",

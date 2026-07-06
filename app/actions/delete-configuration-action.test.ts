@@ -183,6 +183,47 @@ describe("deleteConfigurationAction", () => {
     expect(result.error).toBe(MSG.config.cannotDelete);
   });
 
+  test("SALES cannot delete an OFFER config on a DRAFT revision (line is offer-owned)", async () => {
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "EX",
+    });
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "DRAFT", origin: "OFFER" }),
+    );
+    mockOfferRevisionStatusFor.mockResolvedValue("DRAFT");
+    const result = await deleteConfigurationAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.cannotDeleteOfferOwned);
+    expect(mockDeleteConfiguration).not.toHaveBeenCalled();
+  });
+
+  test("ENGINEER cannot delete a handed-off OFFER config in IN_TECH_REVIEW (frozen accepted line)", async () => {
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ status: "IN_TECH_REVIEW", origin: "OFFER" }),
+    );
+    mockOfferRevisionStatusFor.mockResolvedValue("ACCEPTED");
+    const result = await deleteConfigurationAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.cannotDeleteOfferOwned);
+    expect(mockDeleteConfiguration).not.toHaveBeenCalled();
+  });
+
+  test("maps FK restrict violation (23503) to the offer-owned message", async () => {
+    const { DatabaseError } = await import("pg");
+    const fkError = new DatabaseError(
+      "violates foreign key constraint",
+      0,
+      "error",
+    );
+    (fkError as unknown as { code: string }).code = "23503";
+    mockDeleteConfiguration.mockRejectedValue(fkError);
+    const result = await deleteConfigurationAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.cannotDeleteOfferOwned);
+  });
+
   test("revalidates both /configurazioni and / after deletion", async () => {
     await deleteConfigurationAction(CONF_ID);
     const { revalidatePath } = await import("next/cache");

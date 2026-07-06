@@ -9,6 +9,7 @@ import {
   submitOfferRevisionForApprovalWithAudit,
 } from "@/db/queries";
 import {
+  activityLogs,
   configurations,
   installationItemSettings,
   offerRevisionLines,
@@ -312,7 +313,8 @@ function createAdminSupabaseClient(): SupabaseClient {
   });
 }
 
-// Deletes every auth user. Profiles cascade away via the user_profiles FK.
+// Deletes every auth user. Profiles cascade away via the user_profiles FK — this
+// requires all restrict-FK data (configs, offers, activity logs) to be gone first.
 async function deleteAllAuthUsers(admin: SupabaseClient) {
   // Always re-fetch the first page: deleting shifts the list, so paging by
   // index would skip users. Loop until no users remain.
@@ -415,6 +417,9 @@ async function seedDb() {
   if (shouldReset) {
     console.log("⚠️ Reset flag detected. Cleaning up existing data...");
 
+    // Audit rows first: activity_logs.user_id is onDelete restrict, so they must be
+    // gone before the auth-user deletion below can cascade into user_profiles.
+    await db.delete(activityLogs);
     // Delete the offer spine before configurations: lines → revisions → offers.
     await db.delete(offerRevisionLines);
     await db.delete(offerRevisions);
@@ -425,6 +430,7 @@ async function seedDb() {
     await db.delete(washBays);
     await db.delete(configurations);
 
+    await db.execute(sql`ALTER SEQUENCE activity_logs_id_seq RESTART WITH 1`);
     await db.execute(
       sql`ALTER SEQUENCE surcharge_settings_id_seq RESTART WITH 1`,
     );

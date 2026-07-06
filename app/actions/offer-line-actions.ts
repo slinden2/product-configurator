@@ -78,8 +78,8 @@ export const addOfferLineAction = async (
 };
 
 /**
- * Removes a configuration line from an offer's revision 1 by deleting its
- * configuration (the line cascades). Gated on the revision being DRAFT.
+ * Removes a configuration line from an offer's working revision, deleting the line
+ * row and its configuration. Gated on the revision being DRAFT.
  */
 export const removeOfferLineAction = async (
   offerId: number,

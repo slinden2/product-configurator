@@ -35,8 +35,11 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
   // any visible row is in scope; managers/directors may act on it too.
   const canEdit =
     canManageConfigs(user.role) || configuration.user.id === user.id;
+  // OFFER configs are always referenced by an offer line (FK restrict): they are
+  // removed from the offer page, never deleted from the technical queue.
   const canDelete =
     canEdit &&
+    configuration.origin === "STANDALONE" &&
     isEditable(configuration.status, user.role, configuration.origin);
   const canDuplicate = canEdit;
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
@@ -53,7 +56,7 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       try {
         const response = await deleteConfigurationAction(configuration.id);
         if (!response.success) {
-          toast.error(MSG.toast.deleteError);
+          toast.error(response.error ?? MSG.toast.deleteError);
         } else {
           toast.success(MSG.toast.configDeleted);
         }

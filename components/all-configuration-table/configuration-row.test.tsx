@@ -276,9 +276,9 @@ describe("ConfigurationRow", () => {
       ).not.toBeDisabled();
     });
 
-    test("ENGINEER user can delete a handed-off OFFER configuration in IN_TECH_REVIEW", async () => {
-      // IN_TECH_REVIEW exists only on OFFER configs — the standalone chain is
-      // DRAFT <-> TECH_APPROVED.
+    test("ENGINEER user cannot delete a handed-off OFFER configuration in IN_TECH_REVIEW", async () => {
+      // OFFER configs are always referenced by an offer line (FK restrict): they
+      // are removed from the offer page, never deleted from the technical queue.
       renderRow(
         {
           status: "IN_TECH_REVIEW",
@@ -292,7 +292,7 @@ describe("ConfigurationRow", () => {
 
       expect(
         screen.getByRole("menuitem", { name: /Elimina configurazione/ }),
-      ).not.toBeDisabled();
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
     test("ENGINEER user cannot delete TECH_APPROVED configuration", async () => {

@@ -24,8 +24,10 @@ export const offers = pgTable("offers", {
   customer_address: varchar("customer_address", { length: 500 }),
   customer_email: varchar("customer_email", { length: 255 }),
   // Owner = the agent who created the offer. Scope flows from this (offerScopeWhere).
+  // restrict: deleting a user must never destroy their offers (revisions and frozen
+  // pricing/as-sold snapshots hang off them).
   user_id: uuid("user_id")
-    .references(() => userProfiles.id, { onDelete: "cascade" })
+    .references(() => userProfiles.id, { onDelete: "restrict" })
     .notNull(),
   // The revision the customer accepted, if any. Circular FK to offer_revisions (each revision
   // points back to its offer); declared lazily via AnyPgColumn, as in user-profiles.manager_id.

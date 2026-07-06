@@ -41,8 +41,10 @@ export const offerRevisionLines = pgTable(
     offer_revision_id: integer("offer_revision_id")
       .references(() => offerRevisions.id, { onDelete: "cascade" })
       .notNull(),
+    // restrict: a line (possibly frozen at acceptance) must never vanish because its
+    // configuration was deleted — callers remove the line row first (see removeOfferLine).
     configuration_id: integer("configuration_id")
-      .references(() => configurations.id, { onDelete: "cascade" })
+      .references(() => configurations.id, { onDelete: "restrict" })
       .notNull(),
     position: integer("position").notNull(),
     quantity: integer("quantity").notNull().default(1),
