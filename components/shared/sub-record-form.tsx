@@ -116,12 +116,6 @@ const SubRecordForm = <
     if (formKey) onDirtyChange?.(formKey, formState.isDirty);
   }, [formState.isDirty, formKey, onDirtyChange]);
 
-  useEffect(() => {
-    if (formState.isSubmitSuccessful) {
-      reset(form.getValues());
-    }
-  }, [formState.isSubmitSuccessful, reset, form]);
-
   // --- Derived State ---
   const isEditing = !!entityData?.id;
   const isSaveOrCancelDisabled =

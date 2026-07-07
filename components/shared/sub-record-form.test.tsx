@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
@@ -519,6 +525,92 @@ describe("SubRecordForm — WaterTankForm", () => {
         expect(toast.error).toHaveBeenCalledWith("Errore server");
       });
       expect(onSaved).not.toHaveBeenCalled();
+    });
+
+    test("keeps the form dirty and Save enabled after a failed save", async () => {
+      mockEditWaterTank.mockResolvedValueOnce({
+        success: false,
+        error: "Errore server",
+      });
+      const onDirtyChange = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={onDirtyChange}
+        />,
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("tank-10", true);
+      });
+      onDirtyChange.mockClear();
+
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Errore server");
+      });
+
+      // Once the pending transition settles, the form must stay dirty so the
+      // user can retry or revert
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /salva/i })).toBeEnabled();
+      });
+      expect(screen.getByRole("button", { name: /annulla/i })).toBeEnabled();
+      expect(onDirtyChange).not.toHaveBeenCalledWith("tank-10", false);
+    });
+
+    test("keeps the form dirty when the BOM warning is cancelled", async () => {
+      const onDirtyChange = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={onDirtyChange}
+          hasEngineeringBom
+        />,
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+
+      await waitFor(() => {
+        expect(onDirtyChange).toHaveBeenCalledWith("tank-10", true);
+      });
+      onDirtyChange.mockClear();
+
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      // The BOM invalidation warning appears instead of saving
+      const dialog = await screen.findByRole("dialog");
+      expect(
+        within(dialog).getByText("Distinta di commessa presente"),
+      ).toBeInTheDocument();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Annulla" }),
+      );
+
+      expect(mockEditWaterTank).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: /salva/i })).toBeEnabled();
+      expect(onDirtyChange).not.toHaveBeenCalledWith("tank-10", false);
     });
   });
 });
