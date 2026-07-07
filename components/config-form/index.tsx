@@ -154,9 +154,10 @@ const ConfigForm = ({
           router.push(`/configurazioni/modifica/${result.id}`);
         }
       } catch (err) {
-        if (err instanceof Error) {
-          toast.error(err.message);
-        }
+        console.error("Save configuration error:", err);
+        const message =
+          err instanceof Error ? err.message : MSG.toast.configSaveUnknown;
+        toast.error(message);
       }
     });
   }

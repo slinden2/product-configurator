@@ -249,6 +249,64 @@ describe("ConfigForm", () => {
       });
     });
 
+    test("shows the thrown Error message when editConfigurationAction rejects", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockEditAction.mockRejectedValueOnce(new Error("Boom"));
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Boom");
+      });
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    test("shows a fallback toast when editConfigurationAction rejects with a non-Error", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockEditAction.mockRejectedValueOnce("string failure");
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "Errore sconosciuto durante il salvataggio della configurazione.",
+        );
+      });
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
     test("shows error toast when configuration data is missing user_id", async () => {
       const config = { ...makeValidConfig() };
       // Remove user_id to trigger the "Dati incompleti" branch

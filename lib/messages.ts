@@ -78,6 +78,8 @@ export const MSG = {
     configSavedSubmitHint:
       "Configurazione salvata. Puoi inviarla dalla pagina di visualizzazione.",
     configCreated: "Configurazione creata.",
+    configSaveUnknown:
+      "Errore sconosciuto durante il salvataggio della configurazione.",
     offerCreated: "Offerta creata.",
     offerLineCreated: "Configurazione aggiunta all'offerta.",
     offerLineRemoved: "Configurazione rimossa dall'offerta.",
