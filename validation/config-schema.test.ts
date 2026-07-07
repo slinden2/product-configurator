@@ -178,18 +178,24 @@ describe("configSchema", () => {
   });
 
   describe("Brush qty and pump restrictions", () => {
-    test("should fail when brush_qty is 0 and has_shampoo_pump is true", () => {
+    test("should fail on has_shampoo_pump when brush_qty is 0 and has_shampoo_pump is true", () => {
       const data = {
         ...validBase,
         brush_qty: 0,
         has_shampoo_pump: true,
       };
-      expect(() => configSchema.parse(data)).toThrow(
-        "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
-      );
+      const result = configSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues).toEqual([
+        expect.objectContaining({
+          message:
+            "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
+          path: ["has_shampoo_pump"],
+        }),
+      ]);
     });
 
-    test("should fail when brush_qty is 2 and has_acid_pump is true", () => {
+    test("should fail on has_acid_pump when brush_qty is 2 and has_acid_pump is true", () => {
       const data = {
         ...validBase,
         brush_qty: 2,
@@ -198,12 +204,18 @@ describe("configSchema", () => {
         has_acid_pump: true,
         acid_pump_pos: "WASH_BAY",
       };
-      expect(() => configSchema.parse(data)).toThrow(
-        "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
-      );
+      const result = configSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues).toEqual([
+        expect.objectContaining({
+          message:
+            "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
+          path: ["has_acid_pump"],
+        }),
+      ]);
     });
 
-    test("should fail when brush_qty is 2 and has_omz_pump is true", () => {
+    test("should fail on has_omz_pump when brush_qty is 2 and has_omz_pump is true", () => {
       const data = {
         ...validBase,
         brush_qty: 2,
@@ -212,9 +224,15 @@ describe("configSchema", () => {
         has_omz_pump: true,
         pump_outlet_omz: "SPINNERS",
       };
-      expect(() => configSchema.parse(data)).toThrow(
-        "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
-      );
+      const result = configSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues).toEqual([
+        expect.objectContaining({
+          message:
+            "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
+          path: ["has_omz_pump"],
+        }),
+      ]);
     });
 
     test("should pass with brush_qty 3 and all restricted pumps disabled", () => {

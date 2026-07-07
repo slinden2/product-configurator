@@ -56,6 +56,7 @@ export const configSchema = baseSchema
         code: "custom",
         message:
           "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
+        path: ["has_shampoo_pump"],
       });
     }
     // Disallow acid pump if brush quantity is 2
@@ -64,6 +65,7 @@ export const configSchema = baseSchema
         code: "custom",
         message:
           "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
+        path: ["has_acid_pump"],
       });
     }
     // Disallow OMZ pump for 2 brush configurations
@@ -72,6 +74,7 @@ export const configSchema = baseSchema
         code: "custom",
         message:
           "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
+        path: ["has_omz_pump"],
       });
     }
     // Manual antifreeze for the chassis-wash detergent pump requires both the
