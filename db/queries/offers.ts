@@ -59,7 +59,13 @@ export function offerScopeWhere(user: NonNullable<UserData>) {
         .from(userProfiles)
         .where(
           or(
-            eq(userProfiles.manager_id, user.id),
+            // Defense-in-depth: a direct report only counts while it is still a
+            // SALES profile, so a stale manager_id on a non-SALES user never
+            // leaks that user's offers into this manager's scope.
+            and(
+              eq(userProfiles.manager_id, user.id),
+              eq(userProfiles.role, "SALES"),
+            ),
             eq(userProfiles.id, user.id),
           ),
         ),
@@ -90,11 +96,14 @@ export async function canAccessOffer(
     return true;
   }
   // SALES_MANAGER: in scope only if the offer owner reports to this manager.
+  // Mirrors offerScopeWhere — the `role = SALES` filter is the same
+  // defense-in-depth guard against a stale manager_id on a non-SALES profile.
   if (user.role === "SALES_MANAGER") {
     const report = await db.query.userProfiles.findFirst({
       where: and(
         eq(userProfiles.id, offer.user_id),
         eq(userProfiles.manager_id, user.id),
+        eq(userProfiles.role, "SALES"),
       ),
       columns: { id: true },
     });

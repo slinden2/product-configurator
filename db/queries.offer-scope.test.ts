@@ -26,6 +26,8 @@ import { canAccessOffer, offerScopeWhere } from "@/db/queries";
 const dialect = new PgDialect();
 const renderSql = (clause: unknown): string =>
   dialect.sqlToQuery(clause as SQL).sql;
+const renderParams = (clause: unknown): unknown[] =>
+  dialect.sqlToQuery(clause as SQL).params;
 
 /** Minimal UserData stand-in — the helpers only read `id` and `role`. */
 const makeUser = (role: Role, id = "user-1") =>
@@ -126,6 +128,19 @@ describe("canAccessOffer", () => {
     await expect(
       canAccessOffer(makeUser("SALES_MANAGER"), otherOffer),
     ).resolves.toBe(false);
+  });
+
+  test("SALES_MANAGER scope additionally requires the report to be SALES", async () => {
+    mockFindFirst.mockResolvedValue(undefined);
+    await canAccessOffer(makeUser("SALES_MANAGER", "mgr"), otherOffer);
+    expect(mockFindFirst).toHaveBeenCalledTimes(1);
+    // Defense-in-depth: the report-lookup must filter on role = SALES so a stale
+    // manager_id on a non-SALES profile can never leak an offer (with pricing).
+    const where = mockFindFirst.mock.calls[0][0].where;
+    const sql = renderSql(where);
+    const params = renderParams(where);
+    expect(sql).toContain('"user_profiles"."role"');
+    expect(params).toContain("SALES");
   });
 
   test("SALES_MANAGER accesses its own offer without a report lookup", async () => {
