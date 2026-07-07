@@ -1,10 +1,9 @@
-import { redirect } from "next/navigation";
 import UsersTable from "@/components/users-table";
-import { getAllUsersWithStats, getUserData } from "@/db/queries";
+import { getAllUsersWithStats } from "@/db/queries";
+import { gestioneRouteGuard } from "../lib/gestione-route-guard";
 
 const UsersPage = async () => {
-  const user = await getUserData();
-  if (!user) redirect("/login");
+  const user = await gestioneRouteGuard();
 
   const users = await getAllUsersWithStats();
 

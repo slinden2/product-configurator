@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import ActivityLogTable from "@/components/activity-log-table";
 import { getUserActivityLog, getUserProfileById } from "@/db/queries";
+import { gestioneRouteGuard } from "../../lib/gestione-route-guard";
 
 const PAGE_SIZE = 20;
 
@@ -10,6 +11,7 @@ const UserDetailPage = async (props: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ page?: string }>;
 }) => {
+  await gestioneRouteGuard();
   const { id } = await props.params;
   const { page: pageParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);

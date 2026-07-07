@@ -1,8 +1,10 @@
 import { getAllPriceCoefficients } from "@/db/queries";
 import { collectMaxBomPns, DEFAULT_COEFFICIENT } from "@/lib/pricing";
+import { gestioneRouteGuard } from "../lib/gestione-route-guard";
 import CoefficientsTable from "./coefficients-table";
 
 export default async function CoefficientsPage() {
+  await gestioneRouteGuard();
   const rows = await getAllPriceCoefficients();
   const maxBomPns = collectMaxBomPns();
 
