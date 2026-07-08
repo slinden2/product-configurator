@@ -5,6 +5,7 @@ import { getUserData, updateSurchargeSettingWithAudit } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import type { SurchargeKind } from "@/types";
 import { surchargeSettingsSchema } from "@/validation/surcharge-settings-schema";
+import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 const REVALIDATE_PATH = "/gestione/maggiorazioni";
@@ -26,7 +27,7 @@ export async function updateSurchargeSettingAction(formData: {
   if (!parsed.success) {
     return {
       success: false as const,
-      error: parsed.error.issues[0]?.message ?? MSG.db.unknown,
+      error: firstZodIssueMessage(parsed.error, MSG.db.unknown),
     };
   }
 

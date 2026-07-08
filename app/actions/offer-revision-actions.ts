@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { canTransitionRevision } from "@/app/actions/lib/auth-checks";
+import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
@@ -89,7 +90,7 @@ export async function setRevisionSettingsAction(
   if (!parsed.success) {
     return {
       success: false as const,
-      error: parsed.error.issues[0]?.message ?? MSG.offer.invalidSettings,
+      error: firstZodIssueMessage(parsed.error, MSG.offer.invalidSettings),
     };
   }
 

@@ -3,6 +3,7 @@
 import { DatabaseError } from "pg";
 import { z } from "zod";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
 import {
@@ -109,7 +110,10 @@ export async function handleSubRecordAction<
       );
       return {
         success: false as const,
-        error: validation.error?.message || MSG.entity.invalidData(entityName),
+        error: firstZodIssueMessage(
+          validation.error,
+          MSG.entity.invalidData(entityName),
+        ),
       };
     }
     validatedData = validation.data;

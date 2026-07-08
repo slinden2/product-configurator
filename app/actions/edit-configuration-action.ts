@@ -1,6 +1,7 @@
 "use server";
 
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
@@ -29,7 +30,10 @@ export const editConfigurationAction = async (
   const validation = configSchema.safeParse(formData);
 
   if (!validation.success) {
-    return { success: false as const, error: validation.error.message };
+    return {
+      success: false as const,
+      error: firstZodIssueMessage(validation.error, MSG.db.unknown),
+    };
   }
 
   const user = await getUserData();

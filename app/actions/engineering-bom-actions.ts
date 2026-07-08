@@ -3,6 +3,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { isEditable } from "@/app/actions/lib/auth-checks";
+import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
 import {
@@ -263,7 +264,7 @@ export async function addEngineeringBomItemAction(
   if (!validation.success) {
     return {
       success: false as const,
-      error: validation.error.issues.map((e) => e.message).join(", "),
+      error: firstZodIssueMessage(validation.error, MSG.db.unknown),
     };
   }
 

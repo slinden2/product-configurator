@@ -5,13 +5,17 @@ import { getUserData, insertConfiguration, logActivity } from "@/db/queries";
 import { canManageStandaloneConfigs } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
+import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 export const insertConfigurationAction = async (formData: unknown) => {
   const validation = configSchema.safeParse(formData);
 
   if (!validation.success) {
-    return { success: false as const, error: validation.error.message };
+    return {
+      success: false as const,
+      error: firstZodIssueMessage(validation.error, MSG.db.unknown),
+    };
   }
 
   const user = await getUserData();

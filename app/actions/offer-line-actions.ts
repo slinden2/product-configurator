@@ -12,6 +12,7 @@ import { canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import { configSchema } from "@/validation/config-schema";
+import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 /**
@@ -27,7 +28,10 @@ export const addOfferLineAction = async (
   const validation = configSchema.safeParse(formData);
 
   if (!validation.success) {
-    return { success: false as const, error: validation.error.message };
+    return {
+      success: false as const,
+      error: firstZodIssueMessage(validation.error, MSG.db.unknown),
+    };
   }
 
   const user = await getUserData();

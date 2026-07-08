@@ -23,6 +23,7 @@ import {
   type MarginAbsorbInput,
   marginAbsorbSchema,
 } from "@/validation/offer-schema";
+import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 /**
@@ -46,7 +47,7 @@ export async function absorbLineMarginAction(
   if (!parsed.success) {
     return {
       success: false as const,
-      error: parsed.error.issues[0]?.message ?? MSG.db.unknown,
+      error: firstZodIssueMessage(parsed.error, MSG.db.unknown),
     };
   }
 

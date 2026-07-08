@@ -8,6 +8,7 @@ import {
 import { MSG } from "@/lib/messages";
 import type { InstallationItemKind } from "@/types";
 import { installationItemSettingsSchema } from "@/validation/installation-item-settings-schema";
+import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 const REVALIDATE_PATH = "/gestione/installazione";
@@ -29,7 +30,7 @@ export async function updateInstallationItemSettingAction(formData: {
   if (!parsed.success) {
     return {
       success: false as const,
-      error: parsed.error.issues[0]?.message ?? MSG.db.unknown,
+      error: firstZodIssueMessage(parsed.error, MSG.db.unknown),
     };
   }
 

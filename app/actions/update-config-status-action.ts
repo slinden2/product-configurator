@@ -9,6 +9,7 @@ import {
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { configStatusSchema } from "@/validation/config-status-schema";
+import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 export const updateConfigStatusAction = async (
@@ -18,7 +19,10 @@ export const updateConfigStatusAction = async (
   const validation = configStatusSchema.safeParse(formData);
 
   if (!validation.success) {
-    return { success: false as const, error: validation.error.message };
+    return {
+      success: false as const,
+      error: firstZodIssueMessage(validation.error, MSG.db.unknown),
+    };
   }
 
   const user = await getUserData();
