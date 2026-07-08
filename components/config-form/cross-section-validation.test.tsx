@@ -119,8 +119,8 @@ describe("Cross-section validation (superRefine)", () => {
     });
   });
 
-  describe("Brush restrictions (no path — blocks submission)", () => {
-    test("blocks submission when brush_qty=0 and has_shampoo_pump=true", async () => {
+  describe("Brush restrictions (anchored error blocks submission)", () => {
+    test("shows error when brush_qty=0 and has_shampoo_pump=true", async () => {
       const config = makeValidConfig({
         brush_qty: 0,
         has_shampoo_pump: true,
@@ -140,13 +140,18 @@ describe("Cross-section validation (superRefine)", () => {
         screen.getByRole("button", { name: /salva configurazione/i }),
       );
 
-      // Wait for validation to process
       await waitFor(() => {
-        expect(mockEditAction).not.toHaveBeenCalled();
+        expect(
+          screen.getByText(
+            "Non puoi selezionare la pompa sapone se non ci sono spazzole.",
+          ),
+        ).toBeInTheDocument();
       });
+
+      expect(mockEditAction).not.toHaveBeenCalled();
     });
 
-    test("blocks submission when brush_qty=2 and has_acid_pump=true", async () => {
+    test("shows error when brush_qty=2 and has_acid_pump=true", async () => {
       const config = makeValidConfig({
         brush_qty: 2,
         brush_type: "THREAD",
@@ -170,11 +175,17 @@ describe("Cross-section validation (superRefine)", () => {
       );
 
       await waitFor(() => {
-        expect(mockEditAction).not.toHaveBeenCalled();
+        expect(
+          screen.getByText(
+            "Non puoi selezionare la pompa acido per un portale a 2 spazzole.",
+          ),
+        ).toBeInTheDocument();
       });
+
+      expect(mockEditAction).not.toHaveBeenCalled();
     });
 
-    test("blocks submission when brush_qty=2 and has_omz_pump=true", async () => {
+    test("shows error when brush_qty=2 and has_omz_pump=true", async () => {
       const config = makeValidConfig({
         brush_qty: 2,
         brush_type: "THREAD",
@@ -198,8 +209,14 @@ describe("Cross-section validation (superRefine)", () => {
       );
 
       await waitFor(() => {
-        expect(mockEditAction).not.toHaveBeenCalled();
+        expect(
+          screen.getByText(
+            "Non puoi selezionare la pompa OMZ per un portale a 2 spazzole.",
+          ),
+        ).toBeInTheDocument();
       });
+
+      expect(mockEditAction).not.toHaveBeenCalled();
     });
   });
 
