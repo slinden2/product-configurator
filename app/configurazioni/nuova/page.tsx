@@ -17,8 +17,14 @@ const NewConfiguration = async (props: {
   if (offerId !== undefined && !Number.isNaN(offerId)) {
     if (!canViewOffer(user.role)) redirect("/");
     const offer = await getOfferWithRevisionAndLines(offerId, user);
-    // Out of scope, missing, or the revision is no longer DRAFT → back to offers.
-    if (!offer || offer.revisions[0]?.status !== "DRAFT") {
+    // Out of scope, missing, revision no longer DRAFT, or a post-acceptance
+    // renegotiation (also DRAFT, but its line set is locked — addOfferLine would
+    // throw renegotiationLinesLocked) → back to offers.
+    if (
+      !offer ||
+      offer.revisions[0]?.status !== "DRAFT" ||
+      offer.accepted_revision_id !== null
+    ) {
       redirect("/offerte");
     }
 
