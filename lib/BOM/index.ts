@@ -45,6 +45,16 @@ export type WithSupplyData = Pick<
 
 export type GeneralBOMConfig = Configuration & { has_shelf_extension: boolean };
 
+/** Warn about part numbers absent from the catalog map (likely typos in rule files). */
+function warnMissingPns(pns: string[], map: Map<string, unknown>): void {
+  const missingPns = pns.filter((pn) => !map.has(pn));
+  if (missingPns.length > 0) {
+    console.warn(
+      `[BOM] Part numbers not found in DB: ${missingPns.join(", ")}`,
+    );
+  }
+}
+
 /** Enrich BOM items with cost and family data from the DB. Shared by BOM class and bom-helpers. */
 export async function enrichWithCosts<T extends { pn: string }>(
   items: T[],
@@ -62,6 +72,7 @@ export async function enrichWithCosts<T extends { pn: string }>(
 
   const pnData = await getPartNumbersByArray(uniquePns);
   const partMap = new Map(pnData.map((p) => [p.pn, p]));
+  warnMissingPns(uniquePns, partMap);
 
   return items.map((item) => {
     const part = partMap.get(item.pn);
@@ -220,14 +231,7 @@ export class BOM {
 
     const pnData = await getPartNumbersByArray(pns);
     const map = new Map(pnData.map((p) => [p.pn, p.description]));
-
-    // Warn about part numbers missing from the DB (likely typos in rule files)
-    const missingPns = pns.filter((pn) => !map.has(pn));
-    if (missingPns.length > 0) {
-      console.warn(
-        `[BOM] Part numbers not found in DB: ${missingPns.join(", ")}`,
-      );
-    }
+    warnMissingPns(pns, map);
 
     return map;
   }
