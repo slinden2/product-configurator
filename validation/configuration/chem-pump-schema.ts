@@ -10,10 +10,10 @@ export const ChemicalPumpPosEnum = z.enum(ChemPumpPos, {
 });
 
 export const chemicalPumpPositions: SelectOption[] =
-  generateSelectOptionsFromZodEnum(ChemicalPumpPosEnum, [
-    "A Bordo",
-    "In Sala Tecnica",
-  ]);
+  generateSelectOptionsFromZodEnum(ChemicalPumpPosEnum, {
+    ONBOARD: "A Bordo",
+    WASH_BAY: "In Sala Tecnica",
+  });
 
 // Number of chem pumps
 export const chemicalNum: SelectOption[] = [

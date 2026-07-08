@@ -17,7 +17,11 @@ export const SupplyTypeEnum = z.enum(SupplyTypes, {
 
 export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplyTypeEnum,
-  ["Mensola dritta", "Braccio mobile", "Catena portacavi"],
+  {
+    STRAIGHT_SHELF: "Mensola dritta",
+    BOOM: "Braccio mobile",
+    ENERGY_CHAIN: "Catena portacavi",
+  },
 );
 
 export const CableChainWidthEnum = z.enum(EnergyChainWidths, {
@@ -25,28 +29,28 @@ export const CableChainWidthEnum = z.enum(EnergyChainWidths, {
 });
 
 export const cableChainWidths: SelectOption[] =
-  generateSelectOptionsFromZodEnum(CableChainWidthEnum, [
-    "ST072S.150.R300",
-    "ST072S.200.R300",
-    "ST072S.250.R300",
-    "ST072S.300.R300",
-  ]);
+  generateSelectOptionsFromZodEnum(CableChainWidthEnum, {
+    L150: "ST072S.150.R300",
+    L200: "ST072S.200.R300",
+    L250: "ST072S.250.R300",
+    L300: "ST072S.300.R300",
+  });
 
 export const SupplyFixingTypeEnum = z.enum(SupplyFixTypes, {
   message: genericRequiredMessage,
 });
 
 export const supplyFixingTypes: SelectOption[] =
-  generateSelectOptionsFromZodEnum(SupplyFixingTypeEnum, [
-    "Palo alimentazione",
-    "Staffa a muro",
-  ]);
+  generateSelectOptionsFromZodEnum(SupplyFixingTypeEnum, {
+    POST: "Palo alimentazione",
+    WALL: "Staffa a muro",
+  });
 
 export const supplyFixingTypesEnergyChain: SelectOption[] =
-  generateSelectOptionsFromZodEnum(SupplyFixingTypeEnum, [
-    "Linea pali",
-    "Mensole a muro",
-  ]);
+  generateSelectOptionsFromZodEnum(SupplyFixingTypeEnum, {
+    POST: "Linea pali",
+    WALL: "Mensole a muro",
+  });
 
 /**
  * Fixing-type options for the given supply type. Energy-chain supplies reuse
@@ -66,7 +70,7 @@ export const SupplySideEnum = z.enum(SupplySides, {
 });
 export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplySideEnum,
-  ["Da definire", "Sinistra", "Destra"],
+  { TBD: "Da definire", LEFT: "Sinistra", RIGHT: "Destra" },
 );
 
 export const supplyTypeSchema = z

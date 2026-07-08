@@ -16,26 +16,33 @@ export const WaterTypeEnum = z.enum(WaterTypes, {
 
 export const waterTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterTypeEnum,
-  ["Acqua di rete", "Acqua riciclata", "Acqua demineralizzata"],
+  {
+    NETWORK: "Acqua di rete",
+    RECYCLED: "Acqua riciclata",
+    DEMINERALIZED: "Acqua demineralizzata",
+  },
 );
 
 export const WaterPump1Enum = z.enum(Water1Pumps);
 
 export const waterPump1Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterPump1Enum,
-  [
-    "Pompa di rilancio 1.5kW + Q.E.",
-    "Pompa di rilancio 2.2kW + Q.E.",
-    "Pompa inv. 3kW 200l/min",
-    "Pompa inv. 3kW 250l/min",
-  ],
+  {
+    BOOST_15KW: "Pompa di rilancio 1.5kW + Q.E.",
+    BOOST_22KW: "Pompa di rilancio 2.2kW + Q.E.",
+    INV_3KW_200L: "Pompa inv. 3kW 200l/min",
+    INV_3KW_250L: "Pompa inv. 3kW 250l/min",
+  },
 );
 
 export const WaterPump2Enum = z.enum(Water2Pumps);
 
 export const waterPump2Opts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterPump2Enum,
-  ["Pompa di rilancio 1.5kW + Q.E.", "Pompa di rilancio 2.2kW + Q.E."],
+  {
+    BOOST_15KW: "Pompa di rilancio 1.5kW + Q.E.",
+    BOOST_22KW: "Pompa di rilancio 2.2kW + Q.E.",
+  },
 );
 
 export const inverterPumpOutletOpts: SelectOption[] = [

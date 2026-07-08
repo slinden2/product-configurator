@@ -11,16 +11,16 @@ export const WaterTankTypeEnum = z.enum(WaterTankTypes, {
 
 export const waterTankOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
   WaterTankTypeEnum,
-  [
-    "2000L",
-    "2000L Jolly",
-    "2500L",
-    "3000L",
-    "4500L",
-    "5000L",
-    "7000L",
-    "9000L",
-  ],
+  {
+    L2000: "2000L",
+    L2000_JOLLY: "2000L Jolly",
+    L2500: "2500L",
+    L3000: "3000L",
+    L4500: "4500L",
+    L5000: "5000L",
+    L7000: "7000L",
+    L9000: "9000L",
+  },
 );
 
 export const waterTankSchema = z

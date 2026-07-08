@@ -18,18 +18,21 @@ export const TouchPosEnum = z.enum(TouchPos, {
 });
 
 export const touchPositionOpts: SelectOption[] =
-  generateSelectOptionsFromZodEnum(TouchPosEnum, [
-    "Su Q.E.",
-    "Su vano detergenti",
-    "Esterna",
-  ]);
+  generateSelectOptionsFromZodEnum(TouchPosEnum, {
+    ON_PANEL: "Su Q.E.",
+    ON_DET_CAB: "Su vano detergenti",
+    EXTERNAL: "Esterna",
+  });
 
 export const TouchFixingType = z.enum(TouchFixTypes, {
   message: genericRequiredMessage,
 });
 
 export const touchFixingTypeOpts: SelectOption[] =
-  generateSelectOptionsFromZodEnum(TouchFixingType, ["A muro", "Su palo"]);
+  generateSelectOptionsFromZodEnum(TouchFixingType, {
+    POST: "Su palo",
+    WALL: "A muro",
+  });
 
 export const cardQtyOpts: SelectOption[] = [];
 

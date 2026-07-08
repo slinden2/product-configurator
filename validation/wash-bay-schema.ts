@@ -11,10 +11,10 @@ export const PressureWasherTypeEnum = z.enum(PressureWashers, {
 });
 
 export const pressureWasherOpts: SelectOption[] =
-  generateSelectOptionsFromZodEnum(PressureWasherTypeEnum, [
-    "21 l/min 150 bar",
-    "21 l/min 200 bar",
-  ]);
+  generateSelectOptionsFromZodEnum(PressureWasherTypeEnum, {
+    L21_150BAR: "21 l/min 150 bar",
+    L21_200BAR: "21 l/min 200 bar",
+  });
 
 const lanceErrMsg = "La quantità di lance deve essere 0 o 2.";
 

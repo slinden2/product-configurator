@@ -11,7 +11,11 @@ export const RailTypeEnum = z.enum(RailTypes, {
 });
 export const railTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   RailTypeEnum,
-  ["Da tassellare", "Da saldare", "Da saldare incassato"],
+  {
+    ANCHORED: "Da tassellare",
+    WELDED: "Da saldare",
+    WELDED_RECESSED: "Da saldare incassato",
+  },
 );
 
 export const AnchorTypeEnum = z.enum(AnchorTypes, {
@@ -19,7 +23,7 @@ export const AnchorTypeEnum = z.enum(AnchorTypes, {
 });
 export const anchorTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   AnchorTypeEnum,
-  ["Zincato", "Chimico"],
+  { ZINC: "Zincato", CHEMICAL: "Chimico" },
 );
 
 export const railLengths: SelectOption[] = [

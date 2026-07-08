@@ -17,47 +17,47 @@ export const HPPumpOutlet15kwEnum = z.enum(HpPump15kwOutlets, {
 });
 
 export const hpPumpOutlet15kwTypes: SelectOption[] =
-  generateSelectOptionsFromZodEnum(HPPumpOutlet15kwEnum, [
-    "Lavachassis",
-    "2 robottine basse",
-    "Barre HP basse",
-    "Barre HP alte",
-  ]);
+  generateSelectOptionsFromZodEnum(HPPumpOutlet15kwEnum, {
+    CHASSIS_WASH: "Lavachassis",
+    LOW_SPINNERS: "2 robottine basse",
+    LOW_BARS: "Barre HP basse",
+    HIGH_BARS: "Barre HP alte",
+  });
 
 export const HPPumpOutlet30kwEnum = z.enum(HpPump30kwOutlets, {
   message: genericRequiredMessage,
 });
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
-  generateSelectOptionsFromZodEnum(HPPumpOutlet30kwEnum, [
-    "Lavachassis orizzontale",
-    "Lavachassis orizzontale + laterale",
-    "2 robottine basse, barre alte",
-    "2 robottine basse + 2 medie",
-    "Arco completo",
-  ]);
+  generateSelectOptionsFromZodEnum(HPPumpOutlet30kwEnum, {
+    CHASSIS_WASH_HORIZONTAL: "Lavachassis orizzontale",
+    CHASSIS_WASH_LATERAL_HORIZONTAL: "Lavachassis orizzontale + laterale",
+    LOW_SPINNERS_HIGH_BARS: "2 robottine basse, barre alte",
+    LOW_MEDIUM_SPINNERS: "2 robottine basse + 2 medie",
+    FULL_ARCH: "Arco completo",
+  });
 
 export const HPPumpOutlet75kwEnum = z.enum(HpPump75kwOutlets, {
   message: genericRequiredMessage,
 });
 
 export const hpPumpOutlet75kwTypes: SelectOption[] =
-  generateSelectOptionsFromZodEnum(HPPumpOutlet75kwEnum, [
-    "Lavachassis",
-    "Barre HP basse",
-  ]);
+  generateSelectOptionsFromZodEnum(HPPumpOutlet75kwEnum, {
+    CHASSIS_WASH: "Lavachassis",
+    LOW_BARS: "Barre HP basse",
+  });
 
 export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, {
   message: genericRequiredMessage,
 });
 
 export const chassisWashSensorTypeOpts: SelectOption[] =
-  generateSelectOptionsFromZodEnum(ChassisWashSensorTypeEnum, [
-    "Singolo sensore su palo",
-    "Doppio sensore su palo",
-    "Singolo sensore a parete",
-    "Doppio sensore a parete",
-  ]);
+  generateSelectOptionsFromZodEnum(ChassisWashSensorTypeEnum, {
+    SINGLE_POST: "Singolo sensore su palo",
+    DOUBLE_POST: "Doppio sensore su palo",
+    SINGLE_WALL: "Singolo sensore a parete",
+    DOUBLE_WALL: "Doppio sensore a parete",
+  });
 
 export function hasAnyChassisWashOutlet(data: {
   pump_outlet_1_15kw?: string;
@@ -88,11 +88,11 @@ export const OMZPumpOutletEnum = z.enum(HpPumpOMZkwOutlets, {
 });
 
 export const omzPumpOutletTypes: SelectOption[] =
-  generateSelectOptionsFromZodEnum(OMZPumpOutletEnum, [
-    "Barra oscillante",
-    "4 robottine",
-    "Barra oscillante e 4 robottine",
-  ]);
+  generateSelectOptionsFromZodEnum(OMZPumpOutletEnum, {
+    HP_ROOF_BAR: "Barra oscillante",
+    SPINNERS: "4 robottine",
+    HP_ROOF_BAR_SPINNERS: "Barra oscillante e 4 robottine",
+  });
 
 // Validation function for 15kw and 30kw logic
 function validatePumpOutlets<T>(
