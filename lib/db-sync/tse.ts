@@ -38,17 +38,16 @@ export interface DBData {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
-function isDBDataArray(array: any[]): array is DBData[] {
-  return array.every(
-    (item) =>
-      typeof item.pn === "string" &&
-      typeof item.description === "string" &&
-      (item.pn_type === 1 || item.pn_type === 2) &&
-      (item.is_phantom === 0 || item.is_phantom === 1) &&
-      (typeof item.cost === "number" || item.cost === null) &&
-      (item.is_subcontract === 0 || item.is_subcontract === 1) &&
-      (typeof item.family === "string" || item.family === null) &&
-      (typeof item.sub_family === "string" || item.sub_family === null),
+function isDBData(item: any): item is DBData {
+  return (
+    typeof item.pn === "string" &&
+    typeof item.description === "string" &&
+    (item.pn_type === 1 || item.pn_type === 2) &&
+    (item.is_phantom === 0 || item.is_phantom === 1) &&
+    (typeof item.cost === "number" || item.cost === null) &&
+    (item.is_subcontract === 0 || item.is_subcontract === 1) &&
+    (typeof item.family === "string" || item.family === null) &&
+    (typeof item.sub_family === "string" || item.sub_family === null)
   );
 }
 
@@ -65,7 +64,13 @@ export const fetchPartNumbersFromTSE = async (): Promise<DBData[]> => {
     );
     const result = await sql.query(fetchPartNumbersQuery);
 
-    data = isDBDataArray(result.recordset) ? result.recordset : [];
+    const offending = result.recordset.find((item) => !isDBData(item));
+    if (offending) {
+      throw new Error(
+        `TSE part-number rows failed validation — possible ERP schema drift. Sample offending row: ${JSON.stringify(offending)}`,
+      );
+    }
+    data = result.recordset as DBData[];
   } catch (err) {
     console.error("Error fetching part numbers from TSE:", err);
     throw err;
@@ -86,26 +91,12 @@ export interface BomStructureRow {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
-function isBomStructureRowArray(array: any[]): array is BomStructureRow[] {
-  array.forEach((item) => {
-    if (
-      !(
-        typeof item.parent_pn === "string" &&
-        typeof item.child_pn === "string" &&
-        typeof item.qty === "number" &&
-        typeof item.sort_order === "number"
-      )
-    ) {
-      console.log(item);
-    }
-  });
-
-  return array.every(
-    (item) =>
-      typeof item.parent_pn === "string" &&
-      typeof item.child_pn === "string" &&
-      typeof item.qty === "number" &&
-      typeof item.sort_order === "number",
+function isBomStructureRow(item: any): item is BomStructureRow {
+  return (
+    typeof item.parent_pn === "string" &&
+    typeof item.child_pn === "string" &&
+    typeof item.qty === "number" &&
+    typeof item.sort_order === "number"
   );
 }
 
@@ -124,7 +115,13 @@ export const fetchBomStructureFromTSE = async (): Promise<
     );
     const result = await sql.query(query);
 
-    data = isBomStructureRowArray(result.recordset) ? result.recordset : [];
+    const offending = result.recordset.find((item) => !isBomStructureRow(item));
+    if (offending) {
+      throw new Error(
+        `TSE BOM-structure rows failed validation — possible ERP schema drift. Sample offending row: ${JSON.stringify(offending)}`,
+      );
+    }
+    data = result.recordset as BomStructureRow[];
   } catch (err) {
     console.error("Error fetching BOM structure from TSE:", err);
     throw err;
