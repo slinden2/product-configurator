@@ -16,13 +16,18 @@ if (!user || !password || !server || !database) {
   );
 }
 
+// TLS certificate validation is ON by default. Set TSE_TRUST_CERT=1 in the
+// relevant env file to opt out — required only if the internal ERP MSSQL server
+// presents a self-signed certificate. Gating on an explicit variable (rather
+// than NODE_ENV, which no entrypoint sets) keeps the prod sync path secure by
+// default instead of silently disabling validation everywhere.
 const config = {
   user,
   password,
   server,
   database,
   options: {
-    trustServerCertificate: process.env.NODE_ENV !== "production",
+    trustServerCertificate: process.env.TSE_TRUST_CERT === "1",
   },
 };
 
