@@ -13,6 +13,10 @@ import { cn } from "@/lib/utils";
 
 const MAX_SUB_BOM_DEPTH = 10;
 
+// Static Tailwind classes indexed by (depth - 1). Tailwind v4 only emits classes
+// found as literals in source (no safelist), so these must not be built at runtime.
+const PADDING_BY_DEPTH = ["pl-4", "pl-8", "pl-12", "pl-16"] as const;
+
 type LoadStatus = "idle" | "loading" | "loaded" | "error";
 
 interface AssemblyChildrenRowsProps {
@@ -59,7 +63,8 @@ export function AssemblyChildrenRows({
     return null;
   }
 
-  const paddingClass = `pl-${Math.min(depth * 4, 16)}`;
+  const paddingClass =
+    PADDING_BY_DEPTH[Math.min(depth - 1, PADDING_BY_DEPTH.length - 1)];
 
   function toggleExpanded(pn: string) {
     setExpandedPns((prev) => {
