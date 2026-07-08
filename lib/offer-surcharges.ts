@@ -16,13 +16,30 @@ function buildSurcharge(
   };
 }
 
+/** Whether a height surcharge applies. Single source of truth for guard + builder. */
+export function heightSurchargeApplies(input: {
+  totalHeightMm: number | null | undefined;
+  standardHeightMm: number;
+}): boolean {
+  return (
+    input.totalHeightMm != null &&
+    input.totalHeightMm !== input.standardHeightMm
+  );
+}
+
+/** Whether a paint surcharge applies. Single source of truth for guard + builder. */
+export function paintSurchargeApplies(input: {
+  hasOmzPaint: boolean;
+}): boolean {
+  return input.hasOmzPaint;
+}
+
 export function buildHeightSurcharge(input: {
   totalHeightMm: number | null | undefined;
   standardHeightMm: number;
   amount: number;
 }): OfferSurchargeItem | null {
-  if (input.totalHeightMm == null) return null;
-  if (input.totalHeightMm === input.standardHeightMm) return null;
+  if (!heightSurchargeApplies(input)) return null;
   return buildSurcharge("HEIGHT", input.amount);
 }
 
@@ -30,7 +47,7 @@ export function buildPaintSurcharge(input: {
   hasOmzPaint: boolean;
   amount: number;
 }): OfferSurchargeItem | null {
-  if (!input.hasOmzPaint) return null;
+  if (!paintSurchargeApplies(input)) return null;
   return buildSurcharge("PAINT", input.amount);
 }
 
@@ -72,15 +89,18 @@ export function resolveOfferSurcharges(input: {
   const heightSetting = input.settings.find((s) => s.kind === "HEIGHT");
   const paintSetting = input.settings.find((s) => s.kind === "PAINT");
 
-  const heightWillApply =
-    input.totalHeightMm != null &&
-    input.totalHeightMm !== input.standardHeightMm;
-  const paintWillApply = input.hasOmzPaint;
+  const heightWillApply = heightSurchargeApplies(input);
+  const paintWillApply = paintSurchargeApplies(input);
 
-  if (heightWillApply && Number(heightSetting?.price ?? 0) <= 0) {
+  const heightPrice = Number(heightSetting?.price ?? 0);
+  const paintPrice = Number(paintSetting?.price ?? 0);
+
+  // Fail closed: NaN, 0, and negatives all fail `> 0`, so a malformed price
+  // can never slip a NaN amount into line pricing / the snapshot.
+  if (heightWillApply && !(heightPrice > 0)) {
     return { ok: false };
   }
-  if (paintWillApply && Number(paintSetting?.price ?? 0) <= 0) {
+  if (paintWillApply && !(paintPrice > 0)) {
     return { ok: false };
   }
 
@@ -89,9 +109,9 @@ export function resolveOfferSurcharges(input: {
     surcharges: buildAllSurcharges({
       totalHeightMm: input.totalHeightMm,
       standardHeightMm: input.standardHeightMm,
-      heightAmount: Number(heightSetting?.price ?? 0),
+      heightAmount: heightPrice,
       hasOmzPaint: input.hasOmzPaint,
-      paintAmount: Number(paintSetting?.price ?? 0),
+      paintAmount: paintPrice,
     }),
   };
 }

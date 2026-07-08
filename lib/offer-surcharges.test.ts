@@ -156,6 +156,32 @@ describe("resolveOfferSurcharges", () => {
     expect(result.ok).toBe(false);
   });
 
+  test("returns ok:false when height surcharge would apply but price is unparseable (NaN)", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      settings: [
+        { kind: "HEIGHT", price: "garbage" },
+        { kind: "PAINT", price: "1200" },
+      ],
+      totalHeightMm: 5000,
+      hasOmzPaint: false,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  test("returns ok:false when paint surcharge would apply but price is unparseable (NaN)", () => {
+    const result = resolveOfferSurcharges({
+      ...base,
+      settings: [
+        { kind: "HEIGHT", price: "1500" },
+        { kind: "PAINT", price: "n/a" },
+      ],
+      totalHeightMm: 4000,
+      hasOmzPaint: true,
+    });
+    expect(result.ok).toBe(false);
+  });
+
   test("returns ok:false when paint surcharge would apply but setting is missing", () => {
     const result = resolveOfferSurcharges({
       ...base,
