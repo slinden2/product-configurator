@@ -76,7 +76,11 @@ describe("updateConfigStatus — standalone DRAFT -> TECH_APPROVED edge", () => 
 
     await expect(
       updateConfigStatus(CONF_ID, engineer, { status: "TECH_APPROVED" }),
-    ).resolves.toEqual({ id: CONF_ID, fromStatus: "DRAFT" });
+    ).resolves.toEqual({
+      id: CONF_ID,
+      fromStatus: "DRAFT",
+      origin: "STANDALONE",
+    });
   });
 
   test("the BOM gate fires on the direct edge", async () => {
@@ -105,7 +109,11 @@ describe("updateConfigStatus — standalone DRAFT -> TECH_APPROVED edge", () => 
 
     await expect(
       updateConfigStatus(CONF_ID, engineer, { status: "DRAFT" }),
-    ).resolves.toEqual({ id: CONF_ID, fromStatus: "TECH_APPROVED" });
+    ).resolves.toEqual({
+      id: CONF_ID,
+      fromStatus: "TECH_APPROVED",
+      origin: "STANDALONE",
+    });
     expect(mockWashBaysFindMany).not.toHaveBeenCalled();
   });
 });

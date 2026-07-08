@@ -485,7 +485,7 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.statusConflict, 409);
   }
 
-  return { id: response.id, fromStatus };
+  return { id: response.id, fromStatus, origin: configuration.origin };
 };
 
 export const insertWaterTank = async (

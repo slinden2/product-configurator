@@ -63,6 +63,7 @@ describe("updateConfigStatusAction", () => {
     mockUpdateConfigStatus.mockResolvedValue({
       id: CONF_ID,
       fromStatus: "DRAFT",
+      origin: "STANDALONE",
     });
     mockInsertActivityLog.mockResolvedValue(undefined);
   });
@@ -91,6 +92,28 @@ describe("updateConfigStatusAction", () => {
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
     );
+    // The migration to revalidateConfigurationRoutes now also invalidates the
+    // list and margin pages (status-gated UI) for every origin.
+    expect(revalidatePath).toHaveBeenCalledWith("/configurazioni");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/marginalita/${CONF_ID}`,
+    );
+    // STANDALONE origin must NOT revalidate the offer detail route.
+    expect(revalidatePath).not.toHaveBeenCalledWith("/offerte/[id]", "page");
+  });
+
+  test("revalidates the offer detail route for OFFER-origin configs", async () => {
+    mockUpdateConfigStatus.mockResolvedValue({
+      id: CONF_ID,
+      fromStatus: "SALES_APPROVED",
+      origin: "OFFER",
+    });
+    const result = await updateConfigStatusAction(CONF_ID, {
+      status: "IN_TECH_REVIEW",
+    });
+    expect(result).toEqual({ success: true, id: CONF_ID });
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).toHaveBeenCalledWith("/offerte/[id]", "page");
   });
 
   test("returns validation error for invalid status", async () => {

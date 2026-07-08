@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import {
   getUserData,
@@ -11,6 +10,7 @@ import { MSG } from "@/lib/messages";
 import { configStatusSchema } from "@/validation/config-status-schema";
 import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
+import { revalidateConfigurationRoutes } from "./lib/revalidate-config-routes";
 
 export const updateConfigStatusAction = async (
   confId: number,
@@ -35,7 +35,7 @@ export const updateConfigStatusAction = async (
   }
 
   try {
-    const { id: updatedId } = await db.transaction(async (tx) => {
+    const { id: updatedId, origin } = await db.transaction(async (tx) => {
       const result = await updateConfigStatus(
         confId,
         user,
@@ -55,13 +55,7 @@ export const updateConfigStatusAction = async (
 
       return result;
     });
-    revalidatePath(`/configurazioni/modifica/${updatedId}`);
-    // The read-only view also renders status-dependent UI (edit button,
-    // transition list) and the StatusForm, so it must be revalidated too.
-    revalidatePath(`/configurazioni/visualizza/${updatedId}`);
-    // The BOM page gates Snapshot/Regenerate on editable = isEditable(status, …),
-    // so freezing transitions must invalidate it too.
-    revalidatePath(`/configurazioni/bom/${updatedId}`);
+    revalidateConfigurationRoutes(updatedId, origin);
     return { success: true as const, id: updatedId };
   } catch (err) {
     return mapActionError(err, "Failed to update configuration status:");
