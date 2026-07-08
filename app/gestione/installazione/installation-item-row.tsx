@@ -22,15 +22,19 @@ export default function InstallationItemRow({ row }: InstallationItemRowProps) {
   const [editOpen, setEditOpen] = useState(false);
 
   const handleEdit = async (price: string) => {
-    const result = await updateInstallationItemSettingAction({
-      kind: row.kind as InstallationItemKind,
-      price,
-    });
-    if (result.success) {
-      toast.success(MSG.toast.installationItemUpdated);
-      setEditOpen(false);
-    } else {
-      toast.error(result.error ?? MSG.db.unknown);
+    try {
+      const result = await updateInstallationItemSettingAction({
+        kind: row.kind as InstallationItemKind,
+        price,
+      });
+      if (result.success) {
+        toast.success(MSG.toast.installationItemUpdated);
+        setEditOpen(false);
+      } else {
+        toast.error(result.error ?? MSG.db.unknown);
+      }
+    } catch {
+      toast.error(MSG.db.unknown);
     }
   };
 

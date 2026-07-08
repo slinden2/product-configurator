@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
 import PartNumberCombobox from "@/components/shared/part-number-combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PartNumber } from "@/db/schemas";
+import { MSG } from "@/lib/messages";
 
 const STEP = 0.05;
 
@@ -47,10 +49,14 @@ export default function CoefficientEditorDialog({
 
   const handleSave = () => {
     startTransition(async () => {
-      await onSave(
-        coeffValue,
-        pn === undefined ? (selectedPn?.pn ?? "") : undefined,
-      );
+      try {
+        await onSave(
+          coeffValue,
+          pn === undefined ? (selectedPn?.pn ?? "") : undefined,
+        );
+      } catch {
+        toast.error(MSG.db.unknown);
+      }
     });
   };
 

@@ -57,16 +57,20 @@ export default function CoefficientsTable({
 
   const handleSync = () => {
     startTransition(async () => {
-      const result = await syncMaxBomCoefficientsAction();
-      if (result.success) {
-        const n = result.data.inserted;
-        toast.success(
-          n > 0
-            ? MSG.toast.coefficientSynced(n)
-            : MSG.toast.coefficientSyncNone,
-        );
-      } else {
-        toast.error(result.error ?? MSG.db.unknown);
+      try {
+        const result = await syncMaxBomCoefficientsAction();
+        if (result.success) {
+          const n = result.data.inserted;
+          toast.success(
+            n > 0
+              ? MSG.toast.coefficientSynced(n)
+              : MSG.toast.coefficientSyncNone,
+          );
+        } else {
+          toast.error(result.error ?? MSG.db.unknown);
+        }
+      } catch {
+        toast.error(MSG.db.unknown);
       }
     });
   };

@@ -22,15 +22,19 @@ export default function SurchargeRow({ row }: SurchargeRowProps) {
   const [editOpen, setEditOpen] = useState(false);
 
   const handleEdit = async (price: string) => {
-    const result = await updateSurchargeSettingAction({
-      kind: row.kind as SurchargeKind,
-      price,
-    });
-    if (result.success) {
-      toast.success(MSG.toast.surchargeUpdated);
-      setEditOpen(false);
-    } else {
-      toast.error(result.error ?? MSG.db.unknown);
+    try {
+      const result = await updateSurchargeSettingAction({
+        kind: row.kind as SurchargeKind,
+        price,
+      });
+      if (result.success) {
+        toast.success(MSG.toast.surchargeUpdated);
+        setEditOpen(false);
+      } else {
+        toast.error(result.error ?? MSG.db.unknown);
+      }
+    } catch {
+      toast.error(MSG.db.unknown);
     }
   };
 

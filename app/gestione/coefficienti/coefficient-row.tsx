@@ -68,25 +68,35 @@ export default function CoefficientRow({
 
   const handleReset = () => {
     startTransition(async () => {
-      const result = await resetCoefficientAction(row.pn);
-      if (result.success) {
-        toast.success(MSG.toast.coefficientReset);
-      } else {
-        toast.error(result.error ?? MSG.db.unknown);
+      try {
+        const result = await resetCoefficientAction(row.pn);
+        if (result.success) {
+          toast.success(MSG.toast.coefficientReset);
+        } else {
+          toast.error(result.error ?? MSG.db.unknown);
+        }
+      } catch {
+        toast.error(MSG.db.unknown);
+      } finally {
+        setResetConfirmOpen(false);
       }
-      setResetConfirmOpen(false);
     });
   };
 
   const handleDelete = () => {
     startTransition(async () => {
-      const result = await deleteCoefficientAction(row.pn);
-      if (result.success) {
-        toast.success(MSG.toast.coefficientDeleted);
-      } else {
-        toast.error(result.error ?? MSG.db.unknown);
+      try {
+        const result = await deleteCoefficientAction(row.pn);
+        if (result.success) {
+          toast.success(MSG.toast.coefficientDeleted);
+        } else {
+          toast.error(result.error ?? MSG.db.unknown);
+        }
+      } catch {
+        toast.error(MSG.db.unknown);
+      } finally {
+        setDeleteConfirmOpen(false);
       }
-      setDeleteConfirmOpen(false);
     });
   };
 
