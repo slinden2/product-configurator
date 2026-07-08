@@ -24,6 +24,7 @@ import { BOM, type BOMItemWithDescription } from "@/lib/BOM";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
+import type { BomLineCategory } from "@/types";
 import { engineeringBomItemSchema } from "@/validation/engineering-bom-item-schema";
 
 async function prepareBomItems(
@@ -116,7 +117,7 @@ function flattenBomToItems(
 
   const toRow = (
     item: BOMItemWithDescription,
-    category: "GENERAL" | "WATER_TANK" | "WASH_BAY",
+    category: BomLineCategory,
     categoryIndex: number,
     sortOrder: number,
   ): NewEngineeringBomItem => ({

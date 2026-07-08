@@ -6,7 +6,7 @@ import {
   sumSurchargeTotal,
 } from "@/lib/offer-surcharges";
 import { computeLinePrice, DEFAULT_COEFFICIENT } from "@/lib/pricing";
-import type { BomTag } from "@/types";
+import type { BomLineCategory, BomTag } from "@/types";
 import { BomTagLabels, BomTags, STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import {
   isSurchargeItem,
@@ -20,8 +20,6 @@ export type {
   OfferLineItem,
   OfferSurchargeItem,
 } from "@/validation/offer-schema";
-
-type OfferCategory = "GENERAL" | "WATER_TANK" | "WASH_BAY";
 
 export interface OfferSectionTotals {
   general: Partial<Record<BomTag, number>>;
@@ -56,7 +54,7 @@ export interface GroupedOfferData {
 
 function toOfferItem(
   row: { pn: string; description: string; qty: number; tag?: BomTag | null },
-  category: OfferCategory,
+  category: BomLineCategory,
   category_index: number,
   costMap: Map<string, number>,
   coeffMap: Map<string, number>,

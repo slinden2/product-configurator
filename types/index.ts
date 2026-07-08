@@ -319,6 +319,9 @@ export const BomTags = [
 ] as const;
 export type BomTag = (typeof BomTags)[number];
 
+export const BomLineCategories = ["GENERAL", "WATER_TANK", "WASH_BAY"] as const;
+export type BomLineCategory = (typeof BomLineCategories)[number];
+
 export const BomTagLabels: Record<BomTag, string> = {
   FRAME: "Struttura",
   BRUSHES: "Spazzole",

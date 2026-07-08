@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  BomLineCategories,
   BomTags,
   InstallationItemKinds,
   SurchargeKinds,
@@ -14,7 +15,7 @@ export const offerBomLineItemSchema = z.object({
   list_price: z.number(),
   line_total: z.number(),
   tag: z.enum(BomTags).nullable(),
-  category: z.enum(["GENERAL", "WATER_TANK", "WASH_BAY"]),
+  category: z.enum(BomLineCategories),
   category_index: z.number(),
 });
 

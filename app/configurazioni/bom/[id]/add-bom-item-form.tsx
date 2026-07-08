@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/select";
 import type { PartNumber } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
-import { type BomTag, BomTagLabels } from "@/types";
+import { type BomLineCategory, type BomTag, BomTagLabels } from "@/types";
 
 interface AddBomItemFormProps {
   confId: number;
-  category: "GENERAL" | "WATER_TANK" | "WASH_BAY";
+  category: BomLineCategory;
   categoryIndex: number;
   tag?: BomTag;
   availableTags?: BomTag[];
