@@ -21,6 +21,7 @@ export const MSG = {
   config: {
     notFound: "Configurazione non trovata.",
     associatedNotFound: "Configurazione associata non trovata.",
+    subRecordNotFound: "Record non trovato.",
     cannotEdit:
       "Non è possibile modificare una configurazione in questo stato.",
     cannotDelete:

@@ -495,12 +495,16 @@ export const insertWaterTank = async (
 ) => {
   const dbData = transformWaterTankSchemaToDbData(newWaterTank);
 
-  const [id] = await txOrDb
+  const [inserted] = await txOrDb
     .insert(waterTanks)
     .values({ ...dbData, configuration_id: confId })
     .returning({ id: waterTanks.id });
 
-  return { success: true, id };
+  if (!inserted) {
+    throw new QueryError(MSG.db.error, 500);
+  }
+
+  return inserted;
 };
 
 export const updateWaterTank = async (
@@ -511,7 +515,7 @@ export const updateWaterTank = async (
 ) => {
   const dbData = transformWaterTankSchemaToDbData(waterTank);
 
-  const [id] = await txOrDb
+  const [updated] = await txOrDb
     .update(waterTanks)
     .set(dbData)
     .where(
@@ -522,7 +526,11 @@ export const updateWaterTank = async (
     )
     .returning({ id: waterTanks.id });
 
-  return { success: true, id };
+  if (!updated) {
+    throw new QueryError(MSG.config.subRecordNotFound, 404);
+  }
+
+  return updated;
 };
 
 export const deleteWaterTank = async (
@@ -530,7 +538,7 @@ export const deleteWaterTank = async (
   waterTankId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
-  const [id] = await txOrDb
+  const [deleted] = await txOrDb
     .delete(waterTanks)
     .where(
       and(
@@ -540,7 +548,11 @@ export const deleteWaterTank = async (
     )
     .returning({ id: waterTanks.id });
 
-  return { success: true, id };
+  if (!deleted) {
+    throw new QueryError(MSG.config.subRecordNotFound, 404);
+  }
+
+  return deleted;
 };
 
 export const insertWashBay = async (
@@ -550,12 +562,16 @@ export const insertWashBay = async (
 ) => {
   const dbData = transformWashBaySchemaToDbData(newWashBay);
 
-  const [id] = await txOrDb
+  const [inserted] = await txOrDb
     .insert(washBays)
     .values({ ...dbData, configuration_id: confId })
     .returning({ id: washBays.id });
 
-  return { success: true, id };
+  if (!inserted) {
+    throw new QueryError(MSG.db.error, 500);
+  }
+
+  return inserted;
 };
 
 export const updateWashBay = async (
@@ -566,7 +582,7 @@ export const updateWashBay = async (
 ) => {
   const dbData = transformWashBaySchemaToDbData(washBay);
 
-  const [id] = await txOrDb
+  const [updated] = await txOrDb
     .update(washBays)
     .set(dbData)
     .where(
@@ -574,7 +590,11 @@ export const updateWashBay = async (
     )
     .returning({ id: washBays.id });
 
-  return { success: true, id };
+  if (!updated) {
+    throw new QueryError(MSG.config.subRecordNotFound, 404);
+  }
+
+  return updated;
 };
 
 export const deleteWashBay = async (
@@ -582,17 +602,18 @@ export const deleteWashBay = async (
   washBayId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
-  const [id] = await txOrDb
+  const [deleted] = await txOrDb
     .delete(washBays)
     .where(
       and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
     )
     .returning({ id: washBays.id });
 
-  return {
-    success: true,
-    id,
-  };
+  if (!deleted) {
+    throw new QueryError(MSG.config.subRecordNotFound, 404);
+  }
+
+  return deleted;
 };
 
 export async function getBOM(id: number, user: NonNullable<UserData>) {

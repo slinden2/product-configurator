@@ -129,9 +129,9 @@ describe("wash bay actions — ENERGY_CHAIN reverse guard", () => {
     });
     mockGetConfiguration.mockResolvedValue(mockConfig());
     mockGetWashBaysByConfigId.mockResolvedValue([qualifyingBay, plainBay]);
-    mockInsertWashBay.mockResolvedValue({ success: true, id: { id: 99 } });
-    mockUpdateWashBay.mockResolvedValue({ success: true, id: { id: BAY_ID } });
-    mockDeleteWashBay.mockResolvedValue({ success: true, id: { id: BAY_ID } });
+    mockInsertWashBay.mockResolvedValue({ id: 99 });
+    mockUpdateWashBay.mockResolvedValue({ id: BAY_ID });
+    mockDeleteWashBay.mockResolvedValue({ id: BAY_ID });
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);

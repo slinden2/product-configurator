@@ -65,6 +65,7 @@ vi.mock("pg", () => ({
 // --- Imports ---
 
 import { handleSubRecordAction } from "@/app/actions/lib/sub-record-actions";
+import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
@@ -93,7 +94,7 @@ function insertOptions(overrides: Record<string, unknown> = {}) {
     parentId: PARENT_ID,
     formData: { value: "test" },
     schema: testSchema,
-    queryFn: vi.fn().mockResolvedValue({ success: true, id: { id: 99 } }),
+    queryFn: vi.fn().mockResolvedValue({ id: 99 }),
     entityName: "TestEntity",
     ...overrides,
   };
@@ -119,13 +120,11 @@ describe("handleSubRecordAction", () => {
   // --- Insert ---
 
   test("insert: succeeds with valid data", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: 99 } });
+    const queryFn = vi.fn().mockResolvedValue({ id: 99 });
     const result = await handleSubRecordAction(insertOptions({ queryFn }));
     expect(result).toEqual({
       success: true,
-      data: { success: true, id: { id: 99 } },
+      data: { id: 99 },
     });
     expect(queryFn).toHaveBeenCalledWith(PARENT_ID, { value: "test" }, mockTx);
   });
@@ -140,9 +139,7 @@ describe("handleSubRecordAction", () => {
   // --- Edit ---
 
   test("edit: succeeds with valid data", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const result = await handleSubRecordAction({
       actionType: "edit",
       parentId: PARENT_ID,
@@ -154,7 +151,7 @@ describe("handleSubRecordAction", () => {
     });
     expect(result).toEqual({
       success: true,
-      data: { success: true, id: { id: RECORD_ID } },
+      data: { id: RECORD_ID },
     });
     expect(queryFn).toHaveBeenCalledWith(
       PARENT_ID,
@@ -169,9 +166,7 @@ describe("handleSubRecordAction", () => {
   // --- Delete ---
 
   test("delete: succeeds", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const result = await handleSubRecordAction({
       actionType: "delete",
       parentId: PARENT_ID,
@@ -181,9 +176,51 @@ describe("handleSubRecordAction", () => {
     });
     expect(result).toEqual({
       success: true,
-      data: { success: true, id: { id: RECORD_ID } },
+      data: { id: RECORD_ID },
     });
     expect(queryFn).toHaveBeenCalledWith(PARENT_ID, RECORD_ID, mockTx);
+  });
+
+  test("edit: zero-row match reports failure and skips side effects", async () => {
+    const queryFn = vi
+      .fn()
+      .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound, 404));
+    const result = await handleSubRecordAction({
+      actionType: "edit",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      formData: { value: "test" },
+      schema: testSchema,
+      queryFn,
+      entityName: "TestEntity",
+    });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.subRecordNotFound,
+    });
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+  });
+
+  test("delete: zero-row match reports failure and skips side effects", async () => {
+    const queryFn = vi
+      .fn()
+      .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound, 404));
+    const result = await handleSubRecordAction({
+      actionType: "delete",
+      parentId: PARENT_ID,
+      recordId: RECORD_ID,
+      queryFn,
+      entityName: "TestEntity",
+    });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.subRecordNotFound,
+    });
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
   });
 
   // --- Auth ---
@@ -225,9 +262,7 @@ describe("handleSubRecordAction", () => {
       role: "ENGINEER",
       initials: "IU",
     });
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: 99 } });
+    const queryFn = vi.fn().mockResolvedValue({ id: 99 });
     const result = await handleSubRecordAction(insertOptions({ queryFn }));
     expect(result.success).toBe(true);
   });
@@ -273,9 +308,7 @@ describe("handleSubRecordAction", () => {
   // --- Cross-entity guard hook ---
 
   test("edit: guard rejection returns its error without mutating", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const guard = vi.fn().mockResolvedValue("Operazione non consentita.");
     const result = await handleSubRecordAction({
       actionType: "edit",
@@ -298,9 +331,7 @@ describe("handleSubRecordAction", () => {
   });
 
   test("delete: guard rejection returns its error without mutating", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const guard = vi.fn().mockResolvedValue("Operazione non consentita.");
     const result = await handleSubRecordAction({
       actionType: "delete",
@@ -320,9 +351,7 @@ describe("handleSubRecordAction", () => {
   });
 
   test("edit: guard returning null lets the mutation proceed", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const guard = vi.fn().mockResolvedValue(null);
     const result = await handleSubRecordAction({
       actionType: "edit",
@@ -377,9 +406,7 @@ describe("handleSubRecordAction", () => {
 
   test("deletes engineering BOM after successful edit", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     await handleSubRecordAction({
       actionType: "edit",
       parentId: PARENT_ID,
@@ -397,9 +424,7 @@ describe("handleSubRecordAction", () => {
 
   test("deletes engineering BOM after successful delete", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     await handleSubRecordAction({
       actionType: "delete",
       parentId: PARENT_ID,
@@ -424,9 +449,7 @@ describe("handleSubRecordAction", () => {
   });
 
   test("touches parent configuration updated_at after successful edit", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     await handleSubRecordAction({
       actionType: "edit",
       parentId: PARENT_ID,
@@ -443,9 +466,7 @@ describe("handleSubRecordAction", () => {
   });
 
   test("touches parent configuration updated_at after successful delete", async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValue({ success: true, id: { id: RECORD_ID } });
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     await handleSubRecordAction({
       actionType: "delete",
       parentId: PARENT_ID,

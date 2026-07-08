@@ -23,7 +23,7 @@ import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 
 // --- Types ---
 
-type QueryResult = { success: boolean; id: { id: number } };
+type QueryResult = { id: number };
 
 type SubRecordActionResult =
   | { success: true; data: QueryResult }
