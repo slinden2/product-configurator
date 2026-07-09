@@ -27,11 +27,11 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
   if (!loaded) notFound();
 
   const { configuration, status, origin, waterTanks, washBays } = loaded;
-  const offerRevisionStatus = await offerRevisionStatusFor({ id, origin });
+  const [offerRevisionStatus, offer] = await Promise.all([
+    offerRevisionStatusFor({ id, origin }),
+    canViewOffer(user.role) ? offerRefFor({ id, origin }) : null,
+  ]);
   const editable = isEditable(status, user.role, origin, offerRevisionStatus);
-  const offer = canViewOffer(user.role)
-    ? await offerRefFor({ id, origin })
-    : null;
 
   return (
     <div>

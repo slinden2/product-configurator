@@ -32,12 +32,18 @@ const BOMView = async (props: BOMViewProps) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-  const bom = await getBOM(confId, user);
-  if (!bom) notFound();
+  const [bom, configuration] = await Promise.all([
+    getBOM(confId, user),
+    getConfiguration(confId),
+  ]);
+  if (!bom || !configuration) notFound();
 
-  const configuration = await getConfiguration(confId);
-  if (!configuration) notFound();
-
+  const [pageData, offer] = await Promise.all([
+    prepareBOMPageData(confId, bom, configuration, user.role),
+    canViewOffer(user.role)
+      ? offerRefFor({ id: confId, origin: configuration.origin })
+      : null,
+  ]);
   const {
     clientName,
     description,
@@ -51,11 +57,7 @@ const BOMView = async (props: BOMViewProps) => {
     exportCostsData,
     ebomCreatedAt,
     ebomRulesVersion,
-  } = await prepareBOMPageData(confId, bom, configuration, user.role);
-
-  const offer = canViewOffer(user.role)
-    ? await offerRefFor({ id: confId, origin: configuration.origin })
-    : null;
+  } = pageData;
 
   return (
     <div className="space-y-6">

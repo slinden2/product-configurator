@@ -46,10 +46,10 @@ const EditConfiguration = async (props: EditConfigProps) => {
     redirect(`/configurazioni/visualizza/${id}`);
   }
 
-  const ebomExists = await hasEngineeringBom(id);
-  const offer = canViewOffer(user.role)
-    ? await offerRefFor({ id, origin })
-    : null;
+  const [ebomExists, offer] = await Promise.all([
+    hasEngineeringBom(id),
+    canViewOffer(user.role) ? offerRefFor({ id, origin }) : null,
+  ]);
 
   return (
     <div>

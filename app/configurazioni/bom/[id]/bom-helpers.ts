@@ -136,14 +136,18 @@ export async function prepareBOMPageData(
 ): Promise<BOMPageData> {
   const clientName = bom.getClientName();
   const description = bom.getDescription();
-  const { generalBOM, waterTankBOMs, washBayBOMs } =
-    await bom.buildCompleteBOM();
-
-  const hasEbom = await hasEngineeringBom(confId);
+  const [
+    { generalBOM, waterTankBOMs, washBayBOMs },
+    hasEbom,
+    offerRevisionStatus,
+  ] = await Promise.all([
+    bom.buildCompleteBOM(),
+    hasEngineeringBom(confId),
+    offerRevisionStatusFor(configuration),
+  ]);
   const ebomItems = hasEbom ? await getEngineeringBomItems(confId) : [];
   const activeEbomItems = ebomItems.filter((i) => !i.is_deleted);
 
-  const offerRevisionStatus = await offerRevisionStatusFor(configuration);
   const editable = isEditable(
     configuration.status,
     userRole,
