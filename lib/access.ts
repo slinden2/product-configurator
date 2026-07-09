@@ -1,4 +1,4 @@
-import { isEditable } from "@/app/actions/lib/auth-checks";
+import { isEditable } from "@/lib/status-config";
 import type {
   ConfigOrigin,
   ConfigurationStatusType,

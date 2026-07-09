@@ -3,6 +3,7 @@ import {
   type ConfigOrigin,
   ConfigurationStatus,
   type ConfigurationStatusType,
+  type OfferStatusType,
   type Role,
 } from "@/types";
 
@@ -66,10 +67,10 @@ export interface StatusTransition {
 /**
  * Single source of truth for the configuration status workflow: which
  * `from -> to` moves exist, the roles permitted to perform each, the origins
- * they apply to, and the Italian button label. `canTransition`
- * (app/actions/lib/auth-checks.ts), `getValidTransitions` (status-form.tsx, via
- * canTransition) and {@link getTransitionLabel} all read from this table, so a
- * new stage/role/edge is a single-row change.
+ * they apply to, and the Italian button label. {@link canTransition},
+ * `getValidTransitions` (status-form.tsx, via canTransition) and
+ * {@link getTransitionLabel} all read from this table, so a new stage/role/edge
+ * is a single-row change.
  *
  * Two rules are layered on top in `canTransition` rather than encoded here:
  * - ADMIN may perform any DEFINED edge in this table for the origin, but NOT
@@ -193,8 +194,7 @@ export function isWorkflowEdge(
 /**
  * Whether `role` may perform the `from -> to` edge for `origin` per the edge
  * table. ADMIN's defined-edge grant (via isWorkflowEdge) and the STANDALONE
- * sales-status guard are layered on top in `canTransition`
- * (app/actions/lib/auth-checks.ts).
+ * sales-status guard are layered on top in {@link canTransition}.
  */
 export function isRoleAllowedTransition(
   role: Role,
@@ -209,4 +209,126 @@ export function isRoleAllowedTransition(
       t.origins.includes(origin) &&
       t.roles.includes(role),
   );
+}
+
+/**
+ * Determines whether a configuration is currently in an editable state based on
+ * the User's Role, the Record's Status, its `origin`, and — for an offer-owned
+ * config in the pre-handoff zone — the status of its offer revision.
+ *
+ * `origin` defaults to `"OFFER"`; standalone callers must pass `"STANDALONE"`.
+ *
+ * Two-phase gate for OFFER-origin configs:
+ * - Before SALES_APPROVED (DRAFT) the config is governed by its offer revision:
+ *   editable only while the revision is `DRAFT`. This is a fail-closed gate — a
+ *   missing `offerRevisionStatus` (no offer wired up, or a non-DRAFT lifecycle
+ *   state) means not editable. ENGINEER has no offer access here and is excluded.
+ * - At SALES_APPROVED+ the config is governed by ConfigurationStatus (engineering
+ *   rules), regardless of the revision; the offer is already frozen.
+ *
+ * Rules:
+ * - SALES_APPROVED/TECH_APPROVED/CLOSED: Never editable by anyone (both origins).
+ *   SALES_APPROVED is a locked hand-off snapshot; to edit it an engineer pulls it
+ *   forward to IN_TECH_REVIEW.
+ * - STANDALONE: Engineer/Admin only, editable in DRAFT. The hand-off statuses
+ *   (SALES_APPROVED, IN_TECH_REVIEW) never apply.
+ * - OFFER · IN_TECH_REVIEW: Engineer/Admin (post-handoff engineering zone).
+ * - OFFER · DRAFT: offer-access roles only (SALES/SALES_MANAGER/SALES_DIRECTOR/
+ *   ADMIN), and only while the offer revision is DRAFT.
+ *
+ * Status × role × origin × revision only — ownership/scope is enforced separately
+ * via canAccessConfiguration (db/queries/configurations.ts).
+ */
+export function isEditable(
+  status: ConfigurationStatusType,
+  role: Role,
+  origin: ConfigOrigin = "OFFER",
+  offerRevisionStatus?: OfferStatusType,
+): boolean {
+  // 1. Hard stop: Sales-approved, Approved and Closed are read-only for all roles
+  if (
+    status === "SALES_APPROVED" ||
+    status === "TECH_APPROVED" ||
+    status === "CLOSED"
+  ) {
+    return false;
+  }
+
+  // 2. Standalone configs are pure technical work: Engineer/Admin only, editable
+  // in DRAFT only (the hand-off statuses never apply — there is no hand-off).
+  if (origin === "STANDALONE") {
+    if (role !== "ENGINEER" && role !== "ADMIN") {
+      return false;
+    }
+    return status === "DRAFT";
+  }
+
+  // 3. OFFER · engineering zone (post-handoff): governed by config status, not the
+  // revision. Engineer/Admin finalize the BOM here; the offer is already frozen.
+  if (status === "IN_TECH_REVIEW") {
+    return role === "ENGINEER" || role === "ADMIN";
+  }
+
+  // 4. OFFER · pre-handoff (DRAFT — the only status left here): governed by the
+  // offer revision. Fail closed — editable only while the revision is DRAFT; a
+  // missing or non-DRAFT revision status means not editable.
+  if (offerRevisionStatus !== "DRAFT") {
+    return false;
+  }
+  // Offer-access roles only — ENGINEER has no offer access pre-handoff.
+  return (
+    role === "SALES" ||
+    role === "SALES_MANAGER" ||
+    role === "SALES_DIRECTOR" ||
+    role === "ADMIN"
+  );
+}
+
+/**
+ * Whether a role may move a configuration from one status to another. Pure
+ * role × edge × origin logic — ownership/scope is enforced separately by
+ * canAccessConfiguration (db/queries/configurations.ts). Mirrored client-side by
+ * getValidTransitions in components/status-form.tsx, which also goes through
+ * this function, so the two cannot drift.
+ *
+ * The role-restricted edges live in the single STATUS_TRANSITIONS edge table
+ * (above); this function layers two rules on top:
+ * - ADMIN may perform any DEFINED workflow edge for the origin — including the
+ *   ADMIN-only CLOSED edges (Chiudi / Riapri) that carry an empty `roles` array —
+ *   but NOT arbitrary non-adjacent jumps. There is no status override.
+ * - On a STANDALONE config the hand-off statuses (SALES_APPROVED and
+ *   IN_TECH_REVIEW) are off-limits to everyone — standalone configs have no
+ *   sales→engineering hand-off, keeping the technical lifecycle self-contained.
+ *
+ * `origin` defaults to `"OFFER"` (the full sales+engineering machine). A
+ * STANDALONE config runs only the two-state working/approved machine
+ * `DRAFT ↔ TECH_APPROVED → CLOSED`, Engineer/Admin only.
+ */
+export function canTransition(
+  role: Role,
+  from: ConfigurationStatusType,
+  to: ConfigurationStatusType,
+  origin: ConfigOrigin = "OFFER",
+): boolean {
+  if (from === to) return true;
+
+  // STANDALONE: the hand-off statuses are out of bounds for every role (ADMIN
+  // included) — standalone configs have no sales→engineering hand-off.
+  if (
+    origin === "STANDALONE" &&
+    (from === "SALES_APPROVED" ||
+      to === "SALES_APPROVED" ||
+      from === "IN_TECH_REVIEW" ||
+      to === "IN_TECH_REVIEW")
+  ) {
+    return false;
+  }
+
+  // ADMIN is confined to the defined workflow edges — this is how the ADMIN-only
+  // CLOSED edges (empty `roles`) are reached — but cannot make arbitrary
+  // non-adjacent jumps. There is no status override.
+  if (role === "ADMIN") return isWorkflowEdge(from, to, origin);
+
+  // Everyone else is restricted to the explicit edge table.
+  return isRoleAllowedTransition(role, from, to, origin);
 }

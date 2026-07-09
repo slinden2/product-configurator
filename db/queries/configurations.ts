@@ -1,5 +1,4 @@
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
-import { canTransition } from "@/app/actions/lib/auth-checks";
 import { db } from "@/db";
 import {
   type ConfigurationWithWaterTanksAndWashBays,
@@ -15,7 +14,7 @@ import { canAccessAllConfigs } from "@/lib/access";
 import { BOM } from "@/lib/BOM";
 import { hasQualifyingEnergyChainBay } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
-import { getTransitionDirection } from "@/lib/status-config";
+import { canTransition, getTransitionDirection } from "@/lib/status-config";
 import type { ConfigOrigin, ConfigurationStatusType } from "@/types";
 import { HANDED_OFF_STATUSES, PRE_HANDOFF_STATUSES } from "@/types";
 import type {
