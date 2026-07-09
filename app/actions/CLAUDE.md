@@ -63,6 +63,12 @@ After mutations, invalidate all affected routes:
 
 When multiple actions in one file share the same auth logic, extract it into a local helper (e.g., `authorizeEngineeringBomAction()` in `engineering-bom-actions.ts`). This avoids duplicating the validate → auth → permissions chain across every export.
 
+When the same gate is needed across action files, it lives in `lib/authorize.ts` (a plain module, not `"use server"`) — do not re-inline it:
+
+- `authorizeAdmin(unauthorizedMsg?)` — authenticated + ADMIN; pass the domain's `MSG.*.adminOnly` message (defaults to `MSG.auth.unauthorized`).
+- `authorizeOfferLifecycleAction(offerId)` — offer access (`canViewOffer`) + scope/existence via `getOfferWorkingRevision`.
+- `authorizeRevisionAction(offerId)` — the above + working revision must be `DRAFT`.
+
 ## Data Flow & Frontend Sync
 
 Server Actions are the only mutation path. The full loop is: **Input → Mutation (Server Action) → Database → Sync**.

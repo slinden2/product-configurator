@@ -1,23 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getUserData, updateSurchargeSettingWithAudit } from "@/db/queries";
+import { updateSurchargeSettingWithAudit } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import type { SurchargeKind } from "@/types";
 import { surchargeSettingsSchema } from "@/validation/surcharge-settings-schema";
+import { authorizeAdmin } from "./lib/authorize";
 import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
 const REVALIDATE_PATH = "/gestione/maggiorazioni";
-
-async function authorizeAdmin() {
-  const user = await getUserData();
-  if (!user)
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  if (user.role !== "ADMIN")
-    return { success: false as const, error: MSG.surcharge.adminOnly };
-  return { success: true as const, user };
-}
 
 export async function updateSurchargeSettingAction(formData: {
   kind: SurchargeKind;
@@ -31,7 +23,7 @@ export async function updateSurchargeSettingAction(formData: {
     };
   }
 
-  const auth = await authorizeAdmin();
+  const auth = await authorizeAdmin(MSG.surcharge.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
   const { kind, price } = parsed.data;

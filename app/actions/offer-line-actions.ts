@@ -2,16 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import {
-  addOfferLine,
-  getOfferWorkingRevision,
-  getUserData,
-  removeOfferLine,
-} from "@/db/queries";
-import { canViewOffer } from "@/lib/access";
+import { addOfferLine, removeOfferLine } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import { configSchema } from "@/validation/config-schema";
+import { authorizeOfferLifecycleAction } from "./lib/authorize";
 import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 
@@ -34,23 +29,12 @@ export const addOfferLineAction = async (
     };
   }
 
-  const user = await getUserData();
-
-  if (!user) {
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  }
-
-  if (!canViewOffer(user.role)) {
-    return { success: false as const, error: MSG.offer.unauthorized };
-  }
-
-  // Existence + scope (returns null when out of the user's offer scope). The
-  // revision-DRAFT gate lives in addOfferLine, so the working revision's status is not
-  // needed here — only that the offer is reachable.
-  const working = await getOfferWorkingRevision(offerId, user);
-  if (!working) {
-    return { success: false as const, error: MSG.offer.notFound };
-  }
+  // Offer access + existence + scope. The revision-DRAFT gate lives in addOfferLine,
+  // so the working revision's status is not needed here — only that the offer is
+  // reachable.
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
+  const { user } = auth;
 
   try {
     // The revision-DRAFT gate lives in addOfferLine (throws QueryError otherwise).
@@ -81,23 +65,12 @@ export const removeOfferLineAction = async (
   offerId: number,
   configId: number,
 ) => {
-  const user = await getUserData();
-
-  if (!user) {
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  }
-
-  if (!canViewOffer(user.role)) {
-    return { success: false as const, error: MSG.offer.unauthorized };
-  }
-
-  const working = await getOfferWorkingRevision(offerId, user);
-  if (!working) {
-    return { success: false as const, error: MSG.offer.notFound };
-  }
+  // Offer access + existence + scope; the revision-DRAFT gate lives in removeOfferLine.
+  const auth = await authorizeOfferLifecycleAction(offerId);
+  if (!auth.success) return auth;
 
   try {
-    await removeOfferLine(offerId, configId, user.id);
+    await removeOfferLine(offerId, configId, auth.user.id);
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const };
   } catch (err) {

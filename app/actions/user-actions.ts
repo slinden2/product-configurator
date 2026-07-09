@@ -7,7 +7,6 @@ import { db } from "@/db";
 import {
   assignManagerWithAudit,
   changeUserRoleWithAudit,
-  getUserData,
   logActivity,
 } from "@/db/queries";
 import { userProfiles } from "@/db/schemas";
@@ -18,6 +17,7 @@ import {
   changeRoleSchema,
   sendPasswordResetSchema,
 } from "@/validation/user-schema";
+import { authorizeAdmin } from "./lib/authorize";
 import { mapActionError } from "./lib/map-action-error";
 
 export async function changeUserRoleAction(formData: unknown) {
@@ -28,14 +28,9 @@ export async function changeUserRoleAction(formData: unknown) {
 
   const { userId, newRole } = validation.data;
 
-  const user = await getUserData();
-  if (!user) {
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  }
-
-  if (user.role !== "ADMIN") {
-    return { success: false as const, error: MSG.auth.unauthorized };
-  }
+  const auth = await authorizeAdmin();
+  if (!auth.success) return { success: false as const, error: auth.error };
+  const { user } = auth;
 
   if (userId === user.id) {
     return { success: false as const, error: MSG.users.cannotChangeOwnRole };
@@ -76,14 +71,9 @@ export async function assignManagerAction(formData: unknown) {
 
   const { userId, managerId } = validation.data;
 
-  const user = await getUserData();
-  if (!user) {
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  }
-
-  if (user.role !== "ADMIN") {
-    return { success: false as const, error: MSG.auth.unauthorized };
-  }
+  const auth = await authorizeAdmin();
+  if (!auth.success) return { success: false as const, error: auth.error };
+  const { user } = auth;
 
   if (managerId === userId) {
     return { success: false as const, error: MSG.users.invalidManager };
@@ -133,14 +123,9 @@ export async function sendPasswordResetAction(formData: unknown) {
 
   const { userId } = validation.data;
 
-  const user = await getUserData();
-  if (!user) {
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  }
-
-  if (user.role !== "ADMIN") {
-    return { success: false as const, error: MSG.auth.unauthorized };
-  }
+  const auth = await authorizeAdmin();
+  if (!auth.success) return { success: false as const, error: auth.error };
+  const { user } = auth;
 
   const targetUser = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.id, userId),

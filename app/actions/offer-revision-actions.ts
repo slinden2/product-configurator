@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { canTransitionRevision } from "@/app/actions/lib/auth-checks";
+import {
+  authorizeOfferLifecycleAction,
+  authorizeRevisionAction,
+} from "@/app/actions/lib/authorize";
 import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
@@ -12,8 +16,6 @@ import {
   createOfferRevisionFrom,
   createRenegotiationRevisionFrom,
   getConfigsForEnergyChainCheck,
-  getOfferWorkingRevision,
-  getUserData,
   getWorkingRevisionForSend,
   markOfferRevisionSentWithAudit,
   QueryError,
@@ -25,11 +27,7 @@ import {
   updateRevisionDiscountWithAudit,
   updateRevisionSettingsWithAudit,
 } from "@/db/queries";
-import {
-  canApproveRevision,
-  canRenegotiateOffer,
-  canViewOffer,
-} from "@/lib/access";
+import { canApproveRevision, canRenegotiateOffer } from "@/lib/access";
 import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
@@ -39,21 +37,6 @@ import {
   offerDiscountSchema,
   offerSettingsSchema,
 } from "@/validation/offer-schema";
-
-/**
- * Shared gate for revision header mutations: builds on
- * {@link authorizeOfferLifecycleAction} (offer access + scope + working revision) and
- * adds the pre-handoff edit window — the working revision must be DRAFT, since once it
- * advances the commercial terms freeze with the offer.
- */
-async function authorizeRevisionAction(offerId: number) {
-  const auth = await authorizeOfferLifecycleAction(offerId);
-  if (!auth.success) return auth;
-  if (auth.revision.status !== "DRAFT") {
-    return { success: false as const, error: MSG.offer.lineCannotEdit };
-  }
-  return auth;
-}
 
 export async function setRevisionDiscountAction(
   offerId: number,
@@ -111,28 +94,6 @@ export async function setRevisionSettingsAction(
   } catch (err) {
     return mapActionError(err, "Failed to set revision settings:");
   }
-}
-
-/**
- * Shared offer-access + scope gate for the revision lifecycle actions (send / create).
- * Unlike {@link authorizeRevisionAction} it does NOT require the working revision to be
- * DRAFT — those actions carry their own state guards (send needs DRAFT, create needs a
- * frozen latest). Returns the scoped working revision (id + status) without loading the
- * full revision history.
- */
-async function authorizeOfferLifecycleAction(offerId: number) {
-  const user = await getUserData();
-  if (!user)
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-
-  if (!canViewOffer(user.role)) {
-    return { success: false as const, error: MSG.offer.unauthorized };
-  }
-
-  const revision = await getOfferWorkingRevision(offerId, user);
-  if (!revision) return { success: false as const, error: MSG.offer.notFound };
-
-  return { success: true as const, user, revision };
 }
 
 /**

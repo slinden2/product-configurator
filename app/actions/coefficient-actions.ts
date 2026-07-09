@@ -7,7 +7,6 @@ import {
   deletePriceCoefficientByPnWithAudit,
   getFullPriceCoefficientByPn,
   getPriceCoefficientsByArray,
-  getUserData,
   insertActivityLog,
   insertMissingMaxBomCoefficients,
   resetPriceCoefficientWithAudit,
@@ -19,20 +18,12 @@ import {
   coefficientSchema,
   coefficientUpdateSchema,
 } from "@/validation/coefficient-schema";
+import { authorizeAdmin } from "./lib/authorize";
 import { mapActionError } from "./lib/map-action-error";
 
 const REVALIDATE_PATH = "/gestione/coefficienti";
 
 const DEFAULT_COEFFICIENT_DB = DEFAULT_COEFFICIENT.toFixed(2);
-
-async function authorizeAdmin() {
-  const user = await getUserData();
-  if (!user)
-    return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  if (user.role !== "ADMIN")
-    return { success: false as const, error: MSG.coefficient.adminOnly };
-  return { success: true as const, user };
-}
 
 export async function createCoefficientAction(formData: {
   pn: string;
@@ -47,7 +38,7 @@ export async function createCoefficientAction(formData: {
     };
   }
 
-  const auth = await authorizeAdmin();
+  const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
   const { pn, coefficient, source } = parsed.data;
@@ -88,7 +79,7 @@ export async function updateCoefficientAction(formData: {
     };
   }
 
-  const auth = await authorizeAdmin();
+  const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
   const { pn, coefficient } = parsed.data;
@@ -112,7 +103,7 @@ export async function updateCoefficientAction(formData: {
 }
 
 export async function deleteCoefficientAction(pn: string) {
-  const auth = await authorizeAdmin();
+  const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
   try {
@@ -142,7 +133,7 @@ export async function deleteCoefficientAction(pn: string) {
 }
 
 export async function resetCoefficientAction(pn: string) {
-  const auth = await authorizeAdmin();
+  const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
   try {
@@ -170,7 +161,7 @@ export async function resetCoefficientAction(pn: string) {
 }
 
 export async function syncMaxBomCoefficientsAction() {
-  const auth = await authorizeAdmin();
+  const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
   try {
