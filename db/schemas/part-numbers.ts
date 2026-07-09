@@ -23,6 +23,10 @@ export const partNumbers = pgTable("part_numbers", {
   // Subcontract-treated part (e.g. zinc-plating): BOM explosion stops here,
   // its cost already includes the external treatment phase
   is_subcontract: boolean().notNull().default(false),
+  // Soft-delete flag: set false by the ERP sync when the pn disappears from the
+  // extract. Rows are retained so frozen engineering BOMs, coefficients and
+  // existing bom_lines keep resolving; only the UI part picker filters on it.
+  is_active: boolean().notNull().default(true),
   family: varchar({ length: 255 }),
   sub_family: varchar({ length: 255 }),
   created_at: timestamp("created_at", { mode: "date", precision: 3 })

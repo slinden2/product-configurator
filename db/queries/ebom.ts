@@ -1,4 +1,4 @@
-import { asc, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
 import {
   bomLines,
@@ -18,9 +18,14 @@ export async function getPartNumbersByArray(array: string[]) {
 export async function searchPartNumbers(query: string, limit = 20) {
   const pattern = query.includes("%") ? query : `%${query}%`;
   return db.query.partNumbers.findMany({
-    where: or(
-      ilike(partNumbers.pn, pattern),
-      ilike(partNumbers.description, pattern),
+    // Inactive pns (deleted in the ERP) are excluded from the picker only;
+    // other reads keep returning them so existing BOMs stay computable.
+    where: and(
+      eq(partNumbers.is_active, true),
+      or(
+        ilike(partNumbers.pn, pattern),
+        ilike(partNumbers.description, pattern),
+      ),
     ),
     limit,
     orderBy: [asc(partNumbers.pn)],

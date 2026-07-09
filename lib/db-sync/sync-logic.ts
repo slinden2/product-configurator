@@ -1,4 +1,4 @@
-import { inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   bomLines,
@@ -14,15 +14,25 @@ import {
 
 const BATCH_SIZE = 1000;
 
-function mapPnType(value: number): "PART" | "ASSY" {
+function chunk<T>(items: T[], size = BATCH_SIZE): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+// Exported for unit tests
+export function mapPnType(value: number): "PART" | "ASSY" {
   if (value === 1) return "ASSY";
   if (value === 2) return "PART";
 
   throw new Error(`Invalid pn_type value: ${value}`);
 }
 
+// Exported for unit tests
 // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
-function isPartNumberArray(array: any): array is NewPartNumber[] {
+export function isPartNumberArray(array: any): array is NewPartNumber[] {
   return array.every(
     // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
     (item: any) =>
@@ -65,8 +75,7 @@ export async function batchUpsertPartNumbers() {
   }
 
   console.time("Update records in Supabase");
-  for (let i = 0; i < cleanPartNumbers.length; i += BATCH_SIZE) {
-    const batch = cleanPartNumbers.slice(i, i + BATCH_SIZE);
+  for (const batch of chunk(cleanPartNumbers)) {
     await db
       .insert(partNumbers)
       .values(batch)
@@ -80,6 +89,8 @@ export async function batchUpsertPartNumbers() {
           is_subcontract: sql`excluded.is_subcontract`,
           family: sql`excluded.family`,
           sub_family: sql`excluded.sub_family`,
+          // A pn that reappears in the ERP extract is active again
+          is_active: true,
         },
       });
   }
@@ -87,10 +98,34 @@ export async function batchUpsertPartNumbers() {
   console.log(
     `Upsert completed: ${cleanPartNumbers.length} records in ${Math.ceil(cleanPartNumbers.length / BATCH_SIZE)} batch(es).`,
   );
+
+  // Soft-delete pns no longer present in the ERP extract. The stale set is
+  // diffed in JS (a NOT IN with the full incoming list would blow the
+  // Postgres 65535 bind-parameter limit) and the update is chunked for the
+  // same reason. Rows are kept so frozen engineering BOMs and coefficients
+  // still resolve; only the UI part picker filters on is_active.
+  const incomingPns = new Set(cleanPartNumbers.map((p) => p.pn));
+  const localActive = await db
+    .select({ pn: partNumbers.pn })
+    .from(partNumbers)
+    .where(eq(partNumbers.is_active, true));
+  const stalePns = localActive
+    .map((row) => row.pn)
+    .filter((pn) => !incomingPns.has(pn));
+  for (const batch of chunk(stalePns)) {
+    await db
+      .update(partNumbers)
+      .set({ is_active: false })
+      .where(inArray(partNumbers.pn, batch));
+  }
+  console.log(
+    `Deactivated ${stalePns.length} part number(s) no longer present in the ERP extract.`,
+  );
 }
 
+// Exported for unit tests
 // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
-function isBomLineInsertArray(array: any): array is NewBomLine[] {
+export function isBomLineInsertArray(array: any): array is NewBomLine[] {
   return array.every(
     // biome-ignore lint/suspicious/noExplicitAny: type guard requires any for runtime validation
     (item: any) =>
@@ -126,18 +161,38 @@ export async function batchUpsertBomStructure() {
     throw new Error("Invalid BOM structure array");
   }
 
-  const incomingParents = Array.from(new Set(clean.map((r) => r.parent_pn)));
+  const incomingParentSet = new Set(clean.map((r) => r.parent_pn));
+  const incomingParents = Array.from(incomingParentSet);
 
   console.time("Replace BOM structure in Supabase");
+  let staleParentCount = 0;
   await db.transaction(async (tx) => {
-    await tx
-      .delete(bomLines)
-      .where(inArray(bomLines.parent_pn, incomingParents));
-    for (let i = 0; i < clean.length; i += BATCH_SIZE) {
-      await tx.insert(bomLines).values(clean.slice(i, i + BATCH_SIZE));
+    // Parents deleted in the ERP never reappear in the extract, so their
+    // lines must be removed explicitly or they linger as ghost assemblies.
+    const localParents = await tx
+      .selectDistinct({ parent_pn: bomLines.parent_pn })
+      .from(bomLines);
+    const staleParents = localParents
+      .map((row) => row.parent_pn)
+      .filter((parentPn) => !incomingParentSet.has(parentPn));
+    staleParentCount = staleParents.length;
+
+    // Deletes are chunked like the inserts: a single inArray over every
+    // parent would exceed the Postgres 65535 bind-parameter limit.
+    for (const batch of chunk(incomingParents)) {
+      await tx.delete(bomLines).where(inArray(bomLines.parent_pn, batch));
+    }
+    for (const batch of chunk(staleParents)) {
+      await tx.delete(bomLines).where(inArray(bomLines.parent_pn, batch));
+    }
+    for (const batch of chunk(clean)) {
+      await tx.insert(bomLines).values(batch);
     }
   });
   console.timeEnd("Replace BOM structure in Supabase");
+  console.log(
+    `Removed BOM lines for ${staleParentCount} stale parent(s) deleted in the ERP.`,
+  );
   console.log(
     `BOM structure sync completed: ${clean.length} rows across ${incomingParents.length} parents, in ${Math.ceil(clean.length / BATCH_SIZE)} batch(es).`,
   );
