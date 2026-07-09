@@ -137,19 +137,34 @@ async function authorizeOfferLifecycleAction(offerId: number) {
 
 /**
  * Shared tail for the revision lifecycle transitions (submit / approve / reject /
- * send): runs `txFn` in a single transaction, revalidates the offer detail + list
- * routes on success, and maps QueryError / DatabaseError / unknown to the standard
- * Italian error shape. Callers run their own auth + transition-gate checks first.
+ * send / accept / unaccept): runs `txFn` in a single transaction, revalidates the
+ * offer detail + list routes on success, and maps QueryError / DatabaseError /
+ * unknown to the standard Italian error shape. Callers run their own auth +
+ * transition-gate checks first.
+ *
+ * A `txFn` that changes the line configs' engineering state (accept / unaccept)
+ * returns their ids; the engineering surfaces are then revalidated too — the
+ * technical queue plus each config's edit / view / BOM / margin routes (the margin
+ * pages re-baseline on the frozen/unfrozen lines).
  */
 async function runRevisionTransition(
   offerId: number,
-  txFn: (tx: TransactionType) => Promise<void>,
+  txFn: (tx: TransactionType) => Promise<number[] | undefined>,
 ) {
   try {
-    await db.transaction(txFn);
+    const configIds = await db.transaction(txFn);
 
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
+    if (configIds) {
+      revalidatePath("/configurazioni");
+      for (const configId of configIds) {
+        revalidatePath(`/configurazioni/modifica/${configId}`);
+        revalidatePath(`/configurazioni/visualizza/${configId}`);
+        revalidatePath(`/configurazioni/bom/${configId}`);
+        revalidatePath(`/configurazioni/marginalita/${configId}`);
+      }
+    }
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Offer revision transition failed:");
@@ -395,6 +410,8 @@ export async function acceptRevisionAction(offerId: number) {
     return { success: false as const, error: MSG.offer.cannotAccept };
   }
 
+  // Pre-tx fast-fail so the pooled snapshot loads below aren't wasted; the
+  // authoritative status re-check runs inside the transaction like the siblings.
   const working = await getWorkingRevisionForSend(offerId);
   if (!working) return { success: false as const, error: MSG.offer.notFound };
   if (working.status !== "SENT") {
@@ -415,33 +432,31 @@ export async function acceptRevisionAction(offerId: number) {
     };
   }
 
-  try {
-    await db.transaction(async (tx) => {
-      await acceptOfferRevisionWithAudit(
-        offerId,
-        working.id,
-        user.id,
-        asSoldByConfigId,
-        tx,
-      );
-    });
-
-    revalidatePath(`/offerte/${offerId}`);
-    revalidatePath("/offerte");
-    // The line configs are now SALES_APPROVED — refresh the engineering surfaces.
-    // The margin pages re-baseline on the newly frozen lines (relevant on a
-    // renegotiation re-acceptance, where the new prices can clear the alert).
-    revalidatePath("/configurazioni");
-    for (const configId of working.configIds) {
-      revalidatePath(`/configurazioni/modifica/${configId}`);
-      revalidatePath(`/configurazioni/visualizza/${configId}`);
-      revalidatePath(`/configurazioni/bom/${configId}`);
-      revalidatePath(`/configurazioni/marginalita/${configId}`);
+  return runRevisionTransition(offerId, async (tx) => {
+    const current = await getWorkingRevisionForSend(offerId, tx);
+    if (!current) throw new QueryError(MSG.offer.notFound, 404);
+    // The as-sold snapshots above were loaded for `working`'s lines — a different
+    // latest revision (e.g. a renegotiation sent in the race window, whose lines
+    // reference the same config ids) must not be accepted with them.
+    if (current.id !== working.id) {
+      throw new QueryError(MSG.offer.cannotAccept, 409);
     }
-    return { success: true as const };
-  } catch (err) {
-    return mapActionError(err, "Failed to accept offer revision:");
-  }
+    if (current.status !== "SENT") {
+      throw new QueryError(MSG.offer.cannotAccept, 403);
+    }
+
+    // A line added between the pre-tx snapshot loads and here would have no as-sold
+    // snapshot — acceptOfferRevisionWithAudit refuses it (line-level notFound guard).
+    await acceptOfferRevisionWithAudit(
+      offerId,
+      current.id,
+      user.id,
+      asSoldByConfigId,
+      tx,
+    );
+
+    return current.configIds;
+  });
 }
 
 /**
@@ -462,32 +477,17 @@ export async function unacceptRevisionAction(offerId: number) {
     return { success: false as const, error: MSG.offer.cannotUnaccept };
   }
 
-  const working = await getWorkingRevisionForSend(offerId);
-  if (!working) return { success: false as const, error: MSG.offer.notFound };
-  if (working.status !== "ACCEPTED") {
-    return { success: false as const, error: MSG.offer.cannotUnaccept };
-  }
-
-  try {
-    await db.transaction(async (tx) => {
-      await unacceptOfferRevisionWithAudit(offerId, working.id, user.id, tx);
-    });
-
-    revalidatePath(`/offerte/${offerId}`);
-    revalidatePath("/offerte");
-    // The line configs are back to DRAFT and out of the engineering queue — refresh
-    // the same surfaces the acceptance touched.
-    revalidatePath("/configurazioni");
-    for (const configId of working.configIds) {
-      revalidatePath(`/configurazioni/modifica/${configId}`);
-      revalidatePath(`/configurazioni/visualizza/${configId}`);
-      revalidatePath(`/configurazioni/bom/${configId}`);
-      revalidatePath(`/configurazioni/marginalita/${configId}`);
+  return runRevisionTransition(offerId, async (tx) => {
+    const working = await getWorkingRevisionForSend(offerId, tx);
+    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (working.status !== "ACCEPTED") {
+      throw new QueryError(MSG.offer.cannotUnaccept, 403);
     }
-    return { success: true as const };
-  } catch (err) {
-    return mapActionError(err, "Failed to unaccept offer revision:");
-  }
+
+    await unacceptOfferRevisionWithAudit(offerId, working.id, user.id, tx);
+
+    return working.configIds;
+  });
 }
 
 /**

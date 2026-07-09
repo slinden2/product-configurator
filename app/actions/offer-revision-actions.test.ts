@@ -89,6 +89,7 @@ vi.mock("pg", () => ({
 
 // --- Imports (after mocks) ---
 
+import { revalidatePath } from "next/cache";
 import {
   acceptRevisionAction,
   approveRevisionAction,
@@ -731,6 +732,50 @@ describe("acceptRevisionAction", () => {
       },
       expect.anything(),
     );
+    // The engineering surfaces refresh for each handed-off line config.
+    expect(revalidatePath).toHaveBeenCalledWith("/configurazioni");
+    for (const configId of [11, 12]) {
+      expect(revalidatePath).toHaveBeenCalledWith(
+        `/configurazioni/marginalita/${configId}`,
+      );
+    }
+  });
+
+  test("re-checks the revision status inside the transaction", async () => {
+    // Pre-tx read sees SENT; the in-tx re-read sees a concurrent transition.
+    mockGetWorkingRevisionForSend
+      .mockResolvedValueOnce({
+        id: REVISION_ID,
+        status: "SENT",
+        configIds: [11, 12],
+      })
+      .mockResolvedValueOnce({
+        id: REVISION_ID,
+        status: "ACCEPTED",
+        configIds: [11, 12],
+      });
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotAccept });
+    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the working revision changed identity in the race window", async () => {
+    // The snapshots were loaded for revision 7's lines; a different revision (e.g. a
+    // renegotiation with the same config ids) became the SENT latest before the tx.
+    mockGetWorkingRevisionForSend
+      .mockResolvedValueOnce({
+        id: REVISION_ID,
+        status: "SENT",
+        configIds: [11, 12],
+      })
+      .mockResolvedValueOnce({
+        id: REVISION_ID + 1,
+        status: "SENT",
+        configIds: [11, 12],
+      });
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotAccept });
+    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
   });
 
   test("manager may accept a report's offer (scope enforced by the fetch)", async () => {
@@ -807,6 +852,13 @@ describe("unacceptRevisionAction", () => {
       "a1",
       expect.anything(),
     );
+    // The engineering surfaces refresh for each unwound line config.
+    expect(revalidatePath).toHaveBeenCalledWith("/configurazioni");
+    for (const configId of [11, 12]) {
+      expect(revalidatePath).toHaveBeenCalledWith(
+        `/configurazioni/marginalita/${configId}`,
+      );
+    }
   });
 
   test.each([
@@ -846,6 +898,18 @@ describe("unacceptRevisionAction", () => {
       id: REVISION_ID,
       status: "SENT",
       configIds: [11],
+    });
+    const result = await unacceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotUnaccept });
+    expect(mockUnacceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("re-checks the revision status inside the transaction", async () => {
+    // The auth read saw ACCEPTED; the in-tx re-read sees a concurrent transition.
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "SENT",
+      configIds: [11, 12],
     });
     const result = await unacceptRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.cannotUnaccept });
