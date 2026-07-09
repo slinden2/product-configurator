@@ -12,7 +12,6 @@
     "lint": "biome lint .",
     "test": "vitest",
     "test:run": "vitest run",
-    "zod": "npx tsx ./validation/zod-test-file.ts",
     "type-check": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
     "type-check:incremental": "NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --incremental",
     "erp:sync": "npx tsx ./lib/db-sync/erp-sync.ts",
