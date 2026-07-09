@@ -88,7 +88,10 @@ export const railSchema = z
         path: ["rail_length"],
       });
     }
-    if (data.rail_type === "ANCHORED" && data.anchor_type === undefined) {
+    if (
+      data.rail_type === RailTypeEnum.enum.ANCHORED &&
+      data.anchor_type === undefined
+    ) {
       ctx.addIssue({
         code: "custom",
         message: genericRequiredMessage,

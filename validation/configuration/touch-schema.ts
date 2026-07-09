@@ -70,9 +70,10 @@ const baseTouchSchema = z
         });
       } else {
         // Only check fixing type if position is known
-        // If pos is INTERNAL or ONBOARD_RIGHT, fixing type must NOT be selected
+        // If pos is ON_PANEL or ON_DET_CAB, fixing type must NOT be selected
         if (
-          (data.touch_pos === "ON_PANEL" || data.touch_pos === "ON_DET_CAB") &&
+          (data.touch_pos === TouchPosEnum.enum.ON_PANEL ||
+            data.touch_pos === TouchPosEnum.enum.ON_DET_CAB) &&
           data.touch_fixing_type !== undefined
         ) {
           ctx.addIssue({
@@ -83,7 +84,7 @@ const baseTouchSchema = z
         }
         // If pos is EXTERNAL, fixing type IS required
         if (
-          data.touch_pos === "EXTERNAL" &&
+          data.touch_pos === TouchPosEnum.enum.EXTERNAL &&
           data.touch_fixing_type === undefined
         ) {
           ctx.addIssue({
