@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -21,39 +22,45 @@ export const pressureWasherTypeEnum = pgEnum(
   PressureWashers,
 );
 
-export const washBays = pgTable("wash_bays", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  hp_lance_qty: integer().notNull(),
-  det_lance_qty: integer().notNull(),
-  hose_reel_hp_with_post_qty: integer().notNull().default(0),
-  hose_reel_hp_without_post_qty: integer().notNull().default(0),
-  hose_reel_det_with_post_qty: integer().notNull().default(0),
-  hose_reel_det_without_post_qty: integer().notNull().default(0),
-  hose_reel_hp_det_with_post_qty: integer().notNull().default(0),
-  pressure_washer_type: pressureWasherTypeEnum("pressure_washer_type"),
-  pressure_washer_qty: integer(),
-  has_gantry: boolean().notNull(),
-  energy_chain_width: energyChainWidthEnum("energy_chain_width"),
-  has_shelf_extension: boolean().notNull().default(false),
-  ec_signal_cable_qty: integer(),
-  ec_profinet_cable_qty: integer(),
-  ec_water_1_tube_qty: integer(),
-  ec_water_34_tube_qty: integer(),
-  ec_r1_1_tube_qty: integer(),
-  ec_r2_1_tube_qty: integer(),
-  ec_r2_34_inox_tube_qty: integer(),
-  ec_air_tube_qty: integer(),
-  is_first_bay: boolean().notNull(),
-  has_bay_dividers: boolean().notNull(),
-  has_weeping_lances: boolean().notNull().default(false),
-  created_at: timestamp("created_at", { mode: "date", precision: 3 })
-    .notNull()
-    .defaultNow(),
-  updated_at: timestamp("updated_at", { mode: "date", precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  configuration_id: integer("configuration_id")
-    .references(() => configurations.id, { onDelete: "cascade" })
-    .notNull(),
-}).enableRLS();
+export const washBays = pgTable(
+  "wash_bays",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    hp_lance_qty: integer().notNull(),
+    det_lance_qty: integer().notNull(),
+    hose_reel_hp_with_post_qty: integer().notNull().default(0),
+    hose_reel_hp_without_post_qty: integer().notNull().default(0),
+    hose_reel_det_with_post_qty: integer().notNull().default(0),
+    hose_reel_det_without_post_qty: integer().notNull().default(0),
+    hose_reel_hp_det_with_post_qty: integer().notNull().default(0),
+    pressure_washer_type: pressureWasherTypeEnum("pressure_washer_type"),
+    pressure_washer_qty: integer(),
+    has_gantry: boolean().notNull(),
+    energy_chain_width: energyChainWidthEnum("energy_chain_width"),
+    has_shelf_extension: boolean().notNull().default(false),
+    ec_signal_cable_qty: integer(),
+    ec_profinet_cable_qty: integer(),
+    ec_water_1_tube_qty: integer(),
+    ec_water_34_tube_qty: integer(),
+    ec_r1_1_tube_qty: integer(),
+    ec_r2_1_tube_qty: integer(),
+    ec_r2_34_inox_tube_qty: integer(),
+    ec_air_tube_qty: integer(),
+    is_first_bay: boolean().notNull(),
+    has_bay_dividers: boolean().notNull(),
+    has_weeping_lances: boolean().notNull().default(false),
+    created_at: timestamp("created_at", { mode: "date", precision: 3 })
+      .notNull()
+      .defaultNow(),
+    updated_at: timestamp("updated_at", { mode: "date", precision: 3 })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    configuration_id: integer("configuration_id")
+      .references(() => configurations.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  // Postgres does not auto-index FK columns; per-config loads and the cascade
+  // delete from configurations both scan on configuration_id.
+  (t) => [index("wash_bays_configuration_id_idx").on(t.configuration_id)],
+).enableRLS();

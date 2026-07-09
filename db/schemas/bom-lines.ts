@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   numeric,
   pgTable,
@@ -28,5 +29,8 @@ export const bomLines = pgTable(
   },
   (t) => [
     uniqueIndex("bom_lines_parent_pos_unq").on(t.parent_pn, t.sort_order),
+    // parent_pn is covered by the unique prefix above; child_pn (where-used
+    // lookups during BOM explosion) needs its own index.
+    index("bom_lines_child_pn_idx").on(t.child_pn),
   ],
 ).enableRLS();

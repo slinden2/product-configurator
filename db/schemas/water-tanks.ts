@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -13,23 +14,29 @@ export type NewWaterTank = typeof waterTanks.$inferInsert;
 
 export const waterTankTypeEnum = pgEnum("water_tank_type", WaterTankTypes);
 
-export const waterTanks = pgTable("water_tanks", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  type: waterTankTypeEnum("water_tank_type").notNull(),
-  inlet_w_float_qty: integer().notNull(),
-  inlet_no_float_qty: integer().notNull(),
-  outlet_w_valve_qty: integer().notNull(),
-  outlet_no_valve_qty: integer().notNull(),
-  has_blower: boolean().notNull(),
-  has_electric_float_for_purifier: boolean().notNull().default(false),
-  created_at: timestamp("created_at", { mode: "date", precision: 3 })
-    .notNull()
-    .defaultNow(),
-  updated_at: timestamp("updated_at", { mode: "date", precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-  configuration_id: integer("configuration_id")
-    .references(() => configurations.id, { onDelete: "cascade" })
-    .notNull(),
-}).enableRLS();
+export const waterTanks = pgTable(
+  "water_tanks",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    type: waterTankTypeEnum("water_tank_type").notNull(),
+    inlet_w_float_qty: integer().notNull(),
+    inlet_no_float_qty: integer().notNull(),
+    outlet_w_valve_qty: integer().notNull(),
+    outlet_no_valve_qty: integer().notNull(),
+    has_blower: boolean().notNull(),
+    has_electric_float_for_purifier: boolean().notNull().default(false),
+    created_at: timestamp("created_at", { mode: "date", precision: 3 })
+      .notNull()
+      .defaultNow(),
+    updated_at: timestamp("updated_at", { mode: "date", precision: 3 })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    configuration_id: integer("configuration_id")
+      .references(() => configurations.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  // Postgres does not auto-index FK columns; per-config loads and the cascade
+  // delete from configurations both scan on configuration_id.
+  (t) => [index("water_tanks_configuration_id_idx").on(t.configuration_id)],
+).enableRLS();

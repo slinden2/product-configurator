@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   jsonb,
   numeric,
@@ -90,6 +91,12 @@ export const offerRevisionLines = pgTable(
   (table) => [
     unique().on(table.offer_revision_id, table.position),
     unique().on(table.offer_revision_id, table.configuration_id),
+    // configuration_id is only second in the unique above, so by-config lookups
+    // (offerRevisionLineForConfig, getOfferLinePricingForConfig) need their own
+    // index; Postgres does not auto-index FK columns.
+    index("offer_revision_lines_configuration_id_idx").on(
+      table.configuration_id,
+    ),
     // The as-sold freeze marker and capture are set together at acceptance, never one
     // without the other (mirrors the consistency invariant the old offer_snapshots had).
     check(
