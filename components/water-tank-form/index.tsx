@@ -32,6 +32,7 @@ interface WaterTankFormProps {
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
+  onSubmitFailed?: (key: string) => void;
   hasEngineeringBom?: boolean;
 }
 
@@ -57,6 +58,7 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       formKey={props.formKey}
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}
+      onSubmitFailed={props.onSubmitFailed}
       hasEngineeringBom={props.hasEngineeringBom}
     />
   );

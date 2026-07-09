@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
@@ -31,9 +37,11 @@ vi.mock("@/app/actions/offer-line-actions", () => ({
   addOfferLineAction: vi.fn(),
 }));
 
+const mockInsertWaterTank = vi.fn();
+const mockEditWaterTank = vi.fn();
 vi.mock("@/app/actions/water-tank-actions", () => ({
-  insertWaterTankAction: vi.fn().mockResolvedValue({ success: true }),
-  editWaterTankAction: vi.fn().mockResolvedValue({ success: true }),
+  insertWaterTankAction: (...args: unknown[]) => mockInsertWaterTank(...args),
+  editWaterTankAction: (...args: unknown[]) => mockEditWaterTank(...args),
   deleteWaterTankAction: vi.fn().mockResolvedValue({ success: true }),
 }));
 
@@ -54,9 +62,10 @@ vi.mock("@/hooks/use-media-query", () => ({
 
 // --- Imports (after mocks) ---
 
+import { toast } from "sonner";
 import FormContainer from "@/components/form-container";
 import { MSG } from "@/lib/messages";
-import { makeValidConfig } from "@/test/form-test-utils";
+import { makeValidConfig, selectRadixOption } from "@/test/form-test-utils";
 
 // --- Test Data ---
 
@@ -102,6 +111,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockInsertConfig.mockResolvedValue({ success: true, id: 42 });
   mockEditConfig.mockResolvedValue({ success: true });
+  mockInsertWaterTank.mockResolvedValue({ success: true });
+  mockEditWaterTank.mockResolvedValue({ success: true });
 });
 
 // --- Tests ---
@@ -324,6 +335,137 @@ describe("FormContainer", () => {
       expect(
         screen.queryByText(MSG.config.energyChainRequiresGantry),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Unsaved changes — save and switch", () => {
+    const config = makeValidConfig();
+    const defaultProps = {
+      confId: 1,
+      configuration: config,
+      confStatus: "DRAFT" as const,
+      origin: "STANDALONE" as const,
+      userRole: "ENGINEER" as const,
+      initialWaterTanks: [makeWaterTank(100)],
+      initialWashBays: [makeWashBay(200)],
+    };
+
+    async function dirtyTankAndAttemptSwitch() {
+      await userEvent.click(screen.getByRole("tab", { name: "Serbatoi" }));
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+      await userEvent.click(
+        screen.getByRole("tab", { name: "Piste lavaggio" }),
+      );
+      const dialog = await screen.findByRole("dialog");
+      expect(
+        within(dialog).getByText("Modifiche non salvate"),
+      ).toBeInTheDocument();
+      return dialog;
+    }
+
+    test("auto-switches to the pending tab after a successful save", async () => {
+      render(<FormContainer {...defaultProps} />);
+
+      const dialog = await dirtyTankAndAttemptSwitch();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Salva" }),
+      );
+
+      await waitFor(() => {
+        expect(mockEditWaterTank).toHaveBeenCalled();
+      });
+      await waitFor(() => {
+        expect(screen.getByText("Gestione piste")).toBeInTheDocument();
+      });
+    });
+
+    test("a failed save disarms the pending tab — a later save must not switch (#148)", async () => {
+      mockEditWaterTank.mockResolvedValueOnce({
+        success: false,
+        error: "Errore server",
+      });
+      render(<FormContainer {...defaultProps} />);
+
+      const dialog = await dirtyTankAndAttemptSwitch();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Salva" }),
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Errore server");
+      });
+      expect(screen.getByText("Gestione serbatoi")).toBeInTheDocument();
+
+      // Later, unrelated save succeeds: the stale pending tab must not yank
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      });
+      const saveButton = screen.getByRole("button", { name: "Salva" });
+      await waitFor(() => {
+        expect(saveButton).toBeEnabled();
+      });
+      await userEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalled();
+      });
+      expect(screen.getByText("Gestione serbatoi")).toBeInTheDocument();
+      expect(screen.queryByText("Gestione piste")).not.toBeInTheDocument();
+    });
+
+    test("a Zod validation failure disarms the pending tab and shows feedback", async () => {
+      render(
+        <FormContainer
+          {...defaultProps}
+          initialWaterTanks={[]}
+          initialWashBays={[]}
+        />,
+      );
+
+      // Dirty the add-tank form into an invalid state (required type missing)
+      await userEvent.click(screen.getByRole("tab", { name: "Serbatoi" }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /aggiungi serbatoio/i }),
+      );
+      await selectRadixOption("Ingressi c/ galleggiante", "1");
+
+      await userEvent.click(
+        screen.getByRole("tab", { name: "Configurazione" }),
+      );
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Salva" }),
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(MSG.toast.validationErrors);
+      });
+      expect(screen.getByText("Gestione serbatoi")).toBeInTheDocument();
+
+      // Fix the form and save: still no yank to the stale pending tab
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      });
+      await selectRadixOption("Tipo di serbatoio", "2000L");
+      await selectRadixOption("Uscite c/ rubinetto", "1");
+      await userEvent.click(screen.getByRole("button", { name: "Aggiungi" }));
+
+      await waitFor(() => {
+        expect(mockInsertWaterTank).toHaveBeenCalled();
+      });
+      expect(screen.getByText("Gestione serbatoi")).toBeInTheDocument();
+    });
+
+    test("discarding changes switches immediately", async () => {
+      render(<FormContainer {...defaultProps} />);
+
+      const dialog = await dirtyTankAndAttemptSwitch();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Scarta modifiche" }),
+      );
+
+      expect(screen.getByText("Gestione piste")).toBeInTheDocument();
+      expect(mockEditWaterTank).not.toHaveBeenCalled();
     });
   });
 });

@@ -64,6 +64,7 @@ interface ConfigurationFormProps {
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
+  onSubmitFailed?: (key: string) => void;
   hasEngineeringBom?: boolean;
 }
 
@@ -78,6 +79,7 @@ const ConfigForm = ({
   formKey,
   onDirtyChange,
   onSaved,
+  onSubmitFailed,
   hasEngineeringBom,
 }: ConfigurationFormProps) => {
   const [isPending, startTransition] = useTransition();
@@ -125,6 +127,7 @@ const ConfigForm = ({
         if (id) {
           if (!configuration || !("user_id" in configuration)) {
             toast.error(MSG.toast.configIncompleteUpdate);
+            if (formKey) onSubmitFailed?.(formKey);
             return;
           }
           const result = await editConfigurationAction(id, values);
@@ -137,6 +140,7 @@ const ConfigForm = ({
             }
           } else {
             toast.error(result.error);
+            if (formKey) onSubmitFailed?.(formKey);
           }
         } else {
           // An offerId marks this as a new offer line: create the config + line in
@@ -158,12 +162,14 @@ const ConfigForm = ({
         const message =
           err instanceof Error ? err.message : MSG.toast.configSaveUnknown;
         toast.error(message);
+        if (formKey) onSubmitFailed?.(formKey);
       }
     });
   }
 
   function onInvalid(errors: FieldErrors<ConfigInputSchema>) {
     toast.error(MSG.toast.validationErrors);
+    if (formKey) onSubmitFailed?.(formKey);
     const firstErrorKey = Object.keys(errors)[0];
     if (firstErrorKey) {
       const el = document.querySelector<HTMLElement>(
@@ -279,6 +285,7 @@ const ConfigForm = ({
         onOpenChange={setShowSaveWarning}
         onCancel={() => {
           pendingValuesRef.current = null;
+          if (formKey) onSubmitFailed?.(formKey);
         }}
         onConfirm={handleSaveWarningConfirm}
       />

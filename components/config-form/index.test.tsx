@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { UpdateConfigSchema } from "@/validation/config-schema";
@@ -652,6 +658,142 @@ describe("ConfigForm", () => {
         expect(toast.error).toHaveBeenCalledWith("Errore server");
       });
       expect(onSaved).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Submit failure reporting", () => {
+    test("fires onSubmitFailed on validation failure", async () => {
+      const onSubmitFailed = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onSubmitFailed={onSubmitFailed}
+        />,
+      );
+
+      // name requires min. 3 characters — clearing it makes the form invalid
+      await userEvent.clear(
+        screen.getByPlaceholderText("Inserire il nome del cliente"),
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      await waitFor(() => {
+        expect(onSubmitFailed).toHaveBeenCalledWith("config-1");
+      });
+      expect(toast.error).toHaveBeenCalledWith(
+        "Errori di validazione: correggere i campi evidenziati.",
+      );
+      expect(mockEditAction).not.toHaveBeenCalled();
+    });
+
+    test("fires onSubmitFailed when editConfigurationAction fails", async () => {
+      mockEditAction.mockResolvedValueOnce({
+        success: false,
+        error: "Errore server",
+      });
+      const onSubmitFailed = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onSubmitFailed={onSubmitFailed}
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      await waitFor(() => {
+        expect(onSubmitFailed).toHaveBeenCalledWith("config-1");
+      });
+    });
+
+    test("fires onSubmitFailed when the BOM warning is cancelled", async () => {
+      const onSubmitFailed = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onSubmitFailed={onSubmitFailed}
+          hasEngineeringBom
+        />,
+      );
+
+      // Dirty a non-BOM-exempt field so the warning dialog is triggered
+      await userEvent.click(screen.getByText("Itecoweb"));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      const dialog = await screen.findByRole("dialog");
+      expect(
+        within(dialog).getByText("Distinta di commessa presente"),
+      ).toBeInTheDocument();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Annulla" }),
+      );
+
+      expect(onSubmitFailed).toHaveBeenCalledWith("config-1");
+      expect(mockEditAction).not.toHaveBeenCalled();
+    });
+
+    test("does not fire onSubmitFailed when the BOM warning is confirmed", async () => {
+      const onSubmitFailed = vi.fn();
+      const onSaved = vi.fn();
+      const config = makeValidConfig();
+
+      render(
+        <ConfigForm
+          id={1}
+          configuration={config}
+          status="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          formKey="config-1"
+          onSaved={onSaved}
+          onSubmitFailed={onSubmitFailed}
+          hasEngineeringBom
+        />,
+      );
+
+      await userEvent.click(screen.getByText("Itecoweb"));
+      await userEvent.click(
+        screen.getByRole("button", { name: /salva configurazione/i }),
+      );
+
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(
+        within(dialog).getByRole("button", {
+          name: "Salva e elimina distinta",
+        }),
+      );
+
+      await waitFor(() => {
+        expect(onSaved).toHaveBeenCalledWith("config-1");
+      });
+      expect(onSubmitFailed).not.toHaveBeenCalled();
     });
   });
 });

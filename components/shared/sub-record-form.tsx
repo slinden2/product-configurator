@@ -49,6 +49,7 @@ interface SubRecordFormProps<
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
+  onSubmitFailed?: (key: string) => void;
   // Server Actions
   insertAction: (parentId: number, values: TData) => Promise<ActionResult>;
   editAction: (
@@ -81,6 +82,7 @@ const SubRecordForm = <
   formKey,
   onDirtyChange,
   onSaved,
+  onSubmitFailed,
   insertAction,
   editAction,
   deleteAction,
@@ -159,6 +161,7 @@ const SubRecordForm = <
               ? err.message
               : MSG.toast.entitySaveUnknown(entityName);
           toast.error(message);
+          if (formKey) onSubmitFailed?.(formKey);
         }
       });
     },
@@ -176,6 +179,7 @@ const SubRecordForm = <
       formKey,
       onSaved,
       onDirtyChange,
+      onSubmitFailed,
     ],
   );
 
@@ -191,6 +195,11 @@ const SubRecordForm = <
     },
     [hasEngineeringBom, executeSave],
   );
+
+  const handleInvalid = useCallback(() => {
+    toast.error(MSG.toast.validationErrors);
+    if (formKey) onSubmitFailed?.(formKey);
+  }, [formKey, onSubmitFailed]);
 
   const executeDelete = useCallback(() => {
     if (!isEditing || !onDelete) return;
@@ -278,7 +287,7 @@ const SubRecordForm = <
           <fieldset disabled={formIsDisabled} className="group">
             <form
               id={formKey ? `form-${formKey}` : undefined}
-              onSubmit={handleSubmit(handleSaveSubmit)}
+              onSubmit={handleSubmit(handleSaveSubmit, handleInvalid)}
             >
               <Fieldset
                 title={
@@ -351,6 +360,11 @@ const SubRecordForm = <
         open={showSaveWarning}
         onOpenChange={setShowSaveWarning}
         onCancel={() => {
+          // The BOM warning is shared with the delete flow: only a cancelled
+          // save settles a submit round, delete-cancel must not disarm.
+          if (pendingActionRef.current === "save" && formKey) {
+            onSubmitFailed?.(formKey);
+          }
           pendingValuesRef.current = null;
           pendingActionRef.current = null;
         }}

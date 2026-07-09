@@ -613,6 +613,178 @@ describe("SubRecordForm — WaterTankForm", () => {
       expect(onDirtyChange).not.toHaveBeenCalledWith("tank-10", false);
     });
   });
+
+  describe("Submit failure reporting", () => {
+    test("fires onSubmitFailed and shows validation toast on Zod failure", async () => {
+      const onSubmitFailed = vi.fn();
+      const onSaved = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          onSaveSuccess={vi.fn()}
+          formKey="new-tank"
+          onDirtyChange={vi.fn()}
+          onSaved={onSaved}
+          onSubmitFailed={onSubmitFailed}
+        />,
+      );
+
+      // Submit the empty add form: required "type" is missing
+      await userEvent.click(screen.getByRole("button", { name: /aggiungi/i }));
+
+      await waitFor(() => {
+        expect(onSubmitFailed).toHaveBeenCalledWith("new-tank");
+      });
+      expect(toast.error).toHaveBeenCalledWith(
+        "Errori di validazione: correggere i campi evidenziati.",
+      );
+      expect(mockInsertWaterTank).not.toHaveBeenCalled();
+      expect(onSaved).not.toHaveBeenCalled();
+    });
+
+    test("fires onSubmitFailed when the server action fails", async () => {
+      mockEditWaterTank.mockResolvedValueOnce({
+        success: false,
+        error: "Errore server",
+      });
+      const onSubmitFailed = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={vi.fn()}
+          onSubmitFailed={onSubmitFailed}
+        />,
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      await waitFor(() => {
+        expect(onSubmitFailed).toHaveBeenCalledWith("tank-10");
+      });
+    });
+
+    test("fires onSubmitFailed when the BOM warning is cancelled", async () => {
+      const onSubmitFailed = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={vi.fn()}
+          onSubmitFailed={onSubmitFailed}
+          hasEngineeringBom
+        />,
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Annulla" }),
+      );
+
+      expect(onSubmitFailed).toHaveBeenCalledWith("tank-10");
+      expect(mockEditWaterTank).not.toHaveBeenCalled();
+    });
+
+    test("does not fire onSubmitFailed when the BOM warning is confirmed", async () => {
+      const onSubmitFailed = vi.fn();
+      const onSaved = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={vi.fn()}
+          onSaved={onSaved}
+          onSubmitFailed={onSubmitFailed}
+          hasEngineeringBom
+        />,
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      const dialog = await screen.findByRole("dialog");
+      await userEvent.click(
+        within(dialog).getByRole("button", {
+          name: "Salva e elimina distinta",
+        }),
+      );
+
+      await waitFor(() => {
+        expect(onSaved).toHaveBeenCalledWith("tank-10");
+      });
+      expect(onSubmitFailed).not.toHaveBeenCalled();
+    });
+
+    test("does not fire onSubmitFailed when the BOM warning cancels a delete", async () => {
+      const onSubmitFailed = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          formKey="tank-10"
+          onDirtyChange={vi.fn()}
+          onSubmitFailed={onSubmitFailed}
+          hasEngineeringBom
+        />,
+      );
+
+      // Delete goes through its own confirm, then the BOM warning
+      await userEvent.click(
+        screen.getByRole("button", { name: /elimina serbatoio 1/i }),
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Elimina" }));
+
+      const dialog = await screen.findByRole("dialog");
+      expect(
+        within(dialog).getByText("Distinta di commessa presente"),
+      ).toBeInTheDocument();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Annulla" }),
+      );
+
+      expect(onSubmitFailed).not.toHaveBeenCalled();
+      expect(mockDeleteWaterTank).not.toHaveBeenCalled();
+    });
+  });
 });
 
 // --- Wash Bay Tests ---

@@ -151,6 +151,12 @@ const FormContainer = ({
     });
   }, []);
 
+  // A failed submit means the save-and-switch round can never settle: disarm
+  // the pending tab so a later unrelated save doesn't yank the user away.
+  const handleSubmitFailed = useCallback((_key: string) => {
+    setPendingTab(null);
+  }, []);
+
   // Auto-switch to pending tab once all dirty forms have been saved
   useEffect(() => {
     if (dirtyFormKeys.size === 0 && pendingTab) {
@@ -171,9 +177,16 @@ const FormContainer = ({
   const handleSaveAndSwitch = () => {
     setIsUnsavedModalOpen(false);
     dirtyFormKeys.forEach((key) => {
-      (
-        document.getElementById(`form-${key}`) as HTMLFormElement | null
-      )?.requestSubmit();
+      const formEl = document.getElementById(
+        `form-${key}`,
+      ) as HTMLFormElement | null;
+      if (formEl) {
+        formEl.requestSubmit();
+      } else {
+        // Stale dirty key (e.g. record deleted while dirty): the round can
+        // never settle, so disarm instead of leaving pendingTab armed.
+        setPendingTab(null);
+      }
     });
   };
 
@@ -251,6 +264,7 @@ const FormContainer = ({
             formKey="config"
             onDirtyChange={handleDirtyChange}
             onSaved={handleSaved}
+            onSubmitFailed={handleSubmitFailed}
             hasEngineeringBom={hasEngineeringBom}
           />
         </TabsContent>
@@ -278,6 +292,7 @@ const FormContainer = ({
                   formKey={wt.id?.toString() ?? `tank-${index}`}
                   onDirtyChange={handleDirtyChange}
                   onSaved={handleSaved}
+                  onSubmitFailed={handleSubmitFailed}
                   hasEngineeringBom={hasEngineeringBom}
                 />
               ))
@@ -293,6 +308,7 @@ const FormContainer = ({
                 formKey="new-tank"
                 onDirtyChange={handleDirtyChange}
                 onSaved={handleSaved}
+                onSubmitFailed={handleSubmitFailed}
                 hasEngineeringBom={hasEngineeringBom}
               />
             )}
@@ -334,6 +350,7 @@ const FormContainer = ({
                   formKey={wb.id?.toString() ?? `bay-${index}`}
                   onDirtyChange={handleDirtyChange}
                   onSaved={handleSaved}
+                  onSubmitFailed={handleSubmitFailed}
                   hasEngineeringBom={hasEngineeringBom}
                 />
               ))
@@ -351,6 +368,7 @@ const FormContainer = ({
                 formKey="new-bay"
                 onDirtyChange={handleDirtyChange}
                 onSaved={handleSaved}
+                onSubmitFailed={handleSubmitFailed}
                 hasEngineeringBom={hasEngineeringBom}
               />
             )}
