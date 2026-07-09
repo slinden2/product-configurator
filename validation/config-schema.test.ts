@@ -332,3 +332,35 @@ describe("hasBomRelevantChanges — new fields are BOM-exempt", () => {
     expect(hasBomRelevantChanges(base, { ...base, brush_qty: 3 })).toBe(true);
   });
 });
+
+describe("hasBomRelevantChanges — asymmetric and non-schema keys", () => {
+  const base: Record<string, unknown> = { ...validBase };
+
+  test("returns true when a BOM-relevant key is missing from the new payload", () => {
+    const { rail_length, ...withoutRailLength } = base;
+    expect(hasBomRelevantChanges(base, withoutRailLength)).toBe(true);
+  });
+
+  test("returns true when a BOM-relevant key is missing from the old config", () => {
+    const { rail_length, ...withoutRailLength } = base;
+    expect(hasBomRelevantChanges(withoutRailLength, base)).toBe(true);
+  });
+
+  test("returns false when only an exempt key is missing from the new payload", () => {
+    const oldConfig = { ...base, sales_notes: "Nota commerciale" };
+    const { sales_notes, ...withoutSalesNotes } = base;
+    expect(hasBomRelevantChanges(oldConfig, withoutSalesNotes)).toBe(false);
+  });
+
+  test("ignores non-schema keys on the old config (raw DB row)", () => {
+    const dbRow: Record<string, unknown> = {
+      ...base,
+      id: 42,
+      user_id: "user-1",
+      status: "DRAFT",
+      origin: "STANDALONE",
+      created_at: new Date(0),
+    };
+    expect(hasBomRelevantChanges(dbRow, base)).toBe(false);
+  });
+});

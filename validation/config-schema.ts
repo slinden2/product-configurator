@@ -117,12 +117,18 @@ export const BOM_EXEMPT_FIELDS = new Set<keyof ConfigSchema>([
   "has_omz_paint",
 ]);
 
+/** A full or partial config payload keyed strictly by ConfigSchema fields */
+export type ConfigComparable = Partial<Record<keyof ConfigSchema, unknown>>;
+
 export function hasBomRelevantChanges(
-  oldConfig: Record<string, unknown>,
-  newConfig: Record<string, unknown>,
+  oldConfig: ConfigComparable,
+  newConfig: ConfigComparable,
 ): boolean {
-  for (const key of Object.keys(newConfig)) {
-    if (BOM_EXEMPT_FIELDS.has(key as keyof ConfigSchema)) continue;
+  // Iterate the canonical key set (not the payloads' own keys): a key absent
+  // from one side is still compared (absent counts as null), and non-schema
+  // keys on a payload (e.g. a raw DB row's id/status/timestamps) are ignored.
+  for (const key of CONFIG_SCHEMA_KEYS) {
+    if (BOM_EXEMPT_FIELDS.has(key)) continue;
     const oldVal = oldConfig[key] ?? null;
     const newVal = newConfig[key] ?? null;
     if (oldVal !== newVal) return true;
@@ -199,3 +205,10 @@ export const configDefaults: ConfigSchema = {
   has_chassis_wash_detergent_pump: false,
   has_chassis_wash_detergent_manual_antifreeze: false,
 };
+
+// configSchema is built from intersections/transforms, so its key set is not
+// recoverable at runtime; configDefaults is the full-shape literal (every key
+// is spelled out, optional ones as undefined) and serves as the canonical list.
+const CONFIG_SCHEMA_KEYS = Object.keys(
+  configDefaults,
+) as (keyof ConfigSchema)[];
