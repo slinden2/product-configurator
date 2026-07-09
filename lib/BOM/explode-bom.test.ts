@@ -3,16 +3,19 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   mockGetAssemblyChildren,
+  mockGetAssemblyChildrenForParents,
   mockGetPartNumbersByArray,
   mockEnrichWithCosts,
 } = vi.hoisted(() => ({
   mockGetAssemblyChildren: vi.fn(),
+  mockGetAssemblyChildrenForParents: vi.fn(),
   mockGetPartNumbersByArray: vi.fn(),
   mockEnrichWithCosts: vi.fn(),
 }));
 
 vi.mock("@/db/queries", () => ({
   getAssemblyChildren: mockGetAssemblyChildren,
+  getAssemblyChildrenForParents: mockGetAssemblyChildrenForParents,
   getPartNumbersByArray: mockGetPartNumbersByArray,
 }));
 
@@ -52,6 +55,8 @@ function makeAssyChild(pn: string, qty: number, is_subcontract = false) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: no assembly has catalog children
+  mockGetAssemblyChildrenForParents.mockResolvedValue(new Map());
   // Default: enrichWithCosts passes items through with cost=10
   mockEnrichWithCosts.mockImplementation(
     async (
@@ -77,7 +82,7 @@ describe("explodeBomsToLeaves", () => {
       washBayBOMs: [],
     });
 
-    expect(mockGetAssemblyChildren).not.toHaveBeenCalled();
+    expect(mockGetAssemblyChildrenForParents).not.toHaveBeenCalled();
     // Only 1 enrichWithCosts call: general. Empty tank/bay arrays produce no calls.
     expect(mockEnrichWithCosts).toHaveBeenCalledTimes(1);
     const [generalLeaves] = mockEnrichWithCosts.mock.calls[0];
@@ -90,10 +95,11 @@ describe("explodeBomsToLeaves", () => {
     mockGetPartNumbersByArray.mockResolvedValue([
       { pn: "ASSY-1", pn_type: "ASSY", cost: "0" },
     ]);
-    mockGetAssemblyChildren.mockResolvedValue([
-      makePartChild("PART-A", 3),
-      makePartChild("PART-B", 5),
-    ]);
+    mockGetAssemblyChildrenForParents.mockResolvedValueOnce(
+      new Map([
+        ["ASSY-1", [makePartChild("PART-A", 3), makePartChild("PART-B", 5)]],
+      ]),
+    );
 
     await explodeBomsToLeaves({
       generalBOM: [makeCostItem("ASSY-1", 2)],
@@ -115,9 +121,13 @@ describe("explodeBomsToLeaves", () => {
     mockGetPartNumbersByArray.mockResolvedValue([
       { pn: "ASSY-TOP", pn_type: "ASSY", cost: "0" },
     ]);
-    mockGetAssemblyChildren
-      .mockResolvedValueOnce([makeAssyChild("ASSY-MID", 2)])
-      .mockResolvedValueOnce([makePartChild("PART-LEAF", 4)]);
+    mockGetAssemblyChildrenForParents
+      .mockResolvedValueOnce(
+        new Map([["ASSY-TOP", [makeAssyChild("ASSY-MID", 2)]]]),
+      )
+      .mockResolvedValueOnce(
+        new Map([["ASSY-MID", [makePartChild("PART-LEAF", 4)]]]),
+      );
 
     await explodeBomsToLeaves({
       generalBOM: [makeCostItem("ASSY-TOP", 3)],
@@ -136,7 +146,7 @@ describe("explodeBomsToLeaves", () => {
     mockGetPartNumbersByArray.mockResolvedValue([
       { pn: "ORPHAN-ASSY", pn_type: "ASSY", cost: "0" },
     ]);
-    mockGetAssemblyChildren.mockResolvedValue([]);
+    // Default batch mock returns an empty Map → no catalog rows for the ASSY
 
     await explodeBomsToLeaves({
       generalBOM: [makeCostItem("ORPHAN-ASSY", 1)],
@@ -157,9 +167,13 @@ describe("explodeBomsToLeaves", () => {
     mockGetPartNumbersByArray.mockResolvedValue([
       { pn: "ASSY-A", pn_type: "ASSY", cost: "0" },
     ]);
-    mockGetAssemblyChildren
-      .mockResolvedValueOnce([makeAssyChild("ASSY-B", 1)])
-      .mockResolvedValueOnce([makeAssyChild("ASSY-A", 1)]); // cycle back
+    mockGetAssemblyChildrenForParents
+      .mockResolvedValueOnce(
+        new Map([["ASSY-A", [makeAssyChild("ASSY-B", 1)]]]),
+      )
+      .mockResolvedValueOnce(
+        new Map([["ASSY-B", [makeAssyChild("ASSY-A", 1)]]]),
+      ); // cycle back
 
     await explodeBomsToLeaves({
       generalBOM: [makeCostItem("ASSY-A", 1)],
@@ -186,11 +200,12 @@ describe("explodeBomsToLeaves", () => {
     mockGetPartNumbersByArray.mockResolvedValue([
       { pn: "ASSY-0", pn_type: "ASSY", cost: "0" },
     ]);
-    // Build a chain ASSY-0 → ASSY-1 → ... → ASSY-10 (11 levels deep)
-    for (let i = 0; i <= 10; i++) {
-      mockGetAssemblyChildren.mockResolvedValueOnce([
-        makeAssyChild(`ASSY-${i + 1}`, 1),
-      ]);
+    // Build a chain ASSY-0 → ASSY-1 → ... → ASSY-10 (11 levels deep).
+    // Prefetch fetches exactly MAX_EXPLOSION_DEPTH (10) levels and stops.
+    for (let i = 0; i < 10; i++) {
+      mockGetAssemblyChildrenForParents.mockResolvedValueOnce(
+        new Map([[`ASSY-${i}`, [makeAssyChild(`ASSY-${i + 1}`, 1)]]]),
+      );
     }
 
     await explodeBomsToLeaves({
@@ -200,6 +215,7 @@ describe("explodeBomsToLeaves", () => {
     });
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("depth cap"));
+    expect(mockGetAssemblyChildrenForParents).toHaveBeenCalledTimes(10);
     warnSpy.mockRestore();
   });
 
@@ -229,11 +245,15 @@ describe("explodeBomsToLeaves", () => {
       { pn: "ASSY-TOP", pn_type: "ASSY", is_subcontract: false, cost: "0" },
     ]);
     // clearAllMocks does not drop once-queues leaked by earlier tests (e.g. depth cap)
-    mockGetAssemblyChildren.mockReset();
-    mockGetAssemblyChildren.mockResolvedValueOnce([
-      makeAssyChild("TREATED-PART", 2, true),
-      makePartChild("PART-A", 1),
-    ]);
+    mockGetAssemblyChildrenForParents.mockReset();
+    mockGetAssemblyChildrenForParents.mockResolvedValueOnce(
+      new Map([
+        [
+          "ASSY-TOP",
+          [makeAssyChild("TREATED-PART", 2, true), makePartChild("PART-A", 1)],
+        ],
+      ]),
+    );
 
     await explodeBomsToLeaves({
       generalBOM: [makeCostItem("ASSY-TOP", 3)],
@@ -242,8 +262,10 @@ describe("explodeBomsToLeaves", () => {
     });
 
     // Only ASSY-TOP is exploded; TREATED-PART is never queried for children
-    expect(mockGetAssemblyChildren).toHaveBeenCalledTimes(1);
-    expect(mockGetAssemblyChildren).toHaveBeenCalledWith("ASSY-TOP");
+    expect(mockGetAssemblyChildrenForParents).toHaveBeenCalledTimes(1);
+    expect(mockGetAssemblyChildrenForParents).toHaveBeenCalledWith([
+      "ASSY-TOP",
+    ]);
     const [generalLeaves] = mockEnrichWithCosts.mock.calls[0];
     const treated = generalLeaves.find(
       (l: { pn: string }) => l.pn === "TREATED-PART",
@@ -263,7 +285,7 @@ describe("explodeBomsToLeaves", () => {
       washBayBOMs: [],
     });
 
-    expect(mockGetAssemblyChildren).not.toHaveBeenCalled();
+    expect(mockGetAssemblyChildrenForParents).not.toHaveBeenCalled();
     const [generalLeaves] = mockEnrichWithCosts.mock.calls[0];
     expect(generalLeaves).toHaveLength(1);
     expect(generalLeaves[0].pn).toBe("TREATED-TOP");
@@ -295,7 +317,9 @@ describe("explodeBomsToLeaves", () => {
     mockGetPartNumbersByArray.mockResolvedValue([
       { pn: "ASSY-DUP", pn_type: "ASSY", cost: "0" },
     ]);
-    mockGetAssemblyChildren.mockResolvedValue([makePartChild("PART-X", 2)]);
+    mockGetAssemblyChildrenForParents.mockResolvedValue(
+      new Map([["ASSY-DUP", [makePartChild("PART-X", 2)]]]),
+    );
 
     await explodeBomsToLeaves({
       generalBOM: [makeCostItem("ASSY-DUP", 1), makeCostItem("ASSY-DUP", 3)],
@@ -311,5 +335,38 @@ describe("explodeBomsToLeaves", () => {
     expect(xLeaves).toHaveLength(2);
     expect(xLeaves[0].qty).toBe(2); // 1 * 2
     expect(xLeaves[1].qty).toBe(6); // 3 * 2
+  });
+
+  test("sibling assemblies at the same level are fetched in one batched call per level", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "ASSY-1", pn_type: "ASSY", cost: "0" },
+      { pn: "ASSY-2", pn_type: "ASSY", cost: "0" },
+    ]);
+    mockGetAssemblyChildrenForParents.mockResolvedValueOnce(
+      new Map([
+        ["ASSY-1", [makePartChild("PART-A", 1)]],
+        ["ASSY-2", [makePartChild("PART-B", 2)]],
+      ]),
+    );
+
+    await explodeBomsToLeaves({
+      generalBOM: [makeCostItem("ASSY-1", 1)],
+      waterTankBOMs: [[makeCostItem("ASSY-2", 1)]],
+      washBayBOMs: [],
+    });
+
+    // One round-trip per tree level, not per assembly; the lazy per-pn
+    // fallback in explodeAssy is never needed after the prefetch
+    expect(mockGetAssemblyChildrenForParents).toHaveBeenCalledTimes(1);
+    expect(mockGetAssemblyChildrenForParents).toHaveBeenCalledWith([
+      "ASSY-1",
+      "ASSY-2",
+    ]);
+    expect(mockGetAssemblyChildren).not.toHaveBeenCalled();
+
+    const [generalLeaves] = mockEnrichWithCosts.mock.calls[0];
+    expect(generalLeaves[0].pn).toBe("PART-A");
+    const [tankLeaves] = mockEnrichWithCosts.mock.calls[1];
+    expect(tankLeaves[0].pn).toBe("PART-B");
   });
 });

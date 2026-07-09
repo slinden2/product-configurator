@@ -1,6 +1,7 @@
 import {
   type AssemblyChild,
   getAssemblyChildren,
+  getAssemblyChildrenForParents,
   getPartNumbersByArray,
 } from "@/db/queries";
 import {
@@ -11,6 +12,45 @@ import {
 import type { BomTag } from "@/types";
 
 const MAX_EXPLOSION_DEPTH = 10;
+
+/**
+ * Populates `childrenCache` for the whole assembly tree with one batched
+ * query per level (instead of one round-trip per assembly during the DFS).
+ * The `queued` set fetches each pn once globally, so cycles terminate the
+ * loop naturally. The level cap aligns with the DFS depth cap: a node first
+ * reached at depth MAX_EXPLOSION_DEPTH is depth-capped by `explodeAssy` and
+ * never needs its children, so this many levels always suffice.
+ */
+async function prefetchAssemblyChildren(
+  rootPns: string[],
+  childrenCache: Map<string, AssemblyChild[]>,
+): Promise<void> {
+  const queued = new Set(rootPns);
+  let frontier = rootPns;
+  for (
+    let level = 0;
+    level < MAX_EXPLOSION_DEPTH && frontier.length > 0;
+    level++
+  ) {
+    const byParent = await getAssemblyChildrenForParents(frontier);
+    const next: string[] = [];
+    for (const pn of frontier) {
+      const children = byParent.get(pn) ?? [];
+      childrenCache.set(pn, children);
+      for (const child of children) {
+        if (
+          child.pn_type === "ASSY" &&
+          !child.is_subcontract &&
+          !queued.has(child.pn)
+        ) {
+          queued.add(child.pn);
+          next.push(child.pn);
+        }
+      }
+    }
+    frontier = next;
+  }
+}
 
 interface TaggedLeaf {
   bucket: "general" | "waterTank" | "washBay";
@@ -122,6 +162,12 @@ export async function explodeBomsToLeaves(
   const partCache = new Map(topLevelPnData.map((p) => [p.pn, p]));
 
   const childrenCache = new Map<string, AssemblyChild[]>();
+  const explodableRoots = allTopLevelPns.filter((pn) => {
+    const part = partCache.get(pn);
+    return part?.pn_type === "ASSY" && !part.is_subcontract;
+  });
+  await prefetchAssemblyChildren(explodableRoots, childrenCache);
+
   const leaves: TaggedLeaf[] = [];
   const subcontractLeafPns = new Set<string>();
 
@@ -171,39 +217,32 @@ export async function explodeBomsToLeaves(
     }
   }
 
+  // _description is the internal rule annotation carried by max-BOM items;
+  // exploded leaves come from the ERP catalog, not a rule, so it is always
+  // empty — the field exists only to satisfy BOMItemWithDescription.
+  const toLeafRow = (l: TaggedLeaf) => ({
+    pn: l.pn,
+    description: l.description,
+    qty: l.qty,
+    _description: "",
+    tag: l.tag,
+  });
+
   // Enrich leaves with cost from DB (single batch per bucket to keep structure)
   const generalLeaves = leaves
     .filter((l) => l.bucket === "general")
-    .map((l) => ({
-      pn: l.pn,
-      description: l.description,
-      qty: l.qty,
-      _description: "",
-      tag: l.tag,
-    }));
+    .map(toLeafRow);
 
   const waterTankLeaves = Array.from({ length: waterTankBOMs.length }, (_, i) =>
     leaves
       .filter((l) => l.bucket === "waterTank" && l.bucketIndex === i)
-      .map((l) => ({
-        pn: l.pn,
-        description: l.description,
-        qty: l.qty,
-        _description: "",
-        tag: l.tag,
-      })),
+      .map(toLeafRow),
   );
 
   const washBayLeaves = Array.from({ length: washBayBOMs.length }, (_, i) =>
     leaves
       .filter((l) => l.bucket === "washBay" && l.bucketIndex === i)
-      .map((l) => ({
-        pn: l.pn,
-        description: l.description,
-        qty: l.qty,
-        _description: "",
-        tag: l.tag,
-      })),
+      .map(toLeafRow),
   );
 
   const [enrichedGeneral, enrichedWaterTanks, enrichedWashBays] =

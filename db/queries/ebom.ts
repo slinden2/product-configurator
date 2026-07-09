@@ -91,10 +91,18 @@ export async function getEngineeringBomItemsForConfigs(confIds: number[]) {
     .where(inArray(engineeringBomItems.configuration_id, confIds));
 }
 
-export async function getAssemblyChildren(parentPn: string) {
+/**
+ * Batch variant of `getAssemblyChildren` for level-by-level BOM explosion
+ * (one query per tree level instead of one per assembly). Rows with a
+ * dangling child pn are skipped; parents with no rows are absent from the map.
+ */
+export async function getAssemblyChildrenForParents(parentPns: string[]) {
+  const byParent = new Map<string, AssemblyChild[]>();
+  if (parentPns.length === 0) return byParent;
+
   const rows = await db.query.bomLines.findMany({
-    where: eq(bomLines.parent_pn, parentPn),
-    orderBy: [asc(bomLines.sort_order)],
+    where: inArray(bomLines.parent_pn, parentPns),
+    orderBy: [asc(bomLines.parent_pn), asc(bomLines.sort_order)],
     with: {
       child: {
         columns: {
@@ -108,25 +116,35 @@ export async function getAssemblyChildren(parentPn: string) {
     },
   });
 
-  return rows.flatMap((r) => {
-    if (!r.child) return [];
-    return [
-      {
-        pn: r.child.pn,
-        description: r.child.description,
-        qty: Number(r.qty),
-        sort_order: r.sort_order,
-        pn_type: r.child.pn_type,
-        is_phantom: r.child.is_phantom,
-        is_subcontract: r.child.is_subcontract,
-      },
-    ];
-  });
+  for (const r of rows) {
+    if (!r.child) continue;
+    const children = byParent.get(r.parent_pn) ?? [];
+    children.push({
+      pn: r.child.pn,
+      description: r.child.description,
+      qty: Number(r.qty),
+      sort_order: r.sort_order,
+      pn_type: r.child.pn_type,
+      is_phantom: r.child.is_phantom,
+      is_subcontract: r.child.is_subcontract,
+    });
+    byParent.set(r.parent_pn, children);
+  }
+  return byParent;
 }
 
-export type AssemblyChild = Awaited<
-  ReturnType<typeof getAssemblyChildren>
->[number];
+export type AssemblyChild = Pick<
+  typeof partNumbers.$inferSelect,
+  "pn" | "description" | "pn_type" | "is_phantom" | "is_subcontract"
+> & {
+  qty: number;
+  sort_order: (typeof bomLines.$inferSelect)["sort_order"];
+};
+
+export async function getAssemblyChildren(parentPn: string) {
+  const byParent = await getAssemblyChildrenForParents([parentPn]);
+  return byParent.get(parentPn) ?? [];
+}
 
 export async function hasEngineeringBom(
   confId: number,
