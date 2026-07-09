@@ -282,7 +282,16 @@ export async function getUserOffers(
           orderBy: [desc(offerRevisions.revision_no)],
           limit: 1,
           columns: { id: true, status: true },
-          with: { lines: { columns: { id: true } } },
+          // Correlated count instead of loading the line rows just to count
+          // them. The foreign table/column must be raw identifiers: drizzle
+          // re-qualifies every schema-column reference inside `extras` to the
+          // relation's alias, which would break the correlation. `fields.id`
+          // resolves to the aliased revision; `::int` keeps it a JS number.
+          extras: (fields, { sql }) => ({
+            lineCount:
+              sql<number>`(select count(*)::int from offer_revision_lines l
+              where l.offer_revision_id = ${fields.id})`.as("line_count"),
+          }),
         },
       },
       orderBy: [desc(offers.updated_at)],
@@ -302,7 +311,7 @@ export async function getUserOffers(
       updated_at: offer.updated_at,
       owner: offer.owner,
       status: revision?.status ?? null,
-      lineCount: revision?.lines.length ?? 0,
+      lineCount: revision?.lineCount ?? 0,
     };
   });
 
