@@ -801,6 +801,21 @@ describe("acceptRevisionAction", () => {
     expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
   });
 
+  test("rejects when a line config snapshot fails to load", async () => {
+    mockLoadValidatedConfiguration
+      .mockResolvedValueOnce({
+        configuration: { name: "C" },
+        status: "DRAFT",
+        origin: "OFFER",
+        waterTanks: [],
+        washBays: [],
+      })
+      .mockResolvedValueOnce(null);
+    const result = await acceptRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.config.notFound });
+    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
   test("rejects an empty revision", async () => {
     mockGetWorkingRevisionForSend.mockResolvedValue({
       id: REVISION_ID,

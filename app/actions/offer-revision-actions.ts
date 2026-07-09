@@ -359,7 +359,7 @@ export async function createRenegotiationRevisionAction(offerId: number) {
  * (`accepted_revision_id`). Any offer-access role within scope can record the outcome —
  * recording what the customer decided is not a management gate.
  *
- * Each line's config form-shape is loaded here (pooled reads, before the tx) and frozen
+ * Each line's config form-shape is loaded here (parallel reads, before the tx) and frozen
  * inside the tx, mirroring the old as-sold freeze pattern.
  */
 export async function acceptRevisionAction(offerId: number) {
@@ -371,7 +371,7 @@ export async function acceptRevisionAction(offerId: number) {
     return { success: false as const, error: MSG.offer.cannotAccept };
   }
 
-  // Pre-tx fast-fail so the pooled snapshot loads below aren't wasted; the
+  // Pre-tx fast-fail so the parallel snapshot loads below aren't wasted; the
   // authoritative status re-check runs inside the transaction like the siblings.
   const working = await getWorkingRevisionForSend(offerId);
   if (!working) return { success: false as const, error: MSG.offer.notFound };
@@ -382,11 +382,15 @@ export async function acceptRevisionAction(offerId: number) {
     return { success: false as const, error: MSG.offer.cannotSendEmpty };
   }
 
+  const loadedConfigs = await Promise.all(
+    working.configIds.map((configId) =>
+      loadValidatedConfiguration(configId, user),
+    ),
+  );
   const asSoldByConfigId: Record<number, OfferConfigSnapshot> = {};
-  for (const configId of working.configIds) {
-    const loaded = await loadValidatedConfiguration(configId, user);
+  for (const [i, loaded] of loadedConfigs.entries()) {
     if (!loaded) return { success: false as const, error: MSG.config.notFound };
-    asSoldByConfigId[configId] = {
+    asSoldByConfigId[working.configIds[i]] = {
       configuration: loaded.configuration,
       waterTanks: loaded.waterTanks,
       washBays: loaded.washBays,
