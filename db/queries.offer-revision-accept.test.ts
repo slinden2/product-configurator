@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // --- Mocks ---
 // We exercise the REAL acceptOfferRevisionWithAudit; a hand-built `tx` answers the
-// two reads (offer row, revision lines) and records every update/insert. Only the
-// db connection module is faked so importing @/db/queries doesn't open a connection.
+// relational offer load (query.offers.findFirst) and the revision-lines join, and
+// records every update/insert. Only the db connection module is faked so importing
+// @/db/queries doesn't open a connection.
 vi.mock("@/db", () => ({ db: {} }));
 
 import {
@@ -23,8 +24,15 @@ import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-sch
 
 // --- tx stub ---
 
+interface OfferLoad {
+  id: number;
+  accepted_revision_id: number | null;
+  /** Desc by revision_no, like the real relational load. */
+  revisions: { id: number; revision_no: number }[];
+}
+
 interface TxState {
-  offerRow: { accepted_revision_id: number | null } | null;
+  offer: OfferLoad | null;
   lines: { lineId: number; configId: number; configStatus: string }[];
   /** Rows returned by the status-guarded revision UPDATE (empty = guard failed). */
   revisionUpdateReturns: { id: number }[];
@@ -37,21 +45,18 @@ function makeTx(state: TxState) {
   const tx = {
     // The offer row lock (`select ... for update`) runs through tx.execute.
     execute: vi.fn().mockResolvedValue(undefined),
-    select: () => ({
-      from: (table: unknown) => {
-        if (table === offers) {
-          return {
-            where: () =>
-              Promise.resolve(state.offerRow ? [state.offerRow] : []),
-          };
-        }
-        // The lines read joins configurations.
-        return {
-          innerJoin: () => ({
-            where: () => Promise.resolve(state.lines),
-          }),
-        };
+    query: {
+      offers: {
+        findFirst: vi.fn().mockResolvedValue(state.offer),
       },
+    },
+    // The lines read: select().from(offerRevisionLines).innerJoin(configurations).where().
+    select: () => ({
+      from: () => ({
+        innerJoin: () => ({
+          where: () => Promise.resolve(state.lines),
+        }),
+      }),
     }),
     update: (table: unknown) => ({
       set: (set: Record<string, unknown>) => {
@@ -100,7 +105,11 @@ const SNAPSHOT = {
 
 function baseState(overrides: Partial<TxState> = {}): TxState {
   return {
-    offerRow: { accepted_revision_id: null },
+    offer: {
+      id: 5,
+      accepted_revision_id: null,
+      revisions: [{ id: 500, revision_no: 1 }],
+    },
     lines: [
       { lineId: 21, configId: 7, configStatus: "DRAFT" },
       { lineId: 22, configId: 8, configStatus: "DRAFT" },
@@ -167,7 +176,14 @@ describe("acceptOfferRevisionWithAudit", () => {
       baseState({
         // The offer is already accepted (rev 500 in force); rev 900 is the SENT
         // renegotiation being accepted. Its configs live post-handoff.
-        offerRow: { accepted_revision_id: 500 },
+        offer: {
+          id: 5,
+          accepted_revision_id: 500,
+          revisions: [
+            { id: 900, revision_no: 2 },
+            { id: 500, revision_no: 1 },
+          ],
+        },
         lines: [
           { lineId: 41, configId: 7, configStatus: "IN_TECH_REVIEW" },
           { lineId: 42, configId: 8, configStatus: "TECH_APPROVED" },
@@ -208,12 +224,76 @@ describe("acceptOfferRevisionWithAudit", () => {
 
   test("rejects re-accepting the revision that is already in force", async () => {
     const { tx } = makeTx(
-      baseState({ offerRow: { accepted_revision_id: 500 } }),
+      baseState({
+        offer: {
+          id: 5,
+          accepted_revision_id: 500,
+          revisions: [{ id: 500, revision_no: 1 }],
+        },
+      }),
     );
 
     await expect(
       acceptOfferRevisionWithAudit(5, 500, "actor", AS_SOLD, tx),
     ).rejects.toThrow(MSG.offer.alreadyAccepted);
+  });
+
+  test("rejects a first acceptance when a clone-forward revision committed in the race window", async () => {
+    // Revision 500 was SENT and targeted for acceptance, but a concurrent
+    // clone-forward committed DRAFT revision 501 before this tx acquired the offer
+    // lock — accepting 500 would leave an accepted offer with an open working
+    // revision. The post-lock latest-revision guard must refuse without writing.
+    const { tx, updatesFor, insertsFor } = makeTx(
+      baseState({
+        offer: {
+          id: 5,
+          accepted_revision_id: null,
+          revisions: [
+            { id: 501, revision_no: 2 },
+            { id: 500, revision_no: 1 },
+          ],
+        },
+      }),
+    );
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 500, "actor", AS_SOLD, tx),
+    ).rejects.toThrow(MSG.offer.cannotAccept);
+
+    expect(updatesFor(offerRevisions)).toEqual([]);
+    expect(updatesFor(offers)).toEqual([]);
+    expect(updatesFor(configurations)).toEqual([]);
+    expect(insertsFor(activityLogs)).toEqual([]);
+  });
+
+  test("rejects a re-acceptance when a newer renegotiation revision committed in the race window", async () => {
+    // Rev 500 is in force; SENT renegotiation 900 is being re-accepted, but a
+    // concurrent createRenegotiationRevisionAction committed DRAFT revision 901.
+    const { tx } = makeTx(
+      baseState({
+        offer: {
+          id: 5,
+          accepted_revision_id: 500,
+          revisions: [
+            { id: 901, revision_no: 3 },
+            { id: 900, revision_no: 2 },
+            { id: 500, revision_no: 1 },
+          ],
+        },
+      }),
+    );
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 900, "actor", AS_SOLD, tx),
+    ).rejects.toThrow(MSG.offer.cannotAccept);
+  });
+
+  test("rejects when the target revision does not belong to the offer", async () => {
+    const { tx } = makeTx(baseState());
+
+    await expect(
+      acceptOfferRevisionWithAudit(5, 999, "actor", AS_SOLD, tx),
+    ).rejects.toThrow(MSG.offer.notFound);
   });
 
   test("rejects when the revision is not SENT (guarded update returns no row)", async () => {

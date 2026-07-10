@@ -402,7 +402,9 @@ export async function acceptRevisionAction(offerId: number) {
     if (!current) throw new QueryError(MSG.offer.notFound, 404);
     // The as-sold snapshots above were loaded for `working`'s lines — a different
     // latest revision (e.g. a renegotiation sent in the race window, whose lines
-    // reference the same config ids) must not be accepted with them.
+    // reference the same config ids) must not be accepted with them. This read is
+    // unlocked, so it is a fast-fail only: the authoritative latest-revision check
+    // runs under the offer lock inside acceptOfferRevisionWithAudit.
     if (current.id !== working.id) {
       throw new QueryError(MSG.offer.cannotAccept, 409);
     }

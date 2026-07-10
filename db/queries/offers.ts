@@ -1119,7 +1119,9 @@ export async function markOfferRevisionSentWithAudit(
 /**
  * Records customer acceptance of a SENT revision. In one transaction it:
  *  - locks the offer row, then guards the revision is SENT (the status-guarded
- *    update) and is not the already-in-force accepted revision;
+ *    update), is not the already-in-force accepted revision, and is still the
+ *    offer's latest revision (a clone-forward or renegotiation revision committed
+ *    in the race window supersedes the target — 409);
  *  - moves the revision SENT → ACCEPTED and points `offers.accepted_revision_id`
  *    at it (first acceptance locks the offer; a re-acceptance moves the pointer
  *    forward — the superseded revision keeps its immutable ACCEPTED status);
@@ -1145,10 +1147,16 @@ export async function acceptOfferRevisionWithAudit(
   // Serialize against concurrent lifecycle mutations on this offer.
   await tx.execute(sql`select id from offers where id = ${offerId} for update`);
 
-  const [offerRow] = await tx
-    .select({ accepted_revision_id: offers.accepted_revision_id })
-    .from(offers)
-    .where(eq(offers.id, offerId));
+  const offerRow = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true, accepted_revision_id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        columns: { id: true, revision_no: true },
+      },
+    },
+  });
   if (!offerRow) throw new QueryError(MSG.offer.notFound, 404);
   // A set pointer means this acceptance is a renegotiation re-acceptance. Only the
   // in-force revision itself can't be accepted again; any other target must be SENT,
@@ -1157,6 +1165,19 @@ export async function acceptOfferRevisionWithAudit(
   const isReacceptance = offerRow.accepted_revision_id !== null;
   if (offerRow.accepted_revision_id === revisionId) {
     throw new QueryError(MSG.offer.alreadyAccepted, 409);
+  }
+
+  const target = offerRow.revisions.find((rev) => rev.id === revisionId);
+  if (!target) throw new QueryError(MSG.offer.notFound, 404);
+
+  // The target must still be the offer's latest revision. A clone-forward (or a new
+  // renegotiation revision) committed between the action's in-tx re-read and this lock
+  // would otherwise leave an accepted offer with an open working revision — a state
+  // the workflow defines as impossible. `revisions` is desc by revision_no, so [0] is
+  // the latest — refuse if it is past the target.
+  const latest = offerRow.revisions[0];
+  if (latest && latest.revision_no > target.revision_no) {
+    throw new QueryError(MSG.offer.cannotAccept, 409);
   }
 
   const lines = await tx
