@@ -361,6 +361,32 @@ describe("snapshotEngineeringBomAction", () => {
     expect(mockInsertEngineeringBomItems).not.toHaveBeenCalled();
   });
 
+  test("re-checks hasEngineeringBom inside the transaction and rejects the losing concurrent snapshot (issue #246)", async () => {
+    // The pre-tx fast-path sees no BOM; by the time the tx acquires the
+    // config row lock, a concurrent snapshot has committed its items.
+    mockHasEngineeringBom
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.bom.alreadyExists);
+    expect(mockInsertEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockHasEngineeringBom).toHaveBeenLastCalledWith(
+      CONF_ID,
+      expect.anything(),
+    );
+  });
+
+  test("runs the in-tx duplicate re-check with the transaction handle on success", async () => {
+    await snapshotEngineeringBomAction(CONF_ID);
+    expect(mockHasEngineeringBom).toHaveBeenCalledTimes(2);
+    expect(mockHasEngineeringBom).toHaveBeenLastCalledWith(
+      CONF_ID,
+      expect.anything(),
+    );
+    expect(mockInsertEngineeringBomItems).toHaveBeenCalledTimes(1);
+  });
+
   test("revalidates BOM path on success", async () => {
     await snapshotEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
@@ -515,6 +541,8 @@ describe("addEngineeringBomItemAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupDefaultMocks();
+    // Manual items require an existing rule-generated snapshot (#246).
+    mockHasEngineeringBom.mockResolvedValue(true);
   });
 
   const validFormData = {
@@ -554,6 +582,26 @@ describe("addEngineeringBomItemAction", () => {
     expect(result.error).toBe(MSG.config.statusConflict);
     expect(mockTxInsert).not.toHaveBeenCalled();
     expect(mockLogActivity).not.toHaveBeenCalled();
+  });
+
+  test("rejects a manual item when no snapshot exists (mint-from-nothing, issue #246)", async () => {
+    mockHasEngineeringBom.mockResolvedValue(false);
+    const result: ActionResult = await addEngineeringBomItemAction(
+      CONF_ID,
+      validFormData,
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.bom.snapshotRequired);
+    expect(mockTxInsert).not.toHaveBeenCalled();
+    expect(mockLogActivity).not.toHaveBeenCalled();
+  });
+
+  test("checks the snapshot precondition inside the transaction", async () => {
+    await addEngineeringBomItemAction(CONF_ID, validFormData);
+    expect(mockHasEngineeringBom).toHaveBeenCalledWith(
+      CONF_ID,
+      expect.anything(),
+    );
   });
 
   test("succeeds with custom item", async () => {

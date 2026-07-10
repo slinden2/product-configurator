@@ -162,6 +162,9 @@ export async function snapshotEngineeringBomAction(confId: number) {
     return auth;
   }
 
+  // Fast-path only: skips the expensive BOM generation, but is racy on a
+  // pooled read. The authoritative duplicate guard re-runs inside the
+  // transaction below, under the config row lock (#246).
   const alreadyExists = await hasEngineeringBom(confId);
   if (alreadyExists) {
     return {
@@ -190,6 +193,12 @@ export async function snapshotEngineeringBomAction(confId: number) {
       // on a pooled read, so a concurrent status transition could otherwise
       // land this write on a frozen config (#240).
       await assertConfigurationStatus(confId, auth.configuration.status, tx);
+      // The FOR UPDATE lock above serializes concurrent snapshots on the same
+      // config, so this re-check sees the winner's committed items and stops
+      // the loser from doubling every row (#246).
+      if (await hasEngineeringBom(confId, tx)) {
+        throw new QueryError(MSG.bom.alreadyExists, 409);
+      }
       await insertEngineeringBomItems(items, tx);
       await insertActivityLog(
         {
@@ -285,6 +294,13 @@ export async function addEngineeringBomItemAction(
     const inserted = await db.transaction(async (tx) => {
       // Status re-assert under row lock — see snapshotEngineeringBomAction (#240).
       await assertConfigurationStatus(confId, auth.configuration.status, tx);
+      // Manual items may only extend a rule-generated snapshot: without this
+      // guard a single hand-added row would satisfy the hasEngineeringBom
+      // precondition of the TECH_APPROVED gate (#246). Checked under the same
+      // row lock so a concurrent regenerate/wipe cannot race it.
+      if (!(await hasEngineeringBom(confId, tx))) {
+        throw new QueryError(MSG.bom.snapshotRequired, 409);
+      }
       const [row] = await tx
         .insert(engineeringBomItems)
         .values({

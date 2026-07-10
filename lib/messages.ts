@@ -55,6 +55,8 @@ export const MSG = {
       "Non autorizzato a modificare la distinta di commessa in questo stato.",
     alreadyExists:
       "La distinta di commessa esiste già. Usa 'Rigenera' per sovrascriverla.",
+    snapshotRequired:
+      "La distinta di commessa non esiste ancora. Usa 'Genera distinta di commessa' prima di aggiungere righe manuali.",
     invalidQty: "Quantità non valida.",
     rowNotFound: "Riga non trovata.",
   },
