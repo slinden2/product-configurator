@@ -1,3 +1,10 @@
+---
+paths:
+  - "components/config-form/**"
+  - "components/shared/**"
+  - "validation/**"
+---
+
 # Form Architecture & Implementation Rules
 
 ## Architecture Overview

@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "test/**"
+---
+
 # Testing Patterns
 
 ## Setup
