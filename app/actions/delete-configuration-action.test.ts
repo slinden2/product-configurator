@@ -93,7 +93,12 @@ describe("deleteConfigurationAction", () => {
   test("returns success when owner deletes DRAFT config", async () => {
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({ success: true });
-    expect(mockDeleteConfiguration).toHaveBeenCalledWith(CONF_ID, mockTx);
+    // The pre-read status is threaded through as the CAS guard (issue #240).
+    expect(mockDeleteConfiguration).toHaveBeenCalledWith(
+      CONF_ID,
+      "DRAFT",
+      mockTx,
+    );
     expect(mockInsertActivityLog).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "CONFIG_DELETE",
@@ -225,6 +230,20 @@ describe("deleteConfigurationAction", () => {
       success: false,
       error: MSG.config.cannotDeleteOfferOwned,
     });
+  });
+
+  test("surfaces the 409 conflict when the status moved between gate and delete (lost race, issue #240)", async () => {
+    const { QueryError } = await import("@/db/queries");
+    mockDeleteConfiguration.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result = await deleteConfigurationAction(CONF_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.statusConflict,
+    });
+    const { revalidatePath } = await import("next/cache");
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("revalidates both /configurazioni and / after deletion", async () => {

@@ -384,14 +384,27 @@ export const duplicateConfigurationRecord = async (
 
 export const deleteConfiguration = async (
   id: number,
+  expectedStatus: ConfigurationStatusType,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
-  await txOrDb.delete(configurations).where(eq(configurations.id, id));
+  const [deletedConfiguration] = await txOrDb
+    .delete(configurations)
+    .where(
+      and(eq(configurations.id, id), eq(configurations.status, expectedStatus)),
+    )
+    .returning({ id: configurations.id });
+
+  // The caller's pre-read already proved existence and scope, so a zero-row
+  // delete means the status moved under us — a concurrency conflict (#240).
+  if (!deletedConfiguration) {
+    throw new QueryError(MSG.config.statusConflict, 409);
+  }
 };
 
 export const updateConfiguration = async (
   confId: number,
   configurationData: UpdateConfigSchema,
+  expectedStatus: ConfigurationStatusType,
   txOrDb: DatabaseType | TransactionType = db,
 ): Promise<{ id: number }> => {
   const setData = transformConfigToDbUpdate(configurationData);
@@ -399,11 +412,19 @@ export const updateConfiguration = async (
   const [updatedConfiguration] = await txOrDb
     .update(configurations)
     .set(setData)
-    .where(eq(configurations.id, confId))
+    .where(
+      and(
+        eq(configurations.id, confId),
+        eq(configurations.status, expectedStatus),
+      ),
+    )
     .returning({ id: configurations.id });
 
+  // The caller's pre-read already proved existence and scope, so a zero-row
+  // write means the status moved under us — a concurrency conflict, not
+  // "not found" (#240).
   if (!updatedConfiguration) {
-    throw new QueryError(MSG.config.notFound, 404);
+    throw new QueryError(MSG.config.statusConflict, 409);
   }
 
   return updatedConfiguration;
@@ -411,12 +432,51 @@ export const updateConfiguration = async (
 
 export const touchConfigurationUpdatedAt = async (
   confId: number,
+  expectedStatus: ConfigurationStatusType,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
-  await txOrDb
+  const [touchedConfiguration] = await txOrDb
     .update(configurations)
     .set({ updated_at: new Date() })
-    .where(eq(configurations.id, confId));
+    .where(
+      and(
+        eq(configurations.id, confId),
+        eq(configurations.status, expectedStatus),
+      ),
+    )
+    .returning({ id: configurations.id });
+
+  // Sub-record queryFns only touch child tables, so this conditional touch is
+  // the status compare-and-swap for the whole sub-record path (#240).
+  if (!touchedConfiguration) {
+    throw new QueryError(MSG.config.statusConflict, 409);
+  }
+};
+
+// In-tx status guard for writes that never touch the configurations table
+// (e.g. engineering BOM items) and so cannot compare-and-swap via their own
+// WHERE clause. FOR UPDATE serializes against a concurrent updateConfigStatus:
+// either its transition committed first (the WHERE misses → 409) or its UPDATE
+// blocks on this row lock until our transaction commits (#240).
+export const assertConfigurationStatus = async (
+  confId: number,
+  expectedStatus: ConfigurationStatusType,
+  tx: TransactionType,
+) => {
+  const [row] = await tx
+    .select({ id: configurations.id })
+    .from(configurations)
+    .where(
+      and(
+        eq(configurations.id, confId),
+        eq(configurations.status, expectedStatus),
+      ),
+    )
+    .for("update");
+
+  if (!row) {
+    throw new QueryError(MSG.config.statusConflict, 409);
+  }
 };
 
 export const updateConfigStatus = async (

@@ -7,6 +7,7 @@ import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message"
 import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { db } from "@/db";
 import {
+  assertConfigurationStatus,
   getConfigurationWithTanksAndBays,
   getPartNumbersByArray,
   getUserData,
@@ -185,6 +186,10 @@ export async function snapshotEngineeringBomAction(confId: number) {
   try {
     const items = await prepareBomItems(auth.configuration);
     await db.transaction(async (tx) => {
+      // Re-assert the config status under a row lock: the isEditable gate ran
+      // on a pooled read, so a concurrent status transition could otherwise
+      // land this write on a frozen config (#240).
+      await assertConfigurationStatus(confId, auth.configuration.status, tx);
       await insertEngineeringBomItems(items, tx);
       await insertActivityLog(
         {
@@ -227,6 +232,8 @@ export async function regenerateEngineeringBomAction(confId: number) {
   try {
     const items = await prepareBomItems(auth.configuration);
     await db.transaction(async (tx) => {
+      // Status re-assert under row lock — see snapshotEngineeringBomAction (#240).
+      await assertConfigurationStatus(confId, auth.configuration.status, tx);
       await tx
         .delete(engineeringBomItems)
         .where(eq(engineeringBomItems.configuration_id, confId));
@@ -275,29 +282,34 @@ export async function addEngineeringBomItemAction(
   try {
     // 3. Atomic Insert with SQL Subquery
     // This removes the need for a separate "findMany" query to get the max order
-    const [inserted] = await db
-      .insert(engineeringBomItems)
-      .values({
-        configuration_id: confId,
-        category,
-        category_index,
-        pn,
-        description,
-        qty,
-        original_qty: null,
-        is_deleted: false,
-        is_added: true,
-        is_custom: is_custom ?? false,
-        tag: tag ?? null,
-        sort_order: sql`(
+    const inserted = await db.transaction(async (tx) => {
+      // Status re-assert under row lock — see snapshotEngineeringBomAction (#240).
+      await assertConfigurationStatus(confId, auth.configuration.status, tx);
+      const [row] = await tx
+        .insert(engineeringBomItems)
+        .values({
+          configuration_id: confId,
+          category,
+          category_index,
+          pn,
+          description,
+          qty,
+          original_qty: null,
+          is_deleted: false,
+          is_added: true,
+          is_custom: is_custom ?? false,
+          tag: tag ?? null,
+          sort_order: sql`(
         SELECT COALESCE(MAX(${engineeringBomItems.sort_order}), -1) + 1
         FROM ${engineeringBomItems}
         WHERE ${engineeringBomItems.configuration_id} = ${confId}
         AND ${engineeringBomItems.category} = ${category}
         AND ${engineeringBomItems.category_index} = ${category_index}
       )`,
-      })
-      .returning({ id: engineeringBomItems.id });
+        })
+        .returning({ id: engineeringBomItems.id });
+      return row;
+    });
 
     await logActivity({
       userId: auth.user.id,
@@ -334,6 +346,8 @@ export async function updateEngineeringBomItemQtyAction(
 
   try {
     await db.transaction(async (tx) => {
+      // Status re-assert under row lock — see snapshotEngineeringBomAction (#240).
+      await assertConfigurationStatus(confId, auth.configuration.status, tx);
       const [existing] = await tx
         .select({ qty: engineeringBomItems.qty })
         .from(engineeringBomItems)
@@ -393,6 +407,8 @@ export async function toggleDeleteEngineeringBomItemAction(
 
   try {
     await db.transaction(async (tx) => {
+      // Status re-assert under row lock — see snapshotEngineeringBomAction (#240).
+      await assertConfigurationStatus(confId, auth.configuration.status, tx);
       const [existing] = await tx
         .select({ is_deleted: engineeringBomItems.is_deleted })
         .from(engineeringBomItems)

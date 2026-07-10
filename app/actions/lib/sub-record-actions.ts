@@ -223,8 +223,9 @@ export async function handleSubRecordAction<
         }
       }
 
-      // Touch parent configuration's updated_at
-      await touchConfigurationUpdatedAt(parentId, tx);
+      // Touch parent configuration's updated_at (status-guarded — the CAS for
+      // this whole path, since the queryFns above only touch child tables)
+      await touchConfigurationUpdatedAt(parentId, configuration.status, tx);
 
       // Delete engineering BOM if it exists — config changes invalidate the snapshot
       const ebomExists = await hasEngineeringBom(parentId, tx);

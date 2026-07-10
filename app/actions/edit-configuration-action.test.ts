@@ -181,6 +181,13 @@ describe("editConfigurationAction", () => {
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: true });
     expect(mockUpdateConfiguration).toHaveBeenCalledTimes(1);
+    // The pre-read status is threaded through as the CAS guard (issue #240).
+    expect(mockUpdateConfiguration).toHaveBeenCalledWith(
+      CONF_ID,
+      expect.objectContaining({ user_id: OWNER_ID }),
+      "DRAFT",
+      mockTx,
+    );
     expect(mockInsertActivityLog).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "CONFIG_EDIT",
@@ -365,6 +372,18 @@ describe("editConfigurationAction", () => {
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: false, error: "Non trovata." });
+  });
+
+  test("surfaces the 409 conflict when the status moved between gate and write (lost race, issue #240)", async () => {
+    mockUpdateConfiguration.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.statusConflict,
+    });
+    expect(mockInsertActivityLog).not.toHaveBeenCalled();
   });
 
   test("returns generic error on unknown exceptions", async () => {

@@ -454,8 +454,10 @@ describe("handleSubRecordAction", () => {
 
   test("touches parent configuration updated_at after successful insert", async () => {
     await handleSubRecordAction(insertOptions());
+    // The pre-read status is threaded through as the CAS guard (issue #240).
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
       PARENT_ID,
+      "DRAFT",
       mockTx,
     );
   });
@@ -473,6 +475,7 @@ describe("handleSubRecordAction", () => {
     });
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
       PARENT_ID,
+      "DRAFT",
       mockTx,
     );
   });
@@ -488,8 +491,22 @@ describe("handleSubRecordAction", () => {
     });
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
       PARENT_ID,
+      "DRAFT",
       mockTx,
     );
+  });
+
+  test("surfaces the 409 conflict and skips side effects when the status moved between gate and write (lost race, issue #240)", async () => {
+    mockTouchConfigurationUpdatedAt.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.statusConflict,
+    });
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
   });
 
   test("does NOT touch parent updated_at when validation fails", async () => {

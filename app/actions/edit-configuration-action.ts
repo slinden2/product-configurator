@@ -96,6 +96,7 @@ export const editConfigurationAction = async (
       await updateConfiguration(
         confId,
         { ...validation.data, user_id: configuration.user_id },
+        configuration.status,
         tx,
       );
 

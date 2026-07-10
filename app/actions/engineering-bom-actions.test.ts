@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockGetUserData = vi.fn();
 const mockGetConfigurationWithTanksAndBays = vi.fn();
+const mockAssertConfigurationStatus = vi.fn();
 const mockHasEngineeringBom = vi.fn();
 const mockGetPartNumbersByArray = vi.fn();
 const mockInsertEngineeringBomItems = vi.fn();
@@ -19,6 +20,8 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
+  assertConfigurationStatus: (...args: unknown[]) =>
+    mockAssertConfigurationStatus(...args),
   offerRevisionStatusFor: (...args: unknown[]) =>
     mockOfferRevisionStatusFor(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
@@ -52,16 +55,20 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-// Mock the db module for direct drizzle calls (insert, transaction)
+// Mock the db module for direct drizzle calls (transaction)
 const mockInsertReturning = vi.fn();
-const mockValues = vi.fn((): unknown => ({ returning: mockInsertReturning }));
-const mockInsert = vi.fn((_table: unknown) => ({ values: mockValues }));
 const mockTxDelete = vi.fn(() => ({
   where: vi.fn().mockResolvedValue(undefined),
 }));
-const mockTxInsert = vi.fn(() => ({
-  values: vi.fn().mockResolvedValue(undefined),
-}));
+// The insert chain must serve both regenerate (`await ....values(items)`) and
+// add (`....values({...}).returning()`), so it is an awaitable Promise that
+// also carries the returning step.
+const mockTxInsertValues = vi.fn((): unknown =>
+  Object.assign(Promise.resolve(undefined), {
+    returning: mockInsertReturning,
+  }),
+);
+const mockTxInsert = vi.fn(() => ({ values: mockTxInsertValues }));
 const mockTxSelectWhere = vi.fn();
 const mockTxSelect = vi.fn(() => ({
   from: vi.fn(() => ({ where: mockTxSelectWhere })),
@@ -74,7 +81,6 @@ const mockTransaction = vi.fn();
 
 vi.mock("@/db", () => ({
   db: {
-    insert: (table: unknown) => mockInsert(table),
     transaction: (fn: unknown) => mockTransaction(fn),
   },
 }));
@@ -161,6 +167,7 @@ const MOCK_BAY_BOMS = [
 function setupDefaultMocks() {
   mockGetUserData.mockResolvedValue(mockUser());
   mockGetConfigurationWithTanksAndBays.mockResolvedValue(mockConfig());
+  mockAssertConfigurationStatus.mockResolvedValue(undefined);
   mockHasEngineeringBom.mockResolvedValue(false);
   mockGetPartNumbersByArray.mockResolvedValue([
     { pn: "PN-001" },
@@ -181,14 +188,13 @@ function setupDefaultMocks() {
   mockTxSelectWhere.mockResolvedValue([{ qty: 2, is_deleted: false }]);
   mockTxUpdateReturning.mockResolvedValue([{ id: ITEM_ID }]);
   mockTransaction.mockImplementation(
-    async (fn: (tx: unknown) => Promise<void>) => {
-      await fn({
+    async (fn: (tx: unknown) => Promise<unknown>) =>
+      fn({
         delete: mockTxDelete,
         insert: mockTxInsert,
         select: mockTxSelect,
         update: mockTxUpdate,
-      });
-    },
+      }),
   );
 }
 
@@ -263,6 +269,26 @@ describe("snapshotEngineeringBomAction", () => {
   test("ENGINEER can snapshot DRAFT config", async () => {
     const result = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);
+  });
+
+  test("re-asserts the config status inside the transaction (issue #240)", async () => {
+    await snapshotEngineeringBomAction(CONF_ID);
+    expect(mockAssertConfigurationStatus).toHaveBeenCalledWith(
+      CONF_ID,
+      "DRAFT",
+      expect.anything(),
+    );
+  });
+
+  test("surfaces the 409 conflict and skips the insert when the status moved between gate and tx (lost race, issue #240)", async () => {
+    const { QueryError } = await import("@/db/queries");
+    mockAssertConfigurationStatus.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.statusConflict);
+    expect(mockInsertEngineeringBomItems).not.toHaveBeenCalled();
   });
 
   // -- Snapshot-specific --
@@ -396,6 +422,23 @@ describe("regenerateEngineeringBomAction", () => {
     expect(mockTxInsert).toHaveBeenCalled();
   });
 
+  test("surfaces the 409 conflict and skips delete + insert on a lost status race (issue #240)", async () => {
+    const { QueryError } = await import("@/db/queries");
+    mockAssertConfigurationStatus.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.statusConflict);
+    expect(mockAssertConfigurationStatus).toHaveBeenCalledWith(
+      CONF_ID,
+      "DRAFT",
+      expect.anything(),
+    );
+    expect(mockTxDelete).not.toHaveBeenCalled();
+    expect(mockTxInsert).not.toHaveBeenCalled();
+  });
+
   test("works even without existing BOM (no-op delete)", async () => {
     const result = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(true);
@@ -486,7 +529,31 @@ describe("addEngineeringBomItemAction", () => {
   test("succeeds with valid catalog item", async () => {
     const result = await addEngineeringBomItemAction(CONF_ID, validFormData);
     expect(result.success).toBe(true);
-    expect(mockInsert).toHaveBeenCalled();
+    expect(mockTxInsert).toHaveBeenCalled();
+  });
+
+  test("re-asserts the config status inside the insert transaction (issue #240)", async () => {
+    await addEngineeringBomItemAction(CONF_ID, validFormData);
+    expect(mockAssertConfigurationStatus).toHaveBeenCalledWith(
+      CONF_ID,
+      "DRAFT",
+      expect.anything(),
+    );
+  });
+
+  test("surfaces the 409 conflict and skips insert + log on a lost status race (issue #240)", async () => {
+    const { QueryError } = await import("@/db/queries");
+    mockAssertConfigurationStatus.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result: ActionResult = await addEngineeringBomItemAction(
+      CONF_ID,
+      validFormData,
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.statusConflict);
+    expect(mockTxInsert).not.toHaveBeenCalled();
+    expect(mockLogActivity).not.toHaveBeenCalled();
   });
 
   test("succeeds with custom item", async () => {
@@ -499,7 +566,7 @@ describe("addEngineeringBomItemAction", () => {
 
   test("inserted values have is_added=true and original_qty=null", async () => {
     await addEngineeringBomItemAction(CONF_ID, validFormData);
-    const call = mockValues.mock.calls[0] as unknown[];
+    const call = mockTxInsertValues.mock.calls[0] as unknown[];
     const insertedValues = call[0] as Record<string, unknown>;
     expect(insertedValues.is_added).toBe(true);
     expect(insertedValues.original_qty).toBeNull();
@@ -595,7 +662,7 @@ describe("addEngineeringBomItemAction", () => {
     );
     expect(result.success).toBe(false);
     expect(result.error).toContain(MSG.bom.unauthorized);
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockTransaction).not.toHaveBeenCalled();
   });
 });
 
@@ -610,6 +677,26 @@ describe("updateEngineeringBomItemQtyAction", () => {
     expect(result.success).toBe(true);
     expect(mockTransaction).toHaveBeenCalledTimes(1);
     expect(mockTxUpdateSet).toHaveBeenCalledWith({ qty: 3 });
+    expect(mockAssertConfigurationStatus).toHaveBeenCalledWith(
+      CONF_ID,
+      "DRAFT",
+      expect.anything(),
+    );
+  });
+
+  test("surfaces the 409 conflict and skips the update on a lost status race (issue #240)", async () => {
+    const { QueryError } = await import("@/db/queries");
+    mockAssertConfigurationStatus.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result: ActionResult = await updateEngineeringBomItemQtyAction(
+      CONF_ID,
+      ITEM_ID,
+      3,
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.statusConflict);
+    expect(mockTxUpdate).not.toHaveBeenCalled();
   });
 
   test("logs BOM_ITEM_QTY_UPDATE with old/new qty inside the transaction", async () => {
@@ -729,6 +816,25 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
     const result = await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(result.success).toBe(true);
     expect(mockTxUpdateSet).toHaveBeenCalledWith({ is_deleted: true });
+    expect(mockAssertConfigurationStatus).toHaveBeenCalledWith(
+      CONF_ID,
+      "DRAFT",
+      expect.anything(),
+    );
+  });
+
+  test("surfaces the 409 conflict and skips the toggle on a lost status race (issue #240)", async () => {
+    const { QueryError } = await import("@/db/queries");
+    mockAssertConfigurationStatus.mockRejectedValue(
+      new QueryError(MSG.config.statusConflict, 409),
+    );
+    const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
+      CONF_ID,
+      ITEM_ID,
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.config.statusConflict);
+    expect(mockTxUpdate).not.toHaveBeenCalled();
   });
 
   test("toggles is_deleted from true to false (restore)", async () => {

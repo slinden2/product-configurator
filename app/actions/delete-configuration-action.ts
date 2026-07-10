@@ -63,7 +63,7 @@ export const deleteConfigurationAction = async (id: number) => {
 
   try {
     await db.transaction(async (tx) => {
-      await deleteConfiguration(id, tx);
+      await deleteConfiguration(id, configuration.status, tx);
       await insertActivityLog(
         {
           userId: user.id,
