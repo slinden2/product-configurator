@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 const mockGetUserData = vi.fn();
 const mockChangeUserRoleWithAudit = vi.fn();
 const mockAssignManagerWithAudit = vi.fn();
+const mockActivateUserWithAudit = vi.fn();
 const mockLogActivity = vi.fn();
 const mockFindFirst = vi.fn();
 const mockResetPasswordForEmail = vi.fn();
@@ -16,6 +17,8 @@ vi.mock("@/db/queries", () => ({
     mockChangeUserRoleWithAudit(...args),
   assignManagerWithAudit: (...args: unknown[]) =>
     mockAssignManagerWithAudit(...args),
+  activateUserWithAudit: (...args: unknown[]) =>
+    mockActivateUserWithAudit(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
     errorCode: number;
@@ -65,6 +68,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 import { revalidatePath } from "next/cache";
 import { DatabaseError } from "pg";
 import {
+  activateUserAction,
   assignManagerAction,
   changeUserRoleAction,
   sendPasswordResetAction,
@@ -297,6 +301,65 @@ describe("assignManagerAction", () => {
       managerId: null,
       changedBy: ADMIN_ID,
     });
+  });
+});
+
+// ── activateUserAction ───────────────────────────────────────────────────────
+
+describe("activateUserAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockActivateUserWithAudit.mockResolvedValue(undefined);
+  });
+
+  test("returns validation error for a non-uuid userId", async () => {
+    const result = await activateUserAction({ userId: "not-a-uuid" });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.auth.invalidData);
+    expect(mockActivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects unauthenticated users", async () => {
+    mockGetUserData.mockResolvedValue(null);
+    const result = await activateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    expect(mockActivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects non-ADMIN users", async () => {
+    mockGetUserData.mockResolvedValue(engineerUser);
+    const result = await activateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.auth.unauthorized);
+    expect(mockActivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("activates the user with audit and revalidates", async () => {
+    const result = await activateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(true);
+    expect(mockActivateUserWithAudit).toHaveBeenCalledWith({
+      userId: TARGET_ID,
+      activatedBy: ADMIN_ID,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/gestione/utenti");
+  });
+
+  test("surfaces QueryError messages (already active / not found) verbatim", async () => {
+    mockActivateUserWithAudit.mockRejectedValue(
+      new QueryError(MSG.users.alreadyActive, 400),
+    );
+    const result = await activateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.users.alreadyActive);
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockActivateUserWithAudit.mockRejectedValue(createDatabaseError("pg"));
+    const result = await activateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
   });
 });
 

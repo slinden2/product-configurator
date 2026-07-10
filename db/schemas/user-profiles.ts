@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  boolean,
   pgEnum,
   pgPolicy,
   pgTable,
@@ -29,6 +30,9 @@ export const userProfiles = pgTable(
       .defaultNow(),
     email: varchar().notNull().unique(),
     role: roleEnum().notNull(),
+    // First-login profiles start inactive and must be activated by an ADMIN
+    // before the user can access the app.
+    is_active: boolean().notNull().default(true),
     initials: varchar({ length: 3 }),
     last_login_at: timestamp("last_login_at", { mode: "date", precision: 3 }),
     // Self-referential link to the SALES_MANAGER a SALES user reports to.

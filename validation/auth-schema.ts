@@ -12,7 +12,7 @@ export const authSchema = z.object({
 
 export const newPassWordSchema = z
   .object({
-    password: z.string().min(6, "Password deve contenere almeno 6 caratteri."),
+    password: z.string().min(8, "Password deve contenere almeno 8 caratteri."),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

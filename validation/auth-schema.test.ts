@@ -46,8 +46,8 @@ describe("newPassWordSchema", () => {
   test("should pass when passwords match and meet minimum length", () => {
     expect(() =>
       newPassWordSchema.parse({
-        password: "secret",
-        confirmPassword: "secret",
+        password: "secretsecret",
+        confirmPassword: "secretsecret",
       }),
     ).not.toThrow();
   });
@@ -61,17 +61,20 @@ describe("newPassWordSchema", () => {
     ).not.toThrow();
   });
 
-  test("should fail when password is shorter than 6 characters", () => {
+  test("should fail when password is shorter than 8 characters", () => {
     expect(() =>
-      newPassWordSchema.parse({ password: "abc", confirmPassword: "abc" }),
-    ).toThrow("Password deve contenere almeno 6 caratteri.");
+      newPassWordSchema.parse({
+        password: "seven77",
+        confirmPassword: "seven77",
+      }),
+    ).toThrow("Password deve contenere almeno 8 caratteri.");
   });
 
   test("should fail when passwords do not match", () => {
     expect(() =>
       newPassWordSchema.parse({
-        password: "password1",
-        confirmPassword: "password2",
+        password: "password1-mismatch",
+        confirmPassword: "password2-mismatch",
       }),
     ).toThrow("Le password non corrispondono.");
   });
@@ -79,7 +82,7 @@ describe("newPassWordSchema", () => {
   test("should fail when password is valid length but confirmPassword differs", () => {
     const result = newPassWordSchema.safeParse({
       password: "validpassword",
-      confirmPassword: "different",
+      confirmPassword: "differentpassword",
     });
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -116,8 +119,8 @@ describe("signupSchema", () => {
     expect(() =>
       signupSchema.parse({
         email: "user@itecosrl.com",
-        password: "mypassword",
-        confirmPassword: "mypassword",
+        password: "mypassword123",
+        confirmPassword: "mypassword123",
       }),
     ).not.toThrow();
   });
@@ -126,8 +129,8 @@ describe("signupSchema", () => {
     expect(() =>
       signupSchema.parse({
         email: "user@itecosrl.com",
-        password: "mypassword",
-        confirmPassword: "wrongpassword",
+        password: "mypassword123",
+        confirmPassword: "wrongpassword123",
       }),
     ).toThrow("Le password non corrispondono.");
   });
@@ -135,8 +138,8 @@ describe("signupSchema", () => {
   test("should fail with invalid email", () => {
     const result = signupSchema.safeParse({
       email: "bad",
-      password: "mypassword",
-      confirmPassword: "mypassword",
+      password: "mypassword123",
+      confirmPassword: "mypassword123",
     });
     expect(result.success).toBe(false);
   });

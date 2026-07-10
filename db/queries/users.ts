@@ -23,10 +23,11 @@ export const getUserData = async () => {
 
   const userProfile = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.id, data.user.id),
-    columns: { role: true, initials: true, manager_id: true },
+    columns: { role: true, initials: true, manager_id: true, is_active: true },
   });
 
-  if (!userProfile) {
+  // Fail closed for profiles not yet activated by an ADMIN.
+  if (!userProfile?.is_active) {
     return null;
   }
 
@@ -44,6 +45,7 @@ export type UserWithStats = {
   role: Role;
   initials: string | null;
   manager_id: string | null;
+  is_active: boolean;
   last_login_at: Date | null;
   configCount: number;
   lastActivity: Date | null;
@@ -57,6 +59,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       role: userProfiles.role,
       initials: userProfiles.initials,
       manager_id: userProfiles.manager_id,
+      is_active: userProfiles.is_active,
       last_login_at: userProfiles.last_login_at,
       configCount: countDistinct(configurations.id),
       lastActivity: max(activityLogs.created_at),
@@ -70,6 +73,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       userProfiles.role,
       userProfiles.initials,
       userProfiles.manager_id,
+      userProfiles.is_active,
       userProfiles.last_login_at,
     )
     .orderBy(asc(userProfiles.email));
@@ -127,6 +131,41 @@ export async function changeUserRoleWithAudit(data: {
         targetEntity: "user_profile",
         targetId: data.userId,
         metadata: { from_role: targetRow.role, to_role: data.newRole },
+      },
+      tx,
+    );
+  });
+}
+
+export async function activateUserWithAudit(data: {
+  userId: string;
+  activatedBy: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    // Lock the row so a concurrent activation cannot double-log the audit entry.
+    const [targetRow] = await tx
+      .select({ id: userProfiles.id, is_active: userProfiles.is_active })
+      .from(userProfiles)
+      .where(eq(userProfiles.id, data.userId))
+      .for("update");
+
+    if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+    if (targetRow.is_active) {
+      throw new QueryError(MSG.users.alreadyActive, 400);
+    }
+
+    await tx
+      .update(userProfiles)
+      .set({ is_active: true })
+      .where(eq(userProfiles.id, data.userId));
+
+    await insertActivityLog(
+      {
+        userId: data.activatedBy,
+        action: "USER_ACTIVATE",
+        targetEntity: "user_profile",
+        targetId: data.userId,
+        metadata: {},
       },
       tx,
     );

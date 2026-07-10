@@ -17,3 +17,8 @@ export const sendPasswordResetSchema = z.object({
   userId: z.uuid(),
 });
 export type SendPasswordResetSchema = z.infer<typeof sendPasswordResetSchema>;
+
+export const activateUserSchema = z.object({
+  userId: z.uuid(),
+});
+export type ActivateUserSchema = z.infer<typeof activateUserSchema>;

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
+import { logActivity } from "@/db/queries";
 import { userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { createClient } from "@/utils/supabase/server";
@@ -55,12 +56,9 @@ export async function signUp(formData: SignupSchema) {
     return { success: false as const, error: MSG.auth.genericError };
   }
 
-  if (data.user?.identities?.length === 0) {
-    return {
-      success: false as const,
-      error: MSG.auth.emailAlreadyRegistered,
-    };
-  }
+  // NOTE: when the address is already registered, Supabase returns a fake user
+  // with an empty identities array. Do NOT branch on it — the response must be
+  // indistinguishable from a real signup to prevent account enumeration.
 
   revalidatePath("/", "layout");
 
@@ -92,18 +90,40 @@ export async function signIn(formData: LoginSchema) {
     });
 
     if (!existingUser) {
+      // First login: provision an inactive profile. The user gets no session
+      // until an ADMIN activates the account from the user management area.
       await db.insert(userProfiles).values({
         id: data.user.id,
         email: credentials.email,
         role: "SALES",
-        last_login_at: new Date(),
+        is_active: false,
       });
-    } else {
-      await db
-        .update(userProfiles)
-        .set({ last_login_at: new Date() })
-        .where(eq(userProfiles.id, data.user.id));
+      await logActivity({
+        userId: data.user.id,
+        action: "USER_PROFILE_CREATE",
+        targetEntity: "user_profile",
+        targetId: data.user.id,
+        metadata: { email: credentials.email, initial_role: "SALES" },
+      });
+      await supabase.auth.signOut();
+      return {
+        success: false as const,
+        error: MSG.auth.accountPendingActivation,
+      };
     }
+
+    if (!existingUser.is_active) {
+      await supabase.auth.signOut();
+      return {
+        success: false as const,
+        error: MSG.auth.accountPendingActivation,
+      };
+    }
+
+    await db
+      .update(userProfiles)
+      .set({ last_login_at: new Date() })
+      .where(eq(userProfiles.id, data.user.id));
   } catch (err) {
     console.error(err);
     return { success: false as const, error: MSG.db.error };

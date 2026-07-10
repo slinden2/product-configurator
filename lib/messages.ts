@@ -10,8 +10,8 @@ export const MSG = {
     unauthorizedSubRecord:
       "Non autorizzato a modificare/eliminare questo record.",
     userUnauthorized: "Utente non autorizzato.",
-    emailAlreadyRegistered:
-      "Utente con questo indirizzo email già registrato. Effettua il login per proseguire.",
+    accountPendingActivation:
+      "Account in attesa di attivazione da parte di un amministratore.",
     missingResetCode: "Codice di reset mancante.",
     genericError: "Errore durante l'autenticazione.",
     invalidData: "Dati di autenticazione non validi.",
@@ -64,6 +64,9 @@ export const MSG = {
     cannotPromoteToAdmin: "Non è possibile promuovere un utente ad ADMIN.",
     invalidManager: "Il responsabile selezionato non è valido.",
     adminOnly: "Accesso riservato agli amministratori.",
+    alreadyActive: "L'utente è già attivo.",
+    statusActive: "Attivo",
+    statusPending: "In attesa",
   },
   db: {
     error: "Errore del database.",
@@ -143,6 +146,10 @@ export const MSG = {
     managerUpdateFailed: "Impossibile aggiornare il responsabile.",
     passwordResetSent: "Email di reset password inviata.",
     passwordResetFailed: "Impossibile inviare l'email di reset.",
+    userActivated: "Utente attivato.",
+    userActivateFailed: "Impossibile attivare l'utente.",
+    signupCheckEmail:
+      "Registrazione completata. Controlla la tua email per confermare l'account.",
     subBomLoadFailed: "Impossibile caricare la distinta del sotto-assieme.",
     subBomEmpty: "Il sotto-assieme non contiene articoli.",
     coefficientUpdated: "Coefficiente aggiornato.",
@@ -182,6 +189,11 @@ export const MSG = {
     title: "Conferma invio email di reset password",
     body: "Verrà inviata un'email di reset password all'utente. Continuare?",
     confirm: "Invia email",
+  },
+  activateUserConfirm: {
+    title: "Conferma attivazione utente",
+    body: "L'utente potrà accedere all'applicazione con il ruolo assegnato. Continuare?",
+    confirm: "Attiva utente",
   },
   energyChainWall: {
     supplySection:

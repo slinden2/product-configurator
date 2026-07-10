@@ -17,6 +17,7 @@ interface UsersTableProps {
 const headers = [
   "Email",
   "Ruolo",
+  "Stato",
   "Responsabile",
   "Iniziali",
   "N. Configurazioni",

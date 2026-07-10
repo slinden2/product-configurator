@@ -135,6 +135,28 @@ describe("updateConfigStatus — concurrent transition guard", () => {
   });
 });
 
+describe("updateConfigStatus — access is checked before state-dependent errors", () => {
+  test("out-of-scope SALES probe of an already-in-status config gets 403, not 400", async () => {
+    // An unauthorized caller must not be able to distinguish "already in
+    // status X" (400) from "unauthorized" (403) — that would leak the current
+    // status of configs outside their scope.
+    mockConfigFindFirst.mockResolvedValue(
+      makeConfig("TECH_APPROVED", { user_id: "someone-else" }),
+    );
+    const sales = {
+      id: "sales-1",
+      role: "SALES",
+      initials: "SL",
+      manager_id: null,
+    } as unknown as Parameters<typeof updateConfigStatus>[1];
+
+    await expect(
+      updateConfigStatus(CONF_ID, sales, { status: "TECH_APPROVED" }),
+    ).rejects.toThrow(new QueryError(MSG.auth.userUnauthorized, 403));
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});
+
 describe("updateConfigStatus — IN_TECH_REVIEW is out of bounds for STANDALONE", () => {
   test.each([
     ["DRAFT", "IN_TECH_REVIEW"],

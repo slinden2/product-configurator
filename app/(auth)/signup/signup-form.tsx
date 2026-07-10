@@ -8,6 +8,7 @@ import { signUp } from "@/app/actions/auth";
 import InputField from "@/components/input-field";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Form } from "@/components/ui/form";
+import { MSG } from "@/lib/messages";
 import { type SignupSchema, signupSchema } from "@/validation/auth-schema";
 
 const SignupForm = () => {
@@ -19,6 +20,7 @@ const SignupForm = () => {
   const onSubmit = async (formData: SignupSchema) => {
     const response = await signUp(formData);
     if (response.success) {
+      toast.success(MSG.toast.signupCheckEmail);
       router.push("/login");
     } else {
       toast.error(response.error);

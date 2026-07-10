@@ -8,7 +8,8 @@ if (!process.env.DATABASE_URL) {
 
 export default defineConfig({
   out: "./drizzle",
-  schema: "./db/schemas/*.ts",
+  // Point at the barrel (not a glob) so test files in db/schemas are not loaded.
+  schema: "./db/schemas/index.ts",
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL,

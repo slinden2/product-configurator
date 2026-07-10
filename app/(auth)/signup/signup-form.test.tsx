@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockPush = vi.fn();
 const mockSignUp = vi.fn();
+const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
@@ -19,12 +20,16 @@ vi.mock("@/app/actions/auth", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { error: (...args: unknown[]) => mockToastError(...args) },
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
 }));
 
 // --- Import SUT after mocks ---
 
 import SignupForm from "@/app/(auth)/signup/signup-form";
+import { MSG } from "@/lib/messages";
 
 // --- Tests ---
 
@@ -58,19 +63,22 @@ describe("SignupForm", () => {
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
-      await user.type(screen.getByLabelText("Password"), "password123");
+      await user.type(screen.getByLabelText("Password"), "password12345");
       await user.type(
         screen.getByLabelText("Conferma password"),
-        "password123",
+        "password12345",
       );
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
       await waitFor(() => {
         expect(mockSignUp).toHaveBeenCalledWith({
           email: "test@itecosrl.com",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "password12345",
+          confirmPassword: "password12345",
         });
+        expect(mockToastSuccess).toHaveBeenCalledWith(
+          MSG.toast.signupCheckEmail,
+        );
         expect(mockPush).toHaveBeenCalledWith("/login");
       });
     });
@@ -85,10 +93,10 @@ describe("SignupForm", () => {
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
-      await user.type(screen.getByLabelText("Password"), "password123");
+      await user.type(screen.getByLabelText("Password"), "password12345");
       await user.type(
         screen.getByLabelText("Conferma password"),
-        "password123",
+        "password12345",
       );
       await user.click(screen.getByRole("button", { name: "Registra" }));
 
@@ -116,7 +124,7 @@ describe("SignupForm", () => {
       render(<SignupForm />);
 
       await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
-      await user.type(screen.getByLabelText("Password"), "password123");
+      await user.type(screen.getByLabelText("Password"), "password12345");
       await user.type(
         screen.getByLabelText("Conferma password"),
         "different456",

@@ -25,6 +25,7 @@ vi.mock("@/db/schemas", () => ({
     email: "email",
     role: "role",
     initials: "initials",
+    is_active: "is_active",
     last_login_at: "last_login_at",
   },
   configurations: { id: "config_id", user_id: "user_id" },
@@ -47,6 +48,7 @@ function makeDbRow(overrides = {}) {
   return {
     id: "u-1",
     email: "test@test.com",
+    is_active: true,
     configCount: "5", // DB returns counts as strings
     lastActivity: new Date("2024-01-01"),
     ...overrides,

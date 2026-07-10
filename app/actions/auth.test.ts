@@ -11,6 +11,7 @@ const mockExchangeCodeForSession = vi.fn();
 const mockUpdateUser = vi.fn();
 
 const mockFindFirst = vi.fn();
+const mockLogActivity = vi.fn();
 const mockValues = vi.fn();
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 const mockWhere = vi.fn();
@@ -66,6 +67,10 @@ vi.mock("@/db", () => ({
 
 vi.mock("@/db/schemas", () => ({
   userProfiles: Symbol("userProfiles"),
+}));
+
+vi.mock("@/db/queries", () => ({
+  logActivity: (...args: unknown[]) => mockLogActivity(...args),
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -130,8 +135,8 @@ describe("signUp", () => {
 
     const result = await signUp({
       email: "test@itecosrl.com",
-      password: "password123",
-      confirmPassword: "password123",
+      password: "password12345",
+      confirmPassword: "password12345",
     });
 
     expect(result.success).toBe(true);
@@ -147,8 +152,8 @@ describe("signUp", () => {
 
     const result = await signUp({
       email: "test@itecosrl.com",
-      password: "password123",
-      confirmPassword: "password123",
+      password: "password12345",
+      confirmPassword: "password12345",
     });
 
     expect(result).toEqual({
@@ -158,7 +163,9 @@ describe("signUp", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  test("returns Italian duplicate-email error when identities array is empty", async () => {
+  test("returns the same success shape when the email is already registered (anti-enumeration)", async () => {
+    // Supabase signals an existing address with a fake user whose identities
+    // array is empty; the response must be indistinguishable from a real signup.
     mockSignUp.mockResolvedValue({
       data: { user: { ...mockUser, identities: [] } },
       error: null,
@@ -166,22 +173,20 @@ describe("signUp", () => {
 
     const result = await signUp({
       email: "test@itecosrl.com",
-      password: "password123",
-      confirmPassword: "password123",
+      password: "password12345",
+      confirmPassword: "password12345",
     });
 
-    expect(result).toEqual({
-      success: false,
-      error: MSG.auth.emailAlreadyRegistered,
-    });
-    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(result.success).toBe(true);
+    expect(result).toHaveProperty("data");
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
 
   test("returns validation error for invalid input", async () => {
     const result = await signUp({
       email: "not-an-email",
-      password: "password123",
-      confirmPassword: "password123",
+      password: "password12345",
+      confirmPassword: "password12345",
     });
 
     expect(result).toEqual({
@@ -197,13 +202,14 @@ describe("signIn", () => {
     vi.clearAllMocks();
   });
 
-  test("returns success and creates user profile when not existing", async () => {
+  test("provisions an inactive profile on first login and denies the session", async () => {
     mockSignInWithPassword.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     });
     mockFindFirst.mockResolvedValue(undefined);
     mockValues.mockResolvedValue(undefined);
+    mockSignOut.mockResolvedValue({ error: null });
 
     const result = await signIn({
       email: "test@itecosrl.com",
@@ -211,19 +217,53 @@ describe("signIn", () => {
     });
 
     expect(result).toEqual({
-      success: true,
-      data: { user: mockUser },
+      success: false,
+      error: MSG.auth.accountPendingActivation,
     });
     expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith(
+    expect(mockValues).toHaveBeenCalledWith({
+      id: mockUser.id,
+      email: "test@itecosrl.com",
+      role: "SALES",
+      is_active: false,
+    });
+    expect(mockLogActivity).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: mockUser.id,
-        email: "test@itecosrl.com",
-        role: "SALES",
-        last_login_at: expect.any(Date),
+        userId: mockUser.id,
+        action: "USER_PROFILE_CREATE",
+        targetEntity: "user_profile",
+        targetId: mockUser.id,
       }),
     );
-    expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+    expect(mockSignOut).toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  test("denies login and keeps no session while the profile is inactive", async () => {
+    mockSignInWithPassword.mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    });
+    mockFindFirst.mockResolvedValue({
+      id: mockUser.id,
+      email: mockUser.email,
+      is_active: false,
+    });
+    mockSignOut.mockResolvedValue({ error: null });
+
+    const result = await signIn({
+      email: "test@itecosrl.com",
+      password: "password123",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.accountPendingActivation,
+    });
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("returns success and skips profile creation when user already exists", async () => {
@@ -231,7 +271,11 @@ describe("signIn", () => {
       data: { user: mockUser },
       error: null,
     });
-    mockFindFirst.mockResolvedValue({ id: mockUser.id, email: mockUser.email });
+    mockFindFirst.mockResolvedValue({
+      id: mockUser.id,
+      email: mockUser.email,
+      is_active: true,
+    });
     mockWhere.mockResolvedValue(undefined);
 
     const result = await signIn({
@@ -393,7 +437,7 @@ describe("resetPassword", () => {
 
   test("returns missing code error when code is null", async () => {
     const result = await resetPassword(
-      { password: "newpass123", confirmPassword: "newpass123" },
+      { password: "newpassword123", confirmPassword: "newpassword123" },
       null,
     );
 
@@ -410,7 +454,7 @@ describe("resetPassword", () => {
     });
 
     const result = await resetPassword(
-      { password: "newpass123", confirmPassword: "newpass123" },
+      { password: "newpassword123", confirmPassword: "newpassword123" },
       "bad-code",
     );
 
@@ -428,7 +472,7 @@ describe("resetPassword", () => {
     });
 
     const result = await resetPassword(
-      { password: "newpass123", confirmPassword: "newpass123" },
+      { password: "newpassword123", confirmPassword: "newpassword123" },
       "valid-code",
     );
 
@@ -443,12 +487,14 @@ describe("resetPassword", () => {
     mockUpdateUser.mockResolvedValue({ error: null });
 
     const result = await resetPassword(
-      { password: "newpass123", confirmPassword: "newpass123" },
+      { password: "newpassword123", confirmPassword: "newpassword123" },
       "valid-code",
     );
 
     expect(result).toEqual({ success: true });
-    expect(mockUpdateUser).toHaveBeenCalledWith({ password: "newpass123" });
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      password: "newpassword123",
+    });
   });
 
   test("returns validation error for invalid input", async () => {

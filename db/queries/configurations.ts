@@ -428,12 +428,14 @@ export const updateConfigStatus = async (
     throw new QueryError(MSG.config.notFound, 404);
   }
 
-  if (configuration.status === statusData.status) {
-    throw new QueryError(MSG.config.statusAlreadyUpdated, 400);
-  }
-
+  // Access must be checked before any state-dependent response, or an
+  // out-of-scope caller could probe a config's current status via 400-vs-403.
   if (!(await canAccessConfiguration(user, configuration))) {
     throw new QueryError(MSG.auth.userUnauthorized, 403);
+  }
+
+  if (configuration.status === statusData.status) {
+    throw new QueryError(MSG.config.statusAlreadyUpdated, 400);
   }
 
   if (

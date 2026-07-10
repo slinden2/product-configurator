@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import {
+  activateUserWithAudit,
   assignManagerWithAudit,
   changeUserRoleWithAudit,
   logActivity,
@@ -13,6 +14,7 @@ import { userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { createClient } from "@/utils/supabase/server";
 import {
+  activateUserSchema,
   assignManagerSchema,
   changeRoleSchema,
   sendPasswordResetSchema,
@@ -112,6 +114,29 @@ export async function assignManagerAction(formData: unknown) {
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to assign manager:");
+  }
+}
+
+export async function activateUserAction(formData: unknown) {
+  const validation = activateUserSchema.safeParse(formData);
+  if (!validation.success) {
+    return { success: false as const, error: MSG.auth.invalidData };
+  }
+
+  const { userId } = validation.data;
+
+  const auth = await authorizeAdmin();
+  if (!auth.success) return { success: false as const, error: auth.error };
+  const { user } = auth;
+
+  try {
+    // Existence and already-active guards run inside the locked transaction.
+    await activateUserWithAudit({ userId, activatedBy: user.id });
+
+    revalidatePath("/gestione/utenti");
+    return { success: true as const };
+  } catch (err) {
+    return mapActionError(err, "Failed to activate user:");
   }
 }
 

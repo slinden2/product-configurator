@@ -1,16 +1,18 @@
 "use client";
 
-import { History, Mail } from "lucide-react";
+import { History, Mail, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
+  activateUserAction,
   assignManagerAction,
   changeUserRoleAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { RowActionsMenu } from "@/components/shared/row-actions-menu";
+import { Badge } from "@/components/ui/badge";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -52,6 +54,7 @@ const NO_MANAGER_VALUE = "none";
 const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   const isCurrentUser = user.id === currentUserId;
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [activateConfirmOpen, setActivateConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleRoleChange = (newRole: string) => {
@@ -80,6 +83,18 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   // Only SALES agents are assigned to a manager; the pickable managers are the
   // SALES_MANAGER users.
   const canAssignManager = user.role === "SALES";
+
+  const handleActivate = () => {
+    startTransition(async () => {
+      const result = await activateUserAction({ userId: user.id });
+      if (result.success) {
+        toast.success(MSG.toast.userActivated);
+      } else {
+        toast.error(result.error ?? MSG.toast.userActivateFailed);
+      }
+      setActivateConfirmOpen(false);
+    });
+  };
 
   const handlePasswordReset = () => {
     startTransition(async () => {
@@ -122,6 +137,13 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           )}
         </TableCell>
         <TableCell>
+          {user.is_active ? (
+            <Badge variant="outline">{MSG.users.statusActive}</Badge>
+          ) : (
+            <Badge variant="secondary">{MSG.users.statusPending}</Badge>
+          )}
+        </TableCell>
+        <TableCell>
           {canAssignManager ? (
             <Select
               value={user.manager_id ?? NO_MANAGER_VALUE}
@@ -156,6 +178,15 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
         </TableCell>
         <TableCell>
           <RowActionsMenu>
+            {!user.is_active && (
+              <DropdownMenuItem
+                disabled={isPending}
+                onSelect={() => setActivateConfirmOpen(true)}
+              >
+                <UserCheck />
+                Attiva utente
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               disabled={isPending}
               onSelect={() => setResetConfirmOpen(true)}
@@ -172,6 +203,21 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           </RowActionsMenu>
         </TableCell>
       </TableRow>
+      <ConfirmModal
+        isOpen={activateConfirmOpen}
+        onOpenChange={setActivateConfirmOpen}
+        title={MSG.activateUserConfirm.title}
+        description={
+          <>
+            {MSG.activateUserConfirm.body} Utente:{" "}
+            <span className="font-semibold">{user.email}</span>.
+          </>
+        }
+        confirmText={MSG.activateUserConfirm.confirm}
+        confirmVariant="default"
+        onConfirm={handleActivate}
+        isConfirming={isPending}
+      />
       <ConfirmModal
         isOpen={resetConfirmOpen}
         onOpenChange={setResetConfirmOpen}

@@ -61,15 +61,18 @@ describe("ResetPasswordForm", () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      await user.type(screen.getByLabelText("Password"), "newpass123");
-      await user.type(screen.getByLabelText("Conferma password"), "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpassword123");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "newpassword123",
+      );
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockResetPassword).toHaveBeenCalledWith(
-          { password: "newpass123", confirmPassword: "newpass123" },
+          { password: "newpassword123", confirmPassword: "newpassword123" },
           "test-code-123",
         );
         expect(mockToastSuccess).toHaveBeenCalledWith(
@@ -88,8 +91,11 @@ describe("ResetPasswordForm", () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      await user.type(screen.getByLabelText("Password"), "newpass123");
-      await user.type(screen.getByLabelText("Conferma password"), "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpassword123");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "newpassword123",
+      );
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" }),
       );
@@ -106,7 +112,7 @@ describe("ResetPasswordForm", () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      await user.type(screen.getByLabelText("Password"), "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpassword123");
       await user.type(
         screen.getByLabelText("Conferma password"),
         "different456",
@@ -141,15 +147,18 @@ describe("ResetPasswordForm", () => {
       const user = userEvent.setup();
       render(<ResetPasswordForm />);
 
-      await user.type(screen.getByLabelText("Password"), "newpass123");
-      await user.type(screen.getByLabelText("Conferma password"), "newpass123");
+      await user.type(screen.getByLabelText("Password"), "newpassword123");
+      await user.type(
+        screen.getByLabelText("Conferma password"),
+        "newpassword123",
+      );
       await user.click(
         screen.getByRole("button", { name: "Resetta la password" }),
       );
 
       await waitFor(() => {
         expect(mockResetPassword).toHaveBeenCalledWith(
-          { password: "newpass123", confirmPassword: "newpass123" },
+          { password: "newpassword123", confirmPassword: "newpassword123" },
           null,
         );
       });

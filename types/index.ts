@@ -211,6 +211,8 @@ export const ActivityActions = [
   "OFFER_LINE_MARGIN_ABSORB",
   "SURCHARGE_UPDATE",
   "INSTALLATION_ITEM_UPDATE",
+  "USER_PROFILE_CREATE",
+  "USER_ACTIVATE",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -253,6 +255,8 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   OFFER_LINE_MARGIN_ABSORB: "Presa d'atto margine ridotto",
   SURCHARGE_UPDATE: "Modifica maggiorazione",
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
+  USER_PROFILE_CREATE: "Creazione profilo utente",
+  USER_ACTIVATE: "Attivazione utente",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
