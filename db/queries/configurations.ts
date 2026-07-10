@@ -315,8 +315,8 @@ export const cloneConfigurationRows = async (
   },
   tx: DatabaseType | TransactionType,
 ): Promise<{ id: number }> => {
-  // `origin` stays in `...rest` so it is preserved from the source by default; an
-  // explicit `options.origin` overrides it (clone-forward pins the clones to OFFER).
+  // `origin` stays in `...rest` only as a fail-safe default; both callers pin it
+  // explicitly (clone-forward → OFFER, duplicate → STANDALONE).
   const {
     id: _id,
     created_at: _ca,
@@ -373,6 +373,9 @@ export const duplicateConfigurationRecord = async (
         userId: newUserId,
         name: `Copia di ${source.name}`,
         status: "DRAFT",
+        // A duplicate is a fresh standalone technical copy, never an orphan
+        // OFFER config outside any revision (#243).
+        origin: "STANDALONE",
       },
       tx,
     ),

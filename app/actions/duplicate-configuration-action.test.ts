@@ -50,8 +50,10 @@ function makeEngineerUser() {
   return { id: "engineer-1", role: "ENGINEER" as const, initials: "EN" };
 }
 
-function makeSalesUser(id = "sales-1") {
-  return { id, role: "SALES" as const, initials: "SA" };
+function makeUser(
+  role: "SALES" | "SALES_MANAGER" | "SALES_DIRECTOR" | "ADMIN",
+) {
+  return { id: `${role.toLowerCase()}-1`, role, initials: "XX" };
 }
 
 function makeSourceConfig(overrides: Record<string, unknown> = {}) {
@@ -145,33 +147,25 @@ describe("duplicateConfigurationAction", () => {
     expect(mockDuplicateConfigurationRecord).not.toHaveBeenCalled();
   });
 
-  test("SALES cannot duplicate another user's config (query returns null)", async () => {
-    mockGetUserData.mockResolvedValue(makeSalesUser("sales-2"));
-    // getConfigurationWithTanksAndBays returns null for non-owner SALES (enforced in db/queries)
-    mockGetConfigurationWithTanksAndBays.mockResolvedValue(null);
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("%s cannot duplicate (role gate rejects before the source fetch)", async (role) => {
+    mockGetUserData.mockResolvedValue(makeUser(role));
 
     const result = await duplicateConfigurationAction(10);
 
-    expect(result).toEqual({ success: false, error: MSG.config.notFound });
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.unauthorized,
+    });
+    expect(mockGetConfigurationWithTanksAndBays).not.toHaveBeenCalled();
     expect(mockDuplicateConfigurationRecord).not.toHaveBeenCalled();
   });
 
-  test("SALES can duplicate own SALES_APPROVED config", async () => {
-    mockGetUserData.mockResolvedValue(makeSalesUser("sales-1"));
-    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeSourceConfig({ status: "SALES_APPROVED", user_id: "sales-1" }),
-    );
-
-    const result = await duplicateConfigurationAction(10);
-
-    expect(result).toEqual({ success: true, id: 99 });
-  });
-
-  test("SALES can duplicate own TECH_APPROVED config", async () => {
-    mockGetUserData.mockResolvedValue(makeSalesUser("sales-1"));
-    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
-      makeSourceConfig({ status: "TECH_APPROVED", user_id: "sales-1" }),
-    );
+  test("ADMIN can duplicate a config", async () => {
+    mockGetUserData.mockResolvedValue(makeUser("ADMIN"));
 
     const result = await duplicateConfigurationAction(10);
 
