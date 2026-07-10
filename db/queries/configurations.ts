@@ -558,6 +558,24 @@ export const updateConfigStatus = async (
   return { id: response.id, fromStatus, origin: configuration.origin };
 };
 
+export const getWaterTankById = async (
+  confId: number,
+  waterTankId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) => {
+  const [tank] = await txOrDb
+    .select()
+    .from(waterTanks)
+    .where(
+      and(
+        eq(waterTanks.id, waterTankId),
+        eq(waterTanks.configuration_id, confId),
+      ),
+    );
+
+  return tank;
+};
+
 export const insertWaterTank = async (
   confId: number,
   newWaterTank: WaterTankSchema,
@@ -623,6 +641,21 @@ export const deleteWaterTank = async (
   }
 
   return deleted;
+};
+
+export const getWashBayById = async (
+  confId: number,
+  washBayId: number,
+  txOrDb: DatabaseType | TransactionType = db,
+) => {
+  const [bay] = await txOrDb
+    .select()
+    .from(washBays)
+    .where(
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
+    );
+
+  return bay;
 };
 
 export const insertWashBay = async (

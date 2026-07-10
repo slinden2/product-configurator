@@ -6,6 +6,8 @@ import { mockCanAccessConfiguration } from "@/test/access-mocks";
 const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
 const mockGetWashBaysByConfigId = vi.fn();
+const mockGetWashBayById = vi.fn();
+const mockInsertActivityLog = vi.fn();
 const mockInsertWashBay = vi.fn();
 const mockUpdateWashBay = vi.fn();
 const mockDeleteWashBay = vi.fn();
@@ -23,6 +25,8 @@ vi.mock("@/db/queries", () => ({
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
   getWashBaysByConfigId: (...args: unknown[]) =>
     mockGetWashBaysByConfigId(...args),
+  getWashBayById: (...args: unknown[]) => mockGetWashBayById(...args),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   insertWashBay: (...args: unknown[]) => mockInsertWashBay(...args),
   updateWashBay: (...args: unknown[]) => mockUpdateWashBay(...args),
   deleteWashBay: (...args: unknown[]) => mockDeleteWashBay(...args),
@@ -129,6 +133,8 @@ describe("wash bay actions — ENERGY_CHAIN reverse guard", () => {
     });
     mockGetConfiguration.mockResolvedValue(mockConfig());
     mockGetWashBaysByConfigId.mockResolvedValue([qualifyingBay, plainBay]);
+    mockGetWashBayById.mockResolvedValue(qualifyingBay);
+    mockInsertActivityLog.mockResolvedValue(undefined);
     mockInsertWashBay.mockResolvedValue({ id: 99 });
     mockUpdateWashBay.mockResolvedValue({ id: BAY_ID });
     mockDeleteWashBay.mockResolvedValue({ id: BAY_ID });

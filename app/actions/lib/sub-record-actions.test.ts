@@ -7,6 +7,7 @@ import { mockCanAccessConfiguration } from "@/test/access-mocks";
 const mockGetUserData = vi.fn();
 const mockGetConfiguration = vi.fn();
 const mockHasEngineeringBom = vi.fn();
+const mockInsertActivityLog = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
 const mockRepriceOfferLine = vi.fn();
@@ -28,6 +29,7 @@ vi.mock("@/db/queries", () => ({
     mockGetOfferRefForConfig(...args),
   lockOfferRow: (...args: unknown[]) => mockLockOfferRow(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
+  insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
   touchConfigurationUpdatedAt: (...args: unknown[]) =>
@@ -95,6 +97,9 @@ function mockConfig(overrides: Record<string, unknown> = {}) {
   };
 }
 
+const AUDIT_SNAPSHOT = { id: RECORD_ID, value: "old" };
+const mockAuditSnapshot = vi.fn();
+
 function insertOptions(overrides: Record<string, unknown> = {}) {
   return {
     actionType: "insert" as const,
@@ -103,6 +108,37 @@ function insertOptions(overrides: Record<string, unknown> = {}) {
     schema: testSchema,
     queryFn: vi.fn().mockResolvedValue({ id: 99 }),
     entityName: "TestEntity",
+    auditEntity: "test_entity",
+    ...overrides,
+  };
+}
+
+function editOptions(overrides: Record<string, unknown> = {}) {
+  return {
+    actionType: "edit" as const,
+    parentId: PARENT_ID,
+    recordId: RECORD_ID,
+    formData: { value: "test" },
+    schema: testSchema,
+    queryFn: vi.fn().mockResolvedValue({ id: RECORD_ID }),
+    entityName: "TestEntity",
+    auditEntity: "test_entity",
+    auditAction: "WATER_TANK_EDIT" as const,
+    auditSnapshot: mockAuditSnapshot,
+    ...overrides,
+  };
+}
+
+function deleteOptions(overrides: Record<string, unknown> = {}) {
+  return {
+    actionType: "delete" as const,
+    parentId: PARENT_ID,
+    recordId: RECORD_ID,
+    queryFn: vi.fn().mockResolvedValue({ id: RECORD_ID }),
+    entityName: "TestEntity",
+    auditEntity: "test_entity",
+    auditAction: "WATER_TANK_DELETE" as const,
+    auditSnapshot: mockAuditSnapshot,
     ...overrides,
   };
 }
@@ -121,6 +157,8 @@ describe("handleSubRecordAction", () => {
     mockHasEngineeringBom.mockResolvedValue(false);
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
+    mockInsertActivityLog.mockResolvedValue(undefined);
+    mockAuditSnapshot.mockResolvedValue(AUDIT_SNAPSHOT);
     mockRepriceOfferLine.mockResolvedValue(undefined);
     mockGetOfferRefForConfig.mockResolvedValue({
       offerId: OFFER_ID,
@@ -152,15 +190,7 @@ describe("handleSubRecordAction", () => {
 
   test("edit: succeeds with valid data", async () => {
     const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    const result = await handleSubRecordAction({
-      actionType: "edit",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      formData: { value: "test" },
-      schema: testSchema,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    const result = await handleSubRecordAction(editOptions({ queryFn }));
     expect(result).toEqual({
       success: true,
       data: { id: RECORD_ID },
@@ -179,13 +209,7 @@ describe("handleSubRecordAction", () => {
 
   test("delete: succeeds", async () => {
     const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    const result = await handleSubRecordAction({
-      actionType: "delete",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    const result = await handleSubRecordAction(deleteOptions({ queryFn }));
     expect(result).toEqual({
       success: true,
       data: { id: RECORD_ID },
@@ -197,19 +221,12 @@ describe("handleSubRecordAction", () => {
     const queryFn = vi
       .fn()
       .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound, 404));
-    const result = await handleSubRecordAction({
-      actionType: "edit",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      formData: { value: "test" },
-      schema: testSchema,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    const result = await handleSubRecordAction(editOptions({ queryFn }));
     expect(result).toEqual({
       success: false,
       error: MSG.config.subRecordNotFound,
     });
+    expect(mockInsertActivityLog).not.toHaveBeenCalled();
     expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
     expect(mockRepriceOfferLine).not.toHaveBeenCalled();
@@ -219,17 +236,12 @@ describe("handleSubRecordAction", () => {
     const queryFn = vi
       .fn()
       .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound, 404));
-    const result = await handleSubRecordAction({
-      actionType: "delete",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    const result = await handleSubRecordAction(deleteOptions({ queryFn }));
     expect(result).toEqual({
       success: false,
       error: MSG.config.subRecordNotFound,
     });
+    expect(mockInsertActivityLog).not.toHaveBeenCalled();
     expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
     expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
     expect(mockRepriceOfferLine).not.toHaveBeenCalled();
@@ -322,16 +334,7 @@ describe("handleSubRecordAction", () => {
   test("edit: guard rejection returns its error without mutating", async () => {
     const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const guard = vi.fn().mockResolvedValue("Operazione non consentita.");
-    const result = await handleSubRecordAction({
-      actionType: "edit",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      formData: { value: "test" },
-      schema: testSchema,
-      queryFn,
-      entityName: "TestEntity",
-      guard,
-    });
+    const result = await handleSubRecordAction(editOptions({ queryFn, guard }));
     expect(result).toEqual({
       success: false,
       error: "Operazione non consentita.",
@@ -345,14 +348,9 @@ describe("handleSubRecordAction", () => {
   test("delete: guard rejection returns its error without mutating", async () => {
     const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const guard = vi.fn().mockResolvedValue("Operazione non consentita.");
-    const result = await handleSubRecordAction({
-      actionType: "delete",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      queryFn,
-      entityName: "TestEntity",
-      guard,
-    });
+    const result = await handleSubRecordAction(
+      deleteOptions({ queryFn, guard }),
+    );
     expect(result).toEqual({
       success: false,
       error: "Operazione non consentita.",
@@ -365,16 +363,7 @@ describe("handleSubRecordAction", () => {
   test("edit: guard returning null lets the mutation proceed", async () => {
     const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
     const guard = vi.fn().mockResolvedValue(null);
-    const result = await handleSubRecordAction({
-      actionType: "edit",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      formData: { value: "test" },
-      schema: testSchema,
-      queryFn,
-      entityName: "TestEntity",
-      guard,
-    });
+    const result = await handleSubRecordAction(editOptions({ queryFn, guard }));
     expect(result.success).toBe(true);
     expect(queryFn).toHaveBeenCalled();
   });
@@ -384,14 +373,9 @@ describe("handleSubRecordAction", () => {
     mockGetConfiguration.mockResolvedValue(
       mockConfig({ status: "TECH_APPROVED" }),
     );
-    const result = await handleSubRecordAction({
-      actionType: "delete",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      queryFn: vi.fn(),
-      entityName: "TestEntity",
-      guard,
-    });
+    const result = await handleSubRecordAction(
+      deleteOptions({ queryFn: vi.fn(), guard }),
+    );
     expect(result).toEqual({
       success: false,
       error: MSG.config.cannotEditSubRecord,
@@ -418,16 +402,7 @@ describe("handleSubRecordAction", () => {
 
   test("deletes engineering BOM after successful edit", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    await handleSubRecordAction({
-      actionType: "edit",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      formData: { value: "test" },
-      schema: testSchema,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    await handleSubRecordAction(editOptions());
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
       PARENT_ID,
       mockTx,
@@ -436,18 +411,114 @@ describe("handleSubRecordAction", () => {
 
   test("deletes engineering BOM after successful delete", async () => {
     mockHasEngineeringBom.mockResolvedValue(true);
-    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    await handleSubRecordAction({
-      actionType: "delete",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    await handleSubRecordAction(deleteOptions());
     expect(mockDeleteAllEngineeringBomItems).toHaveBeenCalledWith(
       PARENT_ID,
       mockTx,
     );
+  });
+
+  // --- Audit logging (issue #242) ---
+
+  test("edit: logs the audit action with the pre-edit snapshot inside the transaction", async () => {
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
+    await handleSubRecordAction(editOptions({ queryFn }));
+    expect(mockAuditSnapshot).toHaveBeenCalledWith(
+      PARENT_ID,
+      RECORD_ID,
+      mockTx,
+    );
+    // The snapshot must be read before the mutation overwrites the row.
+    expect(mockAuditSnapshot.mock.invocationCallOrder[0]).toBeLessThan(
+      queryFn.mock.invocationCallOrder[0],
+    );
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      {
+        userId: OWNER_ID,
+        action: "WATER_TANK_EDIT",
+        targetEntity: "test_entity",
+        targetId: RECORD_ID.toString(),
+        metadata: {
+          configuration_id: PARENT_ID,
+          previous: AUDIT_SNAPSHOT,
+        },
+      },
+      mockTx,
+    );
+  });
+
+  test("delete: logs the audit action with the deleted row snapshot inside the transaction", async () => {
+    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
+    await handleSubRecordAction(deleteOptions({ queryFn }));
+    expect(mockAuditSnapshot).toHaveBeenCalledWith(
+      PARENT_ID,
+      RECORD_ID,
+      mockTx,
+    );
+    expect(mockAuditSnapshot.mock.invocationCallOrder[0]).toBeLessThan(
+      queryFn.mock.invocationCallOrder[0],
+    );
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      {
+        userId: OWNER_ID,
+        action: "WATER_TANK_DELETE",
+        targetEntity: "test_entity",
+        targetId: RECORD_ID.toString(),
+        metadata: {
+          configuration_id: PARENT_ID,
+          deleted: AUDIT_SNAPSHOT,
+        },
+      },
+      mockTx,
+    );
+  });
+
+  test("insert: does not log a sub-record audit entry (row itself is the evidence)", async () => {
+    await handleSubRecordAction(insertOptions());
+    expect(mockInsertActivityLog).not.toHaveBeenCalled();
+  });
+
+  test("logs BOM_INVALIDATE inside the transaction when the EBOM wipe fires", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    await handleSubRecordAction(deleteOptions());
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      {
+        userId: OWNER_ID,
+        action: "BOM_INVALIDATE",
+        targetEntity: "configuration",
+        targetId: PARENT_ID.toString(),
+        metadata: {
+          sub_record_entity: "test_entity",
+          sub_record_action: "delete",
+        },
+      },
+      mockTx,
+    );
+  });
+
+  test("logs BOM_INVALIDATE on insert too when the wipe fires", async () => {
+    mockHasEngineeringBom.mockResolvedValue(true);
+    await handleSubRecordAction(insertOptions());
+    expect(mockInsertActivityLog).toHaveBeenCalledTimes(1);
+    expect(mockInsertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "BOM_INVALIDATE",
+        metadata: {
+          sub_record_entity: "test_entity",
+          sub_record_action: "insert",
+        },
+      }),
+      mockTx,
+    );
+  });
+
+  test("does NOT log BOM_INVALIDATE when no EBOM exists", async () => {
+    mockHasEngineeringBom.mockResolvedValue(false);
+    await handleSubRecordAction(deleteOptions());
+    const actions = mockInsertActivityLog.mock.calls.map(
+      (call) => (call[0] as { action: string }).action,
+    );
+    expect(actions).toEqual(["WATER_TANK_DELETE"]);
   });
 
   // --- Parent updated_at propagation ---
@@ -463,16 +534,7 @@ describe("handleSubRecordAction", () => {
   });
 
   test("touches parent configuration updated_at after successful edit", async () => {
-    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    await handleSubRecordAction({
-      actionType: "edit",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      formData: { value: "test" },
-      schema: testSchema,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    await handleSubRecordAction(editOptions());
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
       PARENT_ID,
       "DRAFT",
@@ -481,14 +543,7 @@ describe("handleSubRecordAction", () => {
   });
 
   test("touches parent configuration updated_at after successful delete", async () => {
-    const queryFn = vi.fn().mockResolvedValue({ id: RECORD_ID });
-    await handleSubRecordAction({
-      actionType: "delete",
-      parentId: PARENT_ID,
-      recordId: RECORD_ID,
-      queryFn,
-      entityName: "TestEntity",
-    });
+    await handleSubRecordAction(deleteOptions());
     expect(mockTouchConfigurationUpdatedAt).toHaveBeenCalledWith(
       PARENT_ID,
       "DRAFT",

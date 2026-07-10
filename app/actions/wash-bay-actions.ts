@@ -1,6 +1,7 @@
 "use server";
 import {
   deleteWashBay,
+  getWashBayById,
   getWashBaysByConfigId,
   insertWashBay,
   updateWashBay,
@@ -45,6 +46,7 @@ export const insertWashBayAction = async (
     schema: washBaySchema,
     queryFn: insertWashBay,
     entityName: "Pista",
+    auditEntity: "wash_bay",
   });
 };
 
@@ -61,6 +63,9 @@ export const editWashBayAction = async (
     schema: washBaySchema,
     queryFn: updateWashBay,
     entityName: "Pista",
+    auditEntity: "wash_bay",
+    auditAction: "WASH_BAY_EDIT",
+    auditSnapshot: getWashBayById,
     guard: (configuration, data) =>
       energyChainGuard(configuration, (bays) =>
         bays.map((b) =>
@@ -85,6 +90,9 @@ export const deleteWashBayAction = async (
     recordId: washBayId,
     queryFn: deleteWashBay,
     entityName: "Pista",
+    auditEntity: "wash_bay",
+    auditAction: "WASH_BAY_DELETE",
+    auditSnapshot: getWashBayById,
     guard: (configuration) =>
       energyChainGuard(configuration, (bays) =>
         bays.filter((b) => b.id !== washBayId),

@@ -14,6 +14,7 @@ import {
   getConfiguration,
   getUserData,
   hasEngineeringBom,
+  insertActivityLog,
   offerRevisionStatusFor,
   QueryError,
   type TransactionType,
@@ -22,6 +23,7 @@ import {
 import type { Configuration } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
+import type { ActivityAction } from "@/types";
 
 // --- Types ---
 
@@ -34,6 +36,22 @@ type SubRecordActionResult =
 interface SubRecordOptionsBase {
   parentId: number;
   entityName: string;
+  /** English slug recorded as the audit-log target entity (e.g. "water_tank"). */
+  auditEntity: string;
+}
+
+/**
+ * Audit requirements for mutations that overwrite or destroy pre-state
+ * (edit/delete): the action to record and an in-tx reader that snapshots the
+ * row before the mutation, so the log preserves what the DB no longer holds.
+ */
+interface SubRecordAuditOptions {
+  auditAction: ActivityAction;
+  auditSnapshot: (
+    parentId: number,
+    recordId: number,
+    tx: DatabaseType | TransactionType,
+  ) => Promise<Record<string, unknown> | undefined>;
 }
 
 interface InsertSubRecordOptions<TFormSchema extends z.ZodType>
@@ -49,7 +67,8 @@ interface InsertSubRecordOptions<TFormSchema extends z.ZodType>
 }
 
 interface EditSubRecordOptions<TFormSchema extends z.ZodType>
-  extends SubRecordOptionsBase {
+  extends SubRecordOptionsBase,
+    SubRecordAuditOptions {
   actionType: "edit";
   recordId: number;
   formData: unknown;
@@ -70,7 +89,9 @@ interface EditSubRecordOptions<TFormSchema extends z.ZodType>
   ) => Promise<string | null>;
 }
 
-interface DeleteSubRecordOptions extends SubRecordOptionsBase {
+interface DeleteSubRecordOptions
+  extends SubRecordOptionsBase,
+    SubRecordAuditOptions {
   actionType: "delete";
   recordId: number;
   queryFn: (
@@ -192,6 +213,17 @@ export async function handleSubRecordAction<
         MSG.config.cannotEditSubRecord,
       );
 
+      // Snapshot the row before the mutation: edits overwrite it and deletes
+      // remove it, so the audit log is the only surviving record of pre-state.
+      let preMutationSnapshot: Record<string, unknown> | undefined;
+      if (options.actionType === "edit" || options.actionType === "delete") {
+        preMutationSnapshot = await options.auditSnapshot(
+          parentId,
+          options.recordId,
+          tx,
+        );
+      }
+
       switch (options.actionType) {
         case "insert":
           operationResult = await options.queryFn(
@@ -223,6 +255,26 @@ export async function handleSubRecordAction<
         }
       }
 
+      // Audit the edit/delete in the same transaction: pre-state is not
+      // reconstructable from surviving rows, so the log carries the snapshot.
+      if (options.actionType === "edit" || options.actionType === "delete") {
+        await insertActivityLog(
+          {
+            userId: user.id,
+            action: options.auditAction,
+            targetEntity: options.auditEntity,
+            targetId: options.recordId.toString(),
+            metadata: {
+              configuration_id: parentId,
+              ...(options.actionType === "delete"
+                ? { deleted: preMutationSnapshot ?? null }
+                : { previous: preMutationSnapshot ?? null }),
+            },
+          },
+          tx,
+        );
+      }
+
       // Touch parent configuration's updated_at (status-guarded — the CAS for
       // this whole path, since the queryFns above only touch child tables)
       await touchConfigurationUpdatedAt(parentId, configuration.status, tx);
@@ -231,6 +283,20 @@ export async function handleSubRecordAction<
       const ebomExists = await hasEngineeringBom(parentId, tx);
       if (ebomExists) {
         await deleteAllEngineeringBomItems(parentId, tx);
+        // The wipe destroys the whole EBOM snapshot — audit it in-tx.
+        await insertActivityLog(
+          {
+            userId: user.id,
+            action: "BOM_INVALIDATE",
+            targetEntity: "configuration",
+            targetId: parentId.toString(),
+            metadata: {
+              sub_record_entity: options.auditEntity,
+              sub_record_action: actionType,
+            },
+          },
+          tx,
+        );
       }
 
       // Water tanks and wash bays feed the BOM, so a tank/bay change re-prices the

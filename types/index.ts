@@ -213,6 +213,11 @@ export const ActivityActions = [
   "INSTALLATION_ITEM_UPDATE",
   "USER_PROFILE_CREATE",
   "USER_ACTIVATE",
+  "WATER_TANK_EDIT",
+  "WATER_TANK_DELETE",
+  "WASH_BAY_EDIT",
+  "WASH_BAY_DELETE",
+  "BOM_INVALIDATE",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -257,6 +262,11 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   INSTALLATION_ITEM_UPDATE: "Modifica costo installazione",
   USER_PROFILE_CREATE: "Creazione profilo utente",
   USER_ACTIVATE: "Attivazione utente",
+  WATER_TANK_EDIT: "Modifica serbatoio",
+  WATER_TANK_DELETE: "Eliminazione serbatoio",
+  WASH_BAY_EDIT: "Modifica pista",
+  WASH_BAY_DELETE: "Eliminazione pista",
+  BOM_INVALIDATE: "Invalidazione distinta",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;

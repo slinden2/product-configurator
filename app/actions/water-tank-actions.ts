@@ -1,6 +1,7 @@
 "use server";
 import {
   deleteWaterTank,
+  getWaterTankById,
   insertWaterTank,
   updateWaterTank,
 } from "@/db/queries";
@@ -18,6 +19,7 @@ export const insertWaterTankAction = async (
     schema: waterTankSchema,
     queryFn: insertWaterTank,
     entityName: "Serbatoio",
+    auditEntity: "water_tank",
   });
 };
 
@@ -34,6 +36,9 @@ export const editWaterTankAction = async (
     schema: waterTankSchema,
     queryFn: updateWaterTank,
     entityName: "Serbatoio",
+    auditEntity: "water_tank",
+    auditAction: "WATER_TANK_EDIT",
+    auditSnapshot: getWaterTankById,
   });
 };
 
@@ -44,5 +49,8 @@ export const deleteWaterTankAction = async (confId: number, tankId: number) => {
     recordId: tankId,
     queryFn: deleteWaterTank,
     entityName: "Serbatoio",
+    auditEntity: "water_tank",
+    auditAction: "WATER_TANK_DELETE",
+    auditSnapshot: getWaterTankById,
   });
 };
