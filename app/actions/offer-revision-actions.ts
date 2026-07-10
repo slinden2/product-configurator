@@ -182,8 +182,10 @@ export async function submitRevisionForApprovalAction(offerId: number) {
     }
 
     // Re-price while still DRAFT: this is the as-submitted figure the manager
-    // reviews, frozen by the CAS below under the offer row lock.
-    await repriceOfferLines(working.configIds, user.id, tx, { audit: false });
+    // reviews, frozen by the CAS below under the offer row lock. Audited: the
+    // lines already carry DRAFT pricing this overwrite destroys, so each line
+    // gets an in-tx OFFER_LINE_REPRICE row (unlike the fresh-row creation paths).
+    await repriceOfferLines(working.configIds, user.id, tx);
 
     await submitOfferRevisionForApprovalWithAudit(
       offerId,

@@ -262,17 +262,12 @@ describe("submitRevisionForApprovalAction", () => {
     ]);
   });
 
-  test("reprices the lines (last DRAFT moment) then submits for approval", async () => {
+  test("reprices the lines audited (last DRAFT moment) then submits for approval", async () => {
     const result = await submitRevisionForApprovalAction(OFFER_ID);
     expect(result).toEqual({ success: true });
-    expect(mockRepriceOfferLines).toHaveBeenCalledWith(
-      [11, 12],
-      "u1",
-      {},
-      {
-        audit: false,
-      },
-    );
+    // No { audit: false }: submit overwrites existing DRAFT pricing, so each
+    // line must get an in-tx OFFER_LINE_REPRICE row (default audit behavior).
+    expect(mockRepriceOfferLines).toHaveBeenCalledWith([11, 12], "u1", {});
     expect(mockSubmitOfferRevisionForApprovalWithAudit).toHaveBeenCalledWith(
       OFFER_ID,
       REVISION_ID,
