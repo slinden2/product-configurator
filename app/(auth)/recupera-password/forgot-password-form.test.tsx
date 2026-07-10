@@ -42,12 +42,12 @@ describe("ForgotPasswordForm", () => {
   });
 
   describe("Rendering", () => {
-    test("renders email field and 'Resetta la password' button", () => {
+    test("renders email field and 'Reimposta la password' button", () => {
       render(<ForgotPasswordForm />);
 
       expect(screen.getByLabelText("Email")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       ).toBeInTheDocument();
     });
   });
@@ -59,7 +59,7 @@ describe("ForgotPasswordForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -84,7 +84,7 @@ describe("ForgotPasswordForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "test@itecosrl.com");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -102,7 +102,7 @@ describe("ForgotPasswordForm", () => {
 
       await user.type(screen.getByLabelText("Email"), "not-an-email");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -115,7 +115,7 @@ describe("ForgotPasswordForm", () => {
       render(<ForgotPasswordForm />);
 
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {

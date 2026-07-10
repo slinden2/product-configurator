@@ -229,7 +229,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   CONFIG_STATUS_CHANGE: "Cambio stato",
   ROLE_CHANGE: "Cambio ruolo",
   MANAGER_ASSIGN: "Assegnazione responsabile",
-  PASSWORD_RESET: "Reset password",
+  PASSWORD_RESET: "Reimpostazione password",
   BOM_GENERATE: "Generazione distinta",
   BOM_REGENERATE: "Rigenerazione distinta",
   BOM_ITEM_ADD: "Aggiunta riga distinta",

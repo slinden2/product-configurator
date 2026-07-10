@@ -173,7 +173,7 @@ export async function sendPasswordResetAction(formData: unknown) {
 
     const { error } = await supabase.auth.resetPasswordForEmail(
       targetUser.email,
-      { redirectTo: `${origin}/resetta-password` },
+      { redirectTo: `${origin}/reimposta-password` },
     );
 
     if (error) {

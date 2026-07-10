@@ -401,7 +401,7 @@ describe("forgotPassword", () => {
     expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
       "test@itecosrl.com",
       {
-        redirectTo: "http://localhost:3000/resetta-password",
+        redirectTo: "http://localhost:3000/reimposta-password",
       },
     );
   });
@@ -480,11 +480,13 @@ describe("resetPassword", () => {
       success: false,
       error: MSG.auth.genericError,
     });
+    expect(mockSignOut).not.toHaveBeenCalled();
   });
 
-  test("returns success when both steps succeed", async () => {
+  test("returns success and signs out so the /login redirect is honest", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
     mockUpdateUser.mockResolvedValue({ error: null });
+    mockSignOut.mockResolvedValue({ error: null });
 
     const result = await resetPassword(
       { password: "newpassword123", confirmPassword: "newpassword123" },
@@ -495,6 +497,7 @@ describe("resetPassword", () => {
     expect(mockUpdateUser).toHaveBeenCalledWith({
       password: "newpassword123",
     });
+    expect(mockSignOut).toHaveBeenCalled();
   });
 
   test("returns validation error for invalid input", async () => {

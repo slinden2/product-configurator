@@ -52,7 +52,7 @@ const ResetPasswordForm = () => {
           autoComplete="new-password"
         />
         <SubmitButton isSubmitting={form.formState.isSubmitting}>
-          Resetta la password
+          Reimposta la password
         </SubmitButton>
       </form>
     </Form>

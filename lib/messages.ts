@@ -12,7 +12,7 @@ export const MSG = {
     userUnauthorized: "Utente non autorizzato.",
     accountPendingActivation:
       "Account in attesa di attivazione da parte di un amministratore.",
-    missingResetCode: "Codice di reset mancante.",
+    missingResetCode: "Codice di reimpostazione mancante.",
     genericError: "Errore durante l'autenticazione.",
     invalidData: "Dati di autenticazione non validi.",
     emailDomainNotAllowed:
@@ -141,15 +141,15 @@ export const MSG = {
       `Errore sconosciuto durante il salvataggio (${name}).`,
     entityDeleteUnknown: (name: string) =>
       `Errore sconosciuto durante l'eliminazione (${name}).`,
-    passwordResetEmailSent: "Email per resettare la password inviata.",
+    passwordResetEmailSent: "Email per reimpostare la password inviata.",
     passwordResetSuccess: "Password aggiornata con successo.",
     validationErrors: "Errori di validazione: correggere i campi evidenziati.",
     roleUpdated: "Ruolo utente aggiornato.",
     roleUpdateFailed: "Impossibile aggiornare il ruolo.",
     managerUpdated: "Responsabile aggiornato.",
     managerUpdateFailed: "Impossibile aggiornare il responsabile.",
-    passwordResetSent: "Email di reset password inviata.",
-    passwordResetFailed: "Impossibile inviare l'email di reset.",
+    passwordResetSent: "Email di reimpostazione password inviata.",
+    passwordResetFailed: "Impossibile inviare l'email di reimpostazione.",
     userActivated: "Utente attivato.",
     userActivateFailed: "Impossibile attivare l'utente.",
     signupCheckEmail:
@@ -190,8 +190,8 @@ export const MSG = {
     confirm: "Duplica",
   },
   passwordResetConfirm: {
-    title: "Conferma invio email di reset password",
-    body: "Verrà inviata un'email di reset password all'utente. Continuare?",
+    title: "Conferma invio email di reimpostazione password",
+    body: "Verrà inviata un'email di reimpostazione password all'utente. Continuare?",
     confirm: "Invia email",
   },
   activateUserConfirm: {

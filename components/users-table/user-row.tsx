@@ -192,7 +192,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
               onSelect={() => setResetConfirmOpen(true)}
             >
               <Mail />
-              Invia email di reset password
+              Invia email di reimpostazione password
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={`/gestione/utenti/${user.id}`}>

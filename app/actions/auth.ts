@@ -159,7 +159,7 @@ export async function forgotPassword(formData: AuthSchema) {
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
     {
-      redirectTo: `${origin}/resetta-password`,
+      redirectTo: `${origin}/reimposta-password`,
     },
   );
 
@@ -197,6 +197,11 @@ export async function resetPassword(
   if (error) {
     return { success: false as const, error: MSG.auth.genericError };
   }
+
+  // exchangeCodeForSession above left the user authenticated. Drop that session
+  // so the "/login" redirect on the client is honest: the user re-authenticates
+  // with the new password instead of silently landing logged-in at home.
+  await supabase.auth.signOut();
 
   return { success: true as const };
 }

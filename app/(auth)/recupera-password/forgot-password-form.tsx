@@ -41,7 +41,7 @@ const ForgotPasswordForm = () => {
           autoComplete="email"
         />
         <SubmitButton isSubmitting={form.formState.isSubmitting}>
-          Resetta la password
+          Reimposta la password
         </SubmitButton>
       </form>
     </Form>

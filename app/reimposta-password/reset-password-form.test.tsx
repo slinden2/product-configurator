@@ -30,7 +30,7 @@ vi.mock("sonner", () => ({
 
 // --- Import SUT after mocks ---
 
-import ResetPasswordForm from "@/app/(auth)/resetta-password/reset-password-form";
+import ResetPasswordForm from "@/app/reimposta-password/reset-password-form";
 import { MSG } from "@/lib/messages";
 
 // --- Tests ---
@@ -45,13 +45,13 @@ describe("ResetPasswordForm", () => {
   });
 
   describe("Rendering", () => {
-    test("renders password field, confirm password field, and 'Resetta la password' button", () => {
+    test("renders password field, confirm password field, and 'Reimposta la password' button", () => {
       render(<ResetPasswordForm />);
 
       expect(screen.getByLabelText("Password")).toBeInTheDocument();
       expect(screen.getByLabelText("Conferma password")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       ).toBeInTheDocument();
     });
   });
@@ -67,7 +67,7 @@ describe("ResetPasswordForm", () => {
         "newpassword123",
       );
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -97,7 +97,7 @@ describe("ResetPasswordForm", () => {
         "newpassword123",
       );
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -118,7 +118,7 @@ describe("ResetPasswordForm", () => {
         "different456",
       );
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -133,7 +133,7 @@ describe("ResetPasswordForm", () => {
       await user.type(screen.getByLabelText("Password"), "ab");
       await user.type(screen.getByLabelText("Conferma password"), "ab");
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
@@ -153,7 +153,7 @@ describe("ResetPasswordForm", () => {
         "newpassword123",
       );
       await user.click(
-        screen.getByRole("button", { name: "Resetta la password" }),
+        screen.getByRole("button", { name: "Reimposta la password" }),
       );
 
       await waitFor(() => {
