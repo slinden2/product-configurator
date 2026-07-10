@@ -1190,11 +1190,12 @@ export async function acceptOfferRevisionWithAudit(
   const target = offerRow.revisions.find((rev) => rev.id === revisionId);
   if (!target) throw new QueryError(MSG.offer.notFound, 404);
 
-  // The target must still be the offer's latest revision. A clone-forward (or a new
-  // renegotiation revision) committed between the action's in-tx re-read and this lock
-  // would otherwise leave an accepted offer with an open working revision — a state
-  // the workflow defines as impossible. `revisions` is desc by revision_no, so [0] is
-  // the latest — refuse if it is past the target.
+  // The target must still be the offer's latest revision — a clone-forward (or a new
+  // renegotiation revision) would otherwise leave an accepted offer with an open
+  // working revision, a state the workflow defines as impossible. The action already
+  // reads under this lock, so this is defense-in-depth for any future caller.
+  // `revisions` is desc by revision_no, so [0] is the latest — refuse if it is past
+  // the target.
   const latest = offerRow.revisions[0];
   if (latest && latest.revision_no > target.revision_no) {
     throw new QueryError(MSG.offer.cannotAccept, 409);

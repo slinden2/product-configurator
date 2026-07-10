@@ -84,6 +84,10 @@ export function configScopeWhere(user: NonNullable<UserData>) {
 /**
  * Single-record access decision used once a configuration row (with its owner's
  * user_id) is in hand. Mirrors {@link configScopeWhere} for one record.
+ *
+ * Pass `txOrDb` when calling inside a transaction so the SALES_MANAGER report
+ * lookup stays on the transaction's connection — a pooled read while the caller
+ * holds a row lock risks a pool deadlock under saturation.
  */
 export async function canAccessConfiguration(
   user: NonNullable<UserData>,
@@ -92,6 +96,7 @@ export async function canAccessConfiguration(
     origin: ConfigOrigin;
     status: ConfigurationStatusType;
   },
+  txOrDb: DatabaseType | TransactionType = db,
 ): Promise<boolean> {
   // ENGINEER has no offer access: a pre-handoff OFFER config (DRAFT)
   // belongs to the sales workflow and is invisible to engineers, even by direct URL.
@@ -116,7 +121,7 @@ export async function canAccessConfiguration(
   // Mirrors configScopeWhere — the `role = SALES` filter is the same
   // defense-in-depth guard against a stale manager_id on a non-SALES profile.
   if (user.role === "SALES_MANAGER") {
-    const report = await db.query.userProfiles.findFirst({
+    const report = await txOrDb.query.userProfiles.findFirst({
       where: and(
         eq(userProfiles.id, config.user_id),
         eq(userProfiles.manager_id, user.id),
@@ -189,8 +194,9 @@ export async function getUserConfigurations(
 export async function getConfigurationWithTanksAndBays(
   id: number,
   user: NonNullable<UserData>,
+  txOrDb: DatabaseType | TransactionType = db,
 ) {
-  const response = await db.query.configurations.findFirst({
+  const response = await txOrDb.query.configurations.findFirst({
     where: eq(configurations.id, id),
     with: {
       water_tanks: {
@@ -203,7 +209,7 @@ export async function getConfigurationWithTanksAndBays(
   });
 
   // Scope check: SALES sees own, SALES_MANAGER sees own + reports, others see all
-  if (response && !(await canAccessConfiguration(user, response))) {
+  if (response && !(await canAccessConfiguration(user, response, txOrDb))) {
     return null;
   }
 

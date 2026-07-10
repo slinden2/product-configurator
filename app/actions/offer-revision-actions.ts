@@ -373,8 +373,12 @@ export async function createRenegotiationRevisionAction(offerId: number) {
  * (`accepted_revision_id`). Any offer-access role within scope can record the outcome —
  * recording what the customer decided is not a management gate.
  *
- * Each line's config form-shape is loaded here (parallel reads, before the tx) and frozen
- * inside the tx, mirroring the old as-sold freeze pattern.
+ * Each line's config form-shape is loaded inside the tx, after the offer FOR UPDATE
+ * lock, and frozen in the same tx. On a renegotiation re-acceptance the lines reference
+ * live engineering configs (editable in IN_TECH_REVIEW), so a pre-tx load could freeze
+ * a snapshot an engineer save invalidates before commit (issue #245); post-lock reads
+ * are safe because every OFFER-config write takes the same lock first
+ * (`assertEditableInTx`).
  */
 export async function acceptRevisionAction(offerId: number) {
   const auth = await authorizeOfferLifecycleAction(offerId);
@@ -385,49 +389,35 @@ export async function acceptRevisionAction(offerId: number) {
     return { success: false as const, error: MSG.offer.cannotAccept };
   }
 
-  // Pre-tx fast-fail so the parallel snapshot loads below aren't wasted; the
-  // authoritative status re-check runs inside the transaction like the siblings.
-  const working = await getWorkingRevisionForSend(offerId);
-  if (!working) return { success: false as const, error: MSG.offer.notFound };
-  if (working.status !== "SENT") {
-    return { success: false as const, error: MSG.offer.cannotAccept };
-  }
-  if (working.configIds.length === 0) {
-    return { success: false as const, error: MSG.offer.cannotSendEmpty };
-  }
-
-  const loadedConfigs = await Promise.all(
-    working.configIds.map((configId) =>
-      loadValidatedConfiguration(configId, user),
-    ),
-  );
-  const asSoldByConfigId: Record<number, OfferConfigSnapshot> = {};
-  for (const [i, loaded] of loadedConfigs.entries()) {
-    if (!loaded) return { success: false as const, error: MSG.config.notFound };
-    asSoldByConfigId[working.configIds[i]] = {
-      configuration: loaded.configuration,
-      waterTanks: loaded.waterTanks,
-      washBays: loaded.washBays,
-    };
-  }
-
   return runRevisionTransition(offerId, async (tx) => {
+    // Lock before any read: serializes against concurrent config/sub-record
+    // edits and revision transitions, all of which take this same lock first.
+    // The re-lock inside acceptOfferRevisionWithAudit is a same-tx no-op.
+    await lockOfferRow(offerId, tx);
+
     const current = await getWorkingRevisionForSend(offerId, tx);
     if (!current) throw new QueryError(MSG.offer.notFound, 404);
-    // The as-sold snapshots above were loaded for `working`'s lines — a different
-    // latest revision (e.g. a renegotiation sent in the race window, whose lines
-    // reference the same config ids) must not be accepted with them. This read is
-    // unlocked, so it is a fast-fail only: the authoritative latest-revision check
-    // runs under the offer lock inside acceptOfferRevisionWithAudit.
-    if (current.id !== working.id) {
-      throw new QueryError(MSG.offer.cannotAccept, 409);
-    }
     if (current.status !== "SENT") {
       throw new QueryError(MSG.offer.cannotAccept, 403);
     }
+    if (current.configIds.length === 0) {
+      throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+    }
 
-    // A line added between the pre-tx snapshot loads and here would have no as-sold
-    // snapshot — acceptOfferRevisionWithAudit refuses it (line-level notFound guard).
+    // Post-lock snapshot loads: what freezes as the margin baseline is exactly
+    // the config state the acceptance commits against. Sequential — the tx runs
+    // on a single connection anyway.
+    const asSoldByConfigId: Record<number, OfferConfigSnapshot> = {};
+    for (const configId of current.configIds) {
+      const loaded = await loadValidatedConfiguration(configId, user, tx);
+      if (!loaded) throw new QueryError(MSG.config.notFound, 404);
+      asSoldByConfigId[configId] = {
+        configuration: loaded.configuration,
+        waterTanks: loaded.waterTanks,
+        washBays: loaded.washBays,
+      };
+    }
+
     await acceptOfferRevisionWithAudit(
       offerId,
       current.id,

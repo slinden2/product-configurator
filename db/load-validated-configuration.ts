@@ -1,5 +1,11 @@
 import type { z } from "zod";
-import { getConfigurationWithTanksAndBays, type UserData } from "@/db/queries";
+import { db } from "@/db";
+import {
+  type DatabaseType,
+  getConfigurationWithTanksAndBays,
+  type TransactionType,
+  type UserData,
+} from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import type { ConfigOrigin, ConfigurationStatusType } from "@/types";
 import {
@@ -34,12 +40,20 @@ export interface ValidatedConfiguration {
  * Shared by the edit page and the read-only view page so the parsing/fallback
  * behaviour stays identical across both surfaces. Returns null when the config
  * is not found or not accessible to the user (RLS).
+ *
+ * Pass `txOrDb` to read inside a transaction — required when the snapshot must
+ * be consistent with a lock already held (e.g. the acceptance as-sold freeze).
  */
 export async function loadValidatedConfiguration(
   id: number,
   user: NonNullable<UserData>,
+  txOrDb: DatabaseType | TransactionType = db,
 ): Promise<ValidatedConfiguration | null> {
-  const configurationData = await getConfigurationWithTanksAndBays(id, user);
+  const configurationData = await getConfigurationWithTanksAndBays(
+    id,
+    user,
+    txOrDb,
+  );
   if (!configurationData) return null;
 
   const { water_tanks, wash_bays, ...configuration } = configurationData;

@@ -761,41 +761,40 @@ describe("acceptRevisionAction", () => {
     }
   });
 
-  test("re-checks the revision status inside the transaction", async () => {
-    // Pre-tx read sees SENT; the in-tx re-read sees a concurrent transition.
-    mockGetWorkingRevisionForSend
-      .mockResolvedValueOnce({
-        id: REVISION_ID,
-        status: "SENT",
-        configIds: [11, 12],
-      })
-      .mockResolvedValueOnce({
-        id: REVISION_ID,
-        status: "ACCEPTED",
-        configIds: [11, 12],
-      });
+  test("re-checks the revision status under the offer lock inside the transaction", async () => {
+    // The pre-tx gate saw SENT (working revision from the auth fetch); the
+    // post-lock in-tx read sees a concurrent transition.
+    mockGetWorkingRevisionForSend.mockResolvedValue({
+      id: REVISION_ID,
+      status: "ACCEPTED",
+      configIds: [11, 12],
+    });
     const result = await acceptRevisionAction(OFFER_ID);
     expect(result).toEqual({ success: false, error: MSG.offer.cannotAccept });
     expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+    expect(mockLoadValidatedConfiguration).not.toHaveBeenCalled();
   });
 
-  test("rejects when the working revision changed identity in the race window", async () => {
-    // The snapshots were loaded for revision 7's lines; a different revision (e.g. a
-    // renegotiation with the same config ids) became the SENT latest before the tx.
-    mockGetWorkingRevisionForSend
-      .mockResolvedValueOnce({
-        id: REVISION_ID,
-        status: "SENT",
-        configIds: [11, 12],
-      })
-      .mockResolvedValueOnce({
-        id: REVISION_ID + 1,
-        status: "SENT",
-        configIds: [11, 12],
-      });
+  test("loads as-sold snapshots in-tx, after the offer lock (issue #245)", async () => {
+    // A concurrent engineer save on a re-acceptance line config takes the same
+    // offer FOR UPDATE lock first (assertEditableInTx), so snapshots read after
+    // the lock cannot freeze a stale margin baseline: the save either committed
+    // before the lock (the load sees it) or blocks until the acceptance commits.
     const result = await acceptRevisionAction(OFFER_ID);
-    expect(result).toEqual({ success: false, error: MSG.offer.cannotAccept });
-    expect(mockAcceptOfferRevisionWithAudit).not.toHaveBeenCalled();
+    expect(result).toEqual({ success: true });
+    expect(mockLockOfferRow).toHaveBeenCalledWith(OFFER_ID, expect.anything());
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const revisionReadOrder =
+      mockGetWorkingRevisionForSend.mock.invocationCallOrder[0];
+    expect(lockOrder).toBeLessThan(revisionReadOrder);
+    for (const loadOrder of mockLoadValidatedConfiguration.mock
+      .invocationCallOrder) {
+      expect(lockOrder).toBeLessThan(loadOrder);
+    }
+    // Every snapshot load runs on the transaction handle, not the pooled db.
+    for (const call of mockLoadValidatedConfiguration.mock.calls) {
+      expect(call[2]).toBeDefined();
+    }
   });
 
   test("manager may accept a report's offer (scope enforced by the fetch)", async () => {
