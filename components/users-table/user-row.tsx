@@ -119,7 +119,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
             </span>
           ) : (
             <Select
-              defaultValue={user.role}
+              value={user.role}
               disabled={isPending}
               onValueChange={handleRoleChange}
             >
