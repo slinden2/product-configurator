@@ -1712,11 +1712,16 @@ export async function updateRevisionSettingsWithAudit(data: {
 
 /**
  * Persists a margin absorb sign-off on an offer revision line and writes the
- * audit log in a single transaction. The line row is locked and the state
- * gates (revision ACCEPTED, as-sold freeze present) re-checked inside the
- * transaction — the action's pre-checks run outside it and could race. A
- * re-absorb overwrites the previous decision; the audit metadata carries the
- * prior values so the history stays reconstructable.
+ * audit log in a single transaction. Opens with the offer row lock — the
+ * serialization point of every acceptance transaction — and re-checks the
+ * state gates inside it (revision ACCEPTED, as-sold freeze present, and the
+ * line's revision still the offer's in-force `accepted_revision_id`): the
+ * action's pre-checks run outside the tx and could race. The in-force check
+ * matters post-renegotiation, where a superseded revision keeps its immutable
+ * ACCEPTED status and freeze — without it a concurrent re-acceptance would let
+ * the sign-off land on the old revision's line. A re-absorb overwrites the
+ * previous decision; the audit metadata carries the prior values so the
+ * history stays reconstructable.
  */
 export async function absorbOfferLineMarginWithAudit(data: {
   lineId: number;
@@ -1730,9 +1735,13 @@ export async function absorbOfferLineMarginWithAudit(data: {
   note: string | null;
 }): Promise<void> {
   await db.transaction(async (tx) => {
+    await lockOfferRow(data.offerId, tx);
+
     const [line] = await tx
       .select({
         revision_status: offerRevisions.status,
+        revision_id: offerRevisionLines.offer_revision_id,
+        accepted_revision_id: offers.accepted_revision_id,
         as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
         absorbed_by: offerRevisionLines.absorbed_by,
         absorbed_at: offerRevisionLines.absorbed_at,
@@ -1743,13 +1752,15 @@ export async function absorbOfferLineMarginWithAudit(data: {
         offerRevisions,
         eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
       )
+      .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
       .where(eq(offerRevisionLines.id, data.lineId))
       .for("update", { of: offerRevisionLines });
 
     if (
       !line ||
       line.revision_status !== "ACCEPTED" ||
-      line.as_sold_frozen_at === null
+      line.as_sold_frozen_at === null ||
+      line.accepted_revision_id !== line.revision_id
     ) {
       throw new QueryError(MSG.marginReview.absorbNotAccepted, 409);
     }
