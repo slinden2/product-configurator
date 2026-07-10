@@ -193,13 +193,13 @@ const HPPumpSection = () => {
               ]}
             />
             <div
-              className={`md:mt-2 ${
-                showChemicalRoofBar ? "opacity-100" : "opacity-0"
-              }`}
+              className={`md:mt-2 ${showChemicalRoofBar ? "" : "invisible"}`}
+              aria-hidden={!showChemicalRoofBar}
             >
               <CheckboxField<ConfigSchema>
                 name="has_chemical_roof_bar"
                 label={CONFIG_FIELD_LABELS.has_chemical_roof_bar}
+                disabled={!showChemicalRoofBar}
               />
             </div>
           </div>

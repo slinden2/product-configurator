@@ -236,23 +236,31 @@ describe("HPPumpSection", () => {
       expect(outlets[3]).not.toBeDisabled();
     });
 
-    test("chemical roof bar checkbox is hidden (opacity-0) when outlet is not HP_ROOF_BAR", () => {
+    test("chemical roof bar checkbox is hidden and inert when outlet is not HP_ROOF_BAR", () => {
       renderHPPumpSection({ has_omz_pump: true, pump_outlet_omz: "SPINNERS" });
 
       const chemBarLabel = screen.getByText("Con barra di prelavaggio");
-      const wrapper = chemBarLabel.closest("div.opacity-0, div.opacity-100");
-      expect(wrapper).toHaveClass("opacity-0");
+      const wrapper = chemBarLabel.closest("[aria-hidden]");
+      expect(wrapper).toHaveClass("invisible");
+      expect(wrapper).toHaveAttribute("aria-hidden", "true");
+      // Reserved space keeps the layout stable but the control is out of the
+      // tab order (invisible) and non-interactive (disabled).
+      expect(screen.getByLabelText("Con barra di prelavaggio")).toBeDisabled();
     });
 
-    test("chemical roof bar checkbox is visible when outlet is HP_ROOF_BAR", () => {
+    test("chemical roof bar checkbox is visible and interactive when outlet is HP_ROOF_BAR", () => {
       renderHPPumpSection({
         has_omz_pump: true,
         pump_outlet_omz: "HP_ROOF_BAR",
       });
 
       const chemBarLabel = screen.getByText("Con barra di prelavaggio");
-      const wrapper = chemBarLabel.closest("div.opacity-0, div.opacity-100");
-      expect(wrapper).toHaveClass("opacity-100");
+      const wrapper = chemBarLabel.closest("[aria-hidden]");
+      expect(wrapper).not.toHaveClass("invisible");
+      expect(wrapper).toHaveAttribute("aria-hidden", "false");
+      expect(
+        screen.getByLabelText("Con barra di prelavaggio"),
+      ).not.toBeDisabled();
     });
 
     test("unchecking OMZ pump resets pump_outlet_omz and has_chemical_roof_bar", async () => {
