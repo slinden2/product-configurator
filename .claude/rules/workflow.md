@@ -76,7 +76,9 @@ Post-acceptance, engineering edits can erode a line's margin below its category 
   (`lib/offer-renegotiation.ts`, anchored on the first as-sold freeze).
 - Its lines **reference the current engineering configs read-only** — no deep-clone. Configs stay governed
   by the engineering status machine (`isEditable` unchanged) and engineering work does **not** pause. Line
-  pricing is re-derived from the current configs; only commercial terms (header discount / transport /
+  pricing is re-derived from the current configs — engineering edits reprice the `DRAFT` renegotiation
+  line automatically, even when made by ENGINEER (see the repricing seam under
+  [Offer Access](#offer-access)); only commercial terms (header discount / transport /
   installation) are editable while `DRAFT`. Adding/removing configurations is blocked
   (`renegotiationLinesLocked`). One line per config **per revision** — post-acceptance a config can own its
   frozen accepted line plus one line per renegotiation revision.
@@ -162,6 +164,16 @@ The **offer** is gated separately from the **configuration**: `isEditable` gover
 Commercial terms (header discount / transport / installation) are mutable only while the working revision
 is `DRAFT`, by offer-access roles. The margin page (`canViewMarginReview` = ADMIN/SALES_DIRECTOR) reads the
 line `pricing_snapshot` + `net_price` and surfaces the at-acceptance as-sold freeze date.
+
+**Known seam — ENGINEER renegotiation repricing (by design, #251).** While a renegotiation revision is
+`DRAFT`, its line pricing tracks the current engineering configs. An ENGINEER editing such a config (config
+edit or a tank/bay sub-record) therefore reaches `repriceOfferLine`
+(`lib/offer-revision-pricing.ts`), which updates `offer_revision_lines` pricing and logs
+`OFFER_LINE_REPRICE` — **without** passing `authorizeOfferAction`/`canViewOffer`. This is the single
+intentional exception to "ENGINEER never touches offer tables": the write is system-derived pricing on a
+DRAFT revision only (never commercial terms, never frozen snapshots), a side effect of the config edit
+rather than offer access. Do **not** "fix" it by adding an offer gate — that would silently break
+renegotiation repricing.
 
 ## Scope (Visibility)
 

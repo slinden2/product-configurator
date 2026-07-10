@@ -303,6 +303,15 @@ export async function handleSubRecordAction<
       // owning OFFER line. Pre-handoff (config DRAFT) the revision must still be
       // DRAFT, so a frozen line fails the tx; post-handoff a frozen latest
       // revision is the by-design no-op (a DRAFT renegotiation still reprices).
+      //
+      // Deliberately NOT gated by authorizeOfferAction/canViewOffer: post-handoff
+      // this path is reachable by ENGINEER (a role with no offer access), and on a
+      // DRAFT renegotiation revision it writes offer_revision_lines pricing plus an
+      // OFFER_LINE_REPRICE audit row. That is by design — renegotiation line pricing
+      // is derived from the current engineering configs, so an engineering edit must
+      // propagate (see the ENGINEER repricing seam in .claude/rules/workflow.md,
+      // Offer Access). Adding an offer gate here would silently break renegotiation
+      // repricing (#251).
       if (configuration.origin === "OFFER") {
         await repriceOfferLine(parentId, user.id, tx, {
           requireDraft: configuration.status === "DRAFT",
