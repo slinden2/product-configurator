@@ -2,7 +2,16 @@
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { ConfigOrigin, ConfigurationStatusType, Role } from "@/types";
+import {
+  type ConfigOrigin,
+  ConfigOrigins,
+  ConfigurationStatus,
+  type ConfigurationStatusType,
+  HANDED_OFF_STATUSES,
+  PRE_HANDOFF_STATUSES,
+  type Role,
+  Roles,
+} from "@/types";
 
 // --- Mocks ---
 // We exercise the REAL configScopeWhere / canAccessConfiguration / getUserConfigurations,
@@ -162,6 +171,81 @@ describe("canAccessConfiguration — ENGINEER offer hand-off gate", () => {
   });
 });
 
+describe("canAccessConfiguration — exhaustive role × origin × status × ownership matrix (workflow.md 'Scope (Visibility)')", () => {
+  /**
+   * Relation between the requesting user and the config owner:
+   * - "own": the user owns the config;
+   * - "other": someone unrelated owns it (the report lookup finds nothing);
+   * - "report": a SALES direct report owns it (the report lookup matches) —
+   *   generated for SALES_MANAGER only, the sole role with a reports scope.
+   */
+  type Relation = "own" | "other" | "report";
+
+  // Spec oracle, re-derived from workflow.md prose (not from the code):
+  // "SALES = own; SALES_MANAGER = own + direct reports; SALES_DIRECTOR /
+  // ENGINEER / ADMIN = all", where ENGINEER additionally has "no access to
+  // pre-handoff OFFER configs (DRAFT)".
+  function expectedConfigAccess(
+    role: Role,
+    origin: ConfigOrigin,
+    status: ConfigurationStatusType,
+    relation: Relation,
+  ): boolean {
+    if (role === "ENGINEER")
+      return origin === "STANDALONE" || !PRE_HANDOFF_STATUSES.includes(status);
+    if (role === "ADMIN" || role === "SALES_DIRECTOR") return true;
+    if (role === "SALES") return relation === "own";
+    if (role === "SALES_MANAGER") return relation !== "other";
+    throw new Error(
+      `Spec oracle has no rule for role "${role satisfies never}" — update it from workflow.md before widening the enum.`,
+    );
+  }
+
+  const cells = Roles.flatMap((role) =>
+    ConfigOrigins.flatMap((origin) =>
+      ConfigurationStatus.flatMap((status) => {
+        const relations: Relation[] =
+          role === "SALES_MANAGER"
+            ? ["own", "other", "report"]
+            : ["own", "other"];
+        return relations.map(
+          (relation) =>
+            [
+              role,
+              origin,
+              status,
+              relation,
+              expectedConfigAccess(role, origin, status, relation),
+            ] as const,
+        );
+      }),
+    ),
+  );
+
+  test("covers the full cartesian product (own/other for every role, plus the SALES_MANAGER report case)", () => {
+    expect(cells).toHaveLength(
+      Roles.length * ConfigOrigins.length * ConfigurationStatus.length * 2 +
+        ConfigOrigins.length * ConfigurationStatus.length,
+    );
+  });
+
+  test.each(
+    cells,
+  )("canAccessConfiguration(%s, %s %s, owner=%s) → %s", async (role, origin, status, relation, expected) => {
+    // The report lookup only fires on the SALES_MANAGER non-own path; make it
+    // match exactly when the owner is a direct report.
+    mockFindFirst.mockResolvedValue(
+      relation === "report" ? { id: "user-2" } : undefined,
+    );
+    await expect(
+      canAccessConfiguration(
+        makeUser(role, "user-1"),
+        makeConfig(origin, status, relation === "own" ? "user-1" : "user-2"),
+      ),
+    ).resolves.toBe(expected);
+  });
+});
+
 describe("getUserConfigurations — technical queue filter", () => {
   beforeEach(() => {
     mockFindMany.mockResolvedValue([]);
@@ -181,18 +265,15 @@ describe("getUserConfigurations — technical queue filter", () => {
     expect(sql).toContain('"configurations"."configuration_status"');
     // STANDALONE branch + the handed-off status set on the OFFER branch
     // (values are bound parameters, so assert against the params array).
+    // Asserted via the shared constants so a drift in either the filter or
+    // HANDED_OFF_STATUSES/PRE_HANDOFF_STATUSES fails here.
     expect(params).toEqual(
-      expect.arrayContaining([
-        "STANDALONE",
-        "OFFER",
-        "SALES_APPROVED",
-        "IN_TECH_REVIEW",
-        "TECH_APPROVED",
-        "CLOSED",
-      ]),
+      expect.arrayContaining(["STANDALONE", "OFFER", ...HANDED_OFF_STATUSES]),
     );
-    // The pre-handoff status must NOT be part of the filter.
-    expect(params).not.toContain("DRAFT");
+    // The pre-handoff statuses must NOT be part of the filter.
+    for (const status of PRE_HANDOFF_STATUSES) {
+      expect(params).not.toContain(status);
+    }
   });
 
   test("composes the technical-queue filter with the per-role scope (SALES_MANAGER)", async () => {

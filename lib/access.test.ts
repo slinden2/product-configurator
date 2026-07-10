@@ -1,11 +1,15 @@
 import { describe, expect, test } from "vitest";
 import {
+  canAccessAllConfigs,
+  canAccessAllOffers,
   canApproveRevision,
   canExportOfferRevision,
   canManageStandaloneConfigs,
+  canRenegotiateOffer,
   canViewBom,
   canViewMarginReview,
   canViewOffer,
+  isConfigLocked,
 } from "@/lib/access";
 import type { OfferStatusType, Role } from "@/types";
 
@@ -88,6 +92,72 @@ describe("canManageStandaloneConfigs", () => {
     "SALES_DIRECTOR",
   ] as Role[])("%s does not (sales work from offers)", (role) => {
     expect(canManageStandaloneConfigs(role)).toBe(false);
+  });
+});
+
+describe("canRenegotiateOffer — 'a renegotiation is created ... by canRenegotiateOffer roles (ADMIN / SALES_DIRECTOR)' (workflow.md)", () => {
+  test.each([
+    "ADMIN",
+    "SALES_DIRECTOR",
+  ] as const)("%s may open a renegotiation revision", (role) => {
+    expect(canRenegotiateOffer(role)).toBe(true);
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "ENGINEER",
+  ] as Role[])("%s may not open a renegotiation revision", (role) => {
+    expect(canRenegotiateOffer(role)).toBe(false);
+  });
+});
+
+describe("canAccessAllConfigs — 'SALES_DIRECTOR / ENGINEER / ADMIN = all' config scope (workflow.md)", () => {
+  test.each([
+    "ADMIN",
+    "ENGINEER",
+    "SALES_DIRECTOR",
+  ] as const)("%s sees every configuration", (role) => {
+    expect(canAccessAllConfigs(role)).toBe(true);
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+  ] as Role[])("%s is scoped, not all-access", (role) => {
+    expect(canAccessAllConfigs(role)).toBe(false);
+  });
+});
+
+describe("canAccessAllOffers — 'SALES_DIRECTOR / ADMIN all' offers; ENGINEER excluded entirely (workflow.md)", () => {
+  test.each([
+    "ADMIN",
+    "SALES_DIRECTOR",
+  ] as const)("%s sees every offer", (role) => {
+    expect(canAccessAllOffers(role)).toBe(true);
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "ENGINEER",
+  ] as Role[])("%s is not offer all-access", (role) => {
+    expect(canAccessAllOffers(role)).toBe(false);
+  });
+});
+
+describe("isConfigLocked — fails closed on missing inputs", () => {
+  test("an unknown status locks the config", () => {
+    expect(isConfigLocked(undefined, "ADMIN", "OFFER", "DRAFT")).toBe(true);
+  });
+
+  test("an unknown role locks the config", () => {
+    expect(isConfigLocked("DRAFT", undefined, "OFFER", "DRAFT")).toBe(true);
+  });
+
+  test("delegates to isEditable when both inputs are present", () => {
+    expect(isConfigLocked("DRAFT", "ADMIN", "OFFER", "DRAFT")).toBe(false);
+    expect(isConfigLocked("DRAFT", "ADMIN", "OFFER")).toBe(true);
   });
 });
 

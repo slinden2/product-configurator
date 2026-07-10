@@ -66,4 +66,24 @@ describe("isRenegotiationRevision", () => {
     // A rejected renegotiation between two acceptances still derives as one.
     expect(isRenegotiationRevision(2, 1)).toBe(true);
   });
+
+  // workflow.md: "Renegotiation-ness is derived, never stored" — the whole
+  // derivation is this one comparison against the first-acceptance anchor.
+  // Exhaustive sweep over revision numbers × anchors so no boundary is sampled.
+  describe("exhaustive revisionNo × anchor sweep", () => {
+    const REVISION_NOS = [1, 2, 3, 4, 5, 6];
+    const ANCHORS = [null, 1, 2, 3, 4, 5, 6];
+
+    const cells = REVISION_NOS.flatMap((no) =>
+      ANCHORS.map(
+        (anchor) => [no, anchor, anchor !== null && no > anchor] as const,
+      ),
+    );
+
+    it.each(
+      cells,
+    )("isRenegotiationRevision(%s, anchor=%s) → %s", (no, anchor, expected) => {
+      expect(isRenegotiationRevision(no, anchor)).toBe(expected);
+    });
+  });
 });

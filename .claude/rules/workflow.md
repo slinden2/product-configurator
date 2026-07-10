@@ -51,6 +51,14 @@ Lifecycle lives **per revision** on `offer_revisions.status` (an `offers` header
   a commercial-only **renegotiation revision** (below) can follow. Engineering then proceeds per config via
   the config status machine, unchanged.
 - `REJECTED` / `EXPIRED` are the other terminal customer outcomes of a `SENT` revision.
+- **Un-accept** (`ACCEPTED → SENT`, ADMIN only): the single edge out of the otherwise-terminal
+  `ACCEPTED` state — an admin correction for a mistaken acceptance, the exact inverse of the
+  acceptance hand-off (`unacceptOfferRevisionWithAudit`). In one transaction it moves the revision
+  back to `SENT`, clears `offers.accepted_revision_id`, clears each line's as-sold freeze, and
+  reverts the line configs `SALES_APPROVED → DRAFT`. First acceptances only, and only while the
+  hand-off is still clean: it refuses if any line config has moved past `SALES_APPROVED`
+  (engineering started), if a later revision (a renegotiation) exists, or if the target is a
+  renegotiation re-acceptance.
 
 Two distinct snapshots stay linked so commercial and technical can't drift: the per-sent-revision
 `pricing_snapshot` (the quote) and the at-acceptance as-sold freeze (the margin baseline).
