@@ -447,6 +447,10 @@ export async function searchPartNumbersAction(query: string) {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
+  if (!canViewBom(user.role)) {
+    return { success: false as const, error: MSG.bom.unauthorized };
+  }
+
   if (!query || query.trim().length === 0) {
     return { success: true as const, data: [] };
   }

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockGetUserData = vi.fn();
 const mockGetAssemblyChildren = vi.fn();
+const mockExplodeBomsToLeaves = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -19,6 +20,10 @@ vi.mock("@/db/queries", () => ({
   },
 }));
 
+vi.mock("@/lib/BOM/explode-bom", () => ({
+  explodeBomsToLeaves: (...args: unknown[]) => mockExplodeBomsToLeaves(...args),
+}));
+
 vi.mock("pg", () => ({
   DatabaseError: class DatabaseError extends Error {
     constructor(message: string) {
@@ -31,7 +36,10 @@ vi.mock("pg", () => ({
 // --- Import SUT after mocks ---
 
 import { DatabaseError } from "pg";
-import { getAssemblyChildrenAction } from "@/app/actions/bom-lines-actions";
+import {
+  explodeBomToLeavesAction,
+  getAssemblyChildrenAction,
+} from "@/app/actions/bom-lines-actions";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 
@@ -109,6 +117,29 @@ describe("getAssemblyChildrenAction", () => {
     expect(mockGetAssemblyChildren).not.toHaveBeenCalled();
   });
 
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ])("returns unauthorized error for %s user without querying", async (role) => {
+    mockGetUserData.mockResolvedValue({ id: "user-1", role });
+    const result = await getAssemblyChildrenAction("PARENT-001");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(MSG.bom.unauthorized);
+    }
+    expect(mockGetAssemblyChildren).not.toHaveBeenCalled();
+  });
+
+  test("role gate wins over the empty-PN early return", async () => {
+    mockGetUserData.mockResolvedValue({ id: "user-1", role: "SALES" });
+    const result = await getAssemblyChildrenAction("");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(MSG.bom.unauthorized);
+    }
+  });
+
   test("returns QueryError message on QueryError", async () => {
     mockGetAssemblyChildren.mockRejectedValue(
       new QueryError("PN non trovato.", 404),
@@ -134,6 +165,70 @@ describe("getAssemblyChildrenAction", () => {
   test("returns unknown error message on unexpected error", async () => {
     mockGetAssemblyChildren.mockRejectedValue(new Error("unexpected"));
     const result = await getAssemblyChildrenAction("PARENT-001");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(MSG.db.unknown);
+    }
+  });
+});
+
+describe("explodeBomToLeavesAction", () => {
+  const BOM_DATA = {
+    generalBOM: [],
+    waterTankBOMs: [],
+    washBayBOMs: [],
+  };
+
+  const MOCK_EXPLODED = {
+    generalBOM: [
+      { pn: "LEAF-001", description: "Leaf part", qty: 4, cost: 12.5 },
+    ],
+    waterTankBOMs: [],
+    washBayBOMs: [],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue(MOCK_USER);
+    mockExplodeBomsToLeaves.mockResolvedValue(MOCK_EXPLODED);
+  });
+
+  test("returns exploded leaves for an authorized user", async () => {
+    const result = await explodeBomToLeavesAction(BOM_DATA);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual(MOCK_EXPLODED);
+    }
+    expect(mockExplodeBomsToLeaves).toHaveBeenCalledWith(BOM_DATA);
+  });
+
+  test("returns auth error when user is not authenticated", async () => {
+    mockGetUserData.mockResolvedValue(null);
+    const result = await explodeBomToLeavesAction(BOM_DATA);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(MSG.auth.userNotAuthenticated);
+    }
+    expect(mockExplodeBomsToLeaves).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ])("returns unauthorized error for %s user without exploding", async (role) => {
+    mockGetUserData.mockResolvedValue({ id: "user-1", role });
+    const result = await explodeBomToLeavesAction(BOM_DATA);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(MSG.bom.unauthorized);
+    }
+    expect(mockExplodeBomsToLeaves).not.toHaveBeenCalled();
+  });
+
+  test("returns unknown error message on unexpected error", async () => {
+    mockExplodeBomsToLeaves.mockRejectedValue(new Error("unexpected"));
+    const result = await explodeBomToLeavesAction(BOM_DATA);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe(MSG.db.unknown);

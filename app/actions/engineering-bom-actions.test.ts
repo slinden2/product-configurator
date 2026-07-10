@@ -859,10 +859,22 @@ describe("searchPartNumbersAction", () => {
     expect(result.error).toBe(MSG.db.unknown);
   });
 
-  test("does NOT require ENGINEER/ADMIN role (any authenticated user)", async () => {
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("returns auth error for %s user without querying", async (role) => {
+    mockGetUserData.mockResolvedValue(mockUser({ role }));
+    const result: ActionResult = await searchPartNumbersAction("test");
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.bom.unauthorized);
+    expect(mockSearchPartNumbers).not.toHaveBeenCalled();
+  });
+
+  test("role gate wins over the empty-query early return", async () => {
     mockGetUserData.mockResolvedValue(mockUser({ role: "SALES" }));
-    mockSearchPartNumbers.mockResolvedValue([]);
-    const result = await searchPartNumbersAction("test");
-    expect(result.success).toBe(true);
+    const result: ActionResult = await searchPartNumbersAction("");
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(MSG.bom.unauthorized);
   });
 });

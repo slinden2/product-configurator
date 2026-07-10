@@ -1,6 +1,7 @@
 "use server";
 
 import { getAssemblyChildren, getUserData } from "@/db/queries";
+import { canViewBom } from "@/lib/access";
 import type { BOMItemWithCost } from "@/lib/BOM";
 import { explodeBomsToLeaves } from "@/lib/BOM/explode-bom";
 import { MSG } from "@/lib/messages";
@@ -18,6 +19,10 @@ export async function explodeBomToLeavesAction(data: BOMData) {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
+  if (!canViewBom(user.role)) {
+    return { success: false as const, error: MSG.bom.unauthorized };
+  }
+
   try {
     const exploded = await explodeBomsToLeaves(data);
     return { success: true as const, data: exploded };
@@ -30,6 +35,10 @@ export async function getAssemblyChildrenAction(parentPn: string) {
   const user = await getUserData();
   if (!user) {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
+  }
+
+  if (!canViewBom(user.role)) {
+    return { success: false as const, error: MSG.bom.unauthorized };
   }
 
   const pn = parentPn?.trim();
