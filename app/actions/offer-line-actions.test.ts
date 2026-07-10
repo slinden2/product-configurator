@@ -50,6 +50,7 @@ vi.mock("pg", () => ({
 
 // --- Imports (after mocks) ---
 
+import { revalidatePath } from "next/cache";
 import {
   addOfferLineAction,
   removeOfferLineAction,
@@ -135,6 +136,12 @@ describe("addOfferLineAction", () => {
     );
   });
 
+  test("revalidates the offer list (line count) and detail on success", async () => {
+    await addOfferLineAction(OFFER_ID, makeValidConfig());
+    expect(revalidatePath).toHaveBeenCalledWith("/offerte");
+    expect(revalidatePath).toHaveBeenCalledWith(`/offerte/${OFFER_ID}`);
+  });
+
   test("prices the new line in the same transaction, without a reprice audit and failing on a non-DRAFT revision", async () => {
     await addOfferLineAction(OFFER_ID, makeValidConfig());
     expect(mockRepriceOfferLine).toHaveBeenCalledWith(CONFIG_ID, "u1", TX, {
@@ -202,6 +209,12 @@ describe("removeOfferLineAction", () => {
     const result = await removeOfferLineAction(OFFER_ID, CONFIG_ID);
     expect(result).toEqual({ success: true });
     expect(mockRemoveOfferLine).toHaveBeenCalledWith(OFFER_ID, CONFIG_ID, "u1");
+  });
+
+  test("revalidates the offer list (line count) and detail on success", async () => {
+    await removeOfferLineAction(OFFER_ID, CONFIG_ID);
+    expect(revalidatePath).toHaveBeenCalledWith("/offerte");
+    expect(revalidatePath).toHaveBeenCalledWith(`/offerte/${OFFER_ID}`);
   });
 
   test("rejects ENGINEER (no offer access)", async () => {

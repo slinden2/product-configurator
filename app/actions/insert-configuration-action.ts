@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { getUserData, insertConfiguration, logActivity } from "@/db/queries";
 import { canManageStandaloneConfigs } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import { configSchema } from "@/validation/config-schema";
 import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
+import { revalidateConfigurationRoutes } from "./lib/revalidate-config-routes";
 
 export const insertConfigurationAction = async (formData: unknown) => {
   const validation = configSchema.safeParse(formData);
@@ -38,7 +38,8 @@ export const insertConfigurationAction = async (formData: unknown) => {
       targetEntity: "configuration",
       targetId: newConfig.id.toString(),
     });
-    revalidatePath("/configurazioni");
+    // This flow only creates STANDALONE configs (see the role gate above).
+    revalidateConfigurationRoutes(newConfig.id, "STANDALONE");
     return { success: true as const, id: newConfig.id };
   } catch (err) {
     return mapActionError(err, "Failed to insert configuration:");

@@ -1,10 +1,10 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { mapActionError } from "@/app/actions/lib/map-action-error";
+import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
 import { db } from "@/db";
 import {
   assertConfigurationStatus,
@@ -212,7 +212,7 @@ export async function snapshotEngineeringBomAction(confId: number) {
       );
     });
 
-    revalidatePath(`/configurazioni/bom/${confId}`);
+    revalidateConfigurationRoutes(confId, auth.configuration.origin);
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to snapshot engineering BOM:");
@@ -261,7 +261,7 @@ export async function regenerateEngineeringBomAction(confId: number) {
       );
     });
 
-    revalidatePath(`/configurazioni/bom/${confId}`);
+    revalidateConfigurationRoutes(confId, auth.configuration.origin);
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to regenerate engineering BOM:");
@@ -336,7 +336,7 @@ export async function addEngineeringBomItemAction(
     });
 
     // 4. Cache Invalidation
-    revalidatePath(`/configurazioni/bom/${confId}`);
+    revalidateConfigurationRoutes(confId, auth.configuration.origin);
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to add BOM item:");
@@ -405,7 +405,7 @@ export async function updateEngineeringBomItemQtyAction(
       );
     });
 
-    revalidatePath(`/configurazioni/bom/${confId}`);
+    revalidateConfigurationRoutes(confId, auth.configuration.origin);
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to update BOM item qty:");
@@ -466,7 +466,7 @@ export async function toggleDeleteEngineeringBomItemAction(
       );
     });
 
-    revalidatePath(`/configurazioni/bom/${confId}`);
+    revalidateConfigurationRoutes(confId, auth.configuration.origin);
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to toggle delete BOM item:");

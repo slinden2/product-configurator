@@ -34,6 +34,7 @@ vi.mock("pg", () => ({
 
 // --- Imports (after mocks) ---
 
+import { revalidatePath } from "next/cache";
 import { insertConfigurationAction } from "@/app/actions/insert-configuration-action";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -107,6 +108,12 @@ describe("insertConfigurationAction", () => {
     const result = await insertConfigurationAction(makeValidFormData());
     expect(result).toEqual({ success: true, id: 42 });
     expect(mockInsertConfiguration).toHaveBeenCalledTimes(1);
+  });
+
+  test("revalidates the config list and dashboard status counts on success", async () => {
+    await insertConfigurationAction(makeValidFormData());
+    expect(revalidatePath).toHaveBeenCalledWith("/configurazioni");
+    expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 
   test("returns validation error for invalid form data", async () => {

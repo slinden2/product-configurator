@@ -55,6 +55,8 @@ export const addOfferLineAction = async (
       });
       return configId;
     });
+    // The offer list renders the working revision's line count.
+    revalidatePath("/offerte");
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const, id };
   } catch (err) {
@@ -76,6 +78,8 @@ export const removeOfferLineAction = async (
 
   try {
     await removeOfferLine(offerId, configId, auth.user.id);
+    // The offer list renders the working revision's line count.
+    revalidatePath("/offerte");
     revalidatePath(`/offerte/${offerId}`);
     return { success: true as const };
   } catch (err) {

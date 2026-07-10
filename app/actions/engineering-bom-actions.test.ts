@@ -387,10 +387,13 @@ describe("snapshotEngineeringBomAction", () => {
     expect(mockInsertEngineeringBomItems).toHaveBeenCalledTimes(1);
   });
 
-  test("revalidates BOM path on success", async () => {
+  test("revalidates config routes (BOM + margin) on success", async () => {
     await snapshotEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/marginalita/${CONF_ID}`,
     );
   });
 
@@ -477,10 +480,13 @@ describe("regenerateEngineeringBomAction", () => {
     expect(mockHasEngineeringBom).not.toHaveBeenCalled();
   });
 
-  test("revalidates BOM path on success", async () => {
+  test("revalidates config routes (BOM + margin) on success", async () => {
     await regenerateEngineeringBomAction(CONF_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/marginalita/${CONF_ID}`,
     );
   });
 
@@ -620,10 +626,13 @@ describe("addEngineeringBomItemAction", () => {
     expect(insertedValues.original_qty).toBeNull();
   });
 
-  test("revalidates BOM path on success", async () => {
+  test("revalidates config routes (BOM + margin) on success", async () => {
     await addEngineeringBomItemAction(CONF_ID, validFormData);
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/marginalita/${CONF_ID}`,
     );
   });
 
@@ -772,10 +781,13 @@ describe("updateEngineeringBomItemQtyAction", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  test("revalidates BOM path on success", async () => {
+  test("revalidates config routes (BOM + margin) on success", async () => {
     await updateEngineeringBomItemQtyAction(CONF_ID, ITEM_ID, 3);
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/marginalita/${CONF_ID}`,
     );
   });
 
@@ -921,10 +933,13 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  test("revalidates BOM path on success", async () => {
+  test("revalidates config routes (BOM + margin) on success", async () => {
     await toggleDeleteEngineeringBomItemAction(CONF_ID, ITEM_ID);
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/bom/${CONF_ID}`,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/configurazioni/marginalita/${CONF_ID}`,
     );
   });
 
