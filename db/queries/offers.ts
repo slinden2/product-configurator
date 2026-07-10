@@ -1583,13 +1583,18 @@ export async function removeOfferLine(
  * Sets the revision header discount and re-derives every line's net_price from its
  * stored list_price (pure arithmetic — no BOM rebuild). Audited in the same
  * transaction so the recompute can never be recorded without its evidence.
+ * Locks the offer row and guards the UPDATE on status = DRAFT so the write cannot
+ * land on a revision that a concurrent submit/send has already advanced.
  */
 export async function updateRevisionDiscountWithAudit(data: {
+  offerId: number;
   revisionId: number;
   discount_pct: string;
   updated_by: string;
 }): Promise<void> {
   await db.transaction(async (tx) => {
+    await lockOfferRow(data.offerId, tx);
+
     const [existing] = await tx
       .select({ discount_pct: offerRevisions.discount_pct })
       .from(offerRevisions)
@@ -1597,10 +1602,19 @@ export async function updateRevisionDiscountWithAudit(data: {
 
     if (!existing) throw new QueryError(MSG.offer.notFound, 404);
 
-    await tx
+    const [updated] = await tx
       .update(offerRevisions)
       .set({ discount_pct: data.discount_pct, updated_at: new Date() })
-      .where(eq(offerRevisions.id, data.revisionId));
+      .where(
+        and(
+          eq(offerRevisions.id, data.revisionId),
+          eq(offerRevisions.status, "DRAFT"),
+        ),
+      )
+      .returning({ id: offerRevisions.id });
+
+    // No row updated ⇒ the revision left DRAFT under us (concurrent submit/send).
+    if (!updated) throw new QueryError(MSG.offer.lineCannotEdit, 403);
 
     // Re-derive every line's net_price from its stored list_price in one set-based
     // UPDATE (pure arithmetic, no BOM rebuild, no per-line round-trip). Mirrors
@@ -1642,14 +1656,19 @@ export type RevisionSettingsUpdate = {
 /**
  * Updates the revision header transport/installation/presentation settings. These
  * are offer-level add-ons that do not affect per-line list/net prices, so no line
- * recompute is needed. Audited in the same transaction.
+ * recompute is needed. Audited in the same transaction. Locks the offer row and
+ * guards the UPDATE on status = DRAFT so the write cannot land on a revision that
+ * a concurrent submit/send has already advanced.
  */
 export async function updateRevisionSettingsWithAudit(data: {
+  offerId: number;
   revisionId: number;
   settings: RevisionSettingsUpdate;
   updated_by: string;
 }): Promise<void> {
   await db.transaction(async (tx) => {
+    await lockOfferRow(data.offerId, tx);
+
     const [existing] = await tx
       .select({
         show_net_total_only: offerRevisions.show_net_total_only,
@@ -1663,10 +1682,19 @@ export async function updateRevisionSettingsWithAudit(data: {
 
     if (!existing) throw new QueryError(MSG.offer.notFound, 404);
 
-    await tx
+    const [updated] = await tx
       .update(offerRevisions)
       .set({ ...data.settings, updated_at: new Date() })
-      .where(eq(offerRevisions.id, data.revisionId));
+      .where(
+        and(
+          eq(offerRevisions.id, data.revisionId),
+          eq(offerRevisions.status, "DRAFT"),
+        ),
+      )
+      .returning({ id: offerRevisions.id });
+
+    // No row updated ⇒ the revision left DRAFT under us (concurrent submit/send).
+    if (!updated) throw new QueryError(MSG.offer.lineCannotEdit, 403);
 
     await insertActivityLog(
       {

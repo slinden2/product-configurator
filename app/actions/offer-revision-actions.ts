@@ -54,6 +54,7 @@ export async function setRevisionDiscountAction(
 
   try {
     await updateRevisionDiscountWithAudit({
+      offerId,
       revisionId: revision.id,
       discount_pct: parsed.data.discount_pct.toFixed(2),
       updated_by: user.id,
@@ -85,6 +86,7 @@ export async function setRevisionSettingsAction(
   try {
     const { transport_amount, ...rest } = parsed.data;
     await updateRevisionSettingsWithAudit({
+      offerId,
       revisionId: revision.id,
       settings: { ...rest, transport_amount: transport_amount.toFixed(2) },
       updated_by: user.id,

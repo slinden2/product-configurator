@@ -139,6 +139,7 @@ describe("setRevisionDiscountAction", () => {
     const result = await setRevisionDiscountAction(OFFER_ID, 10);
     expect(result).toEqual({ success: true });
     expect(mockUpdateRevisionDiscountWithAudit).toHaveBeenCalledWith({
+      offerId: OFFER_ID,
       revisionId: REVISION_ID,
       discount_pct: "10.00",
       updated_by: "u1",
@@ -198,6 +199,7 @@ describe("setRevisionSettingsAction", () => {
     expect(result).toEqual({ success: true });
     expect(mockUpdateRevisionSettingsWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({
+        offerId: OFFER_ID,
         revisionId: REVISION_ID,
         updated_by: "u1",
         settings: expect.objectContaining({ transport_amount: "1000.00" }),
