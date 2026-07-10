@@ -135,10 +135,11 @@ describe("addOfferLineAction", () => {
     );
   });
 
-  test("prices the new line in the same transaction, without a reprice audit", async () => {
+  test("prices the new line in the same transaction, without a reprice audit and failing on a non-DRAFT revision", async () => {
     await addOfferLineAction(OFFER_ID, makeValidConfig());
     expect(mockRepriceOfferLine).toHaveBeenCalledWith(CONFIG_ID, "u1", TX, {
       audit: false,
+      requireDraft: true,
     });
   });
 

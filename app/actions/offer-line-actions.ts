@@ -40,6 +40,8 @@ export const addOfferLineAction = async (
     // The revision-DRAFT gate lives in addOfferLine (throws QueryError otherwise).
     // Price the new line from its live BOM in the same transaction; the
     // OFFER_LINE_ADD log already records the creation, so skip the reprice audit.
+    // requireDraft: a just-inserted line on a non-DRAFT revision is a lost race
+    // with submit — roll back the add instead of committing it unpriced.
     const id = await db.transaction(async (tx) => {
       const { id: configId } = await addOfferLine(
         offerId,
@@ -47,7 +49,10 @@ export const addOfferLineAction = async (
         user.id,
         tx,
       );
-      await repriceOfferLine(configId, user.id, tx, { audit: false });
+      await repriceOfferLine(configId, user.id, tx, {
+        audit: false,
+        requireDraft: true,
+      });
       return configId;
     });
     revalidatePath(`/offerte/${offerId}`);

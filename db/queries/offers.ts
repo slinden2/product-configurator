@@ -392,13 +392,27 @@ export async function getOfferWorkingRevision(
 }
 
 /**
+ * Serializes lifecycle mutations on an offer: takes the offer row lock, blocking
+ * until any concurrent holder commits. Must be the **first statement** of every
+ * structural offer transaction (add/remove line, clone, submit, send, accept,
+ * unaccept) so the tx's subsequent reads see the previous holder's committed state.
+ */
+export async function lockOfferRow(
+  offerId: number,
+  tx: TransactionType,
+): Promise<void> {
+  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+}
+
+/**
  * Adds a new configuration line to an offer's **working revision** (the latest by
  * `revision_no`). Inserts the config with `origin=OFFER` owned by the **offer
  * owner** (not the acting user, so a manager adding to a report's offer doesn't
  * flip ownership) and an `offer_revision_lines` row at the next position with
  * placeholder pricing — the caller re-prices the line (via `repriceOfferLine`) in
- * the same transaction. Gated on the revision being DRAFT. Audited in the caller's
- * transaction.
+ * the same transaction. Gated on the revision being DRAFT, under the offer row
+ * lock so a concurrent submit cannot flip the revision out of DRAFT mid-add.
+ * Audited in the caller's transaction.
  */
 export async function addOfferLine(
   offerId: number,
@@ -406,9 +420,13 @@ export async function addOfferLine(
   userId: string,
   // Required: the caller owns the transaction so the config + line insert and the
   // OFFER_LINE_ADD audit (and the follow-up reprice) commit atomically.
-  txOrDb: DatabaseType | TransactionType,
+  tx: TransactionType,
 ): Promise<{ id: number }> {
-  const offer = await txOrDb.query.offers.findFirst({
+  // Serialize against concurrent lifecycle mutations (submit above all): the DRAFT
+  // gate below is only meaningful while no submit can commit under us.
+  await lockOfferRow(offerId, tx);
+
+  const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
     columns: { id: true, user_id: true, accepted_revision_id: true },
     with: {
@@ -436,16 +454,16 @@ export async function addOfferLine(
     configData,
     offer.user_id,
     "OFFER",
-    txOrDb,
+    tx,
   );
 
-  const [posRow] = await txOrDb
+  const [posRow] = await tx
     .select({ max: max(offerRevisionLines.position) })
     .from(offerRevisionLines)
     .where(eq(offerRevisionLines.offer_revision_id, revision.id));
   const nextPosition = Number(posRow?.max ?? -1) + 1;
 
-  await txOrDb.insert(offerRevisionLines).values({
+  await tx.insert(offerRevisionLines).values({
     offer_revision_id: revision.id,
     configuration_id: configId,
     position: nextPosition,
@@ -464,7 +482,7 @@ export async function addOfferLine(
       targetId: String(offerId),
       metadata: { configurationId: configId, position: nextPosition },
     },
-    txOrDb,
+    tx,
   );
 
   return { id: configId };
@@ -645,7 +663,7 @@ export async function createOfferRevisionFrom(
   // Serialize lifecycle mutations on this offer: a concurrent create/send blocks here
   // until we commit, so both can't read the same latest revision and clash on
   // revision_no (which would surface only as a generic unique-violation DB error).
-  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+  await lockOfferRow(offerId, tx);
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
@@ -798,7 +816,7 @@ export async function createRenegotiationRevisionFrom(
   tx: TransactionType,
 ): Promise<{ revisionId: number; revisionNo: number; configIds: number[] }> {
   // Serialize lifecycle mutations on this offer (see createOfferRevisionFrom).
-  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+  await lockOfferRow(offerId, tx);
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
@@ -935,8 +953,9 @@ export async function getWorkingRevisionForSend(
  * Submits a working revision for manager approval: guards it is still DRAFT and
  * non-empty, flips `status = "PENDING_APPROVAL"`, and audits the transition. The lines
  * must already have been re-priced in the same transaction (submit is the last DRAFT
- * moment — once it leaves DRAFT, `repriceOfferLine` no-ops, so the `pricing_snapshot`
- * the manager reviews is the as-submitted figure). Audited in the caller's tx.
+ * moment, so the `pricing_snapshot` the manager reviews is the as-submitted figure),
+ * and the caller's tx must open with `lockOfferRow` so the line set it validated and
+ * re-priced can't change under the CAS. Audited in the caller's tx.
  */
 export async function submitOfferRevisionForApprovalWithAudit(
   offerId: number,
@@ -1070,8 +1089,9 @@ export async function returnOfferRevisionToDraftWithAudit(
 /**
  * Freezes an approved revision as sent: guards it is APPROVED_TO_SEND and non-empty,
  * sets `status = "SENT"` and `sent_at`, and audits the transition. The lines were
- * already re-priced at submit (the last DRAFT moment), so no re-pricing happens here —
- * `repriceOfferLine` no-ops once a revision leaves DRAFT. Audited in the caller's tx.
+ * already re-priced at submit (the last DRAFT moment), so no re-pricing happens here.
+ * The caller's tx must open with `lockOfferRow` (single-writer offer lifecycle).
+ * Audited in the caller's tx.
  */
 export async function markOfferRevisionSentWithAudit(
   offerId: number,
@@ -1145,7 +1165,7 @@ export async function acceptOfferRevisionWithAudit(
   tx: TransactionType,
 ): Promise<void> {
   // Serialize against concurrent lifecycle mutations on this offer.
-  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+  await lockOfferRow(offerId, tx);
 
   const offerRow = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
@@ -1301,7 +1321,7 @@ export async function unacceptOfferRevisionWithAudit(
   tx: TransactionType,
 ): Promise<void> {
   // Serialize against concurrent lifecycle mutations on this offer.
-  await tx.execute(sql`select id from offers where id = ${offerId} for update`);
+  await lockOfferRow(offerId, tx);
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
@@ -1491,8 +1511,9 @@ export async function recordOfferRevisionOutcomeWithAudit(
  * Removes a configuration line from an offer's **working revision** (the latest by
  * `revision_no`), deleting the line row and then its configuration (the FK is
  * `restrict`, so the line must go first). Gated on the revision being DRAFT and the
- * line actually belonging to that working revision. Audited in-transaction
- * (delete ⇒ audit in the same tx).
+ * line actually belonging to that working revision, under the offer row lock so a
+ * concurrent submit cannot flip the revision out of DRAFT mid-remove. Audited
+ * in-transaction (delete ⇒ audit in the same tx).
  */
 export async function removeOfferLine(
   offerId: number,
@@ -1500,6 +1521,10 @@ export async function removeOfferLine(
   userId: string,
 ): Promise<void> {
   await db.transaction(async (tx) => {
+    // Serialize against concurrent lifecycle mutations (submit above all): the
+    // DRAFT gate below is only meaningful while no submit can commit under us.
+    await lockOfferRow(offerId, tx);
+
     const offer = await tx.query.offers.findFirst({
       where: eq(offers.id, offerId),
       columns: { id: true, accepted_revision_id: true },

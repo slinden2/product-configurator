@@ -4,12 +4,22 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // --- Mocks ---
 // We exercise the REAL addOfferLine / removeOfferLine guards with stub readers.
 // removeOfferLine opens its own transaction on the db module, so the fake db
-// hands the callback a recording tx.
+// hands the callback a recording tx. The offer row lock (`select ... for update`)
+// runs through tx.execute.
 const txStub = {
   query: { offers: { findFirst: vi.fn() } },
   delete: vi.fn(),
   insert: vi.fn(),
+  execute: vi.fn(),
 };
+
+/** The offer row lock must be the first statement: before the status read. */
+function expectLockedBeforeStatusRead() {
+  expect(txStub.execute).toHaveBeenCalledTimes(1);
+  const lockOrder = txStub.execute.mock.invocationCallOrder[0];
+  const readOrder = txStub.query.offers.findFirst.mock.invocationCallOrder[0];
+  expect(lockOrder).toBeLessThan(readOrder);
+}
 
 vi.mock("@/db", () => ({
   db: { transaction: (cb: (tx: unknown) => unknown) => cb(txStub) },
@@ -50,6 +60,7 @@ describe("renegotiation line guards (structural edits locked)", () => {
       ),
     ).rejects.toThrow(MSG.offer.renegotiationLinesLocked);
     expect(txStub.insert).not.toHaveBeenCalled();
+    expectLockedBeforeStatusRead();
   });
 
   test("removeOfferLine rejects on a renegotiation draft (would delete an engineering config)", async () => {
@@ -57,6 +68,7 @@ describe("renegotiation line guards (structural edits locked)", () => {
       MSG.offer.renegotiationLinesLocked,
     );
     expect(txStub.delete).not.toHaveBeenCalled();
+    expectLockedBeforeStatusRead();
   });
 });
 
@@ -93,5 +105,6 @@ describe("removeOfferLine happy path", () => {
       target_entity: "offer",
       target_id: "5",
     });
+    expectLockedBeforeStatusRead();
   });
 });

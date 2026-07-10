@@ -229,6 +229,33 @@ describe("repriceOfferLine", () => {
     expect(insertActivityLog).not.toHaveBeenCalled();
   });
 
+  test("throws on a non-DRAFT revision when requireDraft is set (lost race with submit)", async () => {
+    vi.mocked(offerRevisionLineForConfig).mockResolvedValue(
+      draftLine({ status: "PENDING_APPROVAL" }),
+    );
+
+    await expect(
+      repriceOfferLine(CONFIG_ID, "u1", TX, {
+        audit: false,
+        requireDraft: true,
+      }),
+    ).rejects.toThrow(MSG.offer.lineCannotEdit);
+    expect(updateOfferRevisionLinePricing).not.toHaveBeenCalled();
+  });
+
+  test("prices normally on a DRAFT revision when requireDraft is set", async () => {
+    await repriceOfferLine(CONFIG_ID, "u1", TX, {
+      audit: false,
+      requireDraft: true,
+    });
+
+    expect(updateOfferRevisionLinePricing).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({ list_price: 600, net_price: 540 }),
+      TX,
+    );
+  });
+
   test("throws when an OFFER config has no owning line (data drift)", async () => {
     vi.mocked(offerRevisionLineForConfig).mockResolvedValue(null);
 

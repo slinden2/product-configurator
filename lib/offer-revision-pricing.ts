@@ -23,6 +23,16 @@ export interface LinePricing {
 
 type SurchargeSetting = { kind: string; price: string | number };
 
+interface RepriceOpts {
+  /** Defaults to true; pass false on first pricing (the OFFER_LINE_ADD log already
+   *  records the creation and its price). */
+  audit?: boolean;
+  /** Throw (409) instead of silently skipping when the revision is not DRAFT. Pass
+   *  true when the caller just inserted the line: a non-DRAFT revision there is
+   *  proof of a lost race with submit, and the whole mutation must roll back. */
+  requireDraft?: boolean;
+}
+
 /**
  * Computes a single offer line's pricing from its configuration's live BOM, reusing
  * the shared computeOfferListPricing pipeline: BOM list prices + applicable
@@ -57,20 +67,17 @@ export async function computeLinePricing(
 
 /**
  * Re-prices the offer revision line that owns `configId` from its live BOM, in the
- * caller's transaction. No-op when the revision is not DRAFT (frozen/handed-off
- * lines must not move; editability is already gated upstream, this is a defensive
- * guard). Throws QueryError when an OFFER config has no line row (invariant
- * violation) or a triggered surcharge has no configured price, so the whole
- * mutation rolls back.
- *
- * `opts.audit` defaults to true; pass false on first pricing (the OFFER_LINE_ADD log
- * already records the creation and its price).
+ * caller's transaction. When the revision is not DRAFT (frozen/handed-off lines
+ * must not move; editability is already gated upstream) it no-ops as a defensive
+ * guard — or throws when `opts.requireDraft` is set (see {@link RepriceOpts}).
+ * Throws QueryError when an OFFER config has no line row (invariant violation) or
+ * a triggered surcharge has no configured price, so the whole mutation rolls back.
  */
 export async function repriceOfferLine(
   configId: number,
   userId: string,
   txOrDb: DatabaseType | TransactionType,
-  opts: { audit?: boolean } = {},
+  opts: RepriceOpts = {},
 ): Promise<void> {
   // Surcharge settings are read in the caller's tx (consistent with the lines being
   // priced) rather than on a separate pooled connection.
@@ -94,7 +101,7 @@ export async function repriceOfferLines(
   configIds: number[],
   userId: string,
   txOrDb: DatabaseType | TransactionType,
-  opts: { audit?: boolean } = {},
+  opts: RepriceOpts = {},
 ): Promise<void> {
   if (configIds.length === 0) return;
   const surchargeSettings = await getSurchargeSettings(txOrDb);
@@ -115,13 +122,19 @@ async function repriceLineWithSettings(
   userId: string,
   surchargeSettings: SurchargeSetting[],
   txOrDb: DatabaseType | TransactionType,
-  opts: { audit?: boolean } = {},
+  opts: RepriceOpts = {},
 ): Promise<void> {
   const line = await offerRevisionLineForConfig(configId, txOrDb);
   // An OFFER config must own a line; a missing one is data drift, not a no-op.
   if (!line) throw new QueryError(MSG.offer.notFound, 404);
   // A non-DRAFT revision is frozen/handed-off: leave its as-sold pricing untouched.
-  if (line.status !== "DRAFT") return;
+  // On an add (requireDraft) that freeze is a lost race with submit — fail the tx.
+  if (line.status !== "DRAFT") {
+    if (opts.requireDraft) {
+      throw new QueryError(MSG.offer.lineCannotEdit, 409);
+    }
+    return;
+  }
 
   const configuration = await loadConfigForPricing(configId, txOrDb);
   if (!configuration) throw new QueryError(MSG.config.notFound, 404);

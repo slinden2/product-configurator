@@ -17,6 +17,7 @@ import {
   createRenegotiationRevisionFrom,
   getConfigsForEnergyChainCheck,
   getWorkingRevisionForSend,
+  lockOfferRow,
   markOfferRevisionSentWithAudit,
   QueryError,
   recordOfferRevisionOutcomeWithAudit,
@@ -149,6 +150,12 @@ export async function submitRevisionForApprovalAction(offerId: number) {
   }
 
   return runRevisionTransition(offerId, async (tx) => {
+    // Serialize against concurrent line adds/removes: the line set validated and
+    // re-priced below must be exactly the set the CAS freezes into approval. The
+    // lock lives here (not in the WithAudit primitive, unlike accept/unaccept)
+    // because these authoritative reads run in the action's txFn before the CAS.
+    await lockOfferRow(offerId, tx);
+
     const working = await getWorkingRevisionForSend(offerId, tx);
     if (!working) throw new QueryError(MSG.offer.notFound, 404);
     if (working.status !== "DRAFT") {
@@ -172,7 +179,8 @@ export async function submitRevisionForApprovalAction(offerId: number) {
       }
     }
 
-    // Re-price while still DRAFT — repricing no-ops once it leaves DRAFT.
+    // Re-price while still DRAFT: this is the as-submitted figure the manager
+    // reviews, frozen by the CAS below under the offer row lock.
     await repriceOfferLines(working.configIds, user.id, tx, { audit: false });
 
     await submitOfferRevisionForApprovalWithAudit(
@@ -255,6 +263,10 @@ export async function sendRevisionAction(offerId: number) {
   }
 
   return runRevisionTransition(offerId, async (tx) => {
+    // Single-writer offer lifecycle: the send freeze must not interleave with any
+    // structural mutation on this offer (see submitRevisionForApprovalAction).
+    await lockOfferRow(offerId, tx);
+
     const working = await getWorkingRevisionForSend(offerId, tx);
     if (!working) throw new QueryError(MSG.offer.notFound, 404);
     if (working.status !== "APPROVED_TO_SEND") {

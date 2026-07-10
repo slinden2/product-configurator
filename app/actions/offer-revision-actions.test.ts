@@ -20,6 +20,7 @@ const mockRecordOfferRevisionOutcomeWithAudit = vi.fn();
 const mockRepriceOfferLines = vi.fn();
 const mockLoadValidatedConfiguration = vi.fn();
 const mockGetConfigsForEnergyChainCheck = vi.fn();
+const mockLockOfferRow = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -43,6 +44,7 @@ vi.mock("@/db/queries", () => ({
     mockGetWorkingRevisionForSend(...args),
   getConfigsForEnergyChainCheck: (...args: unknown[]) =>
     mockGetConfigsForEnergyChainCheck(...args),
+  lockOfferRow: (...args: unknown[]) => mockLockOfferRow(...args),
   markOfferRevisionSentWithAudit: (...args: unknown[]) =>
     mockMarkOfferRevisionSentWithAudit(...args),
   submitOfferRevisionForApprovalWithAudit: (...args: unknown[]) =>
@@ -277,6 +279,14 @@ describe("submitRevisionForApprovalAction", () => {
     );
   });
 
+  test("takes the offer row lock before reading the working revision (serializes against line adds/removes)", async () => {
+    await submitRevisionForApprovalAction(OFFER_ID);
+    expect(mockLockOfferRow).toHaveBeenCalledWith(OFFER_ID, {});
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const readOrder = mockGetWorkingRevisionForSend.mock.invocationCallOrder[0];
+    expect(lockOrder).toBeLessThan(readOrder);
+  });
+
   test("rejects ENGINEER (no offer access)", async () => {
     mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
     const result = await submitRevisionForApprovalAction(OFFER_ID);
@@ -497,6 +507,14 @@ describe("sendRevisionAction", () => {
       "u1",
       {},
     );
+  });
+
+  test("takes the offer row lock before reading the working revision (single-writer lifecycle)", async () => {
+    await sendRevisionAction(OFFER_ID);
+    expect(mockLockOfferRow).toHaveBeenCalledWith(OFFER_ID, {});
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const readOrder = mockGetWorkingRevisionForSend.mock.invocationCallOrder[0];
+    expect(lockOrder).toBeLessThan(readOrder);
   });
 
   test("rejects ENGINEER (no offer access)", async () => {
