@@ -10,7 +10,10 @@ const mockHasEngineeringBom = vi.fn();
 const mockDeleteAllEngineeringBomItems = vi.fn();
 const mockTouchConfigurationUpdatedAt = vi.fn();
 const mockRepriceOfferLine = vi.fn();
+const mockGetOfferRefForConfig = vi.fn();
+const mockLockOfferRow = vi.fn();
 // STANDALONE configs ignore this; OFFER tests default the revision to DRAFT.
+// Called twice on OFFER mutations: pre-tx gate + in-tx re-assertion under the lock.
 const mockOfferRevisionStatusFor = vi.fn(
   async (..._args: unknown[]) => "DRAFT",
 );
@@ -21,6 +24,9 @@ vi.mock("@/db/queries", () => ({
   getConfiguration: (...args: unknown[]) => mockGetConfiguration(...args),
   offerRevisionStatusFor: (...args: unknown[]) =>
     mockOfferRevisionStatusFor(...args),
+  getOfferRefForConfig: (...args: unknown[]) =>
+    mockGetOfferRefForConfig(...args),
+  lockOfferRow: (...args: unknown[]) => mockLockOfferRow(...args),
   hasEngineeringBom: (...args: unknown[]) => mockHasEngineeringBom(...args),
   deleteAllEngineeringBomItems: (...args: unknown[]) =>
     mockDeleteAllEngineeringBomItems(...args),
@@ -73,6 +79,7 @@ import { MSG } from "@/lib/messages";
 const testSchema = z.object({ value: z.string().min(1) });
 const PARENT_ID = 1;
 const RECORD_ID = 10;
+const OFFER_ID = 77;
 const OWNER_ID = "owner-123";
 
 function mockConfig(overrides: Record<string, unknown> = {}) {
@@ -115,6 +122,11 @@ describe("handleSubRecordAction", () => {
     mockDeleteAllEngineeringBomItems.mockResolvedValue(undefined);
     mockTouchConfigurationUpdatedAt.mockResolvedValue(undefined);
     mockRepriceOfferLine.mockResolvedValue(undefined);
+    mockGetOfferRefForConfig.mockResolvedValue({
+      offerId: OFFER_ID,
+      offerNumber: "OFF-2026-0001",
+    });
+    mockLockOfferRow.mockResolvedValue(undefined);
   });
 
   // --- Insert ---
@@ -531,6 +543,7 @@ describe("handleSubRecordAction", () => {
       PARENT_ID,
       "admin-user",
       mockTx,
+      { requireDraft: true },
     );
     const { revalidatePath } = await import("next/cache");
     expect(revalidatePath).toHaveBeenCalledWith("/offerte/[id]", "page");
@@ -539,5 +552,102 @@ describe("handleSubRecordAction", () => {
   test("does not reprice a STANDALONE config", async () => {
     await handleSubRecordAction(insertOptions());
     expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+  });
+
+  // --- In-tx gate re-assertion under the offer lock (issue #255) ---
+
+  test("locks the offer row before mutating on an OFFER config", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ origin: "OFFER" }));
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    const queryFn = vi.fn().mockResolvedValue({ id: 99 });
+    const result = await handleSubRecordAction(insertOptions({ queryFn }));
+    expect(result.success).toBe(true);
+    expect(mockLockOfferRow).toHaveBeenCalledWith(OFFER_ID, mockTx);
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const mutationOrder = queryFn.mock.invocationCallOrder[0];
+    expect(lockOrder).toBeLessThan(mutationOrder);
+  });
+
+  test("re-reads the revision status in-tx after taking the lock", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ origin: "OFFER" }));
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result.success).toBe(true);
+    expect(mockOfferRevisionStatusFor).toHaveBeenCalledTimes(2);
+    // Second (in-tx) read runs on the transaction, post-lock.
+    expect(mockOfferRevisionStatusFor.mock.calls[1][1]).toBe(mockTx);
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const rereadOrder = mockOfferRevisionStatusFor.mock.invocationCallOrder[1];
+    expect(lockOrder).toBeLessThan(rereadOrder);
+  });
+
+  test("rejects the mutation when the revision leaves DRAFT between gate and tx (lost race)", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ origin: "OFFER" }));
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    // Pre-tx gate sees DRAFT; a concurrent submit commits before the tx's
+    // post-lock re-read, which sees PENDING_APPROVAL.
+    mockOfferRevisionStatusFor
+      .mockResolvedValueOnce("DRAFT")
+      .mockResolvedValueOnce("PENDING_APPROVAL");
+    const queryFn = vi.fn().mockResolvedValue({ id: 99 });
+    const result = await handleSubRecordAction(insertOptions({ queryFn }));
+    expect(result).toEqual({
+      success: false,
+      error: MSG.config.cannotEditSubRecord,
+    });
+    expect(queryFn).not.toHaveBeenCalled();
+    expect(mockTouchConfigurationUpdatedAt).not.toHaveBeenCalled();
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+  });
+
+  test("fails when an OFFER config has no owning offer (data drift)", async () => {
+    mockGetConfiguration.mockResolvedValue(mockConfig({ origin: "OFFER" }));
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    mockGetOfferRefForConfig.mockResolvedValue(null);
+    const queryFn = vi.fn().mockResolvedValue({ id: 99 });
+    const result = await handleSubRecordAction(insertOptions({ queryFn }));
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(queryFn).not.toHaveBeenCalled();
+  });
+
+  test("does not lock the offer row on a STANDALONE config", async () => {
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result.success).toBe(true);
+    expect(mockGetOfferRefForConfig).not.toHaveBeenCalled();
+    expect(mockLockOfferRow).not.toHaveBeenCalled();
+  });
+
+  test("does not require a DRAFT revision on a post-handoff engineering edit", async () => {
+    // Engineer editing an IN_TECH_REVIEW config while the latest revision is
+    // frozen (ACCEPTED): the reprice must keep its by-design silent no-op.
+    mockGetConfiguration.mockResolvedValue(
+      mockConfig({ origin: "OFFER", status: "IN_TECH_REVIEW" }),
+    );
+    mockOfferRevisionStatusFor.mockResolvedValue("ACCEPTED");
+    const result = await handleSubRecordAction(insertOptions());
+    expect(result.success).toBe(true);
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      PARENT_ID,
+      OWNER_ID,
+      mockTx,
+      { requireDraft: false },
+    );
   });
 });

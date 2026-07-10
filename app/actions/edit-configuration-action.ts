@@ -1,5 +1,6 @@
 "use server";
 
+import { assertEditableInTx } from "@/app/actions/lib/assert-editable-in-tx";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { mapActionError } from "@/app/actions/lib/map-action-error";
@@ -82,6 +83,16 @@ export const editConfigurationAction = async (
       validation.data.supply_fixing_type === "WALL";
 
     await db.transaction(async (tx) => {
+      // Re-assert the gate under the offer FOR UPDATE lock: the isEditable
+      // check above ran on a pooled read, so a concurrent revision submit can
+      // freeze the pricing snapshot before this tx commits (issue #255).
+      await assertEditableInTx(
+        configuration,
+        user.role,
+        tx,
+        MSG.config.cannotEdit,
+      );
+
       await updateConfiguration(
         confId,
         { ...validation.data, user_id: configuration.user_id },
@@ -110,9 +121,13 @@ export const editConfigurationAction = async (
       // An OFFER line's price tracks its config. Re-price unconditionally (not
       // gated on hasBomRelevantChanges) because the surcharge drivers total_height
       // and has_omz_paint are BOM-exempt — a BOM-relevance gate would miss them.
-      // No-op for STANDALONE configs and non-DRAFT revisions.
+      // Pre-handoff (config DRAFT) the revision must still be DRAFT, so a
+      // frozen line fails the tx; post-handoff a frozen latest revision is the
+      // by-design no-op (a DRAFT renegotiation revision still reprices).
       if (configuration.origin === "OFFER") {
-        await repriceOfferLine(confId, user.id, tx);
+        await repriceOfferLine(confId, user.id, tx, {
+          requireDraft: configuration.status === "DRAFT",
+        });
       }
 
       await insertActivityLog(

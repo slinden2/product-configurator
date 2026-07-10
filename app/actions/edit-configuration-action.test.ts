@@ -11,8 +11,11 @@ const mockResetWashBayEnergyChainFields = vi.fn();
 const mockResetWashBayNonEnergyChainFields = vi.fn();
 const mockInsertActivityLog = vi.fn();
 const mockRepriceOfferLine = vi.fn();
+const mockGetOfferRefForConfig = vi.fn();
+const mockLockOfferRow = vi.fn();
 // STANDALONE configs ignore this; OFFER tests default the revision to DRAFT so
 // the pre-handoff editability gate stays open (impl survives clearAllMocks).
+// Called twice on OFFER edits: pre-tx gate + in-tx re-assertion under the lock.
 const mockOfferRevisionStatusFor = vi.fn(
   async (..._args: unknown[]) => "DRAFT",
 );
@@ -27,6 +30,9 @@ vi.mock("@/db/queries", () => ({
     mockDeleteAllEngineeringBomItems(...args),
   offerRevisionStatusFor: (...args: unknown[]) =>
     mockOfferRevisionStatusFor(...args),
+  getOfferRefForConfig: (...args: unknown[]) =>
+    mockGetOfferRefForConfig(...args),
+  lockOfferRow: (...args: unknown[]) => mockLockOfferRow(...args),
   resetWashBayEnergyChainFields: (...args: unknown[]) =>
     mockResetWashBayEnergyChainFields(...args),
   resetWashBayNonEnergyChainFields: (...args: unknown[]) =>
@@ -129,6 +135,7 @@ function makeValidFormData(overrides: Record<string, unknown> = {}) {
 }
 
 const CONF_ID = 1;
+const OFFER_ID = 77;
 const OWNER_ID = "owner-123";
 
 function mockConfig(overrides: Record<string, unknown> = {}) {
@@ -163,6 +170,11 @@ describe("editConfigurationAction", () => {
     mockResetWashBayNonEnergyChainFields.mockResolvedValue(undefined);
     mockInsertActivityLog.mockResolvedValue(undefined);
     mockRepriceOfferLine.mockResolvedValue(undefined);
+    mockGetOfferRefForConfig.mockResolvedValue({
+      offerId: OFFER_ID,
+      offerNumber: "OFF-2026-0001",
+    });
+    mockLockOfferRow.mockResolvedValue(undefined);
   });
 
   test("returns success when owner edits DRAFT config", async () => {
@@ -263,6 +275,7 @@ describe("editConfigurationAction", () => {
       CONF_ID,
       "admin-user",
       mockTx,
+      { requireDraft: true },
     );
   });
 
@@ -294,6 +307,7 @@ describe("editConfigurationAction", () => {
       CONF_ID,
       "admin-user",
       mockTx,
+      { requireDraft: true },
     );
   });
 
@@ -534,6 +548,104 @@ describe("editConfigurationAction", () => {
     );
     expect(result.success).toBe(true);
     expect(mockResetWashBayNonEnergyChainFields).not.toHaveBeenCalled();
+  });
+
+  // --- In-tx gate re-assertion under the offer lock (issue #255) ---
+
+  test("locks the offer row before mutating on an OFFER config edit", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockLockOfferRow).toHaveBeenCalledWith(OFFER_ID, mockTx);
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const updateOrder = mockUpdateConfiguration.mock.invocationCallOrder[0];
+    expect(lockOrder).toBeLessThan(updateOrder);
+  });
+
+  test("re-reads the revision status in-tx after taking the lock", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockOfferRevisionStatusFor).toHaveBeenCalledTimes(2);
+    // Second (in-tx) read runs on the transaction, post-lock.
+    expect(mockOfferRevisionStatusFor.mock.calls[1][1]).toBe(mockTx);
+    const lockOrder = mockLockOfferRow.mock.invocationCallOrder[0];
+    const rereadOrder = mockOfferRevisionStatusFor.mock.invocationCallOrder[1];
+    expect(lockOrder).toBeLessThan(rereadOrder);
+  });
+
+  test("rejects the edit when the revision leaves DRAFT between gate and tx (lost race)", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    // Pre-tx gate sees DRAFT; a concurrent submit commits before the tx's
+    // post-lock re-read, which sees PENDING_APPROVAL.
+    mockOfferRevisionStatusFor
+      .mockResolvedValueOnce("DRAFT")
+      .mockResolvedValueOnce("PENDING_APPROVAL");
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: false, error: MSG.config.cannotEdit });
+    expect(mockUpdateConfiguration).not.toHaveBeenCalled();
+    expect(mockDeleteAllEngineeringBomItems).not.toHaveBeenCalled();
+    expect(mockRepriceOfferLine).not.toHaveBeenCalled();
+  });
+
+  test("fails when an OFFER config has no owning offer (data drift)", async () => {
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER" }),
+    );
+    mockGetUserData.mockResolvedValue({
+      id: OWNER_ID,
+      role: "SALES",
+      initials: "SA",
+    });
+    mockGetOfferRefForConfig.mockResolvedValue(null);
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(mockUpdateConfiguration).not.toHaveBeenCalled();
+  });
+
+  test("does not lock the offer row on a STANDALONE config edit", async () => {
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockGetOfferRefForConfig).not.toHaveBeenCalled();
+    expect(mockLockOfferRow).not.toHaveBeenCalled();
+  });
+
+  test("does not require a DRAFT revision on a post-handoff engineering edit", async () => {
+    // Engineer editing an IN_TECH_REVIEW config while the latest revision is
+    // frozen (ACCEPTED): the reprice must keep its by-design silent no-op.
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER", status: "IN_TECH_REVIEW" }),
+    );
+    mockOfferRevisionStatusFor.mockResolvedValue("ACCEPTED");
+    const result = await editConfigurationAction(CONF_ID, makeValidFormData());
+    expect(result).toEqual({ success: true });
+    expect(mockRepriceOfferLine).toHaveBeenCalledWith(
+      CONF_ID,
+      OWNER_ID,
+      mockTx,
+      { requireDraft: false },
+    );
   });
 
   test("does not revalidate when audit log insert fails (CONFIG_EDIT rolls back)", async () => {

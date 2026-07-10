@@ -2,6 +2,7 @@
 
 import { DatabaseError } from "pg";
 import { z } from "zod";
+import { assertEditableInTx } from "@/app/actions/lib/assert-editable-in-tx";
 import { isEditable } from "@/app/actions/lib/auth-checks";
 import { firstZodIssueMessage } from "@/app/actions/lib/first-zod-issue-message";
 import { revalidateConfigurationRoutes } from "@/app/actions/lib/revalidate-config-routes";
@@ -181,6 +182,16 @@ export async function handleSubRecordAction<
     let operationResult!: QueryResult;
 
     await db.transaction(async (tx) => {
+      // Re-assert the gate under the offer FOR UPDATE lock: the isEditable
+      // check above ran on a pooled read, so a concurrent revision submit can
+      // freeze the pricing snapshot before this tx commits (issue #255).
+      await assertEditableInTx(
+        configuration,
+        user.role,
+        tx,
+        MSG.config.cannotEditSubRecord,
+      );
+
       switch (options.actionType) {
         case "insert":
           operationResult = await options.queryFn(
@@ -222,9 +233,13 @@ export async function handleSubRecordAction<
       }
 
       // Water tanks and wash bays feed the BOM, so a tank/bay change re-prices the
-      // owning OFFER line. No-op for STANDALONE configs and non-DRAFT revisions.
+      // owning OFFER line. Pre-handoff (config DRAFT) the revision must still be
+      // DRAFT, so a frozen line fails the tx; post-handoff a frozen latest
+      // revision is the by-design no-op (a DRAFT renegotiation still reprices).
       if (configuration.origin === "OFFER") {
-        await repriceOfferLine(parentId, user.id, tx);
+        await repriceOfferLine(parentId, user.id, tx, {
+          requireDraft: configuration.status === "DRAFT",
+        });
       }
     });
 
