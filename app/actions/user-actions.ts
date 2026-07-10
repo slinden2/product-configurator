@@ -51,6 +51,12 @@ export async function changeUserRoleAction(formData: unknown) {
     return { success: false as const, error: MSG.users.notFound };
   }
 
+  // Symmetric with the promotion block above: ADMIN roles are immutable via
+  // the UI, so the admin count can never silently decrease.
+  if (targetUser.role === "ADMIN") {
+    return { success: false as const, error: MSG.users.cannotChangeAdminRole };
+  }
+
   try {
     await changeUserRoleWithAudit({
       userId,

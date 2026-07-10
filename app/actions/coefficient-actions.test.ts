@@ -392,6 +392,24 @@ describe("deleteCoefficientAction", () => {
     expect(result.success).toBe(false);
   });
 
+  test("rejects empty pn before touching the DB", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    const result = await deleteCoefficientAction("");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.coefficient.invalidPn);
+    expect(mockGetFullPriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockDeletePriceCoefficientByPnWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects pn longer than 25 chars before touching the DB", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    const result = await deleteCoefficientAction("X".repeat(26));
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.coefficient.invalidPn);
+    expect(mockGetFullPriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockDeletePriceCoefficientByPnWithAudit).not.toHaveBeenCalled();
+  });
+
   test("rejects deletion of active MAXBOM rows", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockResolvedValue({
@@ -483,6 +501,24 @@ describe("resetCoefficientAction", () => {
     mockGetUserData.mockResolvedValue(engineerUser);
     const result = await resetCoefficientAction("ITC-001");
     expect(result.success).toBe(false);
+  });
+
+  test("rejects empty pn before touching the DB", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    const result = await resetCoefficientAction("");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.coefficient.invalidPn);
+    expect(mockGetFullPriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockResetPriceCoefficientWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects pn longer than 25 chars before touching the DB", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    const result = await resetCoefficientAction("X".repeat(26));
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.coefficient.invalidPn);
+    expect(mockGetFullPriceCoefficientByPn).not.toHaveBeenCalled();
+    expect(mockResetPriceCoefficientWithAudit).not.toHaveBeenCalled();
   });
 
   test("rejects reset of MANUAL rows", async () => {

@@ -15,6 +15,7 @@ import {
 import { MSG } from "@/lib/messages";
 import { collectMaxBomPns, DEFAULT_COEFFICIENT } from "@/lib/pricing";
 import {
+  coefficientPnSchema,
   coefficientSchema,
   coefficientUpdateSchema,
 } from "@/validation/coefficient-schema";
@@ -102,7 +103,13 @@ export async function updateCoefficientAction(formData: {
   }
 }
 
-export async function deleteCoefficientAction(pn: string) {
+export async function deleteCoefficientAction(rawPn: string) {
+  const parsed = coefficientPnSchema.safeParse(rawPn);
+  if (!parsed.success) {
+    return { success: false as const, error: MSG.coefficient.invalidPn };
+  }
+  const pn = parsed.data;
+
   const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 
@@ -132,7 +139,13 @@ export async function deleteCoefficientAction(pn: string) {
   }
 }
 
-export async function resetCoefficientAction(pn: string) {
+export async function resetCoefficientAction(rawPn: string) {
+  const parsed = coefficientPnSchema.safeParse(rawPn);
+  if (!parsed.success) {
+    return { success: false as const, error: MSG.coefficient.invalidPn };
+  }
+  const pn = parsed.data;
+
   const auth = await authorizeAdmin(MSG.coefficient.adminOnly);
   if (!auth.success) return { success: false as const, error: auth.error };
 

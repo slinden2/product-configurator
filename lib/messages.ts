@@ -64,6 +64,8 @@ export const MSG = {
     notFound: "Utente non trovato.",
     cannotChangeOwnRole: "Non puoi modificare il tuo ruolo.",
     cannotPromoteToAdmin: "Non è possibile promuovere un utente ad ADMIN.",
+    cannotChangeAdminRole:
+      "Non è possibile modificare il ruolo di un utente ADMIN.",
     invalidManager: "Il responsabile selezionato non è valido.",
     adminOnly: "Accesso riservato agli amministratori.",
     alreadyActive: "L'utente è già attivo.",
@@ -211,6 +213,7 @@ export const MSG = {
     cannotResetManual:
       "Solo i coefficienti MaxBOM possono essere ripristinati al valore predefinito.",
     pnRequired: "Codice articolo obbligatorio.",
+    invalidPn: "Codice articolo non valido.",
     pnAlreadyExists: "Esiste già un coefficiente per questo codice articolo.",
     invalidCoefficient:
       "Valore coefficiente non valido (deve essere tra 0 e 5).",

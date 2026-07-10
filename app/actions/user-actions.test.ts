@@ -146,6 +146,19 @@ describe("changeUserRoleAction", () => {
       expect(result.error).toBe(MSG.users.cannotPromoteToAdmin);
   });
 
+  test("rejects demotion of another ADMIN", async () => {
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockFindFirst.mockResolvedValue({ id: TARGET_ID, role: "ADMIN" });
+    const result = await changeUserRoleAction({
+      userId: TARGET_ID,
+      newRole: "ENGINEER",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error).toBe(MSG.users.cannotChangeAdminRole);
+    expect(mockChangeUserRoleWithAudit).not.toHaveBeenCalled();
+  });
+
   test("returns notFound when target user does not exist", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockFindFirst.mockResolvedValue(undefined);
