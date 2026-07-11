@@ -205,16 +205,12 @@ const ConfigurationRow = ({ configuration, user }: ConfigurationRowProps) => {
       <ConfirmModal
         isOpen={isConfirmDeleteOpen}
         onOpenChange={setIsConfirmDeleteOpen}
-        title="Conferma eliminazione"
-        description={
-          <>
-            Sei sicuro di voler eliminare la configurazione{" "}
-            <span className="font-semibold">{configuration.name}</span>? Questa
-            azione non può essere annullata.
-          </>
-        }
+        title={MSG.deleteConfirm.title}
+        description={MSG.deleteConfirm.body(
+          `la configurazione "${configuration.name}"`,
+        )}
         onConfirm={performDelete}
-        confirmText="Elimina"
+        confirmText={MSG.deleteConfirm.confirm}
         confirmVariant="destructive"
         cancelText="Annulla"
         isConfirming={isDeleting}

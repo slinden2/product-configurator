@@ -349,10 +349,10 @@ const SubRecordForm = <
       <ConfirmModal
         isOpen={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
-        title="Conferma eliminazione"
-        description={`Sei sicuro di voler eliminare ${entityName} ${entityIndex ?? ""}?`}
+        title={MSG.deleteConfirm.title}
+        description={MSG.deleteConfirm.body(entityName, entityIndex)}
         onConfirm={handleDeleteConfirm}
-        confirmText="Elimina"
+        confirmText={MSG.deleteConfirm.confirm}
         confirmVariant="destructive"
         isConfirming={isDeleting}
       />
