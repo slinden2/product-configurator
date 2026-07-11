@@ -31,9 +31,9 @@ const RemoveLineButton = ({
       }}
       successMsg={MSG.toast.offerLineRemoved}
       confirm={{
-        title: "Rimuovere la configurazione?",
-        description: `La configurazione "${configName}" verrà eliminata dall'offerta. L'operazione non è reversibile.`,
-        confirmLabel: "Rimuovi",
+        title: MSG.offer.removeLineConfirm.title,
+        description: MSG.offer.removeLineConfirm.description(configName),
+        confirmLabel: MSG.offer.removeLineConfirm.confirmLabel,
         confirmVariant: "destructive",
       }}
     >

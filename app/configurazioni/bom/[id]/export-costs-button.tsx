@@ -5,6 +5,7 @@ import { explodeBomToLeavesAction } from "@/app/actions/bom-lines-actions";
 import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { UserData } from "@/db/queries";
 import type { BOMItemWithCost } from "@/lib/BOM";
+import { MSG } from "@/lib/messages";
 import { createExcelFile } from "./create-excel-file";
 
 interface ExportCostsButtonProps {
@@ -30,7 +31,7 @@ const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => (
       );
     }}
     icon={<Share />}
-    errorMsg="Errore durante l'esportazione dei costi."
+    errorMsg={MSG.toast.exportCostsError}
     variant="outline"
     size="sm"
   >

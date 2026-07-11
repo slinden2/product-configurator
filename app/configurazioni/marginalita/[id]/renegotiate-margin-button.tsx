@@ -32,9 +32,9 @@ const RenegotiateMarginButton = ({ offerId }: RenegotiateMarginButtonProps) => {
       }}
       successMsg={MSG.toast.offerRenegotiationCreated}
       confirm={{
-        title: "Avviare una rinegoziazione?",
+        title: MSG.marginReview.renegotiateConfirmTitle,
         description: MSG.offer.renegotiateConfirm,
-        confirmLabel: "Rinegozia",
+        confirmLabel: MSG.marginReview.renegotiateButton,
         confirmVariant: "default",
       }}
     >

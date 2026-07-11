@@ -59,6 +59,12 @@ export const MSG = {
       "La distinta di commessa non esiste ancora. Usa 'Genera distinta di commessa' prima di aggiungere righe manuali.",
     invalidQty: "Quantità non valida.",
     rowNotFound: "Riga non trovata.",
+    regenerateConfirm: {
+      title: "Rigenerare la distinta?",
+      description:
+        "Attenzione: questa azione sovrascriverà tutte le modifiche manuali alla distinta. La distinta verrà ricalcolata dalla configurazione attuale. Continuare?",
+      confirmLabel: "Rigenera",
+    },
   },
   users: {
     notFound: "Utente non trovato.",
@@ -174,6 +180,8 @@ export const MSG = {
     offerSettingsSet: "Impostazioni offerta aggiornate.",
     offerSettingsError:
       "Errore durante l'aggiornamento delle impostazioni offerta.",
+    exportCostsError: "Errore durante l'esportazione dei costi.",
+    exportPdfError: "Errore durante l'esportazione del PDF.",
   },
   saveWarning: {
     ebomOnly: {
@@ -182,6 +190,12 @@ export const MSG = {
         "Salvando le modifiche alla configurazione, la distinta di commessa verrà eliminata e dovrà essere rigenerata. Continuare?",
       confirm: "Salva e elimina distinta",
     },
+  },
+  deleteConfirm: {
+    title: "Conferma eliminazione",
+    body: (name: string, index?: number | null) =>
+      `Sei sicuro di voler eliminare ${name}${index != null ? ` ${index}` : ""}? Questa azione non può essere annullata.`,
+    confirm: "Elimina",
   },
   duplicateConfirm: {
     title: "Conferma duplicazione",
@@ -304,6 +318,12 @@ export const MSG = {
       "Le configurazioni di una rinegoziazione non sono modificabili: solo prezzi e condizioni commerciali.",
     renegotiateConfirm:
       "Avviare una rinegoziazione? Verrà creata una nuova revisione con le configurazioni correnti (sola lettura) e i prezzi ricalcolati; le condizioni commerciali saranno modificabili fino all'invio.",
+    removeLineConfirm: {
+      title: "Rimuovere la configurazione?",
+      description: (name: string) =>
+        `La configurazione "${name}" verrà eliminata dall'offerta. L'operazione non è reversibile.`,
+      confirmLabel: "Rimuovi",
+    },
     renegotiationBadge: "Rinegoziazione",
     acceptedSupersededBadge: "Accettata (superata)",
     reacceptConfirm:
@@ -344,6 +364,7 @@ export const MSG = {
       `Accettato da ${by} il ${at} con marginalità ${marginPct}.`,
     signOffNoteLabel: "Nota",
     renegotiateButton: "Rinegozia",
+    renegotiateConfirmTitle: "Avviare una rinegoziazione?",
     renegotiationOpen: "Rinegoziazione in corso",
   },
 } as const;

@@ -2,6 +2,7 @@
 
 import { FileText } from "lucide-react";
 import { AsyncActionButton } from "@/components/shared/async-action-button";
+import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import type { UpdateConfigSchema } from "@/validation/config-schema";
 import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
@@ -33,7 +34,7 @@ const ExportConfigPdfButton = ({
       });
     }}
     icon={<FileText />}
-    errorMsg="Errore durante l'esportazione del PDF."
+    errorMsg={MSG.toast.exportPdfError}
     variant="outline"
   >
     Esporta PDF
