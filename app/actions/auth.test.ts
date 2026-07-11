@@ -383,7 +383,7 @@ describe("signOut", () => {
 
     await signOut();
 
-    expect(redirect).toHaveBeenCalledWith("/error");
+    expect(redirect).toHaveBeenCalledWith("/errore");
   });
 });
 
