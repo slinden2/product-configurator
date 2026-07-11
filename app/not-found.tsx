@@ -22,7 +22,7 @@ export default function NotFound() {
       </div>
 
       <Button asChild>
-        <Link href="/configurazioni">
+        <Link href="/">
           <Home className="mr-2 h-4 w-4" />
           Torna alla home
         </Link>

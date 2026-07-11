@@ -19,7 +19,8 @@ const LoginForm = () => {
   const onSubmit = async (formData: LoginSchema) => {
     const response = await signIn(formData);
     if (response.success) {
-      router.push("/configurazioni");
+      // "/" owns the per-role landing redirect; duplicating it here would drift.
+      router.push("/");
     } else {
       toast.error(response.error);
     }

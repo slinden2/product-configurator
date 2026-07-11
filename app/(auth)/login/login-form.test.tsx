@@ -68,7 +68,7 @@ describe("LoginForm", () => {
   });
 
   describe("Form submission", () => {
-    test("calls signIn and redirects to /configurazioni on success", async () => {
+    test("calls signIn and redirects to / on success, letting the landing page route by role", async () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 
@@ -81,7 +81,7 @@ describe("LoginForm", () => {
           email: "test@itecosrl.com",
           password: "password123",
         });
-        expect(mockPush).toHaveBeenCalledWith("/configurazioni");
+        expect(mockPush).toHaveBeenCalledWith("/");
       });
     });
 
