@@ -197,7 +197,7 @@ export async function snapshotEngineeringBomAction(confId: number) {
       // config, so this re-check sees the winner's committed items and stops
       // the loser from doubling every row (#246).
       if (await hasEngineeringBom(confId, tx)) {
-        throw new QueryError(MSG.bom.alreadyExists, 409);
+        throw new QueryError(MSG.bom.alreadyExists);
       }
       await insertEngineeringBomItems(items, tx);
       await insertActivityLog(
@@ -299,7 +299,7 @@ export async function addEngineeringBomItemAction(
       // precondition of the TECH_APPROVED gate (#246). Checked under the same
       // row lock so a concurrent regenerate/wipe cannot race it.
       if (!(await hasEngineeringBom(confId, tx))) {
-        throw new QueryError(MSG.bom.snapshotRequired, 409);
+        throw new QueryError(MSG.bom.snapshotRequired);
       }
       const [row] = await tx
         .insert(engineeringBomItems)
@@ -374,7 +374,7 @@ export async function updateEngineeringBomItemQtyAction(
           ),
         );
 
-      if (!existing) throw new QueryError(MSG.bom.rowNotFound, 404);
+      if (!existing) throw new QueryError(MSG.bom.rowNotFound);
 
       const [updated] = await tx
         .update(engineeringBomItems)
@@ -387,7 +387,7 @@ export async function updateEngineeringBomItemQtyAction(
         )
         .returning({ id: engineeringBomItems.id });
 
-      if (!updated) throw new QueryError(MSG.bom.rowNotFound, 404);
+      if (!updated) throw new QueryError(MSG.bom.rowNotFound);
 
       await insertActivityLog(
         {
@@ -435,7 +435,7 @@ export async function toggleDeleteEngineeringBomItemAction(
           ),
         );
 
-      if (!existing) throw new QueryError(MSG.bom.rowNotFound, 404);
+      if (!existing) throw new QueryError(MSG.bom.rowNotFound);
 
       const [updated] = await tx
         .update(engineeringBomItems)
@@ -448,7 +448,7 @@ export async function toggleDeleteEngineeringBomItemAction(
         )
         .returning({ id: engineeringBomItems.id });
 
-      if (!updated) throw new QueryError(MSG.bom.rowNotFound, 404);
+      if (!updated) throw new QueryError(MSG.bom.rowNotFound);
 
       await insertActivityLog(
         {

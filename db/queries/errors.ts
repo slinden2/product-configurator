@@ -6,12 +6,9 @@ export type TransactionType = Parameters<
 >[0];
 
 export class QueryError extends Error {
-  errorCode: number;
-
-  constructor(message: string, errorCode: number) {
+  constructor(message: string) {
     super(message);
     this.name = "QueryError";
-    this.errorCode = errorCode;
 
     Object.setPrototypeOf(this, QueryError.prototype);
   }

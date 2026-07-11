@@ -19,11 +19,9 @@ vi.mock("@/db/queries", () => ({
   absorbOfferLineMarginWithAudit: (...args: unknown[]) =>
     mockAbsorbOfferLineMarginWithAudit(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -280,7 +278,7 @@ describe("absorbLineMarginAction", () => {
 
   test("maps a QueryError from the audit helper to its message", async () => {
     mockAbsorbOfferLineMarginWithAudit.mockRejectedValue(
-      new QueryError(MSG.marginReview.absorbNotAccepted, 409),
+      new QueryError(MSG.marginReview.absorbNotAccepted),
     );
     const result = await absorbLineMarginAction(CONF_ID, {});
     expect(result).toEqual({

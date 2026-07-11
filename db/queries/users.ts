@@ -109,7 +109,7 @@ export async function changeUserRoleWithAudit(data: {
       .from(userProfiles)
       .where(eq(userProfiles.id, data.userId));
 
-    if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+    if (!targetRow) throw new QueryError(MSG.users.notFound);
 
     // Only SALES agents report to a manager; clear a stale manager_id when the
     // user moves to any other role.
@@ -156,9 +156,9 @@ export async function activateUserWithAudit(data: {
       .where(eq(userProfiles.id, data.userId))
       .for("update");
 
-    if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+    if (!targetRow) throw new QueryError(MSG.users.notFound);
     if (targetRow.is_active) {
-      throw new QueryError(MSG.users.alreadyActive, 400);
+      throw new QueryError(MSG.users.alreadyActive);
     }
 
     await tx
@@ -200,13 +200,13 @@ export async function assignManagerWithAudit(data: {
       .where(eq(userProfiles.id, data.userId))
       .for("update");
 
-    if (!targetRow) throw new QueryError(MSG.users.notFound, 404);
+    if (!targetRow) throw new QueryError(MSG.users.notFound);
 
     // Only SALES agents report to a manager. Re-validate inside the locked
     // transaction so a manager_id can never land on a non-SALES profile and
     // leak that user's configs into a manager's scope.
     if (targetRow.role !== "SALES") {
-      throw new QueryError(MSG.users.invalidManager, 400);
+      throw new QueryError(MSG.users.invalidManager);
     }
 
     // The manager must still exist and be a SALES_MANAGER at write time; lock it
@@ -219,7 +219,7 @@ export async function assignManagerWithAudit(data: {
         .for("update");
 
       if (!managerRow || managerRow.role !== "SALES_MANAGER") {
-        throw new QueryError(MSG.users.invalidManager, 400);
+        throw new QueryError(MSG.users.invalidManager);
       }
     }
 

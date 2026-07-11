@@ -86,7 +86,7 @@ describe("absorbOfferLineMarginWithAudit — in-force accepted revision guard", 
     );
 
     await expect(absorbOfferLineMarginWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.marginReview.absorbNotAccepted, 409),
+      new QueryError(MSG.marginReview.absorbNotAccepted),
     );
     expect(txStub.update).not.toHaveBeenCalled();
     expect(txStub.insert).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe("absorbOfferLineMarginWithAudit — in-force accepted revision guard", 
     );
 
     await expect(absorbOfferLineMarginWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.marginReview.absorbNotAccepted, 409),
+      new QueryError(MSG.marginReview.absorbNotAccepted),
     );
     expect(txStub.update).not.toHaveBeenCalled();
     expect(txStub.insert).not.toHaveBeenCalled();
@@ -110,7 +110,7 @@ describe("absorbOfferLineMarginWithAudit — in-force accepted revision guard", 
     );
 
     await expect(absorbOfferLineMarginWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.marginReview.absorbNotAccepted, 409),
+      new QueryError(MSG.marginReview.absorbNotAccepted),
     );
     expect(txStub.update).not.toHaveBeenCalled();
     expect(txStub.insert).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe("absorbOfferLineMarginWithAudit — in-force accepted revision guard", 
     txStub.select.mockReturnValue(selectChain([]));
 
     await expect(absorbOfferLineMarginWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.marginReview.absorbNotAccepted, 409),
+      new QueryError(MSG.marginReview.absorbNotAccepted),
     );
     expect(txStub.update).not.toHaveBeenCalled();
     expect(txStub.insert).not.toHaveBeenCalled();

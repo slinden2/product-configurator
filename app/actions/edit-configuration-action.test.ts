@@ -39,11 +39,9 @@ vi.mock("@/db/queries", () => ({
     mockResetWashBayNonEnergyChainFields(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -328,7 +326,7 @@ describe("editConfigurationAction", () => {
       mockConfig({ origin: "OFFER" }),
     );
     mockRepriceOfferLine.mockRejectedValue(
-      new QueryError(MSG.surcharge.priceNotConfigured, 400),
+      new QueryError(MSG.surcharge.priceNotConfigured),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({
@@ -367,16 +365,14 @@ describe("editConfigurationAction", () => {
   });
 
   test("returns error message on QueryError", async () => {
-    mockUpdateConfiguration.mockRejectedValue(
-      new QueryError("Non trovata.", 404),
-    );
+    mockUpdateConfiguration.mockRejectedValue(new QueryError("Non trovata."));
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({ success: false, error: "Non trovata." });
   });
 
   test("surfaces the 409 conflict when the status moved between gate and write (lost race, issue #240)", async () => {
     mockUpdateConfiguration.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result = await editConfigurationAction(CONF_ID, makeValidFormData());
     expect(result).toEqual({

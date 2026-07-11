@@ -21,11 +21,9 @@ vi.mock("@/db/queries", () => ({
     mockActivateUserWithAudit(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -189,7 +187,7 @@ describe("changeUserRoleAction", () => {
   test("does not revalidate when helper rejects (audit failure rolls back)", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockChangeUserRoleWithAudit.mockRejectedValue(
-      new QueryError("Utente non trovato.", 404),
+      new QueryError("Utente non trovato."),
     );
     const result = await changeUserRoleAction({
       userId: TARGET_ID,
@@ -202,7 +200,7 @@ describe("changeUserRoleAction", () => {
   test("returns QueryError message on QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockChangeUserRoleWithAudit.mockRejectedValue(
-      new QueryError("Utente non trovato.", 404),
+      new QueryError("Utente non trovato."),
     );
     const result = await changeUserRoleAction({
       userId: TARGET_ID,
@@ -360,7 +358,7 @@ describe("activateUserAction", () => {
 
   test("surfaces QueryError messages (already active / not found) verbatim", async () => {
     mockActivateUserWithAudit.mockRejectedValue(
-      new QueryError(MSG.users.alreadyActive, 400),
+      new QueryError(MSG.users.alreadyActive),
     );
     const result = await activateUserAction({ userId: TARGET_ID });
     expect(result.success).toBe(false);

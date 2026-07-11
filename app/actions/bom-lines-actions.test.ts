@@ -11,11 +11,9 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getAssemblyChildren: (...args: unknown[]) => mockGetAssemblyChildren(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -142,7 +140,7 @@ describe("getAssemblyChildrenAction", () => {
 
   test("returns QueryError message on QueryError", async () => {
     mockGetAssemblyChildren.mockRejectedValue(
-      new QueryError("PN non trovato.", 404),
+      new QueryError("PN non trovato."),
     );
     const result = await getAssemblyChildrenAction("PARENT-001");
     expect(result.success).toBe(false);

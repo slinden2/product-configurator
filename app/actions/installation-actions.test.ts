@@ -11,11 +11,9 @@ vi.mock("@/db/queries", () => ({
   updateInstallationItemSettingWithAudit: (...args: unknown[]) =>
     mockUpdateInstallationItemSettingWithAudit(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -132,7 +130,7 @@ describe("updateInstallationItemSettingAction", () => {
   test("returns QueryError message when transaction fails with QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockUpdateInstallationItemSettingWithAudit.mockRejectedValue(
-      new QueryError("Voce di installazione non trovata.", 404),
+      new QueryError("Voce di installazione non trovata."),
     );
 
     const result = await updateInstallationItemSettingAction({

@@ -54,11 +54,9 @@ vi.mock("@/db/queries", () => ({
   returnOfferRevisionToDraftWithAudit: (...args: unknown[]) =>
     mockReturnOfferRevisionToDraftWithAudit(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -601,7 +599,7 @@ describe("createRevisionAction", () => {
 
   test("surfaces the working-revision guard error", async () => {
     mockCreateOfferRevisionFrom.mockRejectedValue(
-      new QueryError(MSG.offer.workingRevisionExists, 409),
+      new QueryError(MSG.offer.workingRevisionExists),
     );
     const result = await createRevisionAction(OFFER_ID);
     expect(result).toEqual({
@@ -681,7 +679,7 @@ describe("createRenegotiationRevisionAction", () => {
 
   test("surfaces the not-accepted guard error", async () => {
     mockCreateRenegotiationRevisionFrom.mockRejectedValue(
-      new QueryError(MSG.offer.renegotiationNotAccepted, 409),
+      new QueryError(MSG.offer.renegotiationNotAccepted),
     );
     const result = await createRenegotiationRevisionAction(OFFER_ID);
     expect(result).toEqual({
@@ -692,7 +690,7 @@ describe("createRenegotiationRevisionAction", () => {
 
   test("surfaces the open-working-revision guard error", async () => {
     mockCreateRenegotiationRevisionFrom.mockRejectedValue(
-      new QueryError(MSG.offer.workingRevisionExists, 409),
+      new QueryError(MSG.offer.workingRevisionExists),
     );
     const result = await createRenegotiationRevisionAction(OFFER_ID);
     expect(result).toEqual({
@@ -846,7 +844,7 @@ describe("acceptRevisionAction", () => {
 
   test("propagates an already-accepted QueryError from the helper", async () => {
     mockAcceptOfferRevisionWithAudit.mockRejectedValue(
-      new QueryError(MSG.offer.alreadyAccepted, 409),
+      new QueryError(MSG.offer.alreadyAccepted),
     );
     const result = await acceptRevisionAction(OFFER_ID);
     expect(result).toEqual({
@@ -947,7 +945,7 @@ describe("unacceptRevisionAction", () => {
 
   test("propagates the engineering-started guard error from the helper", async () => {
     mockUnacceptOfferRevisionWithAudit.mockRejectedValue(
-      new QueryError(MSG.offer.unacceptEngineeringStarted, 409),
+      new QueryError(MSG.offer.unacceptEngineeringStarted),
     );
     const result = await unacceptRevisionAction(OFFER_ID);
     expect(result).toEqual({

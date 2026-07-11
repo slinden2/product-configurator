@@ -270,7 +270,7 @@ export const insertConfiguration = async (
     .returning({ id: configurations.id });
 
   if (!insertedConfiguration) {
-    throw new QueryError(MSG.config.createFailed, 500);
+    throw new QueryError(MSG.config.createFailed);
   }
 
   return insertedConfiguration;
@@ -348,7 +348,7 @@ export const cloneConfigurationRows = async (
     .returning({ id: configurations.id });
 
   if (!newConfig) {
-    throw new QueryError(MSG.config.duplicateFailed, 500);
+    throw new QueryError(MSG.config.duplicateFailed);
   }
 
   if (source.water_tanks.length > 0) {
@@ -403,7 +403,7 @@ export const deleteConfiguration = async (
   // The caller's pre-read already proved existence and scope, so a zero-row
   // delete means the status moved under us — a concurrency conflict (#240).
   if (!deletedConfiguration) {
-    throw new QueryError(MSG.config.statusConflict, 409);
+    throw new QueryError(MSG.config.statusConflict);
   }
 };
 
@@ -430,7 +430,7 @@ export const updateConfiguration = async (
   // write means the status moved under us — a concurrency conflict, not
   // "not found" (#240).
   if (!updatedConfiguration) {
-    throw new QueryError(MSG.config.statusConflict, 409);
+    throw new QueryError(MSG.config.statusConflict);
   }
 
   return updatedConfiguration;
@@ -455,7 +455,7 @@ export const touchConfigurationUpdatedAt = async (
   // Sub-record queryFns only touch child tables, so this conditional touch is
   // the status compare-and-swap for the whole sub-record path (#240).
   if (!touchedConfiguration) {
-    throw new QueryError(MSG.config.statusConflict, 409);
+    throw new QueryError(MSG.config.statusConflict);
   }
 };
 
@@ -481,7 +481,7 @@ export const assertConfigurationStatus = async (
     .for("update");
 
   if (!row) {
-    throw new QueryError(MSG.config.statusConflict, 409);
+    throw new QueryError(MSG.config.statusConflict);
   }
 };
 
@@ -494,17 +494,17 @@ export const updateConfigStatus = async (
   const configuration = await getConfiguration(confId, txOrDb);
 
   if (!configuration) {
-    throw new QueryError(MSG.config.notFound, 404);
+    throw new QueryError(MSG.config.notFound);
   }
 
   // Access must be checked before any state-dependent response, or an
   // out-of-scope caller could probe a config's current status via 400-vs-403.
   if (!(await canAccessConfiguration(user, configuration))) {
-    throw new QueryError(MSG.auth.userUnauthorized, 403);
+    throw new QueryError(MSG.auth.userUnauthorized);
   }
 
   if (configuration.status === statusData.status) {
-    throw new QueryError(MSG.config.statusAlreadyUpdated, 400);
+    throw new QueryError(MSG.config.statusAlreadyUpdated);
   }
 
   if (
@@ -515,13 +515,13 @@ export const updateConfigStatus = async (
       configuration.origin,
     )
   ) {
-    throw new QueryError(MSG.config.statusUnauthorized, 403);
+    throw new QueryError(MSG.config.statusUnauthorized);
   }
 
   if (statusData.status === "TECH_APPROVED") {
     const bomExists = await hasEngineeringBom(confId, txOrDb);
     if (!bomExists) {
-      throw new QueryError(MSG.config.approvedRequiresBom, 400);
+      throw new QueryError(MSG.config.approvedRequiresBom);
     }
   }
 
@@ -535,7 +535,7 @@ export const updateConfigStatus = async (
   ) {
     const bays = await getWashBaysByConfigId(confId, txOrDb);
     if (!hasQualifyingEnergyChainBay(bays)) {
-      throw new QueryError(MSG.config.energyChainRequiresGantry, 400);
+      throw new QueryError(MSG.config.energyChainRequiresGantry);
     }
   }
 
@@ -552,7 +552,7 @@ export const updateConfigStatus = async (
   // The pre-read already proved the row exists and is authorized, so a zero-row
   // write means the status moved under us — a concurrency conflict, not "not found".
   if (!response) {
-    throw new QueryError(MSG.config.statusConflict, 409);
+    throw new QueryError(MSG.config.statusConflict);
   }
 
   return { id: response.id, fromStatus, origin: configuration.origin };
@@ -589,7 +589,7 @@ export const insertWaterTank = async (
     .returning({ id: waterTanks.id });
 
   if (!inserted) {
-    throw new QueryError(MSG.db.error, 500);
+    throw new QueryError(MSG.db.error);
   }
 
   return inserted;
@@ -615,7 +615,7 @@ export const updateWaterTank = async (
     .returning({ id: waterTanks.id });
 
   if (!updated) {
-    throw new QueryError(MSG.config.subRecordNotFound, 404);
+    throw new QueryError(MSG.config.subRecordNotFound);
   }
 
   return updated;
@@ -637,7 +637,7 @@ export const deleteWaterTank = async (
     .returning({ id: waterTanks.id });
 
   if (!deleted) {
-    throw new QueryError(MSG.config.subRecordNotFound, 404);
+    throw new QueryError(MSG.config.subRecordNotFound);
   }
 
   return deleted;
@@ -671,7 +671,7 @@ export const insertWashBay = async (
     .returning({ id: washBays.id });
 
   if (!inserted) {
-    throw new QueryError(MSG.db.error, 500);
+    throw new QueryError(MSG.db.error);
   }
 
   return inserted;
@@ -694,7 +694,7 @@ export const updateWashBay = async (
     .returning({ id: washBays.id });
 
   if (!updated) {
-    throw new QueryError(MSG.config.subRecordNotFound, 404);
+    throw new QueryError(MSG.config.subRecordNotFound);
   }
 
   return updated;
@@ -713,7 +713,7 @@ export const deleteWashBay = async (
     .returning({ id: washBays.id });
 
   if (!deleted) {
-    throw new QueryError(MSG.config.subRecordNotFound, 404);
+    throw new QueryError(MSG.config.subRecordNotFound);
   }
 
   return deleted;

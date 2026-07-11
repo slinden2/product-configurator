@@ -21,11 +21,9 @@ vi.mock("@/db/queries", () => ({
     mockOfferRevisionStatusFor(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -235,7 +233,7 @@ describe("deleteConfigurationAction", () => {
   test("surfaces the 409 conflict when the status moved between gate and delete (lost race, issue #240)", async () => {
     const { QueryError } = await import("@/db/queries");
     mockDeleteConfiguration.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result).toEqual({
@@ -261,9 +259,7 @@ describe("deleteConfigurationAction", () => {
 
   test("does not revalidate when audit log insert fails (CONFIG_DELETE rolls back)", async () => {
     const { QueryError } = await import("@/db/queries");
-    mockInsertActivityLog.mockRejectedValue(
-      new QueryError("audit failure", 500),
-    );
+    mockInsertActivityLog.mockRejectedValue(new QueryError("audit failure"));
     const result = await deleteConfigurationAction(CONF_ID);
     expect(result.success).toBe(false);
     const { revalidatePath } = await import("next/cache");

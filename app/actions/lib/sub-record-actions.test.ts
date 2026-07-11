@@ -35,11 +35,9 @@ vi.mock("@/db/queries", () => ({
   touchConfigurationUpdatedAt: (...args: unknown[]) =>
     mockTouchConfigurationUpdatedAt(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -220,7 +218,7 @@ describe("handleSubRecordAction", () => {
   test("edit: zero-row match reports failure and skips side effects", async () => {
     const queryFn = vi
       .fn()
-      .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound, 404));
+      .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound));
     const result = await handleSubRecordAction(editOptions({ queryFn }));
     expect(result).toEqual({
       success: false,
@@ -235,7 +233,7 @@ describe("handleSubRecordAction", () => {
   test("delete: zero-row match reports failure and skips side effects", async () => {
     const queryFn = vi
       .fn()
-      .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound, 404));
+      .mockRejectedValue(new QueryError(MSG.config.subRecordNotFound));
     const result = await handleSubRecordAction(deleteOptions({ queryFn }));
     expect(result).toEqual({
       success: false,
@@ -553,7 +551,7 @@ describe("handleSubRecordAction", () => {
 
   test("surfaces the 409 conflict and skips side effects when the status moved between gate and write (lost race, issue #240)", async () => {
     mockTouchConfigurationUpdatedAt.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result = await handleSubRecordAction(insertOptions());
     expect(result).toEqual({

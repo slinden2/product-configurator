@@ -241,7 +241,7 @@ export async function insertOffer(
       .returning({ id: offers.id });
 
     if (!offer) {
-      throw new QueryError(MSG.offer.createFailed, 500);
+      throw new QueryError(MSG.offer.createFailed);
     }
 
     await tx.insert(offerRevisions).values({
@@ -438,16 +438,16 @@ export async function addOfferLine(
     },
   });
 
-  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (!offer) throw new QueryError(MSG.offer.notFound);
   const revision = offer.revisions[0];
-  if (!revision) throw new QueryError(MSG.offer.notFound, 404);
+  if (!revision) throw new QueryError(MSG.offer.notFound);
   if (revision.status !== "DRAFT") {
-    throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    throw new QueryError(MSG.offer.lineCannotEdit);
   }
   // A DRAFT revision on an accepted offer is a renegotiation: commercial-only,
   // its configuration set is fixed to the accepted revision's.
   if (offer.accepted_revision_id !== null) {
-    throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
+    throw new QueryError(MSG.offer.renegotiationLinesLocked);
   }
 
   const { id: configId } = await insertConfiguration(
@@ -688,18 +688,18 @@ export async function createOfferRevisionFrom(
     },
   });
 
-  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (!offer) throw new QueryError(MSG.offer.notFound);
   if (offer.accepted_revision_id !== null) {
-    throw new QueryError(MSG.offer.alreadyAccepted, 409);
+    throw new QueryError(MSG.offer.alreadyAccepted);
   }
 
   const latest = offer.revisions[0];
-  if (!latest) throw new QueryError(MSG.offer.notFound, 404);
+  if (!latest) throw new QueryError(MSG.offer.notFound);
   // Only one open working revision at a time: a new revision can be cloned forward only
   // once the latest has been sent (or otherwise closed). DRAFT/PENDING_APPROVAL/
   // APPROVED_TO_SEND are all still the active working revision.
   if (OPEN_REVISION_STATUSES.includes(latest.status)) {
-    throw new QueryError(MSG.offer.workingRevisionExists, 409);
+    throw new QueryError(MSG.offer.workingRevisionExists);
   }
 
   // Default to the latest revision; resolved here (in-tx) so it can't be stale.
@@ -707,7 +707,7 @@ export async function createOfferRevisionFrom(
   const source = offer.revisions.find(
     (r) => r.revision_no === resolvedSourceNo,
   );
-  if (!source) throw new QueryError(MSG.offer.notFound, 404);
+  if (!source) throw new QueryError(MSG.offer.notFound);
 
   const newRevisionNo = latest.revision_no + 1;
 
@@ -732,7 +732,7 @@ export async function createOfferRevisionFrom(
     })
     .returning({ id: offerRevisions.id });
 
-  if (!newRevision) throw new QueryError(MSG.offer.createFailed, 500);
+  if (!newRevision) throw new QueryError(MSG.offer.createFailed);
 
   // Each config clone needs its own returning id, but the line rows that reference
   // them are accumulated and inserted in a single batch after the loop.
@@ -831,21 +831,21 @@ export async function createRenegotiationRevisionFrom(
     },
   });
 
-  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (!offer) throw new QueryError(MSG.offer.notFound);
   if (offer.accepted_revision_id === null) {
-    throw new QueryError(MSG.offer.renegotiationNotAccepted, 409);
+    throw new QueryError(MSG.offer.renegotiationNotAccepted);
   }
 
   const latest = offer.revisions[0];
-  if (!latest) throw new QueryError(MSG.offer.notFound, 404);
+  if (!latest) throw new QueryError(MSG.offer.notFound);
   if (OPEN_REVISION_STATUSES.includes(latest.status)) {
-    throw new QueryError(MSG.offer.workingRevisionExists, 409);
+    throw new QueryError(MSG.offer.workingRevisionExists);
   }
 
   const source = offer.revisions.find(
     (r) => r.id === offer.accepted_revision_id,
   );
-  if (!source) throw new QueryError(MSG.offer.notFound, 404);
+  if (!source) throw new QueryError(MSG.offer.notFound);
 
   const newRevisionNo = latest.revision_no + 1;
 
@@ -868,7 +868,7 @@ export async function createRenegotiationRevisionFrom(
     })
     .returning({ id: offerRevisions.id });
 
-  if (!newRevision) throw new QueryError(MSG.offer.createFailed, 500);
+  if (!newRevision) throw new QueryError(MSG.offer.createFailed);
 
   // Reference the accepted lines' configurations — no clone. Snapshot and absorb
   // columns start clean: the re-freeze happens at re-acceptance.
@@ -970,7 +970,7 @@ export async function submitOfferRevisionForApprovalWithAudit(
     .from(offerRevisionLines)
     .where(eq(offerRevisionLines.offer_revision_id, revisionId));
   if (Number(lineCount?.count ?? 0) === 0) {
-    throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+    throw new QueryError(MSG.offer.cannotSendEmpty);
   }
 
   const [updated] = await tx
@@ -985,7 +985,7 @@ export async function submitOfferRevisionForApprovalWithAudit(
     .returning({ id: offerRevisions.id });
 
   // No row updated ⇒ the revision left DRAFT under us (concurrent submit/send).
-  if (!updated) throw new QueryError(MSG.offer.cannotSubmit, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotSubmit);
 
   await insertActivityLog(
     {
@@ -1028,7 +1028,7 @@ export async function approveOfferRevisionWithAudit(
     .returning({ id: offerRevisions.id });
 
   // No row updated ⇒ the revision left PENDING_APPROVAL under us.
-  if (!updated) throw new QueryError(MSG.offer.cannotApprove, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotApprove);
 
   await insertActivityLog(
     {
@@ -1072,7 +1072,7 @@ export async function returnOfferRevisionToDraftWithAudit(
     .returning({ id: offerRevisions.id });
 
   // No row updated ⇒ the revision moved off `fromStatus` under us.
-  if (!updated) throw new QueryError(MSG.offer.cannotReturnToDraft, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotReturnToDraft);
 
   await insertActivityLog(
     {
@@ -1107,7 +1107,7 @@ export async function markOfferRevisionSentWithAudit(
     .from(offerRevisionLines)
     .where(eq(offerRevisionLines.offer_revision_id, revisionId));
   if (Number(lineCount?.count ?? 0) === 0) {
-    throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+    throw new QueryError(MSG.offer.cannotSendEmpty);
   }
 
   const [updated] = await tx
@@ -1122,7 +1122,7 @@ export async function markOfferRevisionSentWithAudit(
     .returning({ id: offerRevisions.id });
 
   // No row updated ⇒ the revision moved out of APPROVED_TO_SEND under us.
-  if (!updated) throw new QueryError(MSG.offer.cannotSend, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotSend);
 
   await insertActivityLog(
     {
@@ -1177,18 +1177,18 @@ export async function acceptOfferRevisionWithAudit(
       },
     },
   });
-  if (!offerRow) throw new QueryError(MSG.offer.notFound, 404);
+  if (!offerRow) throw new QueryError(MSG.offer.notFound);
   // A set pointer means this acceptance is a renegotiation re-acceptance. Only the
   // in-force revision itself can't be accepted again; any other target must be SENT,
   // which the status-guarded update below enforces (a past accepted revision can
   // never be SENT again).
   const isReacceptance = offerRow.accepted_revision_id !== null;
   if (offerRow.accepted_revision_id === revisionId) {
-    throw new QueryError(MSG.offer.alreadyAccepted, 409);
+    throw new QueryError(MSG.offer.alreadyAccepted);
   }
 
   const target = offerRow.revisions.find((rev) => rev.id === revisionId);
-  if (!target) throw new QueryError(MSG.offer.notFound, 404);
+  if (!target) throw new QueryError(MSG.offer.notFound);
 
   // The target must still be the offer's latest revision — a clone-forward (or a new
   // renegotiation revision) would otherwise leave an accepted offer with an open
@@ -1198,7 +1198,7 @@ export async function acceptOfferRevisionWithAudit(
   // the target.
   const latest = offerRow.revisions[0];
   if (latest && latest.revision_no > target.revision_no) {
-    throw new QueryError(MSG.offer.cannotAccept, 409);
+    throw new QueryError(MSG.offer.cannotAccept);
   }
 
   const lines = await tx
@@ -1215,7 +1215,7 @@ export async function acceptOfferRevisionWithAudit(
     .where(eq(offerRevisionLines.offer_revision_id, revisionId));
 
   if (lines.length === 0) {
-    throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+    throw new QueryError(MSG.offer.cannotSendEmpty);
   }
 
   // SENT → ACCEPTED, guarded so a concurrent outcome can't slip past us.
@@ -1226,7 +1226,7 @@ export async function acceptOfferRevisionWithAudit(
       and(eq(offerRevisions.id, revisionId), eq(offerRevisions.status, "SENT")),
     )
     .returning({ id: offerRevisions.id });
-  if (!updated) throw new QueryError(MSG.offer.cannotAccept, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotAccept);
 
   const now = new Date();
 
@@ -1237,7 +1237,7 @@ export async function acceptOfferRevisionWithAudit(
 
   for (const line of lines) {
     const asSold = asSoldByConfigId[line.configId];
-    if (!asSold) throw new QueryError(MSG.config.notFound, 404);
+    if (!asSold) throw new QueryError(MSG.config.notFound);
 
     // The engineering hand-off fires only at first acceptance: on re-acceptance the
     // configs are already SALES_APPROVED+ and must stay engineering-governed.
@@ -1336,14 +1336,14 @@ export async function unacceptOfferRevisionWithAudit(
       },
     },
   });
-  if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+  if (!offer) throw new QueryError(MSG.offer.notFound);
   // Only the in-force accepted revision can be un-accepted.
   if (offer.accepted_revision_id !== revisionId) {
-    throw new QueryError(MSG.offer.cannotUnaccept, 403);
+    throw new QueryError(MSG.offer.cannotUnaccept);
   }
 
   const target = offer.revisions.find((rev) => rev.id === revisionId);
-  if (!target) throw new QueryError(MSG.offer.notFound, 404);
+  if (!target) throw new QueryError(MSG.offer.notFound);
 
   // No later revision may exist. A renegotiation revision opened after this acceptance
   // (serialized by the offer lock above, but possibly created between the action's
@@ -1352,7 +1352,7 @@ export async function unacceptOfferRevisionWithAudit(
   // revision_no, so [0] is the latest — refuse if it is past the target.
   const latest = offer.revisions[0];
   if (latest && latest.revision_no > target.revision_no) {
-    throw new QueryError(MSG.offer.cannotUnaccept, 409);
+    throw new QueryError(MSG.offer.cannotUnaccept);
   }
 
   // First-acceptance only: a renegotiation re-acceptance (a revision accepted after an
@@ -1361,7 +1361,7 @@ export async function unacceptOfferRevisionWithAudit(
   // derivation (lib/offer-renegotiation.ts).
   const firstAcceptedNo = firstAcceptedRevisionNo(offer.revisions);
   if (firstAcceptedNo !== null && target.revision_no > firstAcceptedNo) {
-    throw new QueryError(MSG.offer.unacceptRenegotiation, 409);
+    throw new QueryError(MSG.offer.unacceptRenegotiation);
   }
 
   const lines = await tx
@@ -1380,7 +1380,7 @@ export async function unacceptOfferRevisionWithAudit(
   // Engineering-started guard: the hand-off must still be clean. Any config past
   // SALES_APPROVED means the technical office has taken it in — refuse.
   if (lines.some((line) => line.configStatus !== "SALES_APPROVED")) {
-    throw new QueryError(MSG.offer.unacceptEngineeringStarted, 409);
+    throw new QueryError(MSG.offer.unacceptEngineeringStarted);
   }
 
   // ACCEPTED → SENT, guarded so a concurrent mutation can't slip past us.
@@ -1394,7 +1394,7 @@ export async function unacceptOfferRevisionWithAudit(
       ),
     )
     .returning({ id: offerRevisions.id });
-  if (!updated) throw new QueryError(MSG.offer.cannotUnaccept, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotUnaccept);
 
   const now = new Date();
 
@@ -1441,7 +1441,7 @@ export async function unacceptOfferRevisionWithAudit(
       )
       .returning({ id: configurations.id });
     if (!reverted) {
-      throw new QueryError(MSG.offer.unacceptEngineeringStarted, 409);
+      throw new QueryError(MSG.offer.unacceptEngineeringStarted);
     }
 
     await insertActivityLog(
@@ -1491,7 +1491,7 @@ export async function recordOfferRevisionOutcomeWithAudit(
       and(eq(offerRevisions.id, revisionId), eq(offerRevisions.status, "SENT")),
     )
     .returning({ id: offerRevisions.id });
-  if (!updated) throw new QueryError(MSG.offer.cannotRecordOutcome, 403);
+  if (!updated) throw new QueryError(MSG.offer.cannotRecordOutcome);
 
   await insertActivityLog(
     {
@@ -1544,20 +1544,20 @@ export async function removeOfferLine(
       },
     });
 
-    if (!offer) throw new QueryError(MSG.offer.notFound, 404);
+    if (!offer) throw new QueryError(MSG.offer.notFound);
     const revision = offer.revisions[0];
-    if (!revision) throw new QueryError(MSG.offer.notFound, 404);
+    if (!revision) throw new QueryError(MSG.offer.notFound);
     if (revision.status !== "DRAFT") {
-      throw new QueryError(MSG.offer.lineCannotEdit, 403);
+      throw new QueryError(MSG.offer.lineCannotEdit);
     }
     // Renegotiation drafts reference engineering-owned configs read-only: removing
     // a line would delete the config itself (the line's config is deleted with it).
     if (offer.accepted_revision_id !== null) {
-      throw new QueryError(MSG.offer.renegotiationLinesLocked, 403);
+      throw new QueryError(MSG.offer.renegotiationLinesLocked);
     }
     const line = revision.lines[0];
     if (!line) {
-      throw new QueryError(MSG.offer.notFound, 404);
+      throw new QueryError(MSG.offer.notFound);
     }
 
     // Line first: configuration_id is onDelete restrict, so the config delete would
@@ -1601,7 +1601,7 @@ export async function updateRevisionDiscountWithAudit(data: {
       .from(offerRevisions)
       .where(eq(offerRevisions.id, data.revisionId));
 
-    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
+    if (!existing) throw new QueryError(MSG.offer.notFound);
 
     const [updated] = await tx
       .update(offerRevisions)
@@ -1615,7 +1615,7 @@ export async function updateRevisionDiscountWithAudit(data: {
       .returning({ id: offerRevisions.id });
 
     // No row updated ⇒ the revision left DRAFT under us (concurrent submit/send).
-    if (!updated) throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    if (!updated) throw new QueryError(MSG.offer.lineCannotEdit);
 
     // Re-derive every line's net_price from its stored list_price in one set-based
     // UPDATE (pure arithmetic, no BOM rebuild, no per-line round-trip). Mirrors
@@ -1681,7 +1681,7 @@ export async function updateRevisionSettingsWithAudit(data: {
       .from(offerRevisions)
       .where(eq(offerRevisions.id, data.revisionId));
 
-    if (!existing) throw new QueryError(MSG.offer.notFound, 404);
+    if (!existing) throw new QueryError(MSG.offer.notFound);
 
     const [updated] = await tx
       .update(offerRevisions)
@@ -1695,7 +1695,7 @@ export async function updateRevisionSettingsWithAudit(data: {
       .returning({ id: offerRevisions.id });
 
     // No row updated ⇒ the revision left DRAFT under us (concurrent submit/send).
-    if (!updated) throw new QueryError(MSG.offer.lineCannotEdit, 403);
+    if (!updated) throw new QueryError(MSG.offer.lineCannotEdit);
 
     await insertActivityLog(
       {
@@ -1762,7 +1762,7 @@ export async function absorbOfferLineMarginWithAudit(data: {
       line.as_sold_frozen_at === null ||
       line.accepted_revision_id !== line.revision_id
     ) {
-      throw new QueryError(MSG.marginReview.absorbNotAccepted, 409);
+      throw new QueryError(MSG.marginReview.absorbNotAccepted);
     }
 
     await tx

@@ -38,11 +38,9 @@ vi.mock("@/db/queries", () => ({
   touchConfigurationUpdatedAt: (...args: unknown[]) =>
     mockTouchConfigurationUpdatedAt(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));

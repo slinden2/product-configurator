@@ -31,11 +31,9 @@ vi.mock("@/db/queries", () => ({
     mockInsertMissingMaxBomCoefficients(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -207,7 +205,7 @@ describe("createCoefficientAction", () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockResolvedValue(undefined);
     mockCreatePriceCoefficientWithAudit.mockRejectedValue(
-      new QueryError("Coefficiente non trovato.", 404),
+      new QueryError("Coefficiente non trovato."),
     );
     const result = await createCoefficientAction({
       pn: "ITC-001",
@@ -221,7 +219,7 @@ describe("createCoefficientAction", () => {
   test("returns QueryError message on QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new QueryError("Coefficiente non trovato.", 404),
+      new QueryError("Coefficiente non trovato."),
     );
     const result = await createCoefficientAction({
       pn: "ITC-001",
@@ -333,7 +331,7 @@ describe("updateCoefficientAction", () => {
       is_custom: false,
     });
     mockUpdatePriceCoefficientByPnWithAudit.mockRejectedValue(
-      new QueryError("audit failure", 500),
+      new QueryError("audit failure"),
     );
 
     const result = await updateCoefficientAction({
@@ -348,7 +346,7 @@ describe("updateCoefficientAction", () => {
   test("returns QueryError message on QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new QueryError("Coefficiente non trovato.", 404),
+      new QueryError("Coefficiente non trovato."),
     );
     const result = await updateCoefficientAction({
       pn: "ITC-001",
@@ -468,7 +466,7 @@ describe("deleteCoefficientAction", () => {
   test("returns QueryError message on QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new QueryError("Coefficiente non trovato.", 404),
+      new QueryError("Coefficiente non trovato."),
     );
     const result = await deleteCoefficientAction("ITC-001");
     expect(result.success).toBe(false);
@@ -556,7 +554,7 @@ describe("resetCoefficientAction", () => {
   test("returns QueryError message on QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetFullPriceCoefficientByPn.mockRejectedValue(
-      new QueryError("Coefficiente non trovato.", 404),
+      new QueryError("Coefficiente non trovato."),
     );
     const result = await resetCoefficientAction("ITC-001");
     expect(result.success).toBe(false);
@@ -635,7 +633,7 @@ describe("syncMaxBomCoefficientsAction", () => {
   test("returns QueryError message on QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockGetPriceCoefficientsByArray.mockRejectedValue(
-      new QueryError("Coefficiente non trovato.", 404),
+      new QueryError("Coefficiente non trovato."),
     );
     const result = await syncMaxBomCoefficientsAction();
     expect(result.success).toBe(false);

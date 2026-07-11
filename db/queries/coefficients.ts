@@ -182,7 +182,7 @@ export async function updatePriceCoefficientByPnWithAudit(data: {
       .from(priceCoefficients)
       .where(eq(priceCoefficients.pn, data.pn));
 
-    if (!existing) throw new QueryError(MSG.coefficient.notFound, 404);
+    if (!existing) throw new QueryError(MSG.coefficient.notFound);
 
     await tx
       .update(priceCoefficients)
@@ -220,7 +220,7 @@ export async function deletePriceCoefficientByPnWithAudit(data: {
       .from(priceCoefficients)
       .where(eq(priceCoefficients.pn, data.pn));
 
-    if (!existing) throw new QueryError(MSG.coefficient.notFound, 404);
+    if (!existing) throw new QueryError(MSG.coefficient.notFound);
 
     await tx.delete(priceCoefficients).where(eq(priceCoefficients.pn, data.pn));
 
@@ -248,7 +248,7 @@ export async function resetPriceCoefficientWithAudit(data: {
       .from(priceCoefficients)
       .where(eq(priceCoefficients.pn, data.pn));
 
-    if (!existing) throw new QueryError(MSG.coefficient.notFound, 404);
+    if (!existing) throw new QueryError(MSG.coefficient.notFound);
 
     await tx
       .update(priceCoefficients)

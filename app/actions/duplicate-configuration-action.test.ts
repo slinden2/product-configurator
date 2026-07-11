@@ -16,11 +16,9 @@ vi.mock("@/db/queries", () => ({
     mockDuplicateConfigurationRecord(...args),
   logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -189,7 +187,7 @@ describe("duplicateConfigurationAction", () => {
 
   test("returns QueryError message on QueryError", async () => {
     mockDuplicateConfigurationRecord.mockRejectedValue(
-      new QueryError(MSG.config.duplicateFailed, 500),
+      new QueryError(MSG.config.duplicateFailed),
     );
 
     const result = await duplicateConfigurationAction(10);

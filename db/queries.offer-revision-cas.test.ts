@@ -91,7 +91,7 @@ describe("updateRevisionDiscountWithAudit — DRAFT compare-and-swap", () => {
     txStub.update.mockReturnValue(updateChain([]));
 
     await expect(updateRevisionDiscountWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.offer.lineCannotEdit, 403),
+      new QueryError(MSG.offer.lineCannotEdit),
     );
     expect(txStub.update).toHaveBeenCalledTimes(1); // header CAS only, no reprice
     expect(txStub.insert).not.toHaveBeenCalled();
@@ -101,7 +101,7 @@ describe("updateRevisionDiscountWithAudit — DRAFT compare-and-swap", () => {
     txStub.select.mockReturnValue(selectChain([]));
 
     await expect(updateRevisionDiscountWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.offer.notFound, 404),
+      new QueryError(MSG.offer.notFound),
     );
     expect(txStub.update).not.toHaveBeenCalled();
     expect(txStub.insert).not.toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe("updateRevisionSettingsWithAudit — DRAFT compare-and-swap", () => {
     txStub.update.mockReturnValue(updateChain([]));
 
     await expect(updateRevisionSettingsWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.offer.lineCannotEdit, 403),
+      new QueryError(MSG.offer.lineCannotEdit),
     );
     expect(txStub.insert).not.toHaveBeenCalled();
   });
@@ -139,7 +139,7 @@ describe("updateRevisionSettingsWithAudit — DRAFT compare-and-swap", () => {
     txStub.select.mockReturnValue(selectChain([]));
 
     await expect(updateRevisionSettingsWithAudit(DATA)).rejects.toThrow(
-      new QueryError(MSG.offer.notFound, 404),
+      new QueryError(MSG.offer.notFound),
     );
     expect(txStub.update).not.toHaveBeenCalled();
     expect(txStub.insert).not.toHaveBeenCalled();

@@ -12,11 +12,9 @@ vi.mock("@/db/queries", () => ({
   insertOffer: (...args: unknown[]) => mockInsertOffer(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -108,9 +106,7 @@ describe("insertOfferAction", () => {
   });
 
   test("returns the QueryError message on a controlled failure", async () => {
-    mockInsertOffer.mockRejectedValue(
-      new QueryError(MSG.offer.createFailed, 500),
-    );
+    mockInsertOffer.mockRejectedValue(new QueryError(MSG.offer.createFailed));
     const result = await insertOfferAction(validInput);
     expect(result).toEqual({ success: false, error: MSG.offer.createFailed });
   });

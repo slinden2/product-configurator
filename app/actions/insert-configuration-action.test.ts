@@ -10,11 +10,9 @@ vi.mock("@/db/queries", () => ({
   insertConfiguration: (...args: unknown[]) => mockInsertConfiguration(...args),
   logActivity: vi.fn(),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -146,7 +144,7 @@ describe("insertConfigurationAction", () => {
 
   test("returns error message on QueryError", async () => {
     mockInsertConfiguration.mockRejectedValue(
-      new QueryError("Impossibile creare la configurazione.", 500),
+      new QueryError("Impossibile creare la configurazione."),
     );
     const result = await insertConfigurationAction(makeValidFormData());
     expect(result).toEqual({ success: false, error: MSG.config.createFailed });

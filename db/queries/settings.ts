@@ -26,7 +26,7 @@ export async function getSurchargeSettingByKind(
     where: eq(surchargeSettings.kind, kind),
   });
   if (!row) {
-    throw new QueryError(MSG.surcharge.notFound, 404);
+    throw new QueryError(MSG.surcharge.notFound);
   }
   return row;
 }
@@ -47,7 +47,7 @@ export async function updateSurchargeSettingWithAudit(data: {
       .from(surchargeSettings)
       .where(eq(surchargeSettings.kind, data.kind));
 
-    if (!existing) throw new QueryError(MSG.surcharge.notFound, 404);
+    if (!existing) throw new QueryError(MSG.surcharge.notFound);
 
     const [row] = await tx
       .update(surchargeSettings)
@@ -55,7 +55,7 @@ export async function updateSurchargeSettingWithAudit(data: {
       .where(eq(surchargeSettings.kind, data.kind))
       .returning({ kind: surchargeSettings.kind });
 
-    if (!row) throw new QueryError(MSG.surcharge.notFound, 404);
+    if (!row) throw new QueryError(MSG.surcharge.notFound);
 
     await insertActivityLog(
       {
@@ -93,7 +93,7 @@ export async function updateInstallationItemSettingWithAudit(data: {
       .from(installationItemSettings)
       .where(eq(installationItemSettings.kind, data.kind));
 
-    if (!existing) throw new QueryError(MSG.installation.notFound, 404);
+    if (!existing) throw new QueryError(MSG.installation.notFound);
 
     const [row] = await tx
       .update(installationItemSettings)
@@ -101,7 +101,7 @@ export async function updateInstallationItemSettingWithAudit(data: {
       .where(eq(installationItemSettings.kind, data.kind))
       .returning({ kind: installationItemSettings.kind });
 
-    if (!row) throw new QueryError(MSG.installation.notFound, 404);
+    if (!row) throw new QueryError(MSG.installation.notFound);
 
     await insertActivityLog(
       {

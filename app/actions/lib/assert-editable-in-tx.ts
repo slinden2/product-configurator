@@ -37,7 +37,7 @@ export async function assertEditableInTx(
 
   // An OFFER config must own a line; a missing one is data drift, not a no-op.
   const offerRef = await getOfferRefForConfig(configuration.id, tx);
-  if (!offerRef) throw new QueryError(MSG.offer.notFound, 404);
+  if (!offerRef) throw new QueryError(MSG.offer.notFound);
 
   await lockOfferRow(offerRef.offerId, tx);
 
@@ -51,6 +51,6 @@ export async function assertEditableInTx(
       offerRevisionStatus,
     )
   ) {
-    throw new QueryError(errorMessage, 409);
+    throw new QueryError(errorMessage);
   }
 }

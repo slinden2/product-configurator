@@ -67,7 +67,7 @@ describe("updateConfiguration — status compare-and-swap", () => {
 
     await expect(
       updateConfiguration(CONF_ID, UPDATE_DATA, "DRAFT"),
-    ).rejects.toThrow(new QueryError(MSG.config.statusConflict, 409));
+    ).rejects.toThrow(new QueryError(MSG.config.statusConflict));
   });
 });
 
@@ -82,7 +82,7 @@ describe("deleteConfiguration — status compare-and-swap", () => {
     mockDelete.mockReturnValue(deleteChain([]));
 
     await expect(deleteConfiguration(CONF_ID, "DRAFT")).rejects.toThrow(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
   });
 });
@@ -98,7 +98,7 @@ describe("touchConfigurationUpdatedAt — status compare-and-swap", () => {
     mockUpdate.mockReturnValue(updateChain([]));
 
     await expect(touchConfigurationUpdatedAt(CONF_ID, "DRAFT")).rejects.toThrow(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
   });
 });
@@ -130,6 +130,6 @@ describe("assertConfigurationStatus — in-tx locked status re-check", () => {
 
     await expect(
       assertConfigurationStatus(CONF_ID, "IN_TECH_REVIEW", tx),
-    ).rejects.toThrow(new QueryError(MSG.config.statusConflict, 409));
+    ).rejects.toThrow(new QueryError(MSG.config.statusConflict));
   });
 });

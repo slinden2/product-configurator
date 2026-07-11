@@ -11,11 +11,9 @@ vi.mock("@/db/queries", () => ({
   updateConfigStatus: (...args: unknown[]) => mockUpdateConfigStatus(...args),
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -144,7 +142,7 @@ describe("updateConfigStatusAction", () => {
 
   test("returns error on QueryError (e.g. invalid transition)", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
-      new QueryError("Stato non autorizzato.", 403),
+      new QueryError("Stato non autorizzato."),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "IN_TECH_REVIEW",
@@ -157,7 +155,7 @@ describe("updateConfigStatusAction", () => {
 
   test("returns error when approving without engineering BOM", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
-      new QueryError(MSG.config.approvedRequiresBom, 400),
+      new QueryError(MSG.config.approvedRequiresBom),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "TECH_APPROVED",
@@ -170,7 +168,7 @@ describe("updateConfigStatusAction", () => {
 
   test("returns error when energy chain constraint is not met", async () => {
     mockUpdateConfigStatus.mockRejectedValue(
-      new QueryError(MSG.config.energyChainRequiresGantry, 400),
+      new QueryError(MSG.config.energyChainRequiresGantry),
     );
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "IN_TECH_REVIEW",
@@ -190,9 +188,7 @@ describe("updateConfigStatusAction", () => {
   });
 
   test("does not revalidate when audit log insert fails (CONFIG_STATUS_CHANGE rolls back)", async () => {
-    mockInsertActivityLog.mockRejectedValue(
-      new QueryError("audit failure", 500),
-    );
+    mockInsertActivityLog.mockRejectedValue(new QueryError("audit failure"));
     const result = await updateConfigStatusAction(CONF_ID, {
       status: "IN_TECH_REVIEW",
     });

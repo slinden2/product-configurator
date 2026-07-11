@@ -24,11 +24,9 @@ vi.mock("@/db/queries", () => ({
   addOfferLine: (...args: unknown[]) => mockAddOfferLine(...args),
   removeOfferLine: (...args: unknown[]) => mockRemoveOfferLine(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -152,7 +150,7 @@ describe("addOfferLineAction", () => {
 
   test("surfaces a misconfigured surcharge price from the reprice step", async () => {
     mockRepriceOfferLine.mockRejectedValue(
-      new QueryError(MSG.surcharge.priceNotConfigured, 400),
+      new QueryError(MSG.surcharge.priceNotConfigured),
     );
     const result = await addOfferLineAction(OFFER_ID, makeValidConfig());
     expect(result).toEqual({
@@ -183,7 +181,7 @@ describe("addOfferLineAction", () => {
 
   test("surfaces the revision-frozen gate from addOfferLine", async () => {
     mockAddOfferLine.mockRejectedValue(
-      new QueryError(MSG.offer.lineCannotEdit, 403),
+      new QueryError(MSG.offer.lineCannotEdit),
     );
     const result = await addOfferLineAction(OFFER_ID, makeValidConfig());
     expect(result).toEqual({
@@ -233,7 +231,7 @@ describe("removeOfferLineAction", () => {
 
   test("surfaces the revision-frozen gate from removeOfferLine", async () => {
     mockRemoveOfferLine.mockRejectedValue(
-      new QueryError(MSG.offer.lineCannotEdit, 403),
+      new QueryError(MSG.offer.lineCannotEdit),
     );
     const result = await removeOfferLineAction(OFFER_ID, CONFIG_ID);
     expect(result).toEqual({

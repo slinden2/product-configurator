@@ -159,14 +159,14 @@ export async function submitRevisionForApprovalAction(offerId: number) {
     await lockOfferRow(offerId, tx);
 
     const working = await getWorkingRevisionForSend(offerId, tx);
-    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (!working) throw new QueryError(MSG.offer.notFound);
     if (working.status !== "DRAFT") {
-      throw new QueryError(MSG.offer.cannotSubmit, 403);
+      throw new QueryError(MSG.offer.cannotSubmit);
     }
     // An empty revision must not enter approval — it would freeze empty at send. The
     // UI hides Submit with no lines, but the action is the real boundary.
     if (working.configIds.length === 0) {
-      throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+      throw new QueryError(MSG.offer.cannotSendEmpty);
     }
 
     // Cross-entity invariant gate: no line may enter approval while an
@@ -177,7 +177,7 @@ export async function submitRevisionForApprovalAction(offerId: number) {
     );
     for (const cfg of lineConfigs) {
       if (violatesEnergyChainInvariant(cfg.supply_type, cfg.wash_bays)) {
-        throw new QueryError(MSG.offer.lineEnergyChainInvalid(cfg.name), 422);
+        throw new QueryError(MSG.offer.lineEnergyChainInvalid(cfg.name));
       }
     }
 
@@ -272,9 +272,9 @@ export async function sendRevisionAction(offerId: number) {
     await lockOfferRow(offerId, tx);
 
     const working = await getWorkingRevisionForSend(offerId, tx);
-    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (!working) throw new QueryError(MSG.offer.notFound);
     if (working.status !== "APPROVED_TO_SEND") {
-      throw new QueryError(MSG.offer.cannotSend, 403);
+      throw new QueryError(MSG.offer.cannotSend);
     }
 
     await markOfferRevisionSentWithAudit(offerId, working.id, user.id, tx);
@@ -398,12 +398,12 @@ export async function acceptRevisionAction(offerId: number) {
     await lockOfferRow(offerId, tx);
 
     const current = await getWorkingRevisionForSend(offerId, tx);
-    if (!current) throw new QueryError(MSG.offer.notFound, 404);
+    if (!current) throw new QueryError(MSG.offer.notFound);
     if (current.status !== "SENT") {
-      throw new QueryError(MSG.offer.cannotAccept, 403);
+      throw new QueryError(MSG.offer.cannotAccept);
     }
     if (current.configIds.length === 0) {
-      throw new QueryError(MSG.offer.cannotSendEmpty, 422);
+      throw new QueryError(MSG.offer.cannotSendEmpty);
     }
 
     // Post-lock snapshot loads: what freezes as the margin baseline is exactly
@@ -412,7 +412,7 @@ export async function acceptRevisionAction(offerId: number) {
     const asSoldByConfigId: Record<number, OfferConfigSnapshot> = {};
     for (const configId of current.configIds) {
       const loaded = await loadValidatedConfiguration(configId, user, tx);
-      if (!loaded) throw new QueryError(MSG.config.notFound, 404);
+      if (!loaded) throw new QueryError(MSG.config.notFound);
       asSoldByConfigId[configId] = {
         configuration: loaded.configuration,
         waterTanks: loaded.waterTanks,
@@ -452,9 +452,9 @@ export async function unacceptRevisionAction(offerId: number) {
 
   return runRevisionTransition(offerId, async (tx) => {
     const working = await getWorkingRevisionForSend(offerId, tx);
-    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (!working) throw new QueryError(MSG.offer.notFound);
     if (working.status !== "ACCEPTED") {
-      throw new QueryError(MSG.offer.cannotUnaccept, 403);
+      throw new QueryError(MSG.offer.cannotUnaccept);
     }
 
     await unacceptOfferRevisionWithAudit(offerId, working.id, user.id, tx);
@@ -483,9 +483,9 @@ export async function recordRevisionOutcomeAction(
 
   return runRevisionTransition(offerId, async (tx) => {
     const working = await getWorkingRevisionForSend(offerId, tx);
-    if (!working) throw new QueryError(MSG.offer.notFound, 404);
+    if (!working) throw new QueryError(MSG.offer.notFound);
     if (working.status !== "SENT") {
-      throw new QueryError(MSG.offer.cannotRecordOutcome, 403);
+      throw new QueryError(MSG.offer.cannotRecordOutcome);
     }
     await recordOfferRevisionOutcomeWithAudit(
       offerId,

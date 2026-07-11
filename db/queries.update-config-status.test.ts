@@ -89,7 +89,7 @@ describe("updateConfigStatus — standalone DRAFT -> TECH_APPROVED edge", () => 
 
     await expect(
       updateConfigStatus(CONF_ID, engineer, { status: "TECH_APPROVED" }),
-    ).rejects.toThrow(new QueryError(MSG.config.approvedRequiresBom, 400));
+    ).rejects.toThrow(new QueryError(MSG.config.approvedRequiresBom));
   });
 
   test("the ENERGY_CHAIN wash-bay gate fires on the direct edge (forward move)", async () => {
@@ -98,9 +98,7 @@ describe("updateConfigStatus — standalone DRAFT -> TECH_APPROVED edge", () => 
 
     await expect(
       updateConfigStatus(CONF_ID, engineer, { status: "TECH_APPROVED" }),
-    ).rejects.toThrow(
-      new QueryError(MSG.config.energyChainRequiresGantry, 400),
-    );
+    ).rejects.toThrow(new QueryError(MSG.config.energyChainRequiresGantry));
   });
 
   test("the ENERGY_CHAIN gate is skipped on the backward reopen (TECH_APPROVED -> DRAFT)", async () => {
@@ -131,7 +129,7 @@ describe("updateConfigStatus — concurrent transition guard", () => {
 
     await expect(
       updateConfigStatus(CONF_ID, engineer, { status: "TECH_APPROVED" }),
-    ).rejects.toThrow(new QueryError(MSG.config.statusConflict, 409));
+    ).rejects.toThrow(new QueryError(MSG.config.statusConflict));
   });
 });
 
@@ -152,7 +150,7 @@ describe("updateConfigStatus — access is checked before state-dependent errors
 
     await expect(
       updateConfigStatus(CONF_ID, sales, { status: "TECH_APPROVED" }),
-    ).rejects.toThrow(new QueryError(MSG.auth.userUnauthorized, 403));
+    ).rejects.toThrow(new QueryError(MSG.auth.userUnauthorized));
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 });
@@ -170,7 +168,7 @@ describe("updateConfigStatus — IN_TECH_REVIEW is out of bounds for STANDALONE"
 
     await expect(
       updateConfigStatus(CONF_ID, engineer, { status: to }),
-    ).rejects.toThrow(new QueryError(MSG.config.statusUnauthorized, 403));
+    ).rejects.toThrow(new QueryError(MSG.config.statusUnauthorized));
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 });

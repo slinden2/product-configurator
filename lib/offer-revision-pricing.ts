@@ -126,18 +126,18 @@ async function repriceLineWithSettings(
 ): Promise<void> {
   const line = await offerRevisionLineForConfig(configId, txOrDb);
   // An OFFER config must own a line; a missing one is data drift, not a no-op.
-  if (!line) throw new QueryError(MSG.offer.notFound, 404);
+  if (!line) throw new QueryError(MSG.offer.notFound);
   // A non-DRAFT revision is frozen/handed-off: leave its as-sold pricing untouched.
   // On an add (requireDraft) that freeze is a lost race with submit — fail the tx.
   if (line.status !== "DRAFT") {
     if (opts.requireDraft) {
-      throw new QueryError(MSG.offer.lineCannotEdit, 409);
+      throw new QueryError(MSG.offer.lineCannotEdit);
     }
     return;
   }
 
   const configuration = await loadConfigForPricing(configId, txOrDb);
-  if (!configuration) throw new QueryError(MSG.config.notFound, 404);
+  if (!configuration) throw new QueryError(MSG.config.notFound);
 
   const result = await computeLinePricing(
     configuration,
@@ -145,7 +145,7 @@ async function repriceLineWithSettings(
     surchargeSettings,
   );
   if (!result.ok) {
-    throw new QueryError(MSG.surcharge.priceNotConfigured, 400);
+    throw new QueryError(MSG.surcharge.priceNotConfigured);
   }
 
   await updateOfferRevisionLinePricing(line.lineId, result.pricing, txOrDb);

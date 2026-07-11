@@ -21,9 +21,7 @@ describe("mapActionError", () => {
   });
 
   test("QueryError returns its controlled Italian message", () => {
-    const result = mapActionError(
-      new QueryError("Messaggio controllato.", 403),
-    );
+    const result = mapActionError(new QueryError("Messaggio controllato."));
     expect(result).toEqual({
       success: false,
       error: "Messaggio controllato.",

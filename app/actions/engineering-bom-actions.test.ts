@@ -33,11 +33,9 @@ vi.mock("@/db/queries", () => ({
   insertActivityLog: (...args: unknown[]) => mockInsertActivityLog(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -283,7 +281,7 @@ describe("snapshotEngineeringBomAction", () => {
   test("surfaces the 409 conflict and skips the insert when the status moved between gate and tx (lost race, issue #240)", async () => {
     const { QueryError } = await import("@/db/queries");
     mockAssertConfigurationStatus.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result: ActionResult = await snapshotEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -454,7 +452,7 @@ describe("regenerateEngineeringBomAction", () => {
   test("surfaces the 409 conflict and skips delete + insert on a lost status race (issue #240)", async () => {
     const { QueryError } = await import("@/db/queries");
     mockAssertConfigurationStatus.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result: ActionResult = await regenerateEngineeringBomAction(CONF_ID);
     expect(result.success).toBe(false);
@@ -578,7 +576,7 @@ describe("addEngineeringBomItemAction", () => {
   test("surfaces the 409 conflict and skips insert + log on a lost status race (issue #240)", async () => {
     const { QueryError } = await import("@/db/queries");
     mockAssertConfigurationStatus.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result: ActionResult = await addEngineeringBomItemAction(
       CONF_ID,
@@ -744,7 +742,7 @@ describe("updateEngineeringBomItemQtyAction", () => {
   test("surfaces the 409 conflict and skips the update on a lost status race (issue #240)", async () => {
     const { QueryError } = await import("@/db/queries");
     mockAssertConfigurationStatus.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result: ActionResult = await updateEngineeringBomItemQtyAction(
       CONF_ID,
@@ -886,7 +884,7 @@ describe("toggleDeleteEngineeringBomItemAction", () => {
   test("surfaces the 409 conflict and skips the toggle on a lost status race (issue #240)", async () => {
     const { QueryError } = await import("@/db/queries");
     mockAssertConfigurationStatus.mockRejectedValue(
-      new QueryError(MSG.config.statusConflict, 409),
+      new QueryError(MSG.config.statusConflict),
     );
     const result: ActionResult = await toggleDeleteEngineeringBomItemAction(
       CONF_ID,

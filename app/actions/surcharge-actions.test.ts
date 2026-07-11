@@ -11,11 +11,9 @@ vi.mock("@/db/queries", () => ({
   updateSurchargeSettingWithAudit: (...args: unknown[]) =>
     mockUpdateSurchargeSettingWithAudit(...args),
   QueryError: class QueryError extends Error {
-    errorCode: number;
-    constructor(message: string, errorCode: number) {
+    constructor(message: string) {
       super(message);
       this.name = "QueryError";
-      this.errorCode = errorCode;
     }
   },
 }));
@@ -121,7 +119,7 @@ describe("updateSurchargeSettingAction", () => {
   test("returns QueryError message when transaction fails with QueryError", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
     mockUpdateSurchargeSettingWithAudit.mockRejectedValue(
-      new QueryError("Maggiorazione non trovata.", 404),
+      new QueryError("Maggiorazione non trovata."),
     );
 
     const result = await updateSurchargeSettingAction({
