@@ -9,7 +9,6 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { UpdateConfigSchema } from "@/validation/config-schema";
 
 // --- Mocks (before imports) ---
 
@@ -46,60 +45,7 @@ vi.mock("@hookform/devtools", () => ({
 
 import { toast } from "sonner";
 import ConfigForm from "@/components/config-form";
-
-// --- Test Data ---
-
-function makeValidConfig(): UpdateConfigSchema {
-  return {
-    user_id: "test-user-123",
-    name: "Test Config",
-    description: "",
-    brush_qty: 0,
-    brush_type: undefined,
-    brush_color: undefined,
-    has_chemical_pump: false,
-    chemical_qty: undefined,
-    chemical_pump_pos: undefined,
-    has_foam: false,
-    has_acid_pump: false,
-    acid_pump_pos: undefined,
-    has_shampoo_pump: false,
-    has_wax_pump: false,
-    water_1_type: "NETWORK",
-    water_1_pump: undefined,
-    water_2_type: undefined,
-    water_2_pump: undefined,
-    has_antifreeze: false,
-    inv_pump_outlet_dosatron_qty: 0,
-    inv_pump_outlet_pw_qty: 0,
-    supply_type: "STRAIGHT_SHELF",
-    supply_side: "LEFT",
-    supply_fixing_type: undefined,
-    has_post_frame: false,
-    rail_type: "ANCHORED",
-    rail_length: 21,
-    rail_guide_qty: 0,
-    anchor_type: "ZINC",
-    has_15kw_pump: false,
-    pump_outlet_1_15kw: undefined,
-    pump_outlet_2_15kw: undefined,
-    has_30kw_pump: false,
-    pump_outlet_1_30kw: undefined,
-    pump_outlet_2_30kw: undefined,
-    has_omz_pump: false,
-    pump_outlet_omz: undefined,
-    has_chemical_roof_bar: false,
-    touch_qty: 1,
-    touch_pos: "EXTERNAL",
-    touch_fixing_type: "WALL",
-    has_itecoweb: false,
-    has_card_reader: false,
-    card_qty: 0,
-    is_fast: false,
-    sales_notes: "",
-    engineering_notes: "",
-  } as UpdateConfigSchema;
-}
+import { makeValidConfig } from "@/test/form-test-utils";
 
 // --- Tests ---
 
@@ -315,7 +261,8 @@ describe("ConfigForm", () => {
 
     test("shows error toast when configuration data is missing user_id", async () => {
       const config = { ...makeValidConfig() };
-      // Remove user_id to trigger the "Dati incompleti" branch
+      // The branch checks `"user_id" in configuration`, so the key must be
+      // absent — an undefined override is not enough.
       delete (config as Record<string, unknown>).user_id;
 
       render(
