@@ -25,28 +25,13 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import type { UserWithStats } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import type { Role } from "@/types";
+import { ASSIGNABLE_ROLES, RoleLabels } from "@/types";
 
 interface UserRowProps {
   user: UserWithStats;
   currentUserId: string;
   managers: { id: string; email: string }[];
 }
-
-const ASSIGNABLE_ROLES: Role[] = [
-  "ENGINEER",
-  "SALES",
-  "SALES_MANAGER",
-  "SALES_DIRECTOR",
-];
-
-const RoleLabels: Record<Role, string> = {
-  ADMIN: "Admin",
-  ENGINEER: "Ingegnere",
-  SALES: "Commerciale",
-  SALES_MANAGER: "Responsabile vendite",
-  SALES_DIRECTOR: "Direttore vendite",
-};
 
 // Sentinel for the "no manager" option (Radix Select disallows empty values).
 const NO_MANAGER_VALUE = "none";

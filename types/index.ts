@@ -172,6 +172,22 @@ export const Roles = [
 ] as const;
 export type Role = (typeof Roles)[number];
 
+export const RoleLabels: Record<Role, string> = {
+  ADMIN: "Admin",
+  ENGINEER: "Ingegnere",
+  SALES: "Commerciale",
+  SALES_MANAGER: "Responsabile vendite",
+  SALES_DIRECTOR: "Direttore vendite",
+};
+
+/** Roles an ADMIN can assign from the user management area (ADMIN itself excluded). */
+export const ASSIGNABLE_ROLES: Role[] = [
+  "ENGINEER",
+  "SALES",
+  "SALES_MANAGER",
+  "SALES_DIRECTOR",
+];
+
 export const ActivityActions = [
   "CONFIG_CREATE",
   "CONFIG_EDIT",
