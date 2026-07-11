@@ -267,7 +267,7 @@ const EngineeringBomTable = ({
                     variant="outline"
                     className="ml-2 text-orange-500 border-orange-500 text-[10px] px-1 py-0"
                   >
-                    WIP
+                    {MSG.bom.customRowBadge}
                   </Badge>
                 )}
               </TableCell>

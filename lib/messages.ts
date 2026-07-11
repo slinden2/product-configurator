@@ -59,6 +59,7 @@ export const MSG = {
       "La distinta di commessa non esiste ancora. Usa 'Genera distinta di commessa' prima di aggiungere righe manuali.",
     invalidQty: "Quantità non valida.",
     rowNotFound: "Riga non trovata.",
+    customRowBadge: "Provvisorio",
   },
   users: {
     notFound: "Utente non trovato.",
@@ -154,6 +155,7 @@ export const MSG = {
     userActivateFailed: "Impossibile attivare l'utente.",
     signupCheckEmail:
       "Registrazione completata. Controlla la tua email per confermare l'account.",
+    logoutError: "Errore durante la disconnessione.",
     subBomLoadFailed: "Impossibile caricare la distinta del sotto-assieme.",
     subBomEmpty: "Il sotto-assieme non contiene articoli.",
     coefficientUpdated: "Coefficiente aggiornato.",

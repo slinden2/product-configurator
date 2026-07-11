@@ -3,9 +3,11 @@
 import { LogOut } from "lucide-react";
 import type React from "react";
 import { useTransition } from "react";
+import { toast } from "sonner";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { MSG } from "@/lib/messages";
 
 const Logout = () => {
   const [isPending, startTransition] = useTransition();
@@ -16,6 +18,7 @@ const Logout = () => {
       try {
         await signOut();
       } catch (error) {
+        toast.error(MSG.toast.logoutError);
         console.error("Logout failed: ", error);
       }
     });
