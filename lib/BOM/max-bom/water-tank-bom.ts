@@ -1,15 +1,16 @@
 import type { WaterTank } from "@/db/schemas";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { TODO_PN } from "@/lib/BOM/max-bom/conditions";
 
 const PART_NUMBERS = {
   WATER_TANK_2000L: "921.00.201",
   WATER_TANK_JOLLY_2000L: "921.00.200",
   WATER_TANK_2500L: "921.00.250",
-  WATER_TANK_3000L: "", // TODO Add to Excel and BOM
+  WATER_TANK_3000L: TODO_PN("WATER_TANK_3000L"), // TODO Add to Excel and BOM
   WATER_TANK_4500L: "921.00.450",
-  WATER_TANK_5000L: "", // TODO Add to Excel and BOM
-  WATER_TANK_7000L: "", // TODO Add to Excel and BOM
-  WATER_TANK_9000L: "", // TODO Add to Excel and BOM
+  WATER_TANK_5000L: TODO_PN("WATER_TANK_5000L"), // TODO Add to Excel and BOM
+  WATER_TANK_7000L: TODO_PN("WATER_TANK_7000L"), // TODO Add to Excel and BOM
+  WATER_TANK_9000L: TODO_PN("WATER_TANK_9000L"), // TODO Add to Excel and BOM
   INLET_WITH_FLOAT: "1100.064.001",
   INLET_WITHOUT_FLOAT: "1100.064.002",
   INLET_WITH_FLOAT_JOLLY: "1100.064.003",
@@ -19,7 +20,7 @@ const PART_NUMBERS = {
   OUTLET_WITH_VALVE_JOLLY: "1100.064.007",
   OUTLET_WITHOUT_VALVE_JOLLY: "1100.064.008",
   BLOWER: "1100.064.009",
-  ELECTRIC_FLOAT_FOR_PURIFIER: "N/A", // TODO Add part number and add to Excel
+  ELECTRIC_FLOAT_FOR_PURIFIER: TODO_PN("ELECTRIC_FLOAT_FOR_PURIFIER"), // TODO Add part number and add to Excel
 } as const satisfies Record<string, string>;
 
 const usesJolly = (config: WaterTank) => config.type === "L2000_JOLLY";

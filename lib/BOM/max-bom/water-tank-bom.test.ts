@@ -8,6 +8,7 @@ vi.mock("@/db/queries", () => ({
 }));
 
 import type { WaterTank } from "@/db/schemas";
+import { TODO_PN } from "@/lib/BOM/max-bom/conditions";
 import { waterTankBOM } from "@/lib/BOM/max-bom/water-tank-bom";
 
 function makeTank(overrides: Partial<WaterTank> = {}): WaterTank {
@@ -66,7 +67,9 @@ describe("waterTankBOM — tank type selection", () => {
   });
 
   test("type=L3000 → 3000L tank", () => {
-    expect(pns(makeTank({ type: "L3000" }))).toContain("");
+    expect(pns(makeTank({ type: "L3000" }))).toContain(
+      TODO_PN("WATER_TANK_3000L"),
+    );
     const item = waterTankBOM.find(
       (i) =>
         i.conditions.every((fn) => fn(makeTank({ type: "L3000" }))) &&

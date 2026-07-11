@@ -10,6 +10,7 @@ import {
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/max-bom";
+import { isTodoPn } from "@/lib/BOM/max-bom/conditions";
 import type { BomTag } from "@/types";
 
 export interface BOMItem {
@@ -45,9 +46,19 @@ export type WithSupplyData = Pick<
 
 export type GeneralBOMConfig = Configuration & { has_shelf_extension: boolean };
 
-/** Warn about part numbers absent from the catalog map (likely typos in rule files). */
+/**
+ * Warn about part numbers absent from the catalog map. TODO_PN placeholders
+ * (rules whose catalog code is not yet known, see max-bom/conditions.ts) are
+ * reported separately from real PNs missing from the DB (likely typos).
+ */
 function warnMissingPns(pns: string[], map: Map<string, unknown>): void {
-  const missingPns = pns.filter((pn) => !map.has(pn));
+  const todoPns = pns.filter(isTodoPn);
+  if (todoPns.length > 0) {
+    console.warn(
+      `[BOM] Rules without a catalog part number yet: ${todoPns.join(", ")}`,
+    );
+  }
+  const missingPns = pns.filter((pn) => !map.has(pn) && !isTodoPn(pn));
   if (missingPns.length > 0) {
     console.warn(
       `[BOM] Part numbers not found in DB: ${missingPns.join(", ")}`,

@@ -1,5 +1,16 @@
 import type { GeneralBOMConfig } from "@/lib/BOM";
 
+/**
+ * Placeholder for rules whose catalog part number is not yet known. These are
+ * live rules — selecting the option emits a real BOM row carrying this
+ * sentinel — so the single convention keeps them machine-detectable:
+ * `warnMissingPns` (lib/BOM/index.ts) flags them explicitly and
+ * `collectMaxBomPns` (lib/pricing.ts) excludes them from coefficient lookups.
+ */
+export const TODO_PN = (name: string): string => `TODO_PN:${name}`;
+
+export const isTodoPn = (pn: string): boolean => pn.startsWith("TODO_PN:");
+
 export const isOMZ = (config: GeneralBOMConfig): boolean =>
   config.machine_type === "OMZ";
 

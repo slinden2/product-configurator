@@ -1,8 +1,8 @@
 import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { TODO_PN } from "@/lib/BOM/max-bom/conditions";
 import type { BrushColorType, BrushType } from "@/types";
 
-// TODO Add part numbers where missing
 const PART_NUMBERS: Record<
   BrushColorType,
   Record<BrushType, Record<"VERTICAL" | "HORIZONTAL", string>>
@@ -13,8 +13,8 @@ const PART_NUMBERS: Record<
       HORIZONTAL: "450.17.001",
     },
     MIXED: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_BLUE_SILVER_MIXED_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_BLUE_SILVER_MIXED_HORIZONTAL"),
     },
     CARLITE: {
       VERTICAL: "450.16.004",
@@ -27,26 +27,26 @@ const PART_NUMBERS: Record<
       HORIZONTAL: "450.17.006",
     },
     MIXED: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_GREEN_BLACK_MIXED_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_GREEN_BLACK_MIXED_HORIZONTAL"),
     },
     CARLITE: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_GREEN_BLACK_CARLITE_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_GREEN_BLACK_CARLITE_HORIZONTAL"),
     },
   },
   GREEN_SILVER: {
     THREAD: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_GREEN_SILVER_THREAD_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_GREEN_SILVER_THREAD_HORIZONTAL"),
     },
     MIXED: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_GREEN_SILVER_MIXED_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_GREEN_SILVER_MIXED_HORIZONTAL"),
     },
     CARLITE: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_GREEN_SILVER_CARLITE_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_GREEN_SILVER_CARLITE_HORIZONTAL"),
     },
   },
   RED: {
@@ -55,12 +55,12 @@ const PART_NUMBERS: Record<
       HORIZONTAL: "450.17.005",
     },
     MIXED: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_RED_MIXED_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_RED_MIXED_HORIZONTAL"),
     },
     CARLITE: {
-      VERTICAL: "NO_PN",
-      HORIZONTAL: "NO_PN",
+      VERTICAL: TODO_PN("BRUSH_RED_CARLITE_VERTICAL"),
+      HORIZONTAL: TODO_PN("BRUSH_RED_CARLITE_HORIZONTAL"),
     },
   },
 };

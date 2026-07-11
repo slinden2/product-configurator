@@ -4,22 +4,19 @@ import {
   WashBayMaxBOM,
   WaterTankMaxBOM,
 } from "@/lib/BOM/max-bom";
+import { isTodoPn } from "@/lib/BOM/max-bom/conditions";
 
 export const DEFAULT_COEFFICIENT = 3.0;
 
-const EXACT_FILTERED_PNS = new Set(["NO_PN", "N/A", ""]);
-
 /** Collects all unique, real PNs referenced across the three MaxBOM rule arrays.
- * Excludes placeholder values ("NO_PN", "N/A", "TODO:*") that lack a real part number. */
+ * Excludes TODO_PN placeholders that lack a real part number. */
 export function collectMaxBomPns(): string[] {
   const all = [
     ...GeneralMaxBOM.map((i) => i.pn),
     ...WaterTankMaxBOM.map((i) => i.pn),
     ...WashBayMaxBOM.map((i) => i.pn),
   ];
-  return [...new Set(all)].filter(
-    (pn) => !EXACT_FILTERED_PNS.has(pn) && !pn.startsWith("TODO"),
-  );
+  return [...new Set(all)].filter((pn) => !isTodoPn(pn));
 }
 
 export function computeLinePrice(

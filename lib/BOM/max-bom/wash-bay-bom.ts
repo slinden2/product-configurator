@@ -1,6 +1,7 @@
 import type { WashBay } from "@/db/schemas";
 import type { WithSupplyData } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
+import { TODO_PN } from "@/lib/BOM/max-bom/conditions";
 
 const PART_NUMBERS = {
   LINE_POST_ASSY_H2500: "1100.300.001",
@@ -17,11 +18,11 @@ const PART_NUMBERS = {
   HP_LANCE_ASSY: "1100.300.081",
   DETERGENT_LANCE_ASSY: "1100.300.082",
   HP_WEEPING_LANCE_ASSY: "1100.300.083",
-  HOSE_REEL_HP_WITH_POST_ASSY: "TODO-HP-WITH-POST", // TODO Replace with real PN and add to Excel
-  HOSE_REEL_HP_WITHOUT_POST_ASSY: "TODO-HP-WITHOUT-POST", // TODO Replace with real PN and add to Excel
-  HOSE_REEL_DET_WITH_POST_ASSY: "TODO-DET-WITH-POST", // TODO Replace with real PN and add to Excel
-  HOSE_REEL_DET_WITHOUT_POST_ASSY: "TODO-DET-WITHOUT-POST", // TODO Replace with real PN and add to Excel
-  HOSE_REEL_HP_DET_WITH_POST_ASSY: "TODO-HP-DET-WITH-POST", // TODO Replace with real PN and add to Excel
+  HOSE_REEL_HP_WITH_POST_ASSY: TODO_PN("HOSE_REEL_HP_WITH_POST_ASSY"), // TODO Replace with real PN and add to Excel
+  HOSE_REEL_HP_WITHOUT_POST_ASSY: TODO_PN("HOSE_REEL_HP_WITHOUT_POST_ASSY"), // TODO Replace with real PN and add to Excel
+  HOSE_REEL_DET_WITH_POST_ASSY: TODO_PN("HOSE_REEL_DET_WITH_POST_ASSY"), // TODO Replace with real PN and add to Excel
+  HOSE_REEL_DET_WITHOUT_POST_ASSY: TODO_PN("HOSE_REEL_DET_WITHOUT_POST_ASSY"), // TODO Replace with real PN and add to Excel
+  HOSE_REEL_HP_DET_WITH_POST_ASSY: TODO_PN("HOSE_REEL_HP_DET_WITH_POST_ASSY"), // TODO Replace with real PN and add to Excel
   SIDE_PANEL_ASSY: "1100.300.021",
   SIDE_PANEL_ASSY_FOR_CENTRAL_POST_LINE: "1100.300.022",
   SLIDING_BRACKETS_FOR_FESTOON_LINE_WITH_BOOM: "1100.300.061",

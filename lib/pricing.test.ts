@@ -10,6 +10,7 @@ vi.mock("@/db/queries", () => ({
     mockGetPriceCoefficientsByArray(...args),
 }));
 
+import { isTodoPn } from "@/lib/BOM/max-bom/conditions";
 import {
   collectMaxBomPns,
   computeLinePrice,
@@ -53,13 +54,9 @@ describe("collectMaxBomPns", () => {
     expect(collectMaxBomPns()).toEqual(collectMaxBomPns());
   });
 
-  test("excludes NO_PN placeholders", () => {
-    expect(collectMaxBomPns()).not.toContain("NO_PN");
-  });
-
-  test("excludes TODO placeholder PNs", () => {
+  test("excludes TODO_PN placeholders", () => {
     const pns = collectMaxBomPns();
-    expect(pns.every((p) => !p.startsWith("TODO"))).toBe(true);
+    expect(pns.every((p) => !isTodoPn(p))).toBe(true);
   });
 });
 
