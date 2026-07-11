@@ -50,7 +50,7 @@ import {
 import {
   cardQtyOpts,
   emergencyStopQtyOpts,
-  TouchFixingType,
+  TouchFixingTypeEnum,
   TouchPosEnum,
   touchFixingTypeOpts,
   touchPositionOpts,
@@ -91,7 +91,7 @@ export const zodEnums = {
   HPPumpOutlet75kwEnum,
   OMZPumpOutletEnum,
   TouchPosEnum,
-  TouchFixingType,
+  TouchFixingTypeEnum,
   PressureWasherTypeEnum,
 };
 

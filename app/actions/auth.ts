@@ -18,7 +18,7 @@ import type {
 import {
   authSchema,
   loginSchema,
-  newPassWordSchema,
+  newPasswordSchema,
   signupSchema,
 } from "@/validation/auth-schema";
 
@@ -178,7 +178,7 @@ export async function resetPassword(
     return { success: false as const, error: MSG.auth.missingResetCode };
   }
 
-  const parsed = newPassWordSchema.safeParse(formData);
+  const parsed = newPasswordSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false as const, error: MSG.auth.invalidData };
   }

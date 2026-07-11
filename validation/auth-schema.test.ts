@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   authSchema,
   loginSchema,
-  newPassWordSchema,
+  newPasswordSchema,
   signupSchema,
 } from "@/validation/auth-schema";
 
@@ -42,10 +42,10 @@ describe("authSchema", () => {
   });
 });
 
-describe("newPassWordSchema", () => {
+describe("newPasswordSchema", () => {
   test("should pass when passwords match and meet minimum length", () => {
     expect(() =>
-      newPassWordSchema.parse({
+      newPasswordSchema.parse({
         password: "secretsecret",
         confirmPassword: "secretsecret",
       }),
@@ -54,7 +54,7 @@ describe("newPassWordSchema", () => {
 
   test("should pass with a long password", () => {
     expect(() =>
-      newPassWordSchema.parse({
+      newPasswordSchema.parse({
         password: "a-very-long-password-123!",
         confirmPassword: "a-very-long-password-123!",
       }),
@@ -63,7 +63,7 @@ describe("newPassWordSchema", () => {
 
   test("should fail when password is shorter than 8 characters", () => {
     expect(() =>
-      newPassWordSchema.parse({
+      newPasswordSchema.parse({
         password: "seven77",
         confirmPassword: "seven77",
       }),
@@ -72,7 +72,7 @@ describe("newPassWordSchema", () => {
 
   test("should fail when passwords do not match", () => {
     expect(() =>
-      newPassWordSchema.parse({
+      newPasswordSchema.parse({
         password: "password1-mismatch",
         confirmPassword: "password2-mismatch",
       }),
@@ -80,7 +80,7 @@ describe("newPassWordSchema", () => {
   });
 
   test("should fail when password is valid length but confirmPassword differs", () => {
-    const result = newPassWordSchema.safeParse({
+    const result = newPasswordSchema.safeParse({
       password: "validpassword",
       confirmPassword: "differentpassword",
     });

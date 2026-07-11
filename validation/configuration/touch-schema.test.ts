@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { genericRequiredMessage, invalidOption } from "@/validation/common";
 import {
-  TouchFixingType,
+  TouchFixingTypeEnum,
   TouchPosEnum,
   touchSchema,
 } from "@/validation/configuration/touch-schema";
@@ -22,7 +22,7 @@ function createTouchData({
   is_fast?: boolean;
   touch_qty: number | string;
   touch_pos?: keyof typeof TouchPosEnum.enum;
-  touch_fixing_type?: keyof typeof TouchFixingType.enum;
+  touch_fixing_type?: keyof typeof TouchFixingTypeEnum.enum;
 }) {
   return {
     has_itecoweb,
@@ -41,7 +41,7 @@ describe("touchSchema", () => {
       const validData = createTouchData({
         touch_qty: 1,
         touch_pos: TouchPosEnum.enum.EXTERNAL,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
         card_qty: 50,
       });
       expect(() => touchSchema.parse(validData)).not.toThrow();
@@ -50,7 +50,7 @@ describe("touchSchema", () => {
     test("should validate successfully with 2 touches and post fixing type", () => {
       const validData = createTouchData({
         touch_qty: 2,
-        touch_fixing_type: TouchFixingType.enum.POST,
+        touch_fixing_type: TouchFixingTypeEnum.enum.POST,
         card_qty: 100,
       });
       expect(() => touchSchema.parse(validData)).not.toThrow();
@@ -83,7 +83,7 @@ describe("touchSchema", () => {
       const invalidData = createTouchData({
         touch_qty: 0,
         touch_pos: TouchPosEnum.enum.EXTERNAL,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
       });
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
@@ -92,7 +92,7 @@ describe("touchSchema", () => {
       const invalidData = createTouchData({
         touch_qty: 1,
         touch_pos: TouchPosEnum.enum.ON_PANEL,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
       });
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
@@ -101,7 +101,7 @@ describe("touchSchema", () => {
       const invalidData = createTouchData({
         touch_qty: 1,
         touch_pos: TouchPosEnum.enum.ON_DET_CAB,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
       });
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
@@ -110,7 +110,7 @@ describe("touchSchema", () => {
       const invalidData = createTouchData({
         touch_qty: 3,
         touch_pos: TouchPosEnum.enum.EXTERNAL,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
       });
       expect(() => touchSchema.parse(invalidData)).toThrow();
     });
@@ -119,7 +119,7 @@ describe("touchSchema", () => {
       const invalidData = createTouchData({
         touch_qty: 1,
         touch_pos: TouchPosEnum.enum.ON_PANEL,
-        touch_fixing_type: TouchFixingType.enum.POST,
+        touch_fixing_type: TouchFixingTypeEnum.enum.POST,
       });
       expect(() => touchSchema.parse(invalidData)).toThrowError(invalidOption);
     });
@@ -139,7 +139,7 @@ describe("touchSchema", () => {
       const invalidData = createTouchData({
         touch_qty: 1,
         touch_pos: TouchPosEnum.enum.EXTERNAL,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
         card_qty: 75,
       });
       expect(() => touchSchema.parse(invalidData)).toThrowError(
@@ -150,7 +150,7 @@ describe("touchSchema", () => {
     test("should throw error if card_qty exceeds 300", () => {
       const invalidData = createTouchData({
         touch_qty: 2,
-        touch_fixing_type: TouchFixingType.enum.WALL,
+        touch_fixing_type: TouchFixingTypeEnum.enum.WALL,
         card_qty: 350,
       });
       expect(() => touchSchema.parse(invalidData)).toThrow();

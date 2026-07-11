@@ -11,12 +11,12 @@ import { Form } from "@/components/ui/form";
 import { MSG } from "@/lib/messages";
 import {
   type NewPasswordSchema,
-  newPassWordSchema,
+  newPasswordSchema,
 } from "@/validation/auth-schema";
 
 const ResetPasswordForm = () => {
   const form = useForm<NewPasswordSchema>({
-    resolver: zodResolver(newPassWordSchema),
+    resolver: zodResolver(newPasswordSchema),
   });
   const router = useRouter();
   const searchParams = useSearchParams();

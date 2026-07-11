@@ -24,12 +24,12 @@ export const touchPositionOpts: SelectOption[] =
     EXTERNAL: "Esterna",
   });
 
-export const TouchFixingType = z.enum(TouchFixTypes, {
+export const TouchFixingTypeEnum = z.enum(TouchFixTypes, {
   message: genericRequiredMessage,
 });
 
 export const touchFixingTypeOpts: SelectOption[] =
-  generateSelectOptionsFromZodEnum(TouchFixingType, {
+  generateSelectOptionsFromZodEnum(TouchFixingTypeEnum, {
     POST: "Su palo",
     WALL: "A muro",
   });
@@ -48,7 +48,7 @@ const baseTouchSchema = z
       })
       .optional(), // Optional for initial undefined state
     touch_pos: TouchPosEnum.optional(),
-    touch_fixing_type: TouchFixingType.optional(),
+    touch_fixing_type: TouchFixingTypeEnum.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.touch_qty === undefined) {

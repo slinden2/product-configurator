@@ -10,7 +10,7 @@ export const authSchema = z.object({
     ),
 });
 
-export const newPassWordSchema = z
+export const newPasswordSchema = z
   .object({
     password: z.string().min(8, "Password deve contenere almeno 8 caratteri."),
     confirmPassword: z.string(),
@@ -24,9 +24,9 @@ export const loginSchema = authSchema.extend({
   password: z.string(),
 });
 
-export const signupSchema = authSchema.and(newPassWordSchema);
+export const signupSchema = authSchema.and(newPasswordSchema);
 
 export type AuthSchema = z.infer<typeof authSchema>;
-export type NewPasswordSchema = z.infer<typeof newPassWordSchema>;
+export type NewPasswordSchema = z.infer<typeof newPasswordSchema>;
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type SignupSchema = z.infer<typeof signupSchema>;
