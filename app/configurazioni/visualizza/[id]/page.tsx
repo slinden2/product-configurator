@@ -62,7 +62,7 @@ const ViewConfiguration = async (props: ViewConfigProps) => {
               configuration={configuration}
               waterTanks={waterTanks}
               washBays={washBays}
-              generatorEmail={null}
+              generatorEmail={user.email}
             />
             {editable && (
               <Button asChild variant="outline">

@@ -23,7 +23,13 @@ export const getUserData = async () => {
 
   const userProfile = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.id, data.user.id),
-    columns: { role: true, initials: true, manager_id: true, is_active: true },
+    columns: {
+      email: true,
+      role: true,
+      initials: true,
+      manager_id: true,
+      is_active: true,
+    },
   });
 
   // Fail closed for profiles not yet activated by an ADMIN.
@@ -33,6 +39,7 @@ export const getUserData = async () => {
 
   return {
     id: data.user.id,
+    email: userProfile.email,
     role: userProfile.role,
     initials: userProfile.initials,
     manager_id: userProfile.manager_id,

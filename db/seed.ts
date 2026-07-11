@@ -549,6 +549,7 @@ async function seedDb() {
     // way acceptRevisionAction does (pooled read, before the tx). An ADMIN sees all.
     const adminUser = {
       id: adminId,
+      email: "admin@itecosrl.com",
       role: "ADMIN" as const,
       initials: "ADM",
       manager_id: null,

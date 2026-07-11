@@ -124,6 +124,7 @@ function makeUser(
 ) {
   return {
     id: "user-1",
+    email: "engineer@iteco.it",
     role: "ENGINEER" as Role,
     initials: "TE",
     manager_id: null,
