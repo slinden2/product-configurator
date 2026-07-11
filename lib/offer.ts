@@ -1,11 +1,10 @@
-import { getPriceCoefficientsByArray } from "@/db/queries";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import { BOM, enrichWithCosts } from "@/lib/BOM";
 import {
   resolveOfferSurcharges,
   sumSurchargeTotal,
 } from "@/lib/offer-surcharges";
-import { computeLinePrice, DEFAULT_COEFFICIENT } from "@/lib/pricing";
+import { computeLinePrice, enrichWithPrices } from "@/lib/pricing";
 import type { BomLineCategory, BomTag } from "@/types";
 import { BomTagLabels, BomTags, STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import {
@@ -53,21 +52,26 @@ export interface GroupedOfferData {
 }
 
 function toOfferItem(
-  row: { pn: string; description: string; qty: number; tag?: BomTag | null },
+  row: {
+    pn: string;
+    description: string;
+    qty: number;
+    tag?: BomTag | null;
+    cost: number;
+    coefficient: number;
+    list_price: number;
+  },
   category: BomLineCategory,
   category_index: number,
-  costMap: Map<string, number>,
-  coeffMap: Map<string, number>,
 ): OfferBomLineItem {
-  const cost = costMap.get(row.pn) ?? 0;
-  const coefficient = coeffMap.get(row.pn) ?? DEFAULT_COEFFICIENT;
   return {
     pn: row.pn,
     description: row.description,
     qty: row.qty,
-    coefficient,
-    list_price: computeLinePrice(cost, coefficient, 1),
-    line_total: computeLinePrice(cost, coefficient, row.qty),
+    coefficient: row.coefficient,
+    list_price: computeLinePrice(row.cost, row.coefficient, 1),
+    // enrichWithPrices' list_price already multiplies by qty — it is the line total.
+    line_total: row.list_price,
     tag: row.tag ?? null,
     category,
     category_index,
@@ -107,16 +111,11 @@ export async function buildOfferItemsFromLive(
   if (flatSources.length === 0) return [];
 
   const allFlat = flatSources.map(({ item }) => item);
-  const uniquePns = [...new Set(allFlat.map((i) => i.pn))];
-  const [coeffRows, withCosts] = await Promise.all([
-    getPriceCoefficientsByArray(uniquePns),
-    enrichWithCosts(allFlat),
-  ]);
-  const coeffMap = new Map(coeffRows.map((r) => [r.pn, Number(r.coefficient)]));
-  const costMap = new Map(withCosts.map((r) => [r.pn, r.cost]));
+  const withCosts = await enrichWithCosts(allFlat);
+  const withPrices = await enrichWithPrices(withCosts);
 
-  return flatSources.map(({ item, category, category_index }) =>
-    toOfferItem(item, category, category_index, costMap, coeffMap),
+  return flatSources.map(({ category, category_index }, idx) =>
+    toOfferItem(withPrices[idx], category, category_index),
   );
 }
 
