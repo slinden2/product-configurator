@@ -18,7 +18,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { canManageStandaloneConfigs, canViewOffer } from "@/lib/access";
+import {
+  canManageStandaloneConfigs,
+  canManageUsers,
+  canViewOffer,
+} from "@/lib/access";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types";
 
@@ -62,7 +66,7 @@ const MainNav = ({ user, role }: MainNavProps) => {
           },
         ]
       : []),
-    ...(role === "ADMIN"
+    ...(role && canManageUsers(role)
       ? [
           {
             label: "Gestione",

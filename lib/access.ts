@@ -57,6 +57,12 @@ export const canManageStandaloneConfigs = (role: Role): boolean =>
 export const canViewOffer = (role: Role): boolean => OFFER_ROLES.includes(role);
 
 /**
+ * Roles allowed into the admin area (Gestione): user management and the
+ * price/surcharge settings pages. Currently ADMIN only.
+ */
+export const canManageUsers = (role: Role): boolean => role === "ADMIN";
+
+/**
  * True once an offer revision has left the open working states (`SENT` and
  * beyond), i.e. its `pricing_snapshot` is frozen. Gates the customer-facing
  * Excel/PDF export so only sent (manager-approved) quotes can be downloaded —

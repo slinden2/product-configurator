@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getUserData } from "@/db/queries";
+import { canManageUsers } from "@/lib/access";
 
 /**
  * Shared page-level ADMIN guard for /gestione data pages (defense in depth —
@@ -12,6 +13,6 @@ export async function gestioneRouteGuard(): Promise<
 > {
   const user = await getUserData();
   if (!user) redirect("/login");
-  if (user.role !== "ADMIN") redirect("/configurazioni");
+  if (!canManageUsers(user.role)) redirect("/configurazioni");
   return user;
 }

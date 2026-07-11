@@ -2,7 +2,7 @@
 // these are plain helpers imported by action files, not actions themselves (the pure
 // synchronous checks live in auth-checks.ts).
 import { getOfferWorkingRevision, getUserData } from "@/db/queries";
-import { canViewOffer } from "@/lib/access";
+import { canManageUsers, canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 
 /**
@@ -15,7 +15,7 @@ export async function authorizeAdmin(
   const user = await getUserData();
   if (!user)
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
-  if (user.role !== "ADMIN")
+  if (!canManageUsers(user.role))
     return { success: false as const, error: unauthorizedMsg };
   return { success: true as const, user };
 }
