@@ -59,7 +59,6 @@ export const MSG = {
       "La distinta di commessa non esiste ancora. Usa 'Genera distinta di commessa' prima di aggiungere righe manuali.",
     invalidQty: "Quantità non valida.",
     rowNotFound: "Riga non trovata.",
-    customRowBadge: "Provvisorio",
   },
   users: {
     notFound: "Utente non trovato.",
