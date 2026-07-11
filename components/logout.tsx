@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { unstable_rethrow } from "next/navigation";
 import type React from "react";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -18,6 +19,10 @@ const Logout = () => {
       try {
         await signOut();
       } catch (error) {
+        // signOut() always ends in a redirect, which surfaces here as a Next
+        // control-flow error. Rethrow it so the navigation proceeds — only a
+        // genuine failure should reach the toast.
+        unstable_rethrow(error);
         toast.error(MSG.toast.logoutError);
         console.error("Logout failed: ", error);
       }
