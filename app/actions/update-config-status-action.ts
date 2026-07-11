@@ -35,6 +35,11 @@ export const updateConfigStatusAction = async (
   }
 
   try {
+    // Sanctioned exception to the "gate in the action" template: the access
+    // (canAccessConfiguration) and transition (canTransition) gates live inside
+    // updateConfigStatus (db/queries/configurations.ts), which throws QueryError.
+    // They must run against the row it reads under the same transaction, so
+    // re-checking here would only duplicate them. See app/actions/CLAUDE.md.
     const { id: updatedId, origin } = await db.transaction(async (tx) => {
       const result = await updateConfigStatus(
         confId,

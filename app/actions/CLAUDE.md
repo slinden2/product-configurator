@@ -24,6 +24,22 @@ Actions must always return an object with this structure:
    - `DatabaseError` → return `"Errore del database."` (never expose raw pg error strings)
    - Default → return `"Errore sconosciuto."`
 
+## Sanctioned Query-Layer Gates (the only exception to step 4)
+
+A few gates live in the query layer instead of the action, because they must run against the row the
+query itself reads inside its own transaction. These are the **complete** list — do not add more, and do
+not assume an unlisted query guards its own callers (`deleteConfiguration`, for example, has no internal
+gate and relies entirely on its action):
+
+- `updateConfigStatus` (`db/queries/configurations.ts`) — owns `canAccessConfiguration` + `canTransition`
+  for `updateConfigStatusAction`.
+- `addOfferLine` / `removeOfferLine` (`db/queries/offers.ts`) — own the revision-`DRAFT` and
+  renegotiation-lock gates for the offer-line actions (which still run `authorizeOfferLifecycleAction`
+  for offer access + scope first).
+
+Each throws `QueryError`, so the action's `try/catch` surfaces the Italian message as usual. Every action
+in this list carries a comment pointing here.
+
 ## Error Message Registry
 
 All Italian error messages are centralized in `lib/messages.ts` as the `MSG` constant. Import `MSG` from `@/lib/messages` and reference keys like `MSG.auth.unauthorized`, `MSG.config.notFound`, `MSG.db.error`, etc. Never hardcode message strings — always use `MSG`.

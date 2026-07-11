@@ -16,7 +16,13 @@ function buildSurcharge(
   };
 }
 
-/** Whether a height surcharge applies. Single source of truth for guard + builder. */
+/**
+ * Whether a height surcharge applies. Single source of truth for guard + builder.
+ *
+ * The `!==` is deliberate: ANY deviation from `standardHeightMm` — taller or
+ * shorter — makes the machine a custom build and is surcharged as such. Do not
+ * "fix" this to `>`.
+ */
 export function heightSurchargeApplies(input: {
   totalHeightMm: number | null | undefined;
   standardHeightMm: number;
@@ -96,7 +102,9 @@ export function resolveOfferSurcharges(input: {
   const paintPrice = Number(paintSetting?.price ?? 0);
 
   // Fail closed: NaN, 0, and negatives all fail `> 0`, so a malformed price
-  // can never slip a NaN amount into line pricing / the snapshot.
+  // can never slip a NaN amount into line pricing / the snapshot. Note the HEIGHT
+  // guard fires for any deviation from the standard height (above or below) —
+  // see heightSurchargeApplies.
   if (heightWillApply && !(heightPrice > 0)) {
     return { ok: false };
   }

@@ -155,7 +155,8 @@ The **offer** is gated separately from the **configuration**: `isEditable` gover
 `canViewOffer` (`lib/access.ts`) governs the offer — deliberately different role sets.
 
 - `canViewOffer` = SALES roles + `ADMIN`. **ENGINEER is excluded.**
-- The offer route (`app/offerte/[id]/layout.tsx`) redirects disallowed roles.
+- The offer-area route group (`app/offerte/layout.tsx`) redirects disallowed roles — it covers the list,
+  `nuova`, and every `[id]` detail route.
 - Every offer action runs `canViewOffer` first via `authorizeOfferAction` — **before** `isEditable` — so
   ENGINEER is rejected even where `isEditable` would otherwise allow it.
 - Revision transitions are gated by `canTransitionRevision` (`app/actions/lib/auth-checks.ts`); the

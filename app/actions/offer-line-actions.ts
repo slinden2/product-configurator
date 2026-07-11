@@ -37,7 +37,8 @@ export const addOfferLineAction = async (
   const { user } = auth;
 
   try {
-    // The revision-DRAFT gate lives in addOfferLine (throws QueryError otherwise).
+    // The revision-DRAFT and renegotiation-lock gates live in addOfferLine (throws
+    // QueryError otherwise) — a sanctioned query-layer gate, see app/actions/CLAUDE.md.
     // Price the new line from its live BOM in the same transaction; the
     // OFFER_LINE_ADD log already records the creation, so skip the reprice audit.
     // requireDraft: a just-inserted line on a non-DRAFT revision is a lost race
@@ -72,7 +73,8 @@ export const removeOfferLineAction = async (
   offerId: number,
   configId: number,
 ) => {
-  // Offer access + existence + scope; the revision-DRAFT gate lives in removeOfferLine.
+  // Offer access + existence + scope. The revision-DRAFT and renegotiation-lock gates
+  // live in removeOfferLine — a sanctioned query-layer gate, see app/actions/CLAUDE.md.
   const auth = await authorizeOfferLifecycleAction(offerId);
   if (!auth.success) return auth;
 
