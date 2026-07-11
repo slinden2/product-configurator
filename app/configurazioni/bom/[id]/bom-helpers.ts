@@ -14,8 +14,6 @@ import {
 } from "@/lib/BOM";
 import type { Role } from "@/types";
 
-export type { EngineeringBomItemWithPart };
-
 // ── Grouping ────────────────────────────────────────────────────────────
 
 export interface GroupedEbomItems {
@@ -53,10 +51,6 @@ export function groupEbomByCategory(
 
   return { general, waterTanks, washBays };
 }
-
-// ── Tag grouping ────────────────────────────────────────────────────────
-
-export { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 
 // ── Export data builders ────────────────────────────────────────────────
 
@@ -114,8 +108,6 @@ export interface BOMPageData {
   waterTankBOMs: BOMItemWithDescription[][];
   washBayBOMs: BOMItemWithDescription[][];
   hasEbom: boolean;
-  ebomItems: EngineeringBomItemWithPart[];
-  activeEbomItems: EngineeringBomItemWithPart[];
   editable: boolean;
   ebomGrouped: GroupedEbomItems;
   exportData: BOMItemWithDescription[];
@@ -174,8 +166,6 @@ export async function prepareBOMPageData(
     waterTankBOMs,
     washBayBOMs,
     hasEbom,
-    ebomItems,
-    activeEbomItems,
     editable,
     ebomGrouped,
     exportData,

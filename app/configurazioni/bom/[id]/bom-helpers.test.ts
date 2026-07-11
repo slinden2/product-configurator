@@ -12,11 +12,10 @@ import {
   buildEbomExportData,
   getBomRulesVersion,
   getEarliestCreatedAt,
-  groupByTag,
   groupEbomByCategory,
-  hasTagData,
 } from "@/app/configurazioni/bom/[id]/bom-helpers";
 import type { EngineeringBomItemWithPart } from "@/db/queries";
+import { groupByTag, hasTagData } from "@/lib/BOM/tag-utils";
 
 // --- Helpers ---
 

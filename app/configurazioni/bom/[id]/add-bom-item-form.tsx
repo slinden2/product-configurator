@@ -22,7 +22,6 @@ interface AddBomItemFormProps {
   confId: number;
   category: BomLineCategory;
   categoryIndex: number;
-  tag?: BomTag;
   availableTags?: BomTag[];
 }
 
@@ -30,7 +29,6 @@ const AddBomItemForm = ({
   confId,
   category,
   categoryIndex,
-  tag: fixedTag,
   availableTags,
 }: AddBomItemFormProps) => {
   const [mode, setMode] = useState<"catalog" | "custom">("catalog");
@@ -40,7 +38,7 @@ const AddBomItemForm = ({
 
   // Tag selector (only used when availableTags is provided)
   const [selectedTag, setSelectedTag] = useState<BomTag | undefined>(
-    fixedTag ?? availableTags?.[0],
+    availableTags?.[0],
   );
 
   // Custom mode fields

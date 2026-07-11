@@ -3,7 +3,7 @@ import { getUserData } from "@/db/queries";
 import type { Role } from "@/types";
 
 /**
- * Shared auth + role guard for configuration sub-routes (BOM, Offerta).
+ * Shared auth + role guard for configuration sub-routes (BOM, Marginalita).
  * Redirects to /login if unauthenticated; redirects to `fallback(id)` when
  * `canAccess(role)` returns false.
  */
