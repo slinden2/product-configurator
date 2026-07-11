@@ -1,11 +1,17 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import {
+  FormProvider,
+  type Resolver,
+  type ResolverResult,
+  useForm,
+} from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import SelectField from "@/components/select-field";
+import { FormDisabledContext } from "@/components/ui/form";
 import { NOT_SELECTED_LABEL, NOT_SELECTED_VALUE } from "@/lib/utils";
 import type { SelectOption } from "@/types";
 
@@ -35,14 +41,21 @@ const numberItems: SelectOption[] = [
   { value: 5, label: "Large" },
 ];
 
+const booleanItems: SelectOption[] = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+];
+
 // --- Helper ---
 
 function renderSelectField({
   props,
   defaults = {},
+  formDisabled = false,
 }: {
   props?: Partial<React.ComponentProps<typeof SelectField<TestForm>>>;
   defaults?: Partial<TestForm>;
+  formDisabled?: boolean;
 } = {}) {
   let getValues: () => TestForm;
 
@@ -59,13 +72,15 @@ function renderSelectField({
     getValues = form.getValues;
     return (
       <FormProvider {...form}>
-        <SelectField<TestForm>
-          name="color"
-          label="Color"
-          dataType="string"
-          items={colorItems}
-          {...props}
-        />
+        <FormDisabledContext.Provider value={formDisabled}>
+          <SelectField<TestForm>
+            name="color"
+            label="Color"
+            dataType="string"
+            items={colorItems}
+            {...props}
+          />
+        </FormDisabledContext.Provider>
       </FormProvider>
     );
   };
@@ -101,6 +116,28 @@ describe("SelectField", () => {
       renderSelectField({ props: { disabled: true } });
 
       expect(screen.getByLabelText("Color")).toBeDisabled();
+    });
+
+    test("disables the select when the form-wide disabled context is set", () => {
+      renderSelectField({ formDisabled: true });
+
+      expect(screen.getByLabelText("Color")).toBeDisabled();
+    });
+
+    test("shows the placeholder after the selection is cleared", async () => {
+      renderSelectField({
+        props: { items: colorItemsWithEmpty },
+        defaults: { color: "red" },
+      });
+
+      expect(screen.getByLabelText("Color")).toHaveTextContent("Red");
+
+      await selectOption("Color", NOT_SELECTED_LABEL);
+
+      expect(screen.getByLabelText("Color")).toHaveTextContent(
+        NOT_SELECTED_LABEL,
+      );
+      expect(screen.getByLabelText("Color")).not.toHaveTextContent("Red");
     });
   });
 
@@ -140,6 +177,41 @@ describe("SelectField", () => {
 
       expect(getValues().color).toBeUndefined();
     });
+
+    test("stores a boolean value when dataType is boolean", async () => {
+      const { getValues } = renderSelectField({
+        props: {
+          name: "active",
+          label: "Active",
+          dataType: "boolean",
+          items: booleanItems,
+        },
+      });
+
+      await selectOption("Active", "Yes");
+
+      expect(getValues().active).toBe(true);
+
+      await selectOption("Active", "No");
+
+      expect(getValues().active).toBe(false);
+    });
+
+    test("stores undefined when the value cannot be parsed as a number", async () => {
+      const { getValues } = renderSelectField({
+        props: {
+          name: "count",
+          label: "Size",
+          dataType: "number",
+          items: [{ value: "not-a-number", label: "Broken" }],
+        },
+        defaults: { count: 5 },
+      });
+
+      await selectOption("Size", "Broken");
+
+      expect(getValues().count).toBeUndefined();
+    });
   });
 
   describe("Field reset logic", () => {
@@ -175,6 +247,119 @@ describe("SelectField", () => {
       await selectOption("Color", "Blue");
 
       expect(getValues().related).toBeUndefined();
+    });
+
+    test("does NOT reset fields when triggerValue does not match", async () => {
+      const { getValues } = renderSelectField({
+        props: {
+          fieldsToResetOnValue: [
+            { triggerValue: "red", fieldsToReset: ["related"] },
+          ],
+        },
+        defaults: { related: "initial" },
+      });
+
+      await selectOption("Color", "Blue");
+
+      expect(getValues().related).toBe("initial");
+    });
+
+    test("resets fields to the configured resetToValue", async () => {
+      const { getValues } = renderSelectField({
+        props: {
+          fieldsToResetOnValue: [
+            {
+              triggerValue: "red",
+              fieldsToReset: ["related"],
+              resetToValue: "fallback",
+            },
+          ],
+        },
+        defaults: { related: "initial" },
+      });
+
+      await selectOption("Color", "Red");
+
+      expect(getValues().related).toBe("fallback");
+    });
+
+    test("resets fields when the value matches any entry of a triggerValue array", async () => {
+      const { getValues } = renderSelectField({
+        props: {
+          name: "count",
+          label: "Size",
+          dataType: "number",
+          items: numberItems,
+          fieldsToResetOnValue: [
+            { triggerValue: [1, 5], fieldsToReset: ["related"] },
+          ],
+        },
+        defaults: { related: "initial" },
+      });
+
+      await selectOption("Size", "Large");
+
+      expect(getValues().related).toBeUndefined();
+    });
+  });
+
+  describe("Revalidation", () => {
+    test("revalidates fields listed in fieldsToRevalidate on change", async () => {
+      const resolver: Resolver<TestForm> = async (
+        values,
+      ): Promise<ResolverResult<TestForm>> => {
+        if (values.color === "red") {
+          return {
+            values: {},
+            errors: {
+              related: { type: "custom", message: "Related is invalid" },
+            },
+          };
+        }
+        return { values, errors: {} };
+      };
+
+      const Wrapper = () => {
+        const form = useForm<TestForm>({
+          resolver,
+          defaultValues: {
+            color: undefined,
+            count: undefined,
+            active: undefined,
+            related: "initial",
+          },
+        });
+        return (
+          <FormProvider {...form}>
+            <SelectField<TestForm>
+              name="color"
+              label="Color"
+              dataType="string"
+              items={colorItems}
+              fieldsToRevalidate={["related"]}
+            />
+            <SelectField<TestForm>
+              name="related"
+              label="Related"
+              dataType="string"
+              items={[{ value: "initial", label: "Initial" }]}
+            />
+          </FormProvider>
+        );
+      };
+      render(<Wrapper />);
+
+      await selectOption("Color", "Red");
+
+      expect(await screen.findByText("Related is invalid")).toBeInTheDocument();
+
+      await selectOption("Color", "Blue");
+
+      await waitFor(() =>
+        expect(
+          screen.queryByText("Related is invalid"),
+        ).not.toBeInTheDocument(),
+      );
     });
   });
 });
