@@ -94,7 +94,7 @@ const hasDoubleWaterSupply = (config: GeneralBOMConfig): boolean => {
   return !!config.water_2_type;
 };
 
-const has15kWPump = (config: GeneralBOMConfig): boolean => {
+const has15kwPumpWithNonChassisOutlet = (config: GeneralBOMConfig): boolean => {
   return (
     config.has_15kw_pump &&
     ((config.pump_outlet_1_15kw !== null &&
@@ -119,7 +119,7 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       usesBoom,
       usesPost,
       (config) => !hasDoubleWaterSupply(config),
-      (config) => !has15kWPump(config),
+      (config) => !has15kwPumpWithNonChassisOutlet(config),
     ],
     qty: 1,
     _description: "Supply pole (1 water)",
@@ -130,7 +130,7 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       usesBoom,
       usesPost,
       hasDoubleWaterSupply,
-      (config) => !has15kWPump(config),
+      (config) => !has15kwPumpWithNonChassisOutlet(config),
     ],
     qty: 1,
     _description: "Supply pole (2 waters)",
@@ -141,14 +141,19 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       usesBoom,
       usesPost,
       (config) => !hasDoubleWaterSupply(config),
-      has15kWPump,
+      has15kwPumpWithNonChassisOutlet,
     ],
     qty: 1,
     _description: "Supply pole (1 water + hp)",
   },
   {
     pn: PART_NUMBERS.SUPPLY_POLE_2_WATER_HP,
-    conditions: [usesBoom, usesPost, hasDoubleWaterSupply, has15kWPump],
+    conditions: [
+      usesBoom,
+      usesPost,
+      hasDoubleWaterSupply,
+      has15kwPumpWithNonChassisOutlet,
+    ],
     qty: 1,
     _description: "Supply pole (2 waters + hp)",
   },
@@ -158,7 +163,7 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       usesBoom,
       usesShelf,
       (config) => !hasDoubleWaterSupply(config),
-      (config) => !has15kWPump(config),
+      (config) => !has15kwPumpWithNonChassisOutlet(config),
     ],
     qty: 1,
     _description: "Wall shelf (1 water)",
@@ -169,7 +174,7 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       usesBoom,
       usesShelf,
       hasDoubleWaterSupply,
-      (config) => !has15kWPump(config),
+      (config) => !has15kwPumpWithNonChassisOutlet(config),
     ],
     qty: 1,
     _description: "Wall shelf (2 waters)",
@@ -180,14 +185,19 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
       usesBoom,
       usesShelf,
       (config) => !hasDoubleWaterSupply(config),
-      has15kWPump,
+      has15kwPumpWithNonChassisOutlet,
     ],
     qty: 1,
     _description: "Wall shelf (1 water + hp)",
   },
   {
     pn: PART_NUMBERS.WALL_SHELF_2_WATER_HP,
-    conditions: [usesBoom, usesShelf, hasDoubleWaterSupply, has15kWPump],
+    conditions: [
+      usesBoom,
+      usesShelf,
+      hasDoubleWaterSupply,
+      has15kwPumpWithNonChassisOutlet,
+    ],
     qty: 1,
     _description: "Wall shelf (2 waters + hp)",
   },
@@ -205,13 +215,16 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.BOOM,
-    conditions: [usesBoom, (config) => !has15kWPump(config)],
+    conditions: [
+      usesBoom,
+      (config) => !has15kwPumpWithNonChassisOutlet(config),
+    ],
     qty: 1,
     _description: "Boom",
   },
   {
     pn: PART_NUMBERS.BOOM_HP,
-    conditions: [usesBoom, has15kWPump],
+    conditions: [usesBoom, has15kwPumpWithNonChassisOutlet],
     qty: 1,
     _description: "Boom",
   },

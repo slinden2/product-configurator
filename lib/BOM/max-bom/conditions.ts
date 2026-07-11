@@ -24,7 +24,5 @@ export const uses15kwOr30kwPump = (config: GeneralBOMConfig): boolean =>
 export const uses75kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_75kw_pump;
 
-export const usesAnyHpPumpWithChassisWash = (
-  config: GeneralBOMConfig,
-): boolean =>
+export const usesAnyHpPump = (config: GeneralBOMConfig): boolean =>
   config.has_15kw_pump || config.has_30kw_pump || config.has_75kw_pump;

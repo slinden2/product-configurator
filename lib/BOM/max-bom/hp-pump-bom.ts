@@ -5,7 +5,7 @@ import {
   isSTD,
   uses15kwOr30kwPump,
   uses75kwPump,
-  usesAnyHpPumpWithChassisWash,
+  usesAnyHpPump,
   usesHPRoofBar,
   usesOMZPump,
 } from "@/lib/BOM/max-bom/conditions";
@@ -15,6 +15,8 @@ import type {
   HpPump75kwOutletType,
 } from "@/types";
 
+// Wattage in names: *_15KW/*_30KW are 15/30 kW HP pumps, but *_75KW drops the
+// decimal point — it is the 7.5 kW pump.
 const PART_NUMBERS = {
   PUMP_75KW: "1100.024.033",
   PUMP_15KW: "1100.024.030",
@@ -414,7 +416,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_POST,
     conditions: [
-      usesAnyHpPumpWithChassisWash,
+      usesAnyHpPump,
       (config) => config.chassis_wash_sensor_type === "SINGLE_POST",
     ],
     qty: 1,
@@ -423,7 +425,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.DUAL_ULTRASONIC_SENSORS_POST,
     conditions: [
-      usesAnyHpPumpWithChassisWash,
+      usesAnyHpPump,
       (config) => config.chassis_wash_sensor_type === "DOUBLE_POST",
     ],
     qty: 1,
@@ -432,7 +434,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.ULTRASONIC_SENSOR_WALL,
     conditions: [
-      usesAnyHpPumpWithChassisWash,
+      usesAnyHpPump,
       (config) => config.chassis_wash_sensor_type === "SINGLE_WALL",
     ],
     qty: 1,
@@ -441,7 +443,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   {
     pn: PART_NUMBERS.DUAL_ULTRASONIC_SENSORS_WALL,
     conditions: [
-      usesAnyHpPumpWithChassisWash,
+      usesAnyHpPump,
       (config) => config.chassis_wash_sensor_type === "DOUBLE_WALL",
     ],
     qty: 1,

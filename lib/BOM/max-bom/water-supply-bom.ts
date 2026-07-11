@@ -2,6 +2,8 @@ import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
 import type { Water1PumpType, Water2PumpType } from "@/types";
 
+// Wattage in names drops the decimal point: BOOST_*/ELECTRIC_PANEL_* "15KW"/"22KW"
+// are 1.5 kW / 2.2 kW boost pumps (not the 15/30 kW HP pumps of hp-pump-bom).
 const PART_NUMBERS = {
   WASH_BAY_SOLENOID_WITH_ANTIFREEZE: "1100.060.001",
   WASH_BAY_SOLENOID_NO_ANTIFREEZE: "1100.060.002",
@@ -26,13 +28,13 @@ const hasWater2Solenoid = (config: GeneralBOMConfig): boolean => {
   return !!config.water_2_type;
 };
 
-const uses15kwPump = (config: GeneralBOMConfig): boolean => {
+const usesBoost15Pump = (config: GeneralBOMConfig): boolean => {
   return (
     config.water_1_pump === "BOOST_15KW" || config.water_2_pump === "BOOST_15KW"
   );
 };
 
-const uses22kwPump = (config: GeneralBOMConfig): boolean => {
+const usesBoost22Pump = (config: GeneralBOMConfig): boolean => {
   return (
     config.water_1_pump === "BOOST_22KW" || config.water_2_pump === "BOOST_22KW"
   );
@@ -80,25 +82,25 @@ export const waterSupplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.BOOST_PUMP_15KW,
-    conditions: [uses15kwPump],
+    conditions: [usesBoost15Pump],
     qty: (config) => (needsTwoPumps(config, "BOOST_15KW") ? 2 : 1),
     _description: "Boost pump 1.5kW",
   },
   {
     pn: PART_NUMBERS.ELECTRIC_PANEL_15KW,
-    conditions: [uses15kwPump],
+    conditions: [usesBoost15Pump],
     qty: (config) => (needsTwoPumps(config, "BOOST_15KW") ? 2 : 1),
     _description: "Electric panel 1.5kW",
   },
   {
     pn: PART_NUMBERS.BOOST_PUMP_22KW,
-    conditions: [uses22kwPump],
+    conditions: [usesBoost22Pump],
     qty: (config) => (needsTwoPumps(config, "BOOST_22KW") ? 2 : 1),
     _description: "Boost pump 2.2kW",
   },
   {
     pn: PART_NUMBERS.ELECTRIC_PANEL_22KW,
-    conditions: [uses22kwPump],
+    conditions: [usesBoost22Pump],
     qty: (config) => (needsTwoPumps(config, "BOOST_22KW") ? 2 : 1),
     _description: "Electric panel 2.2kW",
   },
