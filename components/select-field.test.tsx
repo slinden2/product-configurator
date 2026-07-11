@@ -361,5 +361,59 @@ describe("SelectField", () => {
         ).not.toBeInTheDocument(),
       );
     });
+
+    test("does not strand an error from a cross-field rule that the reset resolves", async () => {
+      // Rule: `related` may only be set when `color` is set. Clearing `color`
+      // also resets `related`, so the rule ends up satisfied — the field must
+      // not keep an error validated against the pre-reset `related` value.
+      const resolver: Resolver<TestForm> = async (
+        values,
+      ): Promise<ResolverResult<TestForm>> => {
+        if (!values.color && values.related) {
+          return {
+            values: {},
+            errors: {
+              color: { type: "custom", message: "Color is required" },
+            },
+          };
+        }
+        return { values, errors: {} };
+      };
+
+      const Wrapper = () => {
+        const form = useForm<TestForm>({
+          resolver,
+          defaultValues: {
+            color: "red",
+            count: undefined,
+            active: undefined,
+            related: "initial",
+          },
+        });
+        return (
+          <FormProvider {...form}>
+            <SelectField<TestForm>
+              name="color"
+              label="Color"
+              dataType="string"
+              items={colorItemsWithEmpty}
+              fieldsToResetOnValue={[
+                {
+                  triggerValue: NOT_SELECTED_VALUE,
+                  fieldsToReset: ["related"],
+                },
+              ]}
+            />
+          </FormProvider>
+        );
+      };
+      render(<Wrapper />);
+
+      await selectOption("Color", NOT_SELECTED_LABEL);
+
+      await waitFor(() =>
+        expect(screen.queryByText("Color is required")).not.toBeInTheDocument(),
+      );
+    });
   });
 });

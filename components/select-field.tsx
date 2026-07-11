@@ -25,22 +25,22 @@ import {
 import { NOT_SELECTED_LABEL, NOT_SELECTED_VALUE } from "@/lib/utils";
 import type { SelectOption } from "@/types";
 
-// Interface for the reset configuration, now using generics
 interface ResetConfig<TFieldValues extends FieldValues> {
-  triggerValue: string | string[] | number | number[]; // Value(s) that trigger the reset
-  fieldsToReset: Array<FieldPath<TFieldValues>>; // Fields to reset (type-safe)
+  triggerValue: string | string[] | number | number[] | boolean | boolean[]; // Value(s) that trigger the reset; compared via toString()
+  fieldsToReset: Array<FieldPath<TFieldValues>>;
   invertTrigger?: boolean; // Reset when value is NOT triggerValue
-  resetToValue?: unknown; // Value to reset the fields to (defaults to undefined)
+  // `unknown` because fieldsToReset is heterogeneous — a single per-field
+  // value type isn't expressible here; callers must match the Zod schema type.
+  resetToValue?: unknown;
 }
 
-// --- SelectField Props Interface with Generics ---
 interface SelectFieldProps<TFieldValues extends FieldValues = FieldValues> {
-  name: FieldPath<TFieldValues>; // Type-safe field name
+  name: FieldPath<TFieldValues>;
   label: string;
   description?: React.ReactNode;
   disabled?: boolean;
-  items: SelectOption[]; // Array of options { value: string | number, label: string }
-  dataType: "string" | "number" | "boolean"; // *** NEW: Specify expected data type ***
+  items: SelectOption[];
+  dataType: "string" | "number" | "boolean"; // Must match the Zod schema field type
   fieldsToResetOnValue?: Array<ResetConfig<TFieldValues>>;
   fieldsToRevalidate?: Array<FieldPath<TFieldValues>>;
 }
@@ -71,10 +71,10 @@ interface SelectFieldProps<TFieldValues extends FieldValues = FieldValues> {
  * ]}
  * />
  *
- * @important Add an empty option manually to `items` if deselecting is needed:
- * const options = [{value: 1, label: 'One'}, {value: 5, label: 'Five'}];
- * const itemsWithEmpty = [{ value: "", label: NOT_SELECTED_LABEL }, ...options];
- * // Pass itemsWithEmpty to the component
+ * @important If deselecting is needed, prepend the sentinel option with
+ * `withNoSelection(items)` (lib/utils). Never use `""` as an item value —
+ * Radix Select throws on `<SelectItem value="">`; the sentinel is
+ * NOT_SELECTED_VALUE ("null"), which this component parses to `undefined`.
  */
 const SelectField = <TFieldValues extends FieldValues = FieldValues>({
   name,
@@ -139,13 +139,15 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
               // and "no value". Radix does not reliably clear its displayed text
               // when the controlled value changes to "" after having shown a real
               // selection; remounting resets Radix's internal display state.
-              key={watchedValue == null ? "empty" : "has-value"}
+              // Keyed on the trigger string (not watchedValue == null) so a
+              // legitimate "" value also remounts — same symptom, same fix.
+              key={stringValueForSelectTrigger === "" ? "empty" : "has-value"}
+              name={field.name}
               value={stringValueForSelectTrigger}
               onValueChange={(selectedValueString) => {
                 const parsedTypedValue = parseValue(selectedValueString);
                 field.onChange(parsedTypedValue);
                 field.onBlur();
-                trigger(name);
 
                 fieldsToResetOnValue?.forEach((item) => {
                   const triggerValues = Array.isArray(item.triggerValue)
@@ -173,6 +175,13 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                   }
                 });
 
+                // Validate this field only after the dependent resets above have
+                // been applied. A cross-field rule that reads a dependent (e.g.
+                // "water_1_pump requires water_1_type") would otherwise see the
+                // pre-reset value and strand an error here that nothing clears:
+                // the resets' own shouldValidate only revalidates the reset fields.
+                trigger(name);
+
                 fieldsToRevalidate?.forEach((fieldToRevalidate) => {
                   trigger(fieldToRevalidate);
                 });
@@ -180,7 +189,8 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
               disabled={disabled || formDisabled}
             >
               <FormControl>
-                <SelectTrigger className="bg-background">
+                {/* field.ref lets RHF focus this field on validation error */}
+                <SelectTrigger ref={field.ref} className="bg-background">
                   <SelectValue placeholder={NOT_SELECTED_LABEL} />
                 </SelectTrigger>
               </FormControl>

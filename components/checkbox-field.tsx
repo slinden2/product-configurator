@@ -1,4 +1,4 @@
-import type { CheckedState } from "@radix-ui/react-checkbox"; // Import type for clarity
+import type { CheckedState } from "@radix-ui/react-checkbox";
 import type * as React from "react";
 import {
   type FieldPath,
@@ -17,36 +17,36 @@ import {
   useFormDisabled,
 } from "@/components/ui/form";
 
-// Interface for the reset configuration, using generics
 interface ResetCheckboxConfig<TFieldValues extends FieldValues> {
-  fieldsToReset: Array<FieldPath<TFieldValues>>; // Fields to reset (type-safe)
-  resetToValue?: unknown; // Value to reset the fields to (defaults to undefined)
+  fieldsToReset: Array<FieldPath<TFieldValues>>;
+  // `unknown` because fieldsToReset is heterogeneous — a single per-field
+  // value type isn't expressible here; callers must match the Zod schema type.
+  resetToValue?: unknown;
 }
 
-// --- CheckboxField Props Interface with Generics ---
 interface CheckboxFieldProps<TFieldValues extends FieldValues = FieldValues> {
-  name: FieldPath<TFieldValues>; // Type-safe field name
+  name: FieldPath<TFieldValues>;
   label: string;
   description?: React.ReactNode;
   disabled?: boolean;
-  // Changed prop name slightly for consistency, accepts array of configs
   fieldsToResetOnUncheck?: Array<ResetCheckboxConfig<TFieldValues>>;
-  // Value that triggers reset (usually 'false' for checkboxes, but could be configurable)
-  // Let's make it simple: reset always happens when value becomes false (unchecked)
 }
 
 /**
  * A reusable CheckboxField component integrated with React Hook Form.
  * Ensures that the form state is updated with a boolean value (true/false),
  * reducing the need for Zod coercion for checkbox inputs.
- * Supports conditional resetting of other fields when unchecked.
+ *
+ * `fieldsToResetOnUncheck` drives both directions of the dependency:
+ * on uncheck the listed fields are reset; on check they are re-validated,
+ * clearing errors left over from the unchecked discriminated-union branch.
  */
 const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
   name,
   label,
   description,
   disabled,
-  fieldsToResetOnUncheck, // Use the updated prop name
+  fieldsToResetOnUncheck,
 }: CheckboxFieldProps<TFieldValues>) => {
   const { control, setValue, trigger } = useFormContext<TFieldValues>();
   const formDisabled = useFormDisabled();
@@ -61,18 +61,18 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
         return (
           <FormItem className="flex flex-row items-start space-x-3 space-y-0 py-2">
             <FormControl>
+              {/* field.ref lets RHF focus this field on validation error */}
               <Checkbox
+                ref={field.ref}
                 checked={isChecked}
                 onCheckedChange={(checked: CheckedState) => {
-                  // Convert CheckedState (boolean | 'indeterminate') to a definite boolean.
-                  // Treat 'indeterminate' as 'false' for form state update.
+                  // CheckedState is boolean | 'indeterminate'; the schema
+                  // expects a definite boolean, so 'indeterminate' maps to false.
                   const newValue = checked === true;
 
-                  // Update the current field's state with the definite boolean value
                   field.onChange(newValue);
-                  field.onBlur(); // Mark field as touched for validation
+                  field.onBlur();
 
-                  // --- Reset / Revalidate Logic ---
                   if (!newValue) {
                     // Unchecked: reset dependent fields so their values are cleared
                     fieldsToResetOnUncheck?.forEach((item) => {
@@ -100,26 +100,19 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
                   }
                 }}
                 disabled={disabled || formDisabled}
-                // Link label and checkbox implicitly via FormItem/FormLabel or explicitly via aria-labelledby if needed
-                // aria-label={label} // Can be used if label text isn't sufficient
               />
             </FormControl>
             <div className="leading-none">
-              {/* Clicking label should also toggle checkbox */}
               <FormLabel className="cursor-pointer">{label}</FormLabel>
               {description && (
                 <FormDescription className="mt-1.5">
                   {description}
                 </FormDescription>
               )}
+              {/* Inside the label column so the error renders below the
+                  label instead of as a third column of the flex row */}
+              <FormMessage className="mt-1.5" />
             </div>
-            {/* Display validation errors associated with this field */}
-            {/* Note: FormMessage needs to be outside the label div to appear correctly */}
-            {/* However, RHF typically places it relative to FormItem */}
-            {/* Let's add it here for completeness, adjust styling if needed */}
-            {/* <FormMessage className="absolute -bottom-4 left-0 text-xs" /> */}
-            {/* Or rely on default FormItem placement */}
-            <FormMessage />
           </FormItem>
         );
       }}
