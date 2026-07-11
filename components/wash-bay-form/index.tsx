@@ -13,6 +13,7 @@ import type {
   OfferStatusType,
   Role,
 } from "@/types";
+import type { ConfigSchema } from "@/validation/config-schema";
 import {
   type UpdateWashBaySchema,
   washBayDefaults,
@@ -26,8 +27,8 @@ interface WashBayFormProps {
   origin?: ConfigOrigin;
   offerRevisionStatus?: OfferStatusType;
   userRole?: Role;
-  supplyType?: string;
-  supplyFixingType?: string;
+  supplyType?: ConfigSchema["supply_type"];
+  supplyFixingType?: ConfigSchema["supply_fixing_type"];
   washBay?: UpdateWashBaySchema;
   washBayIndex?: number;
   onDelete?: (tankId: number) => void;

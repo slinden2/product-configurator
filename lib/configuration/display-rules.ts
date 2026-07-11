@@ -134,10 +134,5 @@ export const washBayHasHpSource = (
 
 export const showWashBayEnergyChainFields = (
   c: Pick<WashBaySchema, "has_gantry">,
-  supplyType: string | undefined,
+  supplyType: ConfigSchema["supply_type"],
 ): boolean => !!c.has_gantry && supplyType === "ENERGY_CHAIN";
-
-export const isWashBayEcWall = (
-  supplyType: string | undefined,
-  supplyFixingType: string | undefined,
-): boolean => supplyType === "ENERGY_CHAIN" && supplyFixingType === "WALL";

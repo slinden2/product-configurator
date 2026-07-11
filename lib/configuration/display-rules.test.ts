@@ -6,10 +6,10 @@ import {
   isAnchoredRail,
   isInverterPump1Selected,
   isOmzMachine,
-  isWashBayEcWall,
   showCardQty,
   showChassisWashSensor,
   showChemicalRoofBar,
+  showEnergyChainWallWarning,
   showManualAntifreeze,
   showPostFrame,
   showTankBlowerAndFloat,
@@ -195,8 +195,23 @@ describe("wash bay energy chain rules", () => {
   });
 
   it("detects an energy-chain wall mount", () => {
-    expect(isWashBayEcWall("ENERGY_CHAIN", "WALL")).toBe(true);
-    expect(isWashBayEcWall("ENERGY_CHAIN", "POST")).toBe(false);
-    expect(isWashBayEcWall("BOOM", "WALL")).toBe(false);
+    expect(
+      showEnergyChainWallWarning({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "WALL",
+      }),
+    ).toBe(true);
+    expect(
+      showEnergyChainWallWarning({
+        supply_type: "ENERGY_CHAIN",
+        supply_fixing_type: "POST",
+      }),
+    ).toBe(false);
+    expect(
+      showEnergyChainWallWarning({
+        supply_type: "BOOM",
+        supply_fixing_type: "WALL",
+      }),
+    ).toBe(false);
   });
 });

@@ -4,7 +4,7 @@ import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
 import InfoBanner from "@/components/shared/info-banner";
 import {
-  isWashBayEcWall,
+  showEnergyChainWallWarning,
   showWashBayEnergyChainFields,
   washBayHasHpSource,
 } from "@/lib/configuration/display-rules";
@@ -12,12 +12,13 @@ import { WASH_BAY_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { MSG } from "@/lib/messages";
 import { NOT_SELECTED_VALUE, withNoSelection } from "@/lib/utils";
 import { getNumericSelectOptions } from "@/validation/common";
+import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions } from "@/validation/configuration";
 import type { WashBaySchema } from "@/validation/wash-bay-schema";
 
 interface WashBayFieldsProps {
-  supplyType?: string;
-  supplyFixingType?: string;
+  supplyType?: ConfigSchema["supply_type"];
+  supplyFixingType?: ConfigSchema["supply_fixing_type"];
 }
 
 const WashBayFields = ({
@@ -65,7 +66,10 @@ const WashBayFields = ({
     { has_gantry: hasGantryWatch },
     supplyType,
   );
-  const isEcWall = isWashBayEcWall(supplyType, supplyFixingType);
+  const isEcWall = showEnergyChainWallWarning({
+    supply_type: supplyType,
+    supply_fixing_type: supplyFixingType,
+  });
 
   return (
     <div className="fs-content">
