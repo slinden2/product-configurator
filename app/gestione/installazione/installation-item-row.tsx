@@ -11,7 +11,6 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import type { InstallationItemSetting } from "@/db/schemas/installation-item-settings";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
-import type { InstallationItemKind } from "@/types";
 import { InstallationItemKindLabels } from "@/types";
 
 interface InstallationItemRowProps {
@@ -24,7 +23,7 @@ export default function InstallationItemRow({ row }: InstallationItemRowProps) {
   const handleEdit = async (price: string) => {
     try {
       const result = await updateInstallationItemSettingAction({
-        kind: row.kind as InstallationItemKind,
+        kind: row.kind,
         price,
       });
       if (result.success) {
@@ -42,7 +41,7 @@ export default function InstallationItemRow({ row }: InstallationItemRowProps) {
     <>
       <TableRow>
         <TableCell className="text-sm">
-          {InstallationItemKindLabels[row.kind as InstallationItemKind]}
+          {InstallationItemKindLabels[row.kind]}
         </TableCell>
         <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
           {formatEur(Number(row.price))}
@@ -63,7 +62,7 @@ export default function InstallationItemRow({ row }: InstallationItemRowProps) {
       <PriceEditorDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        title={`Modifica prezzo — ${InstallationItemKindLabels[row.kind as InstallationItemKind]}`}
+        title={`Modifica prezzo — ${InstallationItemKindLabels[row.kind]}`}
         initialPrice={Number(row.price).toFixed(2)}
         onSave={handleEdit}
       />

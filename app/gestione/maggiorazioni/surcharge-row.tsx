@@ -11,7 +11,6 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import type { SurchargeSetting } from "@/db/schemas/surcharge-settings";
 import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
-import type { SurchargeKind } from "@/types";
 import { SurchargeKindLabels } from "@/types";
 
 interface SurchargeRowProps {
@@ -24,7 +23,7 @@ export default function SurchargeRow({ row }: SurchargeRowProps) {
   const handleEdit = async (price: string) => {
     try {
       const result = await updateSurchargeSettingAction({
-        kind: row.kind as SurchargeKind,
+        kind: row.kind,
         price,
       });
       if (result.success) {
@@ -42,7 +41,7 @@ export default function SurchargeRow({ row }: SurchargeRowProps) {
     <>
       <TableRow>
         <TableCell className="text-sm">
-          {SurchargeKindLabels[row.kind as SurchargeKind]}
+          {SurchargeKindLabels[row.kind]}
         </TableCell>
         <TableCell className="font-mono text-sm text-right tabular-nums whitespace-nowrap">
           {formatEur(Number(row.price))}
@@ -63,7 +62,7 @@ export default function SurchargeRow({ row }: SurchargeRowProps) {
       <PriceEditorDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        title={`Modifica prezzo — ${SurchargeKindLabels[row.kind as SurchargeKind]}`}
+        title={`Modifica prezzo — ${SurchargeKindLabels[row.kind]}`}
         initialPrice={Number(row.price).toFixed(2)}
         onSave={handleEdit}
       />
