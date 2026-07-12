@@ -12,15 +12,13 @@ export default function BackButton({ fallbackPath }: BackButtonProps) {
   const router = useRouter();
 
   const handleBack = () => {
-    const currentUrl = window.location.href;
-
-    router.back();
-
-    setTimeout(() => {
-      if (window.location.href === currentUrl) {
-        router.push(fallbackPath);
-      }
-    }, 100);
+    // No timing heuristics: with no history to go back to, navigate straight
+    // to the fallback; otherwise trust router.back().
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(fallbackPath);
+    }
   };
 
   return (
