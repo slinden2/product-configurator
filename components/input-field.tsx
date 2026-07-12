@@ -6,6 +6,7 @@ import {
   type FieldValues,
   useFormContext,
 } from "react-hook-form";
+import { useFormDisabled } from "@/components/shared/form-disabled-context";
 import {
   FormControl,
   FormField,
@@ -18,7 +19,17 @@ import { Input } from "@/components/ui/input";
 interface InputFieldProps<TFieldValues extends FieldValues = FieldValues>
   extends Omit<
     React.ComponentProps<"input">,
-    "name" | "type" | "disabled" | "placeholder"
+    // Also omit the RHF-controlled props so a caller cannot silently detach
+    // the field from react-hook-form (inputProps spread after {...field}).
+    | "name"
+    | "type"
+    | "disabled"
+    | "placeholder"
+    | "onChange"
+    | "onBlur"
+    | "value"
+    | "defaultValue"
+    | "ref"
   > {
   name: FieldPath<TFieldValues>;
   label: string;
@@ -38,6 +49,7 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
   ...inputProps
 }: InputFieldProps<TFieldValues>) => {
   const { control } = useFormContext<TFieldValues>();
+  const formDisabled = useFormDisabled();
 
   return (
     <FormField
@@ -54,7 +66,7 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
                     type={type}
                     placeholder={placeholder}
                     className="bg-background pr-10"
-                    disabled={disabled}
+                    disabled={disabled || formDisabled}
                     {...field}
                     {...inputProps}
                     value={field.value ?? ""}
@@ -70,7 +82,7 @@ const InputField = <TFieldValues extends FieldValues = FieldValues>({
                   type={type}
                   placeholder={placeholder}
                   className="bg-background"
-                  disabled={disabled}
+                  disabled={disabled || formDisabled}
                   {...field}
                   {...inputProps}
                   value={field.value ?? ""}

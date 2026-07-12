@@ -1,10 +1,12 @@
 "use client";
 
+import type * as React from "react";
 import {
   type FieldPath,
   type FieldValues,
   useFormContext,
 } from "react-hook-form";
+import { useFormDisabled } from "@/components/shared/form-disabled-context";
 import {
   FormControl,
   FormField,
@@ -14,12 +16,24 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
-interface TextareaFieldProps<TFieldValues extends FieldValues = FieldValues> {
+interface TextareaFieldProps<TFieldValues extends FieldValues = FieldValues>
+  extends Omit<
+    React.ComponentProps<"textarea">,
+    // Also omit the RHF-controlled props so a caller cannot silently detach
+    // the field from react-hook-form (textareaProps spread after {...field}).
+    | "name"
+    | "disabled"
+    | "placeholder"
+    | "onChange"
+    | "onBlur"
+    | "value"
+    | "defaultValue"
+    | "ref"
+  > {
   name: FieldPath<TFieldValues>;
   label: string;
   placeholder?: string;
   disabled?: boolean;
-  rows?: number;
 }
 
 /**
@@ -31,9 +45,10 @@ const TextareaField = <TFieldValues extends FieldValues = FieldValues>({
   label,
   placeholder,
   disabled,
-  rows,
+  ...textareaProps
 }: TextareaFieldProps<TFieldValues>) => {
   const { control } = useFormContext<TFieldValues>();
+  const formDisabled = useFormDisabled();
 
   return (
     <FormField
@@ -47,9 +62,9 @@ const TextareaField = <TFieldValues extends FieldValues = FieldValues>({
               <Textarea
                 placeholder={placeholder}
                 className="bg-background resize-y"
-                disabled={disabled}
-                rows={rows}
+                disabled={disabled || formDisabled}
                 {...field}
+                {...textareaProps}
                 value={field.value ?? ""}
               />
             </FormControl>

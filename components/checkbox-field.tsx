@@ -1,3 +1,5 @@
+"use client";
+
 import type { CheckedState } from "@radix-ui/react-checkbox";
 import type * as React from "react";
 import {
