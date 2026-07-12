@@ -400,7 +400,10 @@ describe("FormContainer", () => {
       await waitFor(() => {
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       });
-      const saveButton = screen.getByRole("button", { name: "Salva" });
+      // findByRole: while a save is pending the button's accessible name is
+      // "Caricamento…Salva" (Spinner's sr-only announcement), so wait for it
+      // to settle back to idle.
+      const saveButton = await screen.findByRole("button", { name: "Salva" });
       await waitFor(() => {
         expect(saveButton).toBeEnabled();
       });

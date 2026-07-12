@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -97,6 +98,9 @@ export default function NumericEditorDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            Inserisci il nuovo valore e conferma con Salva.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {children}

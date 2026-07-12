@@ -184,7 +184,7 @@ const MainNav = ({ user, role }: MainNavProps) => {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          aria-label="Toggle theme"
+          aria-label="Cambia tema"
         >
           {mounted ? (
             resolvedTheme === "dark" ? (

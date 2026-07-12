@@ -43,8 +43,11 @@ export function Spinner({
 }: SpinnerContentProps) {
   return (
     <span role="status" className={spinnerVariants({ show })}>
-      <Loader2 className={cn(loaderVariants({ size }), className)} />
-      {children}
+      <Loader2
+        aria-hidden="true"
+        className={cn(loaderVariants({ size }), className)}
+      />
+      {children ?? <span className="sr-only">Caricamento…</span>}
     </span>
   );
 }
