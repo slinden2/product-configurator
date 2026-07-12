@@ -1,5 +1,11 @@
 import type { configurations } from "@/db/schemas"; // Import Drizzle schema
 import type {
+  RailTypeType,
+  SupplySide,
+  SupplyType,
+  WaterTankType,
+} from "@/types";
+import type {
   ConfigSchema,
   UpdateConfigSchema,
 } from "@/validation/config-schema";
@@ -12,8 +18,10 @@ type DbConfigInsert = typeof configurations.$inferInsert;
 type DbConfigSet = Partial<typeof configurations.$inferSelect>;
 
 // Helper function for common field mapping (Zod -> DB compatible values)
-// Returns a type suitable for Drizzle's .set() or as a base for .values()
-type MappedConfigData = Partial<typeof configurations.$inferSelect>;
+// Typed as the full insert shape (minus the action-supplied user_id) so a new
+// NOT NULL column forgotten here is a compile error, not a runtime insert
+// failure; it doubles as the base for Drizzle's .set().
+type MappedConfigData = Omit<DbConfigInsert, "user_id">;
 
 function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
   return {
@@ -36,13 +44,10 @@ function mapConfigSchemaToDbCompatible(values: ConfigSchema): MappedConfigData {
       values.has_chassis_wash_detergent_manual_antifreeze,
     has_antifreeze: values.has_antifreeze,
     has_filter_backwash: values.has_filter_backwash,
-    supply_type: values.supply_type as
-      | "STRAIGHT_SHELF"
-      | "BOOM"
-      | "ENERGY_CHAIN",
-    supply_side: values.supply_side as "TBD" | "LEFT" | "RIGHT",
+    supply_type: values.supply_type as SupplyType,
+    supply_side: values.supply_side as SupplySide,
     has_post_frame: values.has_post_frame,
-    rail_type: values.rail_type as "ANCHORED" | "WELDED" | "WELDED_RECESSED",
+    rail_type: values.rail_type as RailTypeType,
     rail_length: values.rail_length as number,
     rail_guide_qty: values.rail_guide_qty,
     touch_qty: values.touch_qty as number,
@@ -96,7 +101,7 @@ export function transformConfigToDbInsert(
   return {
     ...commonData,
     user_id: userId,
-  } as DbConfigInsert;
+  };
 }
 
 // Public function for UPDATE transformation
@@ -107,28 +112,27 @@ export function transformConfigToDbUpdate(
   return commonData;
 }
 
-export function transformDbNullToUndefined(data: Record<string, unknown>) {
-  const newDataObj = { ...data };
+/** DB null -> Zod undefined, with nullability rewritten in the result type. */
+type NullToUndefined<T> = {
+  [K in keyof T]: null extends T[K] ? Exclude<T[K], null> | undefined : T[K];
+};
+
+export function transformDbNullToUndefined<T extends Record<string, unknown>>(
+  data: T,
+): NullToUndefined<T> {
+  const newDataObj: Record<string, unknown> = { ...data };
   for (const key in newDataObj) {
     if (newDataObj[key] === null) {
       newDataObj[key] = undefined;
     }
   }
-  return newDataObj;
+  return newDataObj as NullToUndefined<T>;
 }
 
 export function transformWaterTankSchemaToDbData(values: WaterTankSchema) {
   return {
     ...values,
-    type: values.type as
-      | "L2000"
-      | "L2000_JOLLY"
-      | "L2500"
-      | "L3000"
-      | "L4500"
-      | "L5000"
-      | "L7000"
-      | "L9000",
+    type: values.type as WaterTankType,
   };
 }
 
