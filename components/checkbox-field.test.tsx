@@ -14,7 +14,7 @@ import {
 } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import CheckboxField from "@/components/checkbox-field";
-import { FormDisabledContext } from "@/components/ui/form";
+import { FormDisabledContext } from "@/components/shared/form-disabled-context";
 
 afterEach(cleanup);
 

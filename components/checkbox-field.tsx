@@ -6,6 +6,7 @@ import {
   type PathValue,
   useFormContext,
 } from "react-hook-form";
+import { useFormDisabled } from "@/components/shared/form-disabled-context";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
@@ -14,7 +15,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useFormDisabled,
 } from "@/components/ui/form";
 
 interface ResetCheckboxConfig<TFieldValues extends FieldValues> {

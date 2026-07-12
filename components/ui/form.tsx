@@ -14,12 +14,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-const FormDisabledContext = React.createContext<boolean>(false);
-
-function useFormDisabled() {
-  return React.useContext(FormDisabledContext);
-}
-
 const Form = FormProvider;
 
 type FormFieldContextValue<
@@ -176,11 +170,9 @@ export {
   Form,
   FormControl,
   FormDescription,
-  FormDisabledContext,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  useFormDisabled,
   useFormField,
 };

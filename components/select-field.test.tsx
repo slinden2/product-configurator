@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import SelectField from "@/components/select-field";
-import { FormDisabledContext } from "@/components/ui/form";
+import { FormDisabledContext } from "@/components/shared/form-disabled-context";
 import { NOT_SELECTED_LABEL, NOT_SELECTED_VALUE } from "@/lib/utils";
 import type { SelectOption } from "@/types";
 
