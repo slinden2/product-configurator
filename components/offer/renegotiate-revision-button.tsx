@@ -6,8 +6,10 @@ import { createRenegotiationRevisionAction } from "@/app/actions/offer-revision-
 import { AsyncActionButton } from "@/components/shared/async-action-button";
 import { MSG } from "@/lib/messages";
 
-interface RenegotiateOfferButtonProps {
+interface RenegotiateRevisionButtonProps {
   offerId: number;
+  /** Route pushed after success; omitted → refresh the current page. */
+  navigateTo?: string;
   variant?: "default" | "outline";
   size?: "default" | "sm";
 }
@@ -16,14 +18,17 @@ interface RenegotiateOfferButtonProps {
  * Opens a post-acceptance renegotiation revision (#85): a commercial-only DRAFT
  * cloned from the in-force accepted revision, with the configs referenced
  * read-only and the prices re-derived from their current engineering state.
- * Rendered only for ADMIN / SALES_DIRECTOR on an accepted offer with no open
- * working revision (the action re-checks all of it server-side).
+ * Rendered on the offer detail page (ADMIN / SALES_DIRECTOR on an accepted
+ * offer with no open working revision) and as the "renegotiate" arm of the
+ * margin decision point, next to the absorb sign-off (the action re-checks
+ * `canRenegotiateOffer` server-side in both cases).
  */
-const RenegotiateOfferButton = ({
+const RenegotiateRevisionButton = ({
   offerId,
+  navigateTo,
   variant = "default",
   size = "default",
-}: RenegotiateOfferButtonProps) => {
+}: RenegotiateRevisionButtonProps) => {
   const router = useRouter();
 
   return (
@@ -34,13 +39,17 @@ const RenegotiateOfferButton = ({
       action={async () => {
         const res = await createRenegotiationRevisionAction(offerId);
         if (!res.success) throw new Error(res.error);
-        router.refresh();
+        if (navigateTo) {
+          router.push(navigateTo);
+        } else {
+          router.refresh();
+        }
       }}
       successMsg={MSG.toast.offerRenegotiationCreated}
       confirm={{
-        title: "Avviare una rinegoziazione?",
+        title: MSG.marginReview.renegotiateConfirmTitle,
         description: MSG.offer.renegotiateConfirm,
-        confirmLabel: "Rinegozia",
+        confirmLabel: MSG.marginReview.renegotiateButton,
         confirmVariant: "default",
       }}
     >
@@ -49,4 +58,4 @@ const RenegotiateOfferButton = ({
   );
 };
 
-export default RenegotiateOfferButton;
+export default RenegotiateRevisionButton;

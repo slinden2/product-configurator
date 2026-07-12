@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import BackButton from "@/components/back-button";
+import RenegotiateRevisionButton from "@/components/offer/renegotiate-revision-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +40,6 @@ import QuoteView from "./quote-view";
 import RecordOutcomeButton from "./record-outcome-button";
 import RejectRevisionButton from "./reject-revision-button";
 import RemoveLineButton from "./remove-line-button";
-import RenegotiateOfferButton from "./renegotiate-offer-button";
 import RevisionHistory from "./revision-history";
 import SendRevisionButton from "./send-revision-button";
 import SubmitForApprovalButton from "./submit-for-approval-button";
@@ -179,7 +179,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
               </>
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
-            {canRenegotiate && <RenegotiateOfferButton offerId={offer.id} />}
+            {canRenegotiate && <RenegotiateRevisionButton offerId={offer.id} />}
             {canUnaccept && <UnacceptRevisionButton offerId={offer.id} />}
             {canExportOfferRevision(revision.status) && (
               <OfferExportButtons

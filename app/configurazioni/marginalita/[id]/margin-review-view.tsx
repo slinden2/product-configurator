@@ -1,5 +1,6 @@
 import { AlertTriangle, Handshake, Lock, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import RenegotiateRevisionButton from "@/components/offer/renegotiate-revision-button";
 import AlertBanner from "@/components/shared/alert-banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,6 @@ import {
   formatPct,
 } from "@/lib/utils";
 import AbsorbMarginButton from "./absorb-margin-button";
-import RenegotiateMarginButton from "./renegotiate-margin-button";
 
 interface Props {
   comparison: MarginComparison;
@@ -160,7 +160,12 @@ function SummaryCard({
                     {MSG.marginReview.renegotiationOpen}
                   </Link>
                 ) : (
-                  <RenegotiateMarginButton offerId={renegotiation.offerId} />
+                  <RenegotiateRevisionButton
+                    offerId={renegotiation.offerId}
+                    navigateTo={`/offerte/${renegotiation.offerId}`}
+                    variant="outline"
+                    size="sm"
+                  />
                 ))}
             </div>
           </div>
