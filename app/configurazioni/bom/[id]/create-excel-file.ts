@@ -261,15 +261,22 @@ export function buildCostWorkbook(
 
   applyHeaderRowStyling(sheet, headerRowNums, 5);
 
-  buildParetoSheet(workbook, generalBOM, waterTankBOMs, washBayBOMs);
+  buildComponentAnalysisSheet(
+    workbook,
+    "Analisi Costi",
+    generalBOM,
+    waterTankBOMs,
+    washBayBOMs,
+  );
   if (exploded) {
-    buildAnalisiComponentiSheet(
+    buildComponentAnalysisSheet(
       workbook,
+      "Analisi Componenti",
       exploded.generalBOM,
       exploded.waterTankBOMs,
       exploded.washBayBOMs,
     );
-    buildAnalisiFamiglieSheet(
+    buildFamilyAnalysisSheet(
       workbook,
       exploded.generalBOM,
       exploded.waterTankBOMs,
@@ -508,8 +515,9 @@ function buildAnalysisSheet(
   totalRow.getCell("cum_pct").numFmt = "0.00%";
 }
 
-function buildParetoSheet(
+function buildComponentAnalysisSheet(
   workbook: ExcelJS.Workbook,
+  sheetName: string,
   generalBOM: BOM,
   waterTankBOMs: BOM[],
   washBayBOMs: BOM[],
@@ -519,24 +527,10 @@ function buildParetoSheet(
     ...waterTankBOMs.flat(),
     ...washBayBOMs.flat(),
   ]);
-  buildAnalysisSheet(workbook, "Analisi Costi", rows);
+  buildAnalysisSheet(workbook, sheetName, rows);
 }
 
-function buildAnalisiComponentiSheet(
-  workbook: ExcelJS.Workbook,
-  generalBOM: BOM,
-  waterTankBOMs: BOM[],
-  washBayBOMs: BOM[],
-) {
-  const rows = aggregateAndLabel([
-    ...generalBOM,
-    ...waterTankBOMs.flat(),
-    ...washBayBOMs.flat(),
-  ]);
-  buildAnalysisSheet(workbook, "Analisi Componenti", rows);
-}
-
-function buildAnalisiFamiglieSheet(
+function buildFamilyAnalysisSheet(
   workbook: ExcelJS.Workbook,
   generalBOM: ExplodedLeaves,
   waterTankBOMs: ExplodedLeaves[],
