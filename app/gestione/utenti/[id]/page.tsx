@@ -1,8 +1,9 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ActivityLogTable from "@/components/activity-log-table";
 import { getUserActivityLog, getUserProfileById } from "@/db/queries";
+import { RoleLabels } from "@/types";
 import { gestioneRouteGuard } from "../../lib/gestione-route-guard";
 
 const PAGE_SIZE = 20;
@@ -21,10 +22,10 @@ const UserDetailPage = async (props: {
     getUserActivityLog(id, page, PAGE_SIZE),
   ]);
 
-  if (!targetUser) redirect("/gestione/utenti");
+  if (!targetUser) notFound();
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  if (page > totalPages && totalPages > 0) {
+  if (page > totalPages) {
     redirect(`/gestione/utenti/${id}?page=${totalPages}`);
   }
 
@@ -42,7 +43,7 @@ const UserDetailPage = async (props: {
             {targetUser.email}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Ruolo: {targetUser.role}
+            Ruolo: {RoleLabels[targetUser.role]}
             {targetUser.initials ? ` · Iniziali: ${targetUser.initials}` : ""}
           </p>
         </div>
