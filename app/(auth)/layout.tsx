@@ -13,5 +13,11 @@ export default async function AuthLayout({
     redirect("/");
   }
 
-  return <>{children}</>;
+  // Shared auth-page shell. No height class: the root layout's min-h-screen
+  // column already fills the viewport, and h-screen here only forced overflow.
+  return (
+    <section className="flex justify-center">
+      <div className="w-2/3 flex flex-col gap-4">{children}</div>
+    </section>
+  );
 }
