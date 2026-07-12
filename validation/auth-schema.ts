@@ -16,7 +16,7 @@ export const newPasswordSchema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Le password non corrispondono.",
+    error: "Le password non corrispondono.",
     path: ["confirmPassword"],
   });
 

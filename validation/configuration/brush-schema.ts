@@ -6,7 +6,7 @@ import {
 } from "@/validation/common";
 
 export const BrushTypeEnum = z.enum(BrushTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 export const brushTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
   BrushTypeEnum,
@@ -14,7 +14,7 @@ export const brushTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
 );
 
 export const BrushColorEnum = z.enum(BrushColors, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 export const brushColors: SelectOption[] = generateSelectOptionsFromZodEnum(
   BrushColorEnum,
@@ -47,7 +47,7 @@ export const brushSchema = z
     brush_qty: z
       .number({ error: genericRequiredMessage })
       .refine((val) => val === 0 || val === 2 || val === 3, {
-        message: "Numero di spazzole deve essere 0, 2 o 3.",
+        error: "Numero di spazzole deve essere 0, 2 o 3.",
       })
       .optional(),
     brush_type: BrushTypeEnum.optional(),

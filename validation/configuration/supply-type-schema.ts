@@ -12,7 +12,7 @@ import {
 } from "@/validation/common";
 
 export const SupplyTypeEnum = z.enum(SupplyTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
@@ -25,7 +25,7 @@ export const supplyTypes: SelectOption[] = generateSelectOptionsFromZodEnum(
 );
 
 export const CableChainWidthEnum = z.enum(EnergyChainWidths, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const cableChainWidths: SelectOption[] =
@@ -37,7 +37,7 @@ export const cableChainWidths: SelectOption[] =
   });
 
 export const SupplyFixingTypeEnum = z.enum(SupplyFixTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const supplyFixingTypes: SelectOption[] =
@@ -66,7 +66,7 @@ export const getSupplyFixingOptions = (
     : supplyFixingTypes;
 
 export const SupplySideEnum = z.enum(SupplySides, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 export const supplySides: SelectOption[] = generateSelectOptionsFromZodEnum(
   SupplySideEnum,

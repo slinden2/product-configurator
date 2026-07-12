@@ -6,7 +6,7 @@ import {
 } from "@/validation/common";
 
 export const ChemicalPumpPosEnum = z.enum(ChemPumpPos, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const chemicalPumpPositions: SelectOption[] =
@@ -36,7 +36,7 @@ export const chemPumpSchema = z
       .number({ error: genericRequiredMessage })
       .refine(
         (value) => chemicalNum.map((item) => item.value).includes(value),
-        { message: "Numero di pompe di prelavaggio deve essere 1 o 2." },
+        { error: "Numero di pompe di prelavaggio deve essere 1 o 2." },
       )
       .optional(),
     chemical_pump_pos: ChemicalPumpPosEnum.optional(),

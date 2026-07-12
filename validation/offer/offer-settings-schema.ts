@@ -7,7 +7,7 @@ export const offerDiscountSchema = z.object({
     .min(0, "Lo sconto non può essere negativo.")
     .max(40, "Lo sconto massimo consentito è 40%.")
     .refine((v) => Number.isInteger(v * 2), {
-      message: "Lo sconto deve essere un multiplo di 0,5%.",
+      error: "Lo sconto deve essere un multiplo di 0,5%.",
     }),
 });
 
@@ -47,7 +47,7 @@ export const offerSettingsSchema = z.object({
   installation_mode: z.enum(TransportModes),
   installation_items: offerInstallationItemsSchema.refine(
     (items) => new Set(items.map((i) => i.kind)).size === items.length,
-    { message: "Voci di installazione duplicate." },
+    { error: "Voci di installazione duplicate." },
   ),
 });
 export type OfferSettings = z.infer<typeof offerSettingsSchema>;

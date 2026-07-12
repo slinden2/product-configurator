@@ -4,8 +4,8 @@ import { InstallationItemKinds } from "@/types";
 export const installationItemSettingsSchema = z.object({
   kind: z.enum(InstallationItemKinds),
   price: z.coerce
-    .number({ message: "Prezzo non valido." })
-    .min(0, { message: "Il prezzo non può essere negativo." })
+    .number({ error: "Prezzo non valido." })
+    .min(0, { error: "Il prezzo non può essere negativo." })
     .transform((v) => v.toFixed(2)),
 });
 

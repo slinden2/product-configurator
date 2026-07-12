@@ -11,7 +11,7 @@ import {
 } from "@/validation/common";
 
 export const WaterTypeEnum = z.enum(WaterTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const waterTypes: SelectOption[] = generateSelectOptionsFromZodEnum(

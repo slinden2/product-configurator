@@ -14,7 +14,7 @@ export const emergencyStopQtyOpts: SelectOption[] = getNumericSelectOptions([
 ]);
 
 export const TouchPosEnum = z.enum(TouchPos, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const touchPositionOpts: SelectOption[] =
@@ -25,7 +25,7 @@ export const touchPositionOpts: SelectOption[] =
   });
 
 export const TouchFixingTypeEnum = z.enum(TouchFixTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const touchFixingTypeOpts: SelectOption[] =
@@ -122,7 +122,7 @@ const accessoriesSchema = z
       .number({ error: "Quantità invalida" })
       .min(0)
       .max(300)
-      .refine((val) => val % 50 === 0, { message: "Solo multipli di 50" })
+      .refine((val) => val % 50 === 0, { error: "Solo multipli di 50" })
       .default(0),
     is_fast: z.boolean().default(false),
     emergency_stop_qty: z

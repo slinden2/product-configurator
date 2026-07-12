@@ -6,7 +6,7 @@ import {
 } from "@/validation/common";
 
 export const WaterTankTypeEnum = z.enum(WaterTankTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const waterTankOpts: SelectOption[] = generateSelectOptionsFromZodEnum(
@@ -27,22 +27,22 @@ export const waterTankSchema = z
   .object({
     type: WaterTankTypeEnum.optional(),
     inlet_w_float_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),
     inlet_no_float_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(1)
       .default(0),
     outlet_w_valve_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(3)
       .default(0),
     outlet_no_valve_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),

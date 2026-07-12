@@ -3,7 +3,7 @@ import { ConfigurationStatus } from "@/types";
 import { genericRequiredMessage } from "@/validation/common";
 
 const configStatusEnum = z.enum(ConfigurationStatus, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const configStatusSchema = z.object({

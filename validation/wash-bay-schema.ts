@@ -7,7 +7,7 @@ import {
 import { CableChainWidthEnum } from "@/validation/configuration/supply-type-schema";
 
 export const PressureWasherTypeEnum = z.enum(PressureWashers, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const pressureWasherOpts: SelectOption[] =
@@ -21,45 +21,45 @@ const lanceErrMsg = "La quantità di lance deve essere 0 o 2.";
 export const washBaySchema = z
   .object({
     hp_lance_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .refine((val) => val === 0 || val === 2, {
-        message: lanceErrMsg,
+        error: lanceErrMsg,
       })
       .default(0),
     det_lance_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .refine((val) => val === 0 || val === 2, {
-        message: lanceErrMsg,
+        error: lanceErrMsg,
       })
       .default(0),
     hose_reel_hp_with_post_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),
     hose_reel_hp_without_post_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),
     hose_reel_det_with_post_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),
     hose_reel_det_without_post_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),
     hose_reel_hp_det_with_post_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(2)
       .default(0),
     pressure_washer_type: PressureWasherTypeEnum.optional(),
     pressure_washer_qty: z
-      .number({ message: genericRequiredMessage })
+      .number({ error: genericRequiredMessage })
       .min(0)
       .max(3)
       .optional(),

@@ -6,7 +6,7 @@ import {
 } from "@/validation/common";
 
 export const MachineTypeEnum = z.enum(MachineTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const machineTypeOpts = generateSelectOptionsFromZodEnum(

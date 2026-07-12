@@ -13,7 +13,7 @@ import {
 } from "@/validation/common";
 
 export const HPPumpOutlet15kwEnum = z.enum(HpPump15kwOutlets, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const hpPumpOutlet15kwTypes: SelectOption[] =
@@ -25,7 +25,7 @@ export const hpPumpOutlet15kwTypes: SelectOption[] =
   });
 
 export const HPPumpOutlet30kwEnum = z.enum(HpPump30kwOutlets, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const hpPumpOutlet30kwTypes: SelectOption[] =
@@ -38,7 +38,7 @@ export const hpPumpOutlet30kwTypes: SelectOption[] =
   });
 
 export const HPPumpOutlet75kwEnum = z.enum(HpPump75kwOutlets, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const hpPumpOutlet75kwTypes: SelectOption[] =
@@ -48,7 +48,7 @@ export const hpPumpOutlet75kwTypes: SelectOption[] =
   });
 
 export const ChassisWashSensorTypeEnum = z.enum(ChassisWashSensorTypes, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const chassisWashSensorTypeOpts: SelectOption[] =
@@ -84,7 +84,7 @@ export function hasAnyChassisWashOutlet(data: {
 }
 
 export const OMZPumpOutletEnum = z.enum(HpPumpOMZkwOutlets, {
-  message: genericRequiredMessage,
+  error: genericRequiredMessage,
 });
 
 export const omzPumpOutletTypes: SelectOption[] =
