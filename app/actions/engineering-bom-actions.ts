@@ -272,11 +272,7 @@ export async function addEngineeringBomItemAction(
   confId: number,
   formData: unknown,
 ) {
-  // 1. Unified Authorization Check
-  const auth = await authorizeEngineeringBomAction(confId);
-  if (!auth.success) return auth;
-
-  // 2. Schema Validation
+  // 1. Schema Validation
   const validation = engineeringBomItemSchema.safeParse(formData);
   if (!validation.success) {
     return {
@@ -284,6 +280,10 @@ export async function addEngineeringBomItemAction(
       error: firstZodIssueMessage(validation.error, MSG.db.unknown),
     };
   }
+
+  // 2. Unified Authorization Check
+  const auth = await authorizeEngineeringBomAction(confId);
+  if (!auth.success) return auth;
 
   const { pn, qty, description, category, category_index, is_custom, tag } =
     validation.data;
