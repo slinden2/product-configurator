@@ -4,6 +4,7 @@ import { AnchorTypes, RailTypes, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  numberInOptions,
 } from "@/validation/common";
 
 export const RailTypeEnum = z.enum(RailTypes, {
@@ -60,12 +61,9 @@ export const railGuideNum: SelectOption[] = [
 export const railSchema = z
   .object({
     rail_type: RailTypeEnum.optional(),
-    rail_length: z.coerce
-      .number({ error: genericRequiredMessage })
-      .refine((val) => railLengths.map((opt) => opt.value).includes(val), {
-        error: "Lunghezza rotaie non valida.",
-      })
-      .optional(),
+    rail_length: numberInOptions(railLengths, "Lunghezza rotaie non valida.", {
+      coerce: true,
+    }).optional(),
     rail_guide_qty: z.coerce
       .number({ error: genericRequiredMessage })
       .min(0)

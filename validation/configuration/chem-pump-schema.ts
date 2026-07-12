@@ -3,6 +3,7 @@ import { ChemPumpPos, type SelectOption } from "@/types";
 import {
   generateSelectOptionsFromZodEnum,
   genericRequiredMessage,
+  numberInOptions,
 } from "@/validation/common";
 
 export const ChemicalPumpPosEnum = z.enum(ChemPumpPos, {
@@ -32,13 +33,10 @@ export const chemPumpSchema = z
     has_shampoo_pump: z.boolean().default(false),
     has_wax_pump: z.boolean().default(false),
     has_chemical_pump: z.boolean().default(false),
-    chemical_qty: z
-      .number({ error: genericRequiredMessage })
-      .refine(
-        (value) => chemicalNum.map((item) => item.value).includes(value),
-        { error: "Numero di pompe di prelavaggio deve essere 1 o 2." },
-      )
-      .optional(),
+    chemical_qty: numberInOptions(
+      chemicalNum,
+      "Numero di pompe di prelavaggio deve essere 1 o 2.",
+    ).optional(),
     chemical_pump_pos: ChemicalPumpPosEnum.optional(),
     has_foam: z.boolean().default(false),
     has_acid_pump: z.boolean().default(false),

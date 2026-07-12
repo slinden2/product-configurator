@@ -5,6 +5,7 @@ import {
   genericRequiredMessage,
   getNumericSelectOptions,
   invalidOption,
+  numberInOptions,
 } from "@/validation/common";
 
 export const touchQtyOpts: SelectOption[] = getNumericSelectOptions([1, 2]);
@@ -42,11 +43,9 @@ for (let i = 0; i <= 300; i += 50) {
 
 const baseTouchSchema = z
   .object({
-    touch_qty: z
-      .union([z.literal(1), z.literal(2)], {
-        error: genericRequiredMessage, // Error if not 1 or 2 after selection
-      })
-      .optional(), // Optional for initial undefined state
+    touch_qty: numberInOptions(touchQtyOpts, genericRequiredMessage)
+      // Optional for the initial undefined state
+      .optional(),
     touch_pos: TouchPosEnum.optional(),
     touch_fixing_type: TouchFixingTypeEnum.optional(),
   })
@@ -125,11 +124,10 @@ const accessoriesSchema = z
       .refine((val) => val % 50 === 0, { error: "Solo multipli di 50" })
       .default(0),
     is_fast: z.boolean().default(false),
-    emergency_stop_qty: z
-      .union([z.literal(0), z.literal(1), z.literal(2)], {
-        error: genericRequiredMessage,
-      })
-      .default(0),
+    emergency_stop_qty: numberInOptions(
+      emergencyStopQtyOpts,
+      genericRequiredMessage,
+    ).default(0),
   })
   .superRefine((data, ctx) => {
     if (data.has_itecoweb && data.has_card_reader) {
