@@ -9,6 +9,11 @@ import type { SelectOption } from "@/types";
 /** Placeholder shown for missing/empty values (matches the form's NOT_SELECTED_LABEL spirit). */
 export const EMPTY_DISPLAY = "—";
 
+/**
+ * Deliberate asymmetry with the other formatters: a missing boolean renders
+ * "No", not EMPTY_DISPLAY — an unset checkbox means the option is absent, so
+ * the read-only view states it plainly (pinned by test).
+ */
 export const formatBoolean = (value: boolean | undefined | null): string =>
   value ? "Sì" : "No";
 

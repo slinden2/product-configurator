@@ -2,6 +2,14 @@
  * Centralized Italian messages for server actions, components, and DB queries.
  * Single source of truth — import `MSG` wherever a user-facing message is needed.
  */
+
+/** SubRecordForm entity names with feminine grammatical gender. */
+const FEMININE_ENTITIES = new Set(["Pista"]);
+
+/** Italian past-participle suffix agreeing with the entity's gender. */
+const pastParticipleSuffix = (name: string): "a" | "o" =>
+  FEMININE_ENTITIES.has(name) ? "a" : "o";
+
 export const MSG = {
   auth: {
     userNotFound: "Utente non trovato.",
@@ -133,11 +141,11 @@ export const MSG = {
     regenerateError: "Errore durante la rigenerazione della distinta.",
     addError: "Errore durante l'aggiunta.",
     entityUpdated: (name: string, index?: number | null) =>
-      `${name} ${index ?? ""} aggiornat${name === "Pista" ? "a" : "o"}.`,
+      `${name} ${index ?? ""} aggiornat${pastParticipleSuffix(name)}.`,
     entityCreated: (name: string) =>
-      `${name} creat${name === "Pista" ? "a" : "o"}.`,
+      `${name} creat${pastParticipleSuffix(name)}.`,
     entityDeleted: (name: string, index?: number | null) =>
-      `${name} ${index ?? ""} eliminat${name === "Pista" ? "a" : "o"}.`,
+      `${name} ${index ?? ""} eliminat${pastParticipleSuffix(name)}.`,
     entityUpdateFallback: (name: string) =>
       `Errore durante l'aggiornamento (${name}).`,
     entityCreateFallback: (name: string) =>

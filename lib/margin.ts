@@ -250,9 +250,17 @@ const DIFF_ORDER: Record<LineDiffStatus, number> = {
 };
 
 /**
+ * Euro tolerance for the line-diff `costChanged` comparison. Same numeric value
+ * as {@link MARGIN_EPSILON} but a different unit: this one is euros (absolute
+ * cost delta), not margin percentage points.
+ */
+export const COST_EPSILON = 0.005;
+
+/**
  * Outer-joins offer BOM items and EBOM items by part number (aggregating
  * quantities/costs across categories). Flags each part as added, removed,
- * changed or unchanged; sorts changes first, then by largest cost delta.
+ * changed or unchanged (cost deltas within {@link COST_EPSILON} count as
+ * unchanged); sorts changes first, then by largest cost delta.
  */
 export function buildLineDiff(
   offerItems: OfferBomLineItem[],
@@ -287,7 +295,7 @@ export function buildLineDiff(
 
     const qtyChanged = !!offer && !!ebom && offer.qty !== ebom.qty;
     const costChanged =
-      !!offer && !!ebom && Math.abs(offer.cost - ebom.cost) > 0.005;
+      !!offer && !!ebom && Math.abs(offer.cost - ebom.cost) > COST_EPSILON;
 
     let status: LineDiffStatus;
     if (!offer) status = "added";

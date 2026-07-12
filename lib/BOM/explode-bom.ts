@@ -75,13 +75,13 @@ async function explodeAssy(
 ): Promise<void> {
   if (depth >= MAX_EXPLOSION_DEPTH) {
     console.warn(
-      `[explode-bom] depth cap (${MAX_EXPLOSION_DEPTH}) reached at PN: ${pn} — row excluded from Analisi Componenti`,
+      `[explode-bom] depth cap (${MAX_EXPLOSION_DEPTH}) reached at PN: ${pn} — row excluded from the "Analisi Componenti" sheet`,
     );
     return;
   }
   if (visited.has(pn)) {
     console.warn(
-      `[explode-bom] cycle detected at PN: ${pn} — row excluded from Analisi Componenti`,
+      `[explode-bom] cycle detected at PN: ${pn} — row excluded from the "Analisi Componenti" sheet`,
     );
     return;
   }
@@ -94,7 +94,7 @@ async function explodeAssy(
 
   if (children.length === 0) {
     console.warn(
-      `[explode-bom] ASSY without catalog rows: ${pn} — row excluded from Analisi Componenti`,
+      `[explode-bom] ASSY without catalog rows: ${pn} — row excluded from the "Analisi Componenti" sheet`,
     );
     return;
   }
@@ -252,7 +252,8 @@ export async function explodeBomsToLeaves(
       Promise.all(washBayLeaves.map(enrichWithCosts)),
     ]);
 
-  // A subcontract leaf with cost 0 means calcolo costi was never run for it:
+  // A subcontract leaf with cost 0 means the ERP cost roll-up ("calcolo costi")
+  // was never run for it:
   // the sheet would show 0, which is worse than the understated raw cost
   const zeroCostSubcontractPns = new Set(
     [
@@ -265,7 +266,7 @@ export async function explodeBomsToLeaves(
   );
   for (const pn of zeroCostSubcontractPns) {
     console.warn(
-      `[explode-bom] subcontract leaf with cost 0: ${pn} — calcolo costi missing, cost understated in Analisi Componenti`,
+      `[explode-bom] subcontract leaf with cost 0: ${pn} — ERP cost roll-up ("calcolo costi") missing, cost understated in the "Analisi Componenti" sheet`,
     );
   }
 

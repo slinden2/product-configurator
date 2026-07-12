@@ -1,7 +1,7 @@
 WITH LatestCosts AS (
     -- Get the most recent cost for each part number
     -- This is used as a "fallback" for assemblies as they do not have supplier prices.
-    -- This uses the "ITECO_VW_REBPD_0004" view which is updated with the data from "calcolo costi"
+    -- This uses the "ITECO_VW_REBPD_0004" view which is updated with the data from the ERP cost roll-up ("calcolo costi")
     SELECT
         Figlio AS part_number,  -- Part number
         Totale                   -- Total cost
@@ -12,7 +12,7 @@ WITH LatestCosts AS (
             -- Rank costs by date (newest first) for each part
             ROW_NUMBER() OVER (PARTITION BY Figlio ORDER BY PD75_IDCOSTO DESC) as rn
         FROM [ITECO_VW_REBPD_0004]
-        WHERE Padre = Figlio     -- Only include parts where parent = child (final products, primo livello)
+        WHERE Padre = Figlio     -- Only include parts where parent = child (final products — ERP: "primo livello")
     ) ranked_costs
     WHERE rn = 1  -- Only keep the most recent cost for each part
 ),
@@ -87,7 +87,7 @@ FirstPhases AS (
 SELECT
     parts.MG66_CODART AS pn,                     -- Part number
     parts_desc.MG87_DESCART AS description,      -- Part description
-    CAST(production_data.PD18_CODPROV_PD21 AS INT) AS pn_type,  -- Part type (1 or 2 from dati produzione)
+    CAST(production_data.PD18_CODPROV_PD21 AS INT) AS pn_type,  -- Part type (1 or 2 — ERP: "dati produzione")
     production_data.PD18_FLGFANTASMA AS is_phantom,  -- Flag for phantom parts
     -- Use supplier price if available (for type 2 parts), otherwise use latest cost
     COALESCE(
@@ -98,11 +98,11 @@ SELECT
         lc.Totale  -- Fallback to latest cost if no supplier price
     ) AS cost,
     -- Subcontract-treated part: internally produced (make) finished/semi-finished part
-    -- whose default routing cycle starts with an external phase (conto lavoro).
-    -- Its calcolo costi roll-up already includes the external treatment cost,
+    -- whose default routing cycle starts with an external phase (subcontract work — ERP: "conto lavoro").
+    -- Its ERP cost roll-up ("calcolo costi") already includes the external treatment cost,
     -- so the BOM explosion must stop here instead of recursing to the raw part.
-    CASE WHEN CAST(production_data.PD18_CODPROV_PD21 AS INT) = 1  -- tipo di provenienza = make
-          AND RTRIM(production_data.PD18_TIPOPROD_PD20) IN ('PF', 'SL')  -- tipo prodotto
+    CASE WHEN CAST(production_data.PD18_CODPROV_PD21 AS INT) = 1  -- provenance type (ERP: "tipo di provenienza") = make
+          AND RTRIM(production_data.PD18_TIPOPROD_PD20) IN ('PF', 'SL')  -- product type (ERP: "tipo prodotto")
           AND production_data.PD18_FLGFANTASMA = 0  -- not a phantom part
           AND first_phase.PD12_INDTIPOPROV = 1      -- first routing phase is external
          THEN 1 ELSE 0 END AS is_subcontract,
