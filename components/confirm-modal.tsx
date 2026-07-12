@@ -37,8 +37,25 @@ export const ConfirmModal = ({
   isConfirming = false,
   confirmDisabled = false,
 }: ConfirmModalProps) => {
+  // While the action runs, Escape/overlay-click must not close the dialog:
+  // the parent's onOpenChange(false) may clear state the in-flight action
+  // depends on.
+  const handleOpenChange = (open: boolean) => {
+    if (!isConfirming) onOpenChange(open);
+  };
+
+  // onConfirm may be async: surface rejections instead of letting them become
+  // unhandled promise rejections with no user feedback.
+  const handleConfirm = async () => {
+    try {
+      await onConfirm();
+    } catch (err) {
+      console.error("ConfirmModal onConfirm failed:", err);
+    }
+  };
+
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={onOpenChange}>
+    <ResponsiveModal open={isOpen} onOpenChange={handleOpenChange}>
       <ResponsiveModalContent side="bottom">
         <ResponsiveModalHeader className="mb-4">
           <ResponsiveModalTitle>{title}</ResponsiveModalTitle>
@@ -60,7 +77,7 @@ export const ConfirmModal = ({
           <Button
             type="button"
             variant={confirmVariant}
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isConfirming || confirmDisabled}
             className="sm:min-w-25"
           >
