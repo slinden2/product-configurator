@@ -1,25 +1,27 @@
 "use client";
 
 import { Share } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { BOMItemWithDescription } from "@/lib/BOM";
 import { exportBomToXls } from "@/lib/BOM/export-xlsx";
+import { MSG } from "@/lib/messages";
 
 interface ExportButtonProps {
   exportData: BOMItemWithDescription[];
 }
 
-const ExportButton = ({ exportData }: ExportButtonProps) => {
-  const handleExportBOM = () => {
-    exportBomToXls(exportData, "exp_config");
-  };
-
-  return (
-    <Button variant="outline" size="sm" onClick={handleExportBOM}>
-      <Share />
-      <span>Esporta distinta di produzione</span>
-    </Button>
-  );
-};
+const ExportButton = ({ exportData }: ExportButtonProps) => (
+  <AsyncActionButton
+    action={async () => {
+      exportBomToXls(exportData, "exp_config");
+    }}
+    icon={<Share />}
+    errorMsg={MSG.toast.exportBomError}
+    variant="outline"
+    size="sm"
+  >
+    Esporta distinta di produzione
+  </AsyncActionButton>
+);
 
 export default ExportButton;

@@ -189,6 +189,7 @@ export const MSG = {
     offerSettingsError:
       "Errore durante l'aggiornamento delle impostazioni offerta.",
     exportCostsError: "Errore durante l'esportazione dei costi.",
+    exportBomError: "Errore durante l'esportazione della distinta.",
     exportPdfError: "Errore durante l'esportazione del PDF.",
   },
   saveWarning: {
