@@ -185,7 +185,14 @@ const SubSection = ({
     </Text>
     <ColumnHeaderRow netOnly={netOnly} />
     {items.map((item, i) => (
-      <ItemRow key={item.pn} item={item} index={i} netOnly={netOnly} />
+      // Composite key: grouped items are not guaranteed unique per PN
+      // (mirrors the config PDF's positional-key stance)
+      <ItemRow
+        key={`${item.pn}-${i}`}
+        item={item}
+        index={i}
+        netOnly={netOnly}
+      />
     ))}
     {!netOnly && <SubtotalRow label={subtotalLabel} total={total} />}
   </View>
