@@ -40,10 +40,13 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   const isCurrentUser = user.id === currentUserId;
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [activateConfirmOpen, setActivateConfirmOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isChangingRole, startRoleChange] = useTransition();
+  const [isAssigningManager, startManagerAssign] = useTransition();
+  const [isActivating, startActivate] = useTransition();
+  const [isResettingPassword, startPasswordReset] = useTransition();
 
   const handleRoleChange = (newRole: string) => {
-    startTransition(async () => {
+    startRoleChange(async () => {
       try {
         const result = await changeUserRoleAction({ userId: user.id, newRole });
         if (result.success) {
@@ -59,7 +62,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
 
   const handleManagerChange = (value: string) => {
     const managerId = value === NO_MANAGER_VALUE ? null : value;
-    startTransition(async () => {
+    startManagerAssign(async () => {
       try {
         const result = await assignManagerAction({
           userId: user.id,
@@ -81,7 +84,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   const canAssignManager = user.role === "SALES";
 
   const handleActivate = () => {
-    startTransition(async () => {
+    startActivate(async () => {
       try {
         const result = await activateUserAction({ userId: user.id });
         if (result.success) {
@@ -98,7 +101,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   };
 
   const handlePasswordReset = () => {
-    startTransition(async () => {
+    startPasswordReset(async () => {
       try {
         const result = await sendPasswordResetAction({ userId: user.id });
         if (result.success) {
@@ -126,7 +129,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           ) : (
             <Select
               value={user.role}
-              disabled={isPending}
+              disabled={isChangingRole}
               onValueChange={handleRoleChange}
             >
               <SelectTrigger className="w-36">
@@ -153,7 +156,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           {canAssignManager ? (
             <Select
               value={user.manager_id ?? NO_MANAGER_VALUE}
-              disabled={isPending || managers.length === 0}
+              disabled={isAssigningManager || managers.length === 0}
               onValueChange={handleManagerChange}
             >
               <SelectTrigger className="w-44">
@@ -186,7 +189,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           <RowActionsMenu>
             {!user.is_active && (
               <DropdownMenuItem
-                disabled={isPending}
+                disabled={isActivating}
                 onSelect={() => setActivateConfirmOpen(true)}
               >
                 <UserCheck />
@@ -194,7 +197,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
-              disabled={isPending}
+              disabled={isResettingPassword}
               onSelect={() => setResetConfirmOpen(true)}
             >
               <Mail />
@@ -222,7 +225,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
         confirmText={MSG.activateUserConfirm.confirm}
         confirmVariant="default"
         onConfirm={handleActivate}
-        isConfirming={isPending}
+        isConfirming={isActivating}
       />
       <ConfirmModal
         isOpen={resetConfirmOpen}
@@ -237,7 +240,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
         confirmText={MSG.passwordResetConfirm.confirm}
         confirmVariant="default"
         onConfirm={handlePasswordReset}
-        isConfirming={isPending}
+        isConfirming={isResettingPassword}
       />
     </>
   );
