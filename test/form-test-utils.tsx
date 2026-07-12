@@ -87,29 +87,31 @@ export function makeValidConfig(
   } as UpdateConfigSchema;
 }
 
-// --- Config form wrapper with Zod validation ---
+// --- Config form wrapper ---
 
 /**
- * Renders children inside a FormProvider with the configSchema resolver.
+ * Renders children inside a FormProvider seeded with configDefaults.
  * Returns getValues for inspecting form state.
+ *
+ * Section tests skip the Zod resolver by default (they exercise field
+ * wiring, not validation); pass `withResolver: true` to attach it.
  */
 export function renderWithConfigFormProvider(
-  overrides: Partial<ConfigSchema> = {},
   children: React.ReactNode,
+  overrides: Partial<ConfigSchema> = {},
+  { withResolver = false }: { withResolver?: boolean } = {},
 ) {
   let getValues: () => ConfigInputSchema;
 
   const Wrapper = () => {
     const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
-      resolver: zodResolver(configSchema),
+      resolver: withResolver ? zodResolver(configSchema) : undefined,
       defaultValues: { ...configDefaults, ...overrides } as ConfigInputSchema,
     });
     getValues = form.getValues;
-    return (
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(() => {})}>{children}</form>
-      </FormProvider>
-    );
+    // No <form> element: inside a form, Radix Select renders its hidden
+    // native <select>, duplicating option labels for text queries.
+    return <FormProvider {...form}>{children}</FormProvider>;
   };
 
   const result = render(<Wrapper />);

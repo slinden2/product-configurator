@@ -1,32 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import WaterSupplySection from "@/components/config-form/water-supply-section";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { renderWithConfigFormProvider } from "@/test/form-test-utils";
+import type { ConfigSchema } from "@/validation/config-schema";
 
 afterEach(cleanup);
 
-function renderWaterSupplySection(overrides: Partial<ConfigSchema> = {}) {
-  let getValues: () => ConfigSchema;
-
-  const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
-    });
-    getValues = form.getValues;
-    return (
-      <FormProvider {...form}>
-        <WaterSupplySection />
-      </FormProvider>
-    );
-  };
-
-  render(<Wrapper />);
-  return { getValues: () => getValues() };
-}
+const renderWaterSupplySection = (overrides: Partial<ConfigSchema> = {}) =>
+  renderWithConfigFormProvider(<WaterSupplySection />, overrides);
 
 describe("WaterSupplySection", () => {
   test("renders section title and base fields", () => {

@@ -1,27 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
-import { FormProvider, useForm } from "react-hook-form";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import SupplySection from "@/components/config-form/supply-section";
 import { MSG } from "@/lib/messages";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { renderWithConfigFormProvider } from "@/test/form-test-utils";
+import type { ConfigSchema } from "@/validation/config-schema";
 
 afterEach(cleanup);
 
-function renderSupplySection(overrides: Partial<ConfigSchema> = {}) {
-  const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
-    });
-    return (
-      <FormProvider {...form}>
-        <SupplySection />
-      </FormProvider>
-    );
-  };
-  render(<Wrapper />);
-}
+const renderSupplySection = (overrides: Partial<ConfigSchema> = {}) =>
+  renderWithConfigFormProvider(<SupplySection />, overrides);
 
 describe("SupplySection", () => {
   test("renders section title and all three select fields", () => {

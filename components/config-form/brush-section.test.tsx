@@ -1,27 +1,16 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { FormProvider, useForm } from "react-hook-form";
+import { cleanup, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import BrushSection from "@/components/config-form/brush-section";
 import { NOT_SELECTED_LABEL } from "@/lib/utils";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { renderWithConfigFormProvider } from "@/test/form-test-utils";
+import type { ConfigSchema } from "@/validation/config-schema";
 
 afterEach(cleanup);
 
-function renderBrushSection(overrides: Partial<ConfigSchema> = {}) {
-  const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
-    });
-    return (
-      <FormProvider {...form}>
-        <BrushSection />
-      </FormProvider>
-    );
-  };
-  render(<Wrapper />);
-}
+const renderBrushSection = (overrides: Partial<ConfigSchema> = {}) =>
+  renderWithConfigFormProvider(<BrushSection />, overrides);
 
 describe("BrushSection", () => {
   test("renders all three select fields", () => {

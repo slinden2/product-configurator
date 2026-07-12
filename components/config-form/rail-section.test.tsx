@@ -1,26 +1,15 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
-import { FormProvider, useForm } from "react-hook-form";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import RailSection from "@/components/config-form/rail-section";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import { renderWithConfigFormProvider } from "@/test/form-test-utils";
+import type { ConfigSchema } from "@/validation/config-schema";
 
 afterEach(cleanup);
 
-function renderRailSection(overrides: Partial<ConfigSchema> = {}) {
-  const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
-    });
-    return (
-      <FormProvider {...form}>
-        <RailSection />
-      </FormProvider>
-    );
-  };
-  render(<Wrapper />);
-}
+const renderRailSection = (overrides: Partial<ConfigSchema> = {}) =>
+  renderWithConfigFormProvider(<RailSection />, overrides);
 
 describe("RailSection", () => {
   test("renders section title and all three select fields", () => {

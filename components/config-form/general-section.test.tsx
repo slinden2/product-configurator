@@ -1,34 +1,20 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import GeneralSection from "@/components/config-form/general-section";
-import { selectRadixOption } from "@/test/form-test-utils";
+import {
+  renderWithConfigFormProvider,
+  selectRadixOption,
+} from "@/test/form-test-utils";
 import { STANDARD_MACHINE_HEIGHT_MM, WASH_HEIGHT_OFFSET_MM } from "@/types";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import type { ConfigSchema } from "@/validation/config-schema";
 
 afterEach(cleanup);
 
-function renderGeneralSection(overrides: Partial<ConfigSchema> = {}) {
-  let getValues: () => ConfigSchema;
-
-  const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
-    });
-    getValues = form.getValues;
-    return (
-      <FormProvider {...form}>
-        <GeneralSection />
-      </FormProvider>
-    );
-  };
-
-  render(<Wrapper />);
-  return { getValues: () => getValues() };
-}
+const renderGeneralSection = (overrides: Partial<ConfigSchema> = {}) =>
+  renderWithConfigFormProvider(<GeneralSection />, overrides);
 
 describe("GeneralSection", () => {
   test("renders section title and both fields", () => {

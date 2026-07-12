@@ -1,39 +1,28 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
-import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test } from "vitest";
 import BrushSection from "@/components/config-form/brush-section";
 import HPPumpSection from "@/components/config-form/hp-pump-section";
 import SupplySection from "@/components/config-form/supply-section";
 import TouchSection from "@/components/config-form/touch-section";
 import WaterSupplySection from "@/components/config-form/water-supply-section";
-import { selectRadixOption } from "@/test/form-test-utils";
-import { type ConfigSchema, configDefaults } from "@/validation/config-schema";
+import {
+  renderWithConfigFormProvider,
+  selectRadixOption,
+} from "@/test/form-test-utils";
+import type { ConfigSchema } from "@/validation/config-schema";
 
 afterEach(cleanup);
 
 // --- Helper: render sections with shared form state ---
 
-function renderSections(
+const renderSections = (
   overrides: Partial<ConfigSchema> = {},
-  sections: React.ReactNode,
-) {
-  let getValues: () => ConfigSchema;
-
-  const Wrapper = () => {
-    const form = useForm<ConfigSchema>({
-      defaultValues: { ...configDefaults, ...overrides } as ConfigSchema,
-    });
-    getValues = form.getValues;
-    return <FormProvider {...form}>{sections}</FormProvider>;
-  };
-
-  render(<Wrapper />);
-  return { getValues: () => getValues() };
-}
+  sections: React.ReactNode = null,
+) => renderWithConfigFormProvider(sections, overrides);
 
 // --- Tests ---
 
