@@ -28,7 +28,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { isConfigLocked } from "@/lib/access";
 import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
-import { makeDummyConfig } from "@/lib/dev/dummy-config";
 import { MSG } from "@/lib/messages";
 import type {
   ConfigOrigin,
@@ -194,7 +193,10 @@ const ConfigForm = ({
     executeSubmit(values);
   }
 
-  function handleDevFill() {
+  async function handleDevFill() {
+    // Dynamic import so the dev-only generator is code-split out of the
+    // production bundle (the button itself only renders outside production).
+    const { makeDummyConfig } = await import("@/lib/dev/dummy-config");
     form.reset(makeDummyConfig(), { keepDefaultValues: true });
     // Edit mode validates on mount; re-trigger so stale field errors clear.
     void form.trigger();
@@ -255,7 +257,9 @@ const ConfigForm = ({
                     }
                   />
                 )}
-                {!formIsDisabled && <DevFillButton onFill={handleDevFill} />}
+                {process.env.NODE_ENV !== "production" && !formIsDisabled && (
+                  <DevFillButton onFill={handleDevFill} />
+                )}
                 <Button
                   type="button"
                   className="ml-auto"

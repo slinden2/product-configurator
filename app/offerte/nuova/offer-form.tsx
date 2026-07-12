@@ -10,7 +10,6 @@ import InputField from "@/components/input-field";
 import { DevFillButton } from "@/components/shared/dev-fill-button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Form } from "@/components/ui/form";
-import { makeDummyOffer } from "@/lib/dev/dummy-offer";
 import { MSG } from "@/lib/messages";
 import {
   type OfferHeaderInput,
@@ -62,11 +61,18 @@ const OfferForm = () => {
         />
         <div className="flex gap-4">
           <BackButton fallbackPath="/offerte" />
-          <DevFillButton
-            onFill={() =>
-              form.reset(makeDummyOffer(), { keepDefaultValues: true })
-            }
-          />
+          {process.env.NODE_ENV !== "production" && (
+            <DevFillButton
+              onFill={async () => {
+                // Dynamic import keeps the dev-only generator out of the
+                // production bundle.
+                const { makeDummyOffer } = await import(
+                  "@/lib/dev/dummy-offer"
+                );
+                form.reset(makeDummyOffer(), { keepDefaultValues: true });
+              }}
+            />
+          )}
           <SubmitButton
             isSubmitting={form.formState.isSubmitting}
             className="ml-auto"
