@@ -1,7 +1,7 @@
 import { AlertTriangle, Handshake, Lock, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import RenegotiateRevisionButton from "@/components/offer/renegotiate-revision-button";
-import AlertBanner from "@/components/shared/alert-banner";
+import Banner from "@/components/shared/banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -133,7 +133,7 @@ function SummaryCard({
       <CardContent className="space-y-6">
         {alertActive && (
           <div className="space-y-3">
-            <AlertBanner
+            <Banner
               variant="error"
               icon={<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />}
               title="Marginalità sotto la soglia minima"
@@ -141,7 +141,7 @@ function SummaryCard({
               La marginalità dopo la progettazione (
               {formatPct(currentMargin.marginPct)}) è inferiore alla soglia
               minima del {formatPct(thresholdPct)}.
-            </AlertBanner>
+            </Banner>
             <div className="flex flex-wrap items-center gap-2">
               {absorb && (
                 <AbsorbMarginButton
@@ -172,7 +172,7 @@ function SummaryCard({
         )}
 
         {absorb?.signOff && (
-          <AlertBanner
+          <Banner
             icon={<ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />}
             title={MSG.marginReview.signOffTitle}
           >
@@ -186,7 +186,7 @@ function SummaryCard({
                 {MSG.marginReview.signOffNoteLabel}: {absorb.signOff.note}
               </span>
             )}
-          </AlertBanner>
+          </Banner>
         )}
 
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">

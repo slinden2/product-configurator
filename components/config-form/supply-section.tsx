@@ -2,7 +2,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
-import InfoBanner from "@/components/shared/info-banner";
+import Banner from "@/components/shared/banner";
 import {
   showEnergyChainWallWarning,
   showPostFrame as showPostFrameRule,
@@ -82,9 +82,9 @@ const SupplySection = () => {
               ]}
             />
             {showEcWallWarning && (
-              <InfoBanner variant="warning">
+              <Banner variant="warning">
                 {MSG.energyChainWall.supplySection}
-              </InfoBanner>
+              </Banner>
             )}
             {showPostFrame && (
               <CheckboxField<ConfigSchema>

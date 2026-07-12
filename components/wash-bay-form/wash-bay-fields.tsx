@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
-import InfoBanner from "@/components/shared/info-banner";
+import Banner from "@/components/shared/banner";
 import {
   showEnergyChainWallWarning,
   showWashBayEnergyChainFields,
@@ -74,9 +74,9 @@ const WashBayFields = ({
   return (
     <div className="fs-content">
       {isEcWall && (
-        <InfoBanner variant="warning" className="mb-4">
+        <Banner variant="warning" className="mb-4">
           {MSG.energyChainWall.washBayForm}
-        </InfoBanner>
+        </Banner>
       )}
       <div className="fs-row">
         <div className="fs-item">

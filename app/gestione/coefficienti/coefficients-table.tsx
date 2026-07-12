@@ -7,7 +7,7 @@ import {
   createCoefficientAction,
   syncMaxBomCoefficientsAction,
 } from "@/app/actions/coefficient-actions";
-import InfoBanner from "@/components/shared/info-banner";
+import Banner from "@/components/shared/banner";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -97,7 +97,9 @@ export default function CoefficientsTable({
   return (
     <div className="space-y-4">
       {missingMaxBomPns.length > 0 && (
-        <InfoBanner
+        <Banner
+          variant="warning"
+          icon={<AlertTriangle className="h-4 w-4 shrink-0" />}
           action={
             <Button
               className="text-foreground"
@@ -111,9 +113,8 @@ export default function CoefficientsTable({
             </Button>
           }
         >
-          <AlertTriangle className="h-4 w-4 shrink-0" />
           {missingMaxBomPns.length} PN MaxBOM senza coefficiente.
-        </InfoBanner>
+        </Banner>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
