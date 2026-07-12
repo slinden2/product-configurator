@@ -45,6 +45,7 @@ function makeRevision() {
     installation_items: [],
     show_net_total_only: false,
     status: "DRAFT",
+    updated_at: new Date("2026-01-05T10:00:00Z"),
     lines: [
       {
         id: 1,

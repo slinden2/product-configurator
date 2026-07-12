@@ -87,7 +87,13 @@ export default function QuoteView({ offerId, revision, editable }: Props) {
       })}
 
       {editable && (
+        // Keyed on the revision's updated_at so the card (and the nested
+        // DiscountInput) remounts with fresh initial props whenever the server
+        // state changes — e.g. a concurrent edit by another user within scope
+        // (manager + agent can both edit a DRAFT revision). Without the key the
+        // mounted card would keep displaying and re-saving its stale snapshot.
         <OfferSettingsCard
+          key={revision.updated_at.getTime()}
           initialDiscount={discountPct}
           initialSettings={settings}
           onSaveDiscount={setRevisionDiscountAction.bind(null, offerId)}
