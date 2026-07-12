@@ -1,22 +1,30 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Must be mocked before BOM is imported — prevents DATABASE_URL check
 vi.mock("@/db", () => ({
   db: {},
 }));
+const mockGetPartNumbersByArray = vi.fn();
 vi.mock("@/db/queries", () => ({
-  getPartNumbersByArray: vi.fn().mockResolvedValue([]),
+  getPartNumbersByArray: (...args: unknown[]) =>
+    mockGetPartNumbersByArray(...args),
 }));
 
 import {
   BOM,
   type BOMItemWithDescription,
+  enrichWithCosts,
   type GeneralBOMConfig,
 } from "@/lib/BOM";
 import {
   makeConfigWithBaysAndTanks as makeConfig,
   makeWashBay,
 } from "@/test/bom-test-utils";
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockGetPartNumbersByArray.mockResolvedValue([]);
+});
 
 // Spy item: captures the config passed to it (always excludes itself from results)
 function makeSpyItem(captured: { value: unknown }) {
@@ -33,6 +41,13 @@ function makeSpyItem(captured: { value: unknown }) {
   };
 }
 
+const item = (pn: string): BOMItemWithDescription => ({
+  pn,
+  qty: 1,
+  _description: pn,
+  description: pn,
+});
+
 // --- Tests ---
 
 describe("BOM.init and getters", () => {
@@ -40,12 +55,6 @@ describe("BOM.init and getters", () => {
     const config = makeConfig();
     const bom = BOM.init(config);
     expect(bom.configuration).toBe(config);
-  });
-
-  test("getConfiguration returns the full configuration", () => {
-    const config = makeConfig();
-    const bom = BOM.init(config);
-    expect(bom.getConfiguration()).toBe(config);
   });
 
   test("getClientName returns configuration.name", () => {
@@ -62,13 +71,6 @@ describe("BOM.init and getters", () => {
 });
 
 describe("BOM.generateExportData (static)", () => {
-  const item = (pn: string): BOMItemWithDescription => ({
-    pn,
-    qty: 1,
-    _description: pn,
-    description: pn,
-  });
-
   test("returns empty array when all inputs are empty", () => {
     expect(BOM.generateExportData([], [], [])).toEqual([]);
   });
@@ -95,7 +97,7 @@ describe("BOM.generateExportData (static)", () => {
   });
 });
 
-describe("buildGeneralBOM — has_shelf_extension derivation", () => {
+describe("buildCompleteBOM — has_shelf_extension derivation", () => {
   async function getShelfExtension(
     washBays: ReturnType<typeof makeWashBay>[],
   ): Promise<boolean> {
@@ -103,7 +105,7 @@ describe("buildGeneralBOM — has_shelf_extension derivation", () => {
     const bom = BOM.init(config);
     const captured: { value: unknown } = { value: undefined };
     bom.generalMaxBOM = [makeSpyItem(captured)] as typeof bom.generalMaxBOM;
-    await bom.buildGeneralBOM();
+    await bom.buildCompleteBOM();
     return (captured.value as GeneralBOMConfig)?.has_shelf_extension ?? false;
   }
 
@@ -144,7 +146,7 @@ describe("buildGeneralBOM — has_shelf_extension derivation", () => {
   });
 });
 
-describe("buildWashBayBOM — uses_3000_posts detection", () => {
+describe("buildCompleteBOM — uses_3000_posts detection", () => {
   async function getUses3000Posts(
     washBays: ReturnType<typeof makeWashBay>[],
   ): Promise<boolean | undefined> {
@@ -152,15 +154,15 @@ describe("buildWashBayBOM — uses_3000_posts detection", () => {
     const bom = BOM.init(config);
     const captured: { value: unknown } = { value: undefined };
     bom.washBayMaxBOM = [makeSpyItem(captured)] as typeof bom.washBayMaxBOM;
-    await bom.buildWashBayBOM();
+    await bom.buildCompleteBOM();
     return (captured.value as { uses_3000_posts?: boolean })?.uses_3000_posts;
   }
 
-  test("no wash bays → no output (nothing captured)", async () => {
+  test("no wash bays → empty washBayBOMs", async () => {
     const config = makeConfig({ wash_bays: [] });
     const bom = BOM.init(config);
-    const results = await bom.buildWashBayBOM();
-    expect(results).toEqual([]);
+    const { washBayBOMs } = await bom.buildCompleteBOM();
+    expect(washBayBOMs).toEqual([]);
   });
 
   test("bay with 0+0 lances → uses_3000_posts=false", async () => {
@@ -205,7 +207,7 @@ describe("buildWashBayBOM — uses_3000_posts detection", () => {
         _description: "spy",
       },
     ] as typeof bom.washBayMaxBOM;
-    await bom.buildWashBayBOM();
+    await bom.buildCompleteBOM();
     const allUse3000 = capturedValues.every(
       (c) => (c as { uses_3000_posts?: boolean }).uses_3000_posts === true,
     );
@@ -213,7 +215,7 @@ describe("buildWashBayBOM — uses_3000_posts detection", () => {
   });
 });
 
-describe("buildWashBayBOM — supply data propagation", () => {
+describe("buildCompleteBOM — supply data propagation", () => {
   test("each wash bay receives supply_type, supply_side, supply_fixing_type from configuration", async () => {
     const config = makeConfig({
       supply_type: "ENERGY_CHAIN",
@@ -236,12 +238,147 @@ describe("buildWashBayBOM — supply data propagation", () => {
         _description: "spy",
       },
     ] as typeof bom.washBayMaxBOM;
-    await bom.buildWashBayBOM();
+    await bom.buildCompleteBOM();
     expect(capturedValues).toHaveLength(2);
     for (const c of capturedValues as Record<string, unknown>[]) {
       expect(c.supply_type).toBe("ENERGY_CHAIN");
       expect(c.supply_side).toBe("RIGHT");
       expect(c.supply_fixing_type).toBe("POST");
     }
+  });
+});
+
+describe("buildCompleteBOM — output shape and descriptions", () => {
+  test("attaches DB descriptions to matched rules and N/A to unknown PNs", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "KNOWN", description: "Known part", cost: "1" },
+    ]);
+    const config = makeConfig();
+    const bom = BOM.init(config);
+    bom.generalMaxBOM = [
+      { pn: "KNOWN", conditions: [], qty: 2, _description: "rule a" },
+      { pn: "UNKNOWN", conditions: [], qty: 1, _description: "rule b" },
+    ] as typeof bom.generalMaxBOM;
+
+    const { generalBOM } = await bom.buildCompleteBOM();
+
+    expect(generalBOM).toEqual([
+      {
+        pn: "KNOWN",
+        qty: 2,
+        _description: "rule a",
+        description: "Known part",
+        tag: undefined,
+      },
+      {
+        pn: "UNKNOWN",
+        qty: 1,
+        _description: "rule b",
+        description: "N/A",
+        tag: undefined,
+      },
+    ]);
+    // single batched DB call for all sections
+    expect(mockGetPartNumbersByArray).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("enrichWithCosts", () => {
+  test("returns zero-cost items without a DB call when input is empty", async () => {
+    const result = await enrichWithCosts([]);
+    expect(result).toEqual([]);
+    expect(mockGetPartNumbersByArray).not.toHaveBeenCalled();
+  });
+
+  test("maps cost/family/sub_family from the DB and preserves input order", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "B", cost: "2.5", family: "FAM-B", sub_family: "SUB-B" },
+      { pn: "A", cost: "10", family: "FAM-A", sub_family: null },
+    ]);
+
+    const result = await enrichWithCosts([
+      { pn: "A" },
+      { pn: "B" },
+      { pn: "A" },
+    ]);
+
+    // one output per input, in input order — generateCostExportData's
+    // offset slicing depends on this contract
+    expect(result.map((r) => r.pn)).toEqual(["A", "B", "A"]);
+    expect(result[0]).toEqual({
+      pn: "A",
+      cost: 10,
+      family: "FAM-A",
+      sub_family: null,
+    });
+    expect(result[1]).toEqual({
+      pn: "B",
+      cost: 2.5,
+      family: "FAM-B",
+      sub_family: "SUB-B",
+    });
+    // duplicate PN enriched identically
+    expect(result[2]).toEqual(result[0]);
+    // PNs deduped in the DB call
+    expect(mockGetPartNumbersByArray).toHaveBeenCalledWith(["A", "B"]);
+  });
+
+  test("falls back to cost 0 and null family for PNs missing from the DB", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([]);
+
+    const result = await enrichWithCosts([{ pn: "MISSING" }]);
+
+    expect(result).toEqual([
+      { pn: "MISSING", cost: 0, family: null, sub_family: null },
+    ]);
+  });
+
+  test("falls back to cost 0 for non-numeric DB costs", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "BAD", cost: "not-a-number", family: null, sub_family: null },
+    ]);
+
+    const result = await enrichWithCosts([{ pn: "BAD" }]);
+
+    expect(result[0].cost).toBe(0);
+  });
+});
+
+describe("BOM.generateCostExportData (static)", () => {
+  test("round-trips ragged bucket shapes through the flat enrichment", async () => {
+    mockGetPartNumbersByArray.mockResolvedValue([
+      { pn: "G1", cost: "1", family: "F", sub_family: null },
+      { pn: "T1", cost: "2", family: "F", sub_family: null },
+      { pn: "T2", cost: "3", family: "F", sub_family: null },
+      { pn: "B1", cost: "4", family: "F", sub_family: null },
+      { pn: "B2", cost: "5", family: "F", sub_family: null },
+    ]);
+
+    const general = [item("G1")];
+    const tanks = [[item("T1"), item("T2")], [], [item("T1")]];
+    const bays = [[], [item("B1")], [item("B2"), item("B1")]];
+
+    const result = await BOM.generateCostExportData(general, tanks, bays);
+
+    expect(result.generalBOM.map((i) => [i.pn, i.cost])).toEqual([["G1", 1]]);
+    expect(
+      result.waterTankBOMs.map((bucket) => bucket.map((i) => i.pn)),
+    ).toEqual([["T1", "T2"], [], ["T1"]]);
+    expect(result.washBayBOMs.map((bucket) => bucket.map((i) => i.pn))).toEqual(
+      [[], ["B1"], ["B2", "B1"]],
+    );
+    expect(result.washBayBOMs[2].map((i) => i.cost)).toEqual([5, 4]);
+    // one batched DB call for the whole export
+    expect(mockGetPartNumbersByArray).toHaveBeenCalledTimes(1);
+  });
+
+  test("handles all-empty input", async () => {
+    const result = await BOM.generateCostExportData([], [], []);
+    expect(result).toEqual({
+      generalBOM: [],
+      waterTankBOMs: [],
+      washBayBOMs: [],
+    });
+    expect(mockGetPartNumbersByArray).not.toHaveBeenCalled();
   });
 });

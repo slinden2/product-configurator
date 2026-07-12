@@ -20,10 +20,6 @@ export interface BOMItem {
   tag?: BomTag;
 }
 
-export interface WithBOMItems {
-  bomItems: BOMItem[];
-}
-
 export interface BOMItemWithDescription extends BOMItem {
   description: string;
 }
@@ -66,7 +62,13 @@ function warnMissingPns(pns: string[], map: Map<string, unknown>): void {
   }
 }
 
-/** Enrich BOM items with cost and family data from the DB. Shared by BOM class and bom-helpers. */
+/**
+ * Enrich BOM items with cost and family data from the DB. Shared by BOM class and bom-helpers.
+ *
+ * Contract: returns one output item per input item, in input order —
+ * {@link BOM.generateCostExportData} relies on this to slice the flat enriched
+ * array back into its nested buckets by offset.
+ */
 export async function enrichWithCosts<T extends { pn: string }>(
   items: T[],
 ): Promise<
@@ -148,38 +150,6 @@ export class BOM {
     return { generalBOM, waterTankBOMs, washBayBOMs };
   }
 
-  async buildGeneralBOM(): Promise<BOMItemWithDescription[]> {
-    const filtered = this._filterAndResolve(
-      this.generalMaxBOM,
-      this._buildGeneralConfig(),
-    );
-    const descriptionMap = await this._fetchDescriptions(filtered);
-    return this._attachDescriptions(filtered, descriptionMap);
-  }
-
-  async buildWaterTankBOM(): Promise<BOMItemWithDescription[][]> {
-    return await Promise.all(
-      this.configuration.water_tanks.map(async (waterTank) => {
-        const filtered = this._filterAndResolve(
-          this.waterTankMaxBOM,
-          waterTank,
-        );
-        const descriptionMap = await this._fetchDescriptions(filtered);
-        return this._attachDescriptions(filtered, descriptionMap);
-      }),
-    );
-  }
-
-  async buildWashBayBOM(): Promise<BOMItemWithDescription[][]> {
-    const washBayFiltered = this._filterWashBays();
-    return await Promise.all(
-      washBayFiltered.map(async (items) => {
-        const descriptionMap = await this._fetchDescriptions(items);
-        return this._attachDescriptions(items, descriptionMap);
-      }),
-    );
-  }
-
   private _buildGeneralConfig(): GeneralBOMConfig {
     const has_shelf_extension = this.configuration.wash_bays.some(
       (wb) => wb.has_gantry && wb.has_shelf_extension,
@@ -256,10 +226,6 @@ export class BOM {
       ...item,
       description: descriptionMap.get(item.pn) || "N/A",
     }));
-  }
-
-  getConfiguration() {
-    return this.configuration;
   }
 
   getClientName() {
