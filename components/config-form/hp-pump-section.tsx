@@ -1,3 +1,5 @@
+"use client";
+
 import { Fragment, type ReactNode, useEffect } from "react";
 import { type FieldPath, useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";

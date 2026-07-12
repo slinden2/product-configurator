@@ -1,4 +1,6 @@
-import { useWatch } from "react-hook-form";
+"use client";
+
+import { useFormContext, useWatch } from "react-hook-form";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import { isAnchoredRail } from "@/lib/configuration/display-rules";
@@ -7,7 +9,8 @@ import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 
 const RailSection = () => {
-  const railType = useWatch<ConfigSchema, "rail_type">({ name: "rail_type" });
+  const { control } = useFormContext<ConfigSchema>();
+  const railType = useWatch({ control, name: "rail_type" });
   const showAnchorType = isAnchoredRail({ rail_type: railType });
 
   return (

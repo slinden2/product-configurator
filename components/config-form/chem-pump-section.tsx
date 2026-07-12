@@ -1,3 +1,5 @@
+"use client";
+
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
@@ -14,10 +16,7 @@ import { selectFieldOptions } from "@/validation/configuration";
 
 const ChemPumpSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const brushNumWatch = useWatch<ConfigSchema, "brush_qty">({
-    control,
-    name: "brush_qty",
-  });
+  const brushNumWatch = useWatch({ control, name: "brush_qty" });
   const hasChemicalPumpWatch = useWatch({ control, name: "has_chemical_pump" });
   const hasAcidPumpWatch = useWatch({ control, name: "has_acid_pump" });
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
@@ -64,11 +66,10 @@ const TouchSection = () => {
               items={selectFieldOptions.touchPositionOpts}
               fieldsToResetOnValue={[
                 {
-                  triggerValue: zodEnums.TouchPosEnum.enum.ON_PANEL,
-                  fieldsToReset: ["touch_fixing_type"],
-                },
-                {
-                  triggerValue: zodEnums.TouchPosEnum.enum.ON_DET_CAB,
+                  triggerValue: [
+                    zodEnums.TouchPosEnum.enum.ON_PANEL,
+                    zodEnums.TouchPosEnum.enum.ON_DET_CAB,
+                  ],
                   fieldsToReset: ["touch_fixing_type"],
                 },
               ]}
@@ -79,7 +80,10 @@ const TouchSection = () => {
               name="touch_fixing_type"
               dataType="string"
               label={CONFIG_FIELD_LABELS.touch_fixing_type}
-              disabled={touchQtyWatch !== 2 && touchPosWatch !== "EXTERNAL"}
+              disabled={
+                touchQtyWatch !== 2 &&
+                touchPosWatch !== zodEnums.TouchPosEnum.enum.EXTERNAL
+              }
               items={selectFieldOptions.touchFixingTypeOpts}
             />
           </div>

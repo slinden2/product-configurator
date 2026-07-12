@@ -20,14 +20,8 @@ import { selectFieldOptions } from "@/validation/configuration";
 
 const GeneralSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const totalHeight = useWatch<ConfigSchema, "total_height">({
-    control,
-    name: "total_height",
-  });
-  const machineType = useWatch<ConfigSchema, "machine_type">({
-    control,
-    name: "machine_type",
-  });
+  const totalHeight = useWatch({ control, name: "total_height" });
+  const machineType = useWatch({ control, name: "machine_type" });
   const isOMZ = isOmzMachine({ machine_type: machineType });
 
   const washHeightMm = getWashHeightMm(totalHeight);

@@ -1,3 +1,5 @@
+"use client";
+
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";

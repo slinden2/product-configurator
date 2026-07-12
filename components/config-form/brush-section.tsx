@@ -1,3 +1,5 @@
+"use client";
+
 import { useFormContext, useWatch } from "react-hook-form";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
@@ -8,10 +10,7 @@ import { selectFieldOptions } from "@/validation/configuration";
 
 const BrushSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const brushNumWatch = useWatch<ConfigSchema, "brush_qty">({
-    control,
-    name: "brush_qty",
-  });
+  const brushNumWatch = useWatch({ control, name: "brush_qty" });
   const isDisabled = !hasBrushes({ brush_qty: brushNumWatch });
 
   return (
