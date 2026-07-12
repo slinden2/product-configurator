@@ -52,6 +52,7 @@ const Configurations = async (props: {
         page={page}
         totalCount={totalCount}
         pageSize={PAGE_SIZE}
+        user={user}
       />
     </div>
   );

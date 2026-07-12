@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import ConfigurationRow from "@/components/all-configuration-table/configuration-row";
 import PaginationControls from "@/components/shared/pagination-controls";
 import {
@@ -9,13 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type AllConfigurations, getUserData } from "@/db/queries";
+import type { AllConfigurations, UserData } from "@/db/queries";
 
 interface AllConfigurationsTableProps {
   configurations: AllConfigurations;
   page: number;
   totalCount: number;
   pageSize: number;
+  user: NonNullable<UserData>;
 }
 
 const headers = [
@@ -29,18 +29,13 @@ const headers = [
   "azioni",
 ];
 
-const AllConfigurationsTable = async ({
+const AllConfigurationsTable = ({
   configurations,
   page,
   totalCount,
   pageSize,
+  user,
 }: AllConfigurationsTableProps) => {
-  const user = await getUserData();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
