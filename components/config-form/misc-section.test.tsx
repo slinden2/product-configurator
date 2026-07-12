@@ -55,8 +55,9 @@ describe("MiscSection", () => {
 
       expect(screen.queryByText("Antigelo manuale")).not.toBeInTheDocument();
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      await userEvent.click(checkboxes[0]);
+      await userEvent.click(
+        screen.getByLabelText("Lavachassis con detergente"),
+      );
 
       expect(screen.getByText("Antigelo manuale")).toBeInTheDocument();
     });
@@ -68,8 +69,9 @@ describe("MiscSection", () => {
         has_chassis_wash_detergent_manual_antifreeze: true,
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      await userEvent.click(checkboxes[0]);
+      await userEvent.click(
+        screen.getByLabelText("Lavachassis con detergente"),
+      );
 
       expect(getValues().has_chassis_wash_detergent_pump).toBe(false);
       expect(getValues().has_chassis_wash_detergent_manual_antifreeze).toBe(

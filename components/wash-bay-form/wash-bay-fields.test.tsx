@@ -3,7 +3,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { MSG } from "@/lib/messages";
-import type { UpdateWashBaySchema } from "@/validation/wash-bay-schema";
+import {
+  type UpdateWashBaySchema,
+  washBayDefaults,
+} from "@/validation/wash-bay-schema";
 
 // --- Mocks (before imports) ---
 
@@ -34,24 +37,11 @@ function makeWashBay(
   overrides: Partial<UpdateWashBaySchema> = {},
 ): UpdateWashBaySchema {
   return {
+    ...washBayDefaults,
     id: 20,
     configuration_id: 1,
-    hp_lance_qty: 0,
-    det_lance_qty: 0,
-    hose_reel_hp_with_post_qty: 0,
-    hose_reel_hp_without_post_qty: 0,
-    hose_reel_det_with_post_qty: 0,
-    hose_reel_det_without_post_qty: 0,
-    hose_reel_hp_det_with_post_qty: 0,
-    pressure_washer_type: undefined,
-    pressure_washer_qty: undefined,
-    has_gantry: false,
-    energy_chain_width: undefined,
-    has_shelf_extension: false,
-    is_first_bay: false,
-    has_bay_dividers: false,
     ...overrides,
-  } as UpdateWashBaySchema;
+  };
 }
 
 // --- Setup ---

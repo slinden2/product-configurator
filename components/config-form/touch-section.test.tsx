@@ -87,9 +87,7 @@ describe("TouchSection", () => {
 
       expect(screen.queryByText("Numero di schede")).not.toBeInTheDocument();
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_itecoweb is the first checkbox in the second row
-      await userEvent.click(checkboxes[0]);
+      await userEvent.click(screen.getByLabelText("Itecoweb"));
 
       expect(screen.getByText("Numero di schede")).toBeInTheDocument();
     });

@@ -50,9 +50,7 @@ describe("HPPumpSection", () => {
         pump_outlet_2_75kw: "LOW_BARS",
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_75kw_pump is the first checkbox
-      await userEvent.click(checkboxes[0]);
+      await userEvent.click(screen.getByLabelText("Pompa 7.5kW"));
 
       expect(getValues().has_75kw_pump).toBe(false);
       expect(getValues().pump_outlet_1_75kw).toBeUndefined();
@@ -75,9 +73,7 @@ describe("HPPumpSection", () => {
         has_chassis_wash_plates: true,
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_75kw_pump is the first checkbox
-      await userEvent.click(checkboxes[0]);
+      await userEvent.click(screen.getByLabelText("Pompa 7.5kW"));
 
       expect(getValues().has_chassis_wash_plates).toBe(false);
     });
@@ -110,9 +106,7 @@ describe("HPPumpSection", () => {
         pump_outlet_2_15kw: "LOW_SPINNERS",
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_15kw_pump is the second checkbox
-      await userEvent.click(checkboxes[1]);
+      await userEvent.click(screen.getByLabelText("Pompa 15kW"));
 
       expect(getValues().has_15kw_pump).toBe(false);
       expect(getValues().pump_outlet_1_15kw).toBeUndefined();
@@ -147,9 +141,7 @@ describe("HPPumpSection", () => {
         pump_outlet_2_30kw: "LOW_SPINNERS_HIGH_BARS",
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_30kw_pump is the third checkbox
-      await userEvent.click(checkboxes[2]);
+      await userEvent.click(screen.getByLabelText("Pompa 30kW"));
 
       expect(getValues().has_30kw_pump).toBe(false);
       expect(getValues().pump_outlet_1_30kw).toBeUndefined();
@@ -180,9 +172,7 @@ describe("HPPumpSection", () => {
         has_chassis_wash_plates: true,
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_15kw_pump is the second checkbox
-      await userEvent.click(checkboxes[1]);
+      await userEvent.click(screen.getByLabelText("Pompa 15kW"));
 
       expect(getValues().has_chassis_wash_plates).toBe(false);
     });
@@ -254,9 +244,7 @@ describe("HPPumpSection", () => {
         has_chemical_roof_bar: true,
       });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_omz_pump is the fourth checkbox (after 15kW, 30kW, 7.5kW)
-      await userEvent.click(checkboxes[3]);
+      await userEvent.click(screen.getByLabelText("Pompa OMZ"));
 
       expect(getValues().has_omz_pump).toBe(false);
       expect(getValues().pump_outlet_omz).toBeUndefined();

@@ -107,12 +107,8 @@ describe("WaterSupplySection", () => {
 
       expect(getValues().has_filter_backwash).toBe(false);
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      const filterCheckbox = checkboxes.find(
-        (el) => el.getAttribute("data-state") !== undefined,
-      );
       await userEvent.click(
-        filterCheckbox ?? checkboxes[checkboxes.length - 1],
+        screen.getByLabelText("Uscita controlavaggio filtro"),
       );
 
       expect(getValues().has_filter_backwash).toBe(true);

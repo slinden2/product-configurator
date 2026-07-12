@@ -27,31 +27,25 @@ describe("ChemPumpSection", () => {
     test("shampoo pump is disabled when brush_qty is 0", () => {
       renderChemPumpSection({ brush_qty: 0 });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_shampoo_pump is the first checkbox
-      expect(checkboxes[0]).toBeDisabled();
+      expect(screen.getByLabelText("Pompa sapone")).toBeDisabled();
     });
 
     test("shampoo pump is enabled when brush_qty > 0", () => {
       renderChemPumpSection({ brush_qty: 2 });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      expect(checkboxes[0]).not.toBeDisabled();
+      expect(screen.getByLabelText("Pompa sapone")).not.toBeDisabled();
     });
 
     test("acid pump is disabled when brush_qty is 2", () => {
       renderChemPumpSection({ brush_qty: 2 });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      // has_acid_pump is the last checkbox (4th)
-      expect(checkboxes[3]).toBeDisabled();
+      expect(screen.getByLabelText("Pompa acido")).toBeDisabled();
     });
 
     test("acid pump is enabled when brush_qty is 3", () => {
       renderChemPumpSection({ brush_qty: 3 });
 
-      const checkboxes = screen.getAllByRole("checkbox");
-      expect(checkboxes[3]).not.toBeDisabled();
+      expect(screen.getByLabelText("Pompa acido")).not.toBeDisabled();
     });
   });
 
@@ -109,9 +103,7 @@ describe("ChemPumpSection", () => {
         screen.queryByText("Numero di pompe di prelavaggio"),
       ).not.toBeInTheDocument();
 
-      // The chemical pump checkbox is the 3rd one
-      const checkboxes = screen.getAllByRole("checkbox");
-      await userEvent.click(checkboxes[2]);
+      await userEvent.click(screen.getByLabelText("Pompa prelavaggio"));
 
       expect(
         screen.getByText("Numero di pompe di prelavaggio"),
@@ -126,9 +118,7 @@ describe("ChemPumpSection", () => {
         has_foam: true,
       });
 
-      // Uncheck chemical pump (3rd checkbox)
-      const checkboxes = screen.getAllByRole("checkbox");
-      await userEvent.click(checkboxes[2]);
+      await userEvent.click(screen.getByLabelText("Pompa prelavaggio"));
 
       expect(getValues().has_chemical_pump).toBe(false);
       expect(getValues().chemical_qty).toBeUndefined();
@@ -143,9 +133,7 @@ describe("ChemPumpSection", () => {
         brush_qty: 3,
       });
 
-      // Acid pump is the 4th checkbox
-      const checkboxes = screen.getAllByRole("checkbox");
-      await userEvent.click(checkboxes[3]);
+      await userEvent.click(screen.getByLabelText("Pompa acido"));
 
       expect(getValues().has_acid_pump).toBe(false);
       expect(getValues().acid_pump_pos).toBeUndefined();
