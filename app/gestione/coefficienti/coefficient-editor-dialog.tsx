@@ -1,20 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import NumericEditorDialog from "@/components/shared/numeric-editor-dialog";
 import PartNumberCombobox from "@/components/shared/part-number-combobox";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PartNumber } from "@/db/schemas";
-import { MSG } from "@/lib/messages";
 
 const STEP = 0.05;
 
@@ -36,99 +26,39 @@ export default function CoefficientEditorDialog({
   pn,
   onSave,
 }: CoefficientEditorDialogProps) {
-  const [coeffValue, setCoeffValue] = useState(initialCoefficient);
   const [selectedPn, setSelectedPn] = useState<PartNumber | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const isCreateMode = pn === undefined;
 
   useEffect(() => {
     if (open) {
-      setCoeffValue(initialCoefficient);
       setSelectedPn(null);
     }
-  }, [open, initialCoefficient]);
-
-  const handleSave = () => {
-    startTransition(async () => {
-      try {
-        await onSave(
-          coeffValue,
-          pn === undefined ? (selectedPn?.pn ?? "") : undefined,
-        );
-      } catch {
-        toast.error(MSG.db.unknown);
-      }
-    });
-  };
-
-  const handleBlur = () => {
-    const n = parseFloat(coeffValue);
-    if (!Number.isNaN(n) && n > 0) setCoeffValue(n.toFixed(2));
-  };
-
-  const stepValue = (direction: 1 | -1) => {
-    const n = parseFloat(coeffValue);
-    if (Number.isNaN(n)) return;
-    const next = Math.round((n + direction * STEP) * 100) / 100;
-    if (next >= STEP) setCoeffValue(next.toFixed(2));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      stepValue(1);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      stepValue(-1);
-    }
-  };
-
-  const isCreateMode = pn === undefined;
+  }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {isCreateMode && (
-            <div className="space-y-1.5">
-              <Label htmlFor="coeff-dialog-pn">Codice Articolo</Label>
-              <PartNumberCombobox
-                id="coeff-dialog-pn"
-                selectedPn={selectedPn}
-                onSelect={setSelectedPn}
-              />
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label htmlFor="coeff-dialog-value">
-              Coefficiente (moltiplicatore)
-            </Label>
-            <Input
-              id="coeff-dialog-value"
-              type="text"
-              inputMode="decimal"
-              value={coeffValue}
-              onChange={(e) => setCoeffValue(e.target.value)}
-              onBlur={handleBlur}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
+    <NumericEditorDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      inputId="coeff-dialog-value"
+      inputLabel="Coefficiente (moltiplicatore)"
+      initialValue={initialCoefficient}
+      step={STEP}
+      min={STEP}
+      onSave={(coefficient) =>
+        onSave(coefficient, isCreateMode ? (selectedPn?.pn ?? "") : undefined)
+      }
+    >
+      {isCreateMode && (
+        <div className="space-y-1.5">
+          <Label htmlFor="coeff-dialog-pn">Codice Articolo</Label>
+          <PartNumberCombobox
+            id="coeff-dialog-pn"
+            selectedPn={selectedPn}
+            onSelect={setSelectedPn}
+          />
         </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Annulla
-          </Button>
-          <Button onClick={handleSave} disabled={isPending}>
-            Salva
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      )}
+    </NumericEditorDialog>
   );
 }
