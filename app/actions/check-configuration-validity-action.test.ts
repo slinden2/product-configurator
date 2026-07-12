@@ -11,11 +11,18 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getConfigurationWithTanksAndBays: (...args: unknown[]) =>
     mockGetConfigurationWithTanksAndBays(...args),
+  QueryError: class QueryError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "QueryError";
+    }
+  },
 }));
 
 // --- Imports (after mocks) ---
 
 import { checkConfigurationValidityAction } from "@/app/actions/check-configuration-validity-action";
+import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
@@ -337,5 +344,25 @@ describe("checkConfigurationValidityAction", () => {
     const result = await checkConfigurationValidityAction(10);
 
     expect(result).toEqual({ success: false, error: MSG.config.notFound });
+  });
+
+  test("returns QueryError message when the fetch throws QueryError", async () => {
+    mockGetConfigurationWithTanksAndBays.mockRejectedValue(
+      new QueryError(MSG.config.notFound),
+    );
+
+    const result = await checkConfigurationValidityAction(10);
+
+    expect(result).toEqual({ success: false, error: MSG.config.notFound });
+  });
+
+  test("returns generic unknown error when the fetch throws unexpectedly", async () => {
+    mockGetConfigurationWithTanksAndBays.mockRejectedValue(
+      new Error("connection reset"),
+    );
+
+    const result = await checkConfigurationValidityAction(10);
+
+    expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 });

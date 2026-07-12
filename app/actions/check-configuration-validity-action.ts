@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { mapActionError } from "@/app/actions/lib/map-action-error";
 import { getConfigurationWithTanksAndBays, getUserData } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
 import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
@@ -22,35 +23,39 @@ export const checkConfigurationValidityAction = async (sourceId: unknown) => {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
   }
 
-  // 3. Fetch source — enforces SALES-sees-own read permission (same as duplicate action)
-  const source = await getConfigurationWithTanksAndBays(parsed.data, user);
-  if (!source) {
-    return { success: false as const, error: MSG.config.notFound };
+  try {
+    // 3. Fetch source — enforces SALES-sees-own read permission (same as duplicate action)
+    const source = await getConfigurationWithTanksAndBays(parsed.data, user);
+    if (!source) {
+      return { success: false as const, error: MSG.config.notFound };
+    }
+
+    // 4. Validate each artifact exactly as the edit page does per-form.
+    //    safeParse never throws — returns a discriminated union.
+    const { water_tanks, wash_bays, ...config } = source;
+
+    const configValid = configSchema.safeParse(
+      transformDbNullToUndefined(config),
+    ).success;
+    const tanksValid = water_tanks.every(
+      (t) => waterTankSchema.safeParse(transformDbNullToUndefined(t)).success,
+    );
+    const baysValid = wash_bays.every(
+      (b) => washBaySchema.safeParse(transformDbNullToUndefined(b)).success,
+    );
+
+    // Cross-entity invariant: ENERGY_CHAIN requires at least one qualifying bay.
+    const energyChainValid = !violatesEnergyChainInvariant(
+      config.supply_type,
+      wash_bays,
+    );
+
+    return {
+      success: true as const,
+      hasValidationIssues:
+        !configValid || !tanksValid || !baysValid || !energyChainValid,
+    };
+  } catch (err) {
+    return mapActionError(err, "Failed to check configuration validity:");
   }
-
-  // 4. Validate each artifact exactly as the edit page does per-form.
-  //    safeParse never throws — returns a discriminated union.
-  const { water_tanks, wash_bays, ...config } = source;
-
-  const configValid = configSchema.safeParse(
-    transformDbNullToUndefined(config),
-  ).success;
-  const tanksValid = water_tanks.every(
-    (t) => waterTankSchema.safeParse(transformDbNullToUndefined(t)).success,
-  );
-  const baysValid = wash_bays.every(
-    (b) => washBaySchema.safeParse(transformDbNullToUndefined(b)).success,
-  );
-
-  // Cross-entity invariant: ENERGY_CHAIN requires at least one qualifying bay.
-  const energyChainValid = !violatesEnergyChainInvariant(
-    config.supply_type,
-    wash_bays,
-  );
-
-  return {
-    success: true as const,
-    hasValidationIssues:
-      !configValid || !tanksValid || !baysValid || !energyChainValid,
-  };
 };
