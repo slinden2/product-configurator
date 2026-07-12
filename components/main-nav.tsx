@@ -137,7 +137,6 @@ const MainNav = ({ user, role }: MainNavProps) => {
                 <SheetClose asChild key={route.href}>
                   <Link
                     href={route.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                       "text-base font-medium transition-colors hover:text-primary p-2 rounded-md",
                       route.active

@@ -28,7 +28,6 @@ const RailSection = () => {
                   triggerValue: zodEnums.RailTypeEnum.enum.ANCHORED,
                   fieldsToReset: ["anchor_type"],
                   invertTrigger: true,
-                  resetToValue: undefined,
                 },
               ]}
             />

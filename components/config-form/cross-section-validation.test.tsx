@@ -29,10 +29,6 @@ vi.mock("@/app/actions/offer-line-actions", () => ({
   addOfferLineAction: vi.fn(),
 }));
 
-vi.mock("@hookform/devtools", () => ({
-  DevTool: () => null,
-}));
-
 // --- Imports (after mocks) ---
 
 import ConfigForm from "@/components/config-form";

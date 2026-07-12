@@ -43,7 +43,7 @@ const ChemPumpSection = () => {
               label={CONFIG_FIELD_LABELS.has_wax_pump}
             />
           </div>
-          <div className="order-2 my-1 md:my-0 md:oder-3">
+          <div className="order-2 my-1 md:my-0 md:order-3">
             <CheckboxField<ConfigSchema>
               name="has_chemical_pump"
               label={CONFIG_FIELD_LABELS.has_chemical_pump}

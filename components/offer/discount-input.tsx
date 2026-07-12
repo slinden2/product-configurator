@@ -9,7 +9,7 @@ import { MSG } from "@/lib/messages";
 interface Props {
   initialDiscount: number;
   disabled?: boolean;
-  /** Persists the new discount — a per-config or per-revision server action. */
+  /** Persists the new discount — a revision-scoped server action. */
   onSave: (discount: number) => Promise<{ success: boolean; error?: string }>;
 }
 

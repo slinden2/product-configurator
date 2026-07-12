@@ -37,10 +37,6 @@ vi.mock("@/app/actions/offer-line-actions", () => ({
   addOfferLineAction: (...args: unknown[]) => mockAddOfferLineAction(...args),
 }));
 
-vi.mock("@hookform/devtools", () => ({
-  DevTool: () => null,
-}));
-
 // --- Imports (after mocks) ---
 
 import { toast } from "sonner";

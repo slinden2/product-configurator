@@ -31,7 +31,7 @@ interface WashBayFormProps {
   supplyFixingType?: ConfigSchema["supply_fixing_type"];
   washBay?: UpdateWashBaySchema;
   washBayIndex?: number;
-  onDelete?: (tankId: number) => void;
+  onDelete?: (bayId: number) => void;
   onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;

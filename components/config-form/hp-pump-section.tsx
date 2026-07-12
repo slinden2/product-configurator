@@ -168,7 +168,6 @@ const HPPumpSection = () => {
               fieldsToResetOnUncheck={[
                 {
                   fieldsToReset: ["pump_outlet_omz"],
-                  resetToValue: undefined,
                 },
                 {
                   fieldsToReset: ["has_chemical_roof_bar"],

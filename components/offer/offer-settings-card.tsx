@@ -28,11 +28,11 @@ interface Props {
   initialDiscount: number;
   initialSettings: OfferDisplaySettings;
   disabled?: boolean;
-  /** Persists the discount — a per-config or per-revision server action. */
+  /** Persists the discount — a revision-scoped server action. */
   onSaveDiscount: (
     discount: number,
   ) => Promise<{ success: boolean; error?: string }>;
-  /** Persists the settings — a per-config or per-revision server action. */
+  /** Persists the settings — a revision-scoped server action. */
   onSaveSettings: (
     settings: OfferDisplaySettings,
   ) => Promise<{ success: boolean; error?: string }>;
