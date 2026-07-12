@@ -27,7 +27,7 @@ export async function getUserSession() {
   const { data, error } = await supabase.auth.getUser();
 
   if (error) {
-    return null;
+    return { success: false as const, error: MSG.auth.genericError };
   }
 
   return {

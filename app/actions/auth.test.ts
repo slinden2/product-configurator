@@ -110,7 +110,7 @@ describe("getUserSession", () => {
     expect(result).toEqual({ success: true, data: { user: mockUser } });
   });
 
-  test("returns null on error", async () => {
+  test("returns the standard failure shape on error", async () => {
     mockGetUser.mockResolvedValue({
       data: null,
       error: { message: "Not authenticated" },
@@ -118,7 +118,10 @@ describe("getUserSession", () => {
 
     const result = await getUserSession();
 
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      success: false,
+      error: "Errore durante l'autenticazione.",
+    });
   });
 });
 
