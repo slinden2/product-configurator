@@ -45,6 +45,7 @@ vi.mock("@/app/actions/wash-bay-actions", () => ({
 import { toast } from "sonner";
 import WashBayForm from "@/components/wash-bay-form";
 import WaterTankForm from "@/components/water-tank-form";
+import { MSG } from "@/lib/messages";
 import { selectRadixOption } from "@/test/form-test-utils";
 
 // --- Test Data ---
@@ -783,6 +784,91 @@ describe("SubRecordForm — WaterTankForm", () => {
 
       expect(onSubmitFailed).not.toHaveBeenCalled();
       expect(mockDeleteWaterTank).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Engineering BOM warning", () => {
+    test("confirming the BOM warning executes the pending save", async () => {
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          hasEngineeringBom
+        />,
+      );
+
+      await selectRadixOption("Ingressi c/ galleggiante", "2");
+      await userEvent.click(screen.getByRole("button", { name: /salva/i }));
+
+      // The warning gates the action: nothing saved until confirmed
+      const dialog = await screen.findByRole("dialog");
+      expect(
+        within(dialog).getByText(MSG.saveWarning.ebomOnly.title),
+      ).toBeInTheDocument();
+      expect(mockEditWaterTank).not.toHaveBeenCalled();
+
+      await userEvent.click(
+        within(dialog).getByRole("button", {
+          name: MSG.saveWarning.ebomOnly.confirm,
+        }),
+      );
+
+      // The pending values captured before the dialog reach the action
+      await waitFor(() => {
+        expect(mockEditWaterTank).toHaveBeenCalledWith(
+          1,
+          10,
+          expect.objectContaining({ inlet_w_float_qty: 2 }),
+        );
+      });
+      expect(toast.success).toHaveBeenCalledWith("Serbatoio 1 aggiornato.");
+    });
+
+    test("confirming the BOM warning executes the pending delete", async () => {
+      const onDelete = vi.fn();
+
+      render(
+        <WaterTankForm
+          confId={1}
+          confStatus="DRAFT"
+          origin="STANDALONE"
+          userRole="ENGINEER"
+          waterTank={makeWaterTank()}
+          waterTankIndex={1}
+          onDelete={onDelete}
+          onSaveSuccess={vi.fn()}
+          hasEngineeringBom
+        />,
+      );
+
+      // Delete goes through its own confirm, then the BOM warning
+      await userEvent.click(
+        screen.getByRole("button", { name: /elimina serbatoio 1/i }),
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Elimina" }));
+
+      const dialog = await screen.findByRole("dialog");
+      expect(
+        within(dialog).getByText(MSG.saveWarning.ebomOnly.title),
+      ).toBeInTheDocument();
+      expect(mockDeleteWaterTank).not.toHaveBeenCalled();
+
+      await userEvent.click(
+        within(dialog).getByRole("button", {
+          name: MSG.saveWarning.ebomOnly.confirm,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(mockDeleteWaterTank).toHaveBeenCalledWith(1, 10);
+      });
+      expect(onDelete).toHaveBeenCalledWith(10);
     });
   });
 });
