@@ -185,9 +185,8 @@ const SubSection = ({
     </Text>
     <ColumnHeaderRow netOnly={netOnly} />
     {items.map((item, i) => (
-      // Composite key: grouped items are not guaranteed unique per PN
-      // (mirrors the config PDF's positional-key stance)
       <ItemRow
+        // biome-ignore lint/suspicious/noArrayIndexKey: composite key — grouped items are not guaranteed unique per PN (mirrors the config PDF's positional-key stance)
         key={`${item.pn}-${i}`}
         item={item}
         index={i}
