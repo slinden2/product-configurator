@@ -6,7 +6,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { GroupedOfferData, GroupedOfferSection } from "@/lib/offer";
 import { formatEur } from "@/lib/utils";
-import type { OfferSurchargeItem } from "@/validation/offer-schema";
+import type { OfferSurchargeItem } from "@/validation/offer/offer-pricing-schema";
 
 /**
  * Presentational grouped BOM breakdown for a single offer line (one

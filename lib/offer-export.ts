@@ -6,7 +6,7 @@ import {
   type OfferSummaryExtras,
   parseOfferSettings,
 } from "@/lib/offer-settings";
-import type { OfferSurchargeItem } from "@/validation/offer-schema";
+import type { OfferSurchargeItem } from "@/validation/offer/offer-pricing-schema";
 
 type OfferRevision = OfferWithRevisionAndLines["revisions"][number];
 

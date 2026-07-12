@@ -1,5 +1,5 @@
 import { InstallationItemKinds } from "@/types";
-import type { OfferInstallationItem } from "@/validation/offer-schema";
+import type { OfferInstallationItem } from "@/validation/offer/offer-settings-schema";
 
 type SettingRow = { kind: string; price: string | number };
 

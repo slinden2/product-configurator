@@ -22,7 +22,7 @@ import { prepareOfferDisplayData } from "@/lib/offer";
 import {
   type MarginAbsorbInput,
   marginAbsorbSchema,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-settings-schema";
 import { firstZodIssueMessage } from "./lib/first-zod-issue-message";
 import { mapActionError } from "./lib/map-action-error";
 

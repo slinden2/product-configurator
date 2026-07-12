@@ -20,7 +20,7 @@ vi.mock("@/components/offer/offer-settings-card", () => ({
 }));
 
 import QuoteView from "@/app/offerte/[id]/quote-view";
-import type { OfferLineItem } from "@/validation/offer-schema";
+import type { OfferLineItem } from "@/validation/offer/offer-pricing-schema";
 
 const bomItem: OfferLineItem = {
   pn: "GEN-01",

@@ -8,7 +8,7 @@ import {
   resolveOfferSurcharges,
 } from "@/lib/offer-surcharges";
 import { SurchargeKindLabels } from "@/types";
-import { offerSurchargeItemSchema } from "@/validation/offer-schema";
+import { offerSurchargeItemSchema } from "@/validation/offer/offer-pricing-schema";
 
 describe("buildHeightSurcharge", () => {
   test("returns null when totalHeightMm is null", () => {

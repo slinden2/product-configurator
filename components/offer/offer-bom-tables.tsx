@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import type { GroupedOfferData, GroupedOfferSection } from "@/lib/offer";
 import { formatEur } from "@/lib/utils";
-import type { OfferBomLineItem } from "@/validation/offer-schema";
+import type { OfferBomLineItem } from "@/validation/offer/offer-pricing-schema";
 
 /**
  * Shared presentational pieces for offer BOM breakdown tables, used by both the

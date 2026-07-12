@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BomTag } from "@/types";
-import type { OfferBomLineItem } from "@/validation/offer-schema";
+import type { OfferBomLineItem } from "@/validation/offer/offer-pricing-schema";
 import {
   buildLineDiff,
   buildMarginComparison,

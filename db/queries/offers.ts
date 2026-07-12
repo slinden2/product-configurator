@@ -17,12 +17,10 @@ import { firstAcceptedRevisionNo } from "@/lib/offer-renegotiation";
 import type { ConfigOrigin, OfferStatusType, TransportMode } from "@/types";
 import { OPEN_REVISION_STATUSES } from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
+import type { OfferLineItem } from "@/validation/offer/offer-pricing-schema";
 import type { OfferHeaderInput } from "@/validation/offer/offer-schema";
+import type { OfferInstallationItem } from "@/validation/offer/offer-settings-schema";
 import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
-import type {
-  OfferInstallationItem,
-  OfferLineItem,
-} from "@/validation/offer-schema";
 import { insertActivityLog } from "./activity";
 import { cloneConfigurationRows, insertConfiguration } from "./configurations";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";

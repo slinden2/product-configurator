@@ -16,7 +16,7 @@ import {
   localIsoDate,
   offerExportFilenameStem,
 } from "@/lib/offer-export-filename";
-import type { OfferLineItem } from "@/validation/offer-schema";
+import type { OfferLineItem } from "@/validation/offer/offer-pricing-schema";
 
 type Revision = OfferWithRevisionAndLines["revisions"][number];
 type Line = Revision["lines"][number];

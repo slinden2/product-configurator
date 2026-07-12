@@ -13,12 +13,12 @@ import {
   type OfferLineItem,
   type OfferSurchargeItem,
   offerLineItemsSchema,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-pricing-schema";
 
 export type {
   OfferLineItem,
   OfferSurchargeItem,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-pricing-schema";
 
 export interface OfferSectionTotals {
   general: Partial<Record<BomTag, number>>;

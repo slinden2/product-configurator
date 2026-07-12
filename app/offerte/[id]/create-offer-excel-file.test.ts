@@ -13,7 +13,7 @@ import type { OfferSummaryExtras } from "@/lib/offer-settings";
 import type {
   OfferBomLineItem,
   OfferSurchargeItem,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-pricing-schema";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

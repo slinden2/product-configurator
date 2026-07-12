@@ -32,12 +32,12 @@ import { canApproveRevision, canRenegotiateOffer } from "@/lib/access";
 import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
-import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 import {
   type OfferSettings,
   offerDiscountSchema,
   offerSettingsSchema,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-settings-schema";
+import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 
 export async function setRevisionDiscountAction(
   offerId: number,

@@ -4,7 +4,7 @@ import { InstallationItemKinds } from "@/types";
 import {
   type OfferInstallationItem,
   offerInstallationItemsSchema,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-settings-schema";
 
 /** Offer-level presentation settings (transport/installation), in display form. */
 export interface OfferDisplaySettings {

@@ -4,7 +4,7 @@ import {
   BomTags,
   type ProductCategory,
 } from "@/types";
-import type { OfferBomLineItem } from "@/validation/offer-schema";
+import type { OfferBomLineItem } from "@/validation/offer/offer-pricing-schema";
 
 /**
  * Minimum acceptable gross margin per product category, expressed as a

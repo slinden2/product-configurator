@@ -16,7 +16,7 @@ import { formatEur } from "@/lib/utils";
 import type {
   OfferBomLineItem,
   OfferSurchargeItem,
-} from "@/validation/offer-schema";
+} from "@/validation/offer/offer-pricing-schema";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
