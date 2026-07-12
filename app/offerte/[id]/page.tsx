@@ -290,7 +290,6 @@ const OfferDetail = async (props: OfferDetailProps) => {
         offer={offer}
         canCreateRevision={canCreateRevision}
         exporterInitials={user.initials ?? ""}
-        acceptedRevisionId={offer.accepted_revision_id}
         firstAcceptedNo={firstAcceptedNo}
       />
 

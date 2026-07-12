@@ -20,9 +20,6 @@ interface RevisionHistoryProps {
   canCreateRevision: boolean;
   /** Initials of the viewing user, credited as author on exported documents. */
   exporterInitials: string;
-  /** The in-force accepted revision id: a past ACCEPTED revision that is no longer
-   * pointed at has been superseded by an accepted renegotiation. */
-  acceptedRevisionId: number | null;
   /** `revision_no` of the first-accepted revision (see `lib/offer-renegotiation`);
    * every later revision is marked as a renegotiation. */
   firstAcceptedNo: number | null;
@@ -37,9 +34,11 @@ const RevisionHistory = ({
   offer,
   canCreateRevision,
   exporterInitials,
-  acceptedRevisionId,
   firstAcceptedNo,
 }: RevisionHistoryProps) => {
+  // The in-force accepted revision id: a past ACCEPTED revision that is no longer
+  // pointed at has been superseded by an accepted renegotiation.
+  const acceptedRevisionId = offer.accepted_revision_id;
   // revisions[0] is the working revision, shown at the top of the page; everything
   // after it is immutable history.
   const past = offer.revisions.slice(1);

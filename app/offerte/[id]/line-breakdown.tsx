@@ -17,10 +17,7 @@ import type { OfferSurchargeItem } from "@/validation/offer/offer-pricing-schema
 
 interface Props {
   title: string;
-  data: GroupedOfferData & {
-    total_list_price: number;
-    discounted_total: number;
-  };
+  data: GroupedOfferData;
   surcharges: OfferSurchargeItem[];
   showPrices: boolean;
   quantity: number;
