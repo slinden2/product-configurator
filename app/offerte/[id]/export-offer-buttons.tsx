@@ -8,7 +8,6 @@ import {
   offerExportFilenameStem,
 } from "@/lib/offer-export-filename";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
-import { createOfferExcelFile } from "./create-offer-excel-file";
 
 interface OfferExportButtonsProps {
   data: OfferRevisionExportData;
@@ -23,7 +22,10 @@ const OfferExportButtons = ({
 }: OfferExportButtonsProps) => (
   <div className="flex items-center gap-2">
     <AsyncActionButton
-      action={() => {
+      action={async () => {
+        const { createOfferExcelFile } = await import(
+          "./create-offer-excel-file"
+        );
         const stem = offerExportFilenameStem(data, localIsoDate());
         return createOfferExcelFile(data, exporterInitials, `${stem}.xlsx`);
       }}

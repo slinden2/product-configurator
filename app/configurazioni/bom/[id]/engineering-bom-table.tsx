@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/table";
 import type { EngineeringBomItemWithPart } from "@/db/queries";
 import { useSortedRows } from "@/hooks/use-sorted-rows";
-import { exportBomToXls } from "@/lib/BOM/export-xlsx";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 import { AssemblyChildrenRows } from "./assembly-children-rows";
@@ -133,6 +132,7 @@ const EngineeringBomTable = ({
         toast.error(MSG.toast.subBomEmpty);
         return;
       }
+      const { exportBomToXls } = await import("@/lib/BOM/export-xlsx");
       exportBomToXls(result.data, item.pn);
     });
   }

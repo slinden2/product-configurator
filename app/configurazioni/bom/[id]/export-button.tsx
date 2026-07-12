@@ -3,7 +3,6 @@
 import { Share } from "lucide-react";
 import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { BOMItemWithDescription } from "@/lib/BOM";
-import { exportBomToXls } from "@/lib/BOM/export-xlsx";
 import { MSG } from "@/lib/messages";
 
 interface ExportButtonProps {
@@ -13,6 +12,7 @@ interface ExportButtonProps {
 const ExportButton = ({ exportData }: ExportButtonProps) => (
   <AsyncActionButton
     action={async () => {
+      const { exportBomToXls } = await import("@/lib/BOM/export-xlsx");
       exportBomToXls(exportData, "exp_config");
     }}
     icon={<Share />}

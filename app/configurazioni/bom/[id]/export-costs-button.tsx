@@ -6,7 +6,6 @@ import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { UserData } from "@/db/queries";
 import type { BOMItemWithCost } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
-import { createExcelFile } from "./create-excel-file";
 
 interface ExportCostsButtonProps {
   exportData: {
@@ -22,6 +21,7 @@ const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => (
     action={async () => {
       const result = await explodeBomToLeavesAction(exportData);
       if (!result.success) throw new Error(result.error);
+      const { createExcelFile } = await import("./create-excel-file");
       await createExcelFile(
         exportData.generalBOM,
         exportData.waterTankBOMs,
