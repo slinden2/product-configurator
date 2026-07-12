@@ -27,12 +27,17 @@ export default function DiscountInput({
     if (Number.isNaN(numeric) || numeric === lastSaved.current) return;
 
     startTransition(async () => {
-      const result = await onSave(numeric);
-      if (result.success) {
-        lastSaved.current = numeric;
-        toast.success(MSG.toast.offerDiscountSet);
-      } else {
-        toast.error(result.error ?? MSG.toast.offerDiscountError);
+      try {
+        const result = await onSave(numeric);
+        if (result.success) {
+          lastSaved.current = numeric;
+          toast.success(MSG.toast.offerDiscountSet);
+        } else {
+          toast.error(result.error ?? MSG.toast.offerDiscountError);
+          setValue(lastSaved.current.toString());
+        }
+      } catch {
+        toast.error(MSG.toast.offerDiscountError);
         setValue(lastSaved.current.toString());
       }
     });

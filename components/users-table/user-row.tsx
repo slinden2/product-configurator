@@ -44,11 +44,15 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
 
   const handleRoleChange = (newRole: string) => {
     startTransition(async () => {
-      const result = await changeUserRoleAction({ userId: user.id, newRole });
-      if (result.success) {
-        toast.success(MSG.toast.roleUpdated);
-      } else {
-        toast.error(result.error ?? MSG.toast.roleUpdateFailed);
+      try {
+        const result = await changeUserRoleAction({ userId: user.id, newRole });
+        if (result.success) {
+          toast.success(MSG.toast.roleUpdated);
+        } else {
+          toast.error(result.error ?? MSG.toast.roleUpdateFailed);
+        }
+      } catch {
+        toast.error(MSG.toast.roleUpdateFailed);
       }
     });
   };
@@ -56,11 +60,18 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   const handleManagerChange = (value: string) => {
     const managerId = value === NO_MANAGER_VALUE ? null : value;
     startTransition(async () => {
-      const result = await assignManagerAction({ userId: user.id, managerId });
-      if (result.success) {
-        toast.success(MSG.toast.managerUpdated);
-      } else {
-        toast.error(result.error ?? MSG.toast.managerUpdateFailed);
+      try {
+        const result = await assignManagerAction({
+          userId: user.id,
+          managerId,
+        });
+        if (result.success) {
+          toast.success(MSG.toast.managerUpdated);
+        } else {
+          toast.error(result.error ?? MSG.toast.managerUpdateFailed);
+        }
+      } catch {
+        toast.error(MSG.toast.managerUpdateFailed);
       }
     });
   };
@@ -71,25 +82,35 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
 
   const handleActivate = () => {
     startTransition(async () => {
-      const result = await activateUserAction({ userId: user.id });
-      if (result.success) {
-        toast.success(MSG.toast.userActivated);
-      } else {
-        toast.error(result.error ?? MSG.toast.userActivateFailed);
+      try {
+        const result = await activateUserAction({ userId: user.id });
+        if (result.success) {
+          toast.success(MSG.toast.userActivated);
+        } else {
+          toast.error(result.error ?? MSG.toast.userActivateFailed);
+        }
+      } catch {
+        toast.error(MSG.toast.userActivateFailed);
+      } finally {
+        setActivateConfirmOpen(false);
       }
-      setActivateConfirmOpen(false);
     });
   };
 
   const handlePasswordReset = () => {
     startTransition(async () => {
-      const result = await sendPasswordResetAction({ userId: user.id });
-      if (result.success) {
-        toast.success(MSG.toast.passwordResetSent);
-      } else {
-        toast.error(result.error ?? MSG.toast.passwordResetFailed);
+      try {
+        const result = await sendPasswordResetAction({ userId: user.id });
+        if (result.success) {
+          toast.success(MSG.toast.passwordResetSent);
+        } else {
+          toast.error(result.error ?? MSG.toast.passwordResetFailed);
+        }
+      } catch {
+        toast.error(MSG.toast.passwordResetFailed);
+      } finally {
+        setResetConfirmOpen(false);
       }
-      setResetConfirmOpen(false);
     });
   };
 

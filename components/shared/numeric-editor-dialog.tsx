@@ -50,6 +50,10 @@ export default function NumericEditorDialog({
   const [value, setValue] = useState(initialValue);
   const [isPending, startTransition] = useTransition();
 
+  // Client-side gate so a non-numeric or below-min draft never reaches onSave.
+  const parsed = parseFloat(value);
+  const isInvalid = Number.isNaN(parsed) || parsed < min;
+
   useEffect(() => {
     if (open) {
       setValue(initialValue);
@@ -117,7 +121,7 @@ export default function NumericEditorDialog({
           >
             Annulla
           </Button>
-          <Button onClick={handleSave} disabled={isPending}>
+          <Button onClick={handleSave} disabled={isPending || isInvalid}>
             Salva
           </Button>
         </DialogFooter>

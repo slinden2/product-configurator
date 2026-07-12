@@ -67,15 +67,23 @@ export default function OfferSettingsCard({
   const persist = (next: OfferDisplaySettings) => {
     setSettings(next);
     startTransition(async () => {
-      const result = await onSaveSettings(next);
-      if (result.success) {
-        lastSaved.current = next;
-        toast.success(MSG.toast.offerSettingsSet);
-      } else {
-        toast.error(result.error ?? MSG.toast.offerSettingsError);
+      const rollback = () => {
         setSettings(lastSaved.current);
         setTransportDraft(lastSaved.current.transport_amount.toString());
         setItemDrafts(amountDrafts(lastSaved.current));
+      };
+      try {
+        const result = await onSaveSettings(next);
+        if (result.success) {
+          lastSaved.current = next;
+          toast.success(MSG.toast.offerSettingsSet);
+        } else {
+          toast.error(result.error ?? MSG.toast.offerSettingsError);
+          rollback();
+        }
+      } catch {
+        toast.error(MSG.toast.offerSettingsError);
+        rollback();
       }
     });
   };
