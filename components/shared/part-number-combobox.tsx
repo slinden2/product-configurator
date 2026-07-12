@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronsUpDown } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { searchPartNumbersAction } from "@/app/actions/engineering-bom-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { PartNumber } from "@/db/schemas";
+import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -38,23 +39,39 @@ export default function PartNumberCombobox({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<PartNumber[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, startSearchTransition] = useTransition();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  // Monotonic counter so a slow response for an old query can't overwrite
+  // the results of a newer one.
+  const searchSeqRef = useRef(0);
 
-  const doSearch = useCallback(async (query: string) => {
+  const doSearch = useCallback((query: string) => {
+    const seq = ++searchSeqRef.current;
     if (query.trim().length === 0) {
       setResults([]);
+      setSearchError(null);
       return;
     }
-    setIsSearching(true);
-    try {
-      const result = await searchPartNumbersAction(query);
-      setResults(result.success ? result.data : []);
-    } catch {
-      setResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+    startSearchTransition(async () => {
+      try {
+        const result = await searchPartNumbersAction(query);
+        if (seq !== searchSeqRef.current) return;
+        if (result.success) {
+          setResults(result.data);
+          setSearchError(null);
+        } else {
+          console.error("Part number search failed:", result.error);
+          setResults([]);
+          setSearchError(result.error);
+        }
+      } catch (err) {
+        if (seq !== searchSeqRef.current) return;
+        console.error("Part number search failed:", err);
+        setResults([]);
+        setSearchError(MSG.toast.pnSearchError);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -109,6 +126,10 @@ export default function PartNumberCombobox({
             {isSearching ? (
               <div className="py-4 text-center text-sm text-muted-foreground">
                 Ricerca...
+              </div>
+            ) : searchError ? (
+              <div className="py-4 text-center text-sm text-destructive">
+                {searchError}
               </div>
             ) : results.length === 0 && searchQuery.trim().length > 0 ? (
               <CommandEmpty>Nessun risultato.</CommandEmpty>

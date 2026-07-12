@@ -135,6 +135,7 @@ export const MSG = {
     rowDeleted: "Riga eliminata.",
     pnRequired: "Seleziona un codice articolo.",
     pnMandatory: "Codice articolo obbligatorio.",
+    pnSearchError: "Errore durante la ricerca dei codici articolo.",
     updateError: "Errore aggiornamento.",
     operationError: "Errore operazione.",
     generateError: "Errore durante la generazione.",
