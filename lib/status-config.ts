@@ -68,7 +68,7 @@ export interface StatusTransition {
  * Single source of truth for the configuration status workflow: which
  * `from -> to` moves exist, the roles permitted to perform each, the origins
  * they apply to, and the Italian button label. {@link canTransition},
- * `getValidTransitions` (status-form.tsx, via canTransition) and
+ * `getValidTransitions` (status-control.tsx, via canTransition) and
  * {@link getTransitionLabel} all read from this table, so a new stage/role/edge
  * is a single-row change.
  *
@@ -288,7 +288,7 @@ export function isEditable(
  * Whether a role may move a configuration from one status to another. Pure
  * role × edge × origin logic — ownership/scope is enforced separately by
  * canAccessConfiguration (db/queries/configurations.ts). Mirrored client-side by
- * getValidTransitions in components/status-form.tsx, which also goes through
+ * getValidTransitions in components/status-control.tsx, which also goes through
  * this function, so the two cannot drift.
  *
  * The role-restricted edges live in the single STATUS_TRANSITIONS edge table

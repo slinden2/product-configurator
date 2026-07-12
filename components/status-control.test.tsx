@@ -19,7 +19,7 @@ vi.mock("@/app/actions/update-config-status-action", () => ({
 // --- Imports (after mocks) ---
 
 import { toast } from "sonner";
-import StatusControl from "@/components/status-form";
+import StatusControl from "@/components/status-control";
 import { MSG } from "@/lib/messages";
 
 // --- Helpers ---
