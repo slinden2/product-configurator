@@ -27,7 +27,6 @@ import DiscountInput from "./discount-input";
 interface Props {
   initialDiscount: number;
   initialSettings: OfferDisplaySettings;
-  disabled?: boolean;
   /** Persists the discount — a revision-scoped server action. */
   onSaveDiscount: (
     discount: number,
@@ -50,7 +49,6 @@ function amountDrafts(settings: OfferDisplaySettings) {
 export default function OfferSettingsCard({
   initialDiscount,
   initialSettings,
-  disabled,
   onSaveDiscount,
   onSaveSettings,
 }: Props) {
@@ -62,7 +60,11 @@ export default function OfferSettingsCard({
   const [isPending, startTransition] = useTransition();
   const lastSaved = useRef(initialSettings);
 
-  const controlsDisabled = disabled || isPending;
+  // Editability is gated by conditional rendering in the parent (quote-view
+  // only mounts this card when the revision is editable), so the only local
+  // disable condition is an in-flight save — shared with DiscountInput because
+  // discount and settings mutate the same revision row.
+  const controlsDisabled = isPending;
 
   const persist = (next: OfferDisplaySettings) => {
     setSettings(next);
@@ -135,7 +137,7 @@ export default function OfferSettingsCard({
       <CardContent className="space-y-6">
         <DiscountInput
           initialDiscount={initialDiscount}
-          disabled={disabled}
+          disabled={controlsDisabled}
           onSave={onSaveDiscount}
         />
 

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MSG } from "@/lib/messages";
+import { offerDiscountSchema } from "@/validation/offer/offer-settings-schema";
 
 interface Props {
   initialDiscount: number;
@@ -24,7 +25,24 @@ export default function DiscountInput({
 
   const handleBlur = () => {
     const numeric = parseFloat(value);
-    if (Number.isNaN(numeric) || numeric === lastSaved.current) return;
+    if (Number.isNaN(numeric)) {
+      // Same policy as the sibling amount handlers: revert the draft.
+      setValue(lastSaved.current.toString());
+      return;
+    }
+    if (numeric === lastSaved.current) return;
+
+    // Pre-validate with the same schema the server action uses, so an
+    // out-of-range value is rejected (with its Italian message) without a
+    // server round-trip.
+    const parsed = offerDiscountSchema.safeParse({ discount_pct: numeric });
+    if (!parsed.success) {
+      toast.error(
+        parsed.error.issues[0]?.message ?? MSG.toast.offerDiscountError,
+      );
+      setValue(lastSaved.current.toString());
+      return;
+    }
 
     startTransition(async () => {
       try {
