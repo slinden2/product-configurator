@@ -37,12 +37,12 @@ import {
 } from "@/db/queries";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
+import { round2 } from "@/lib/money";
 import {
   computeLinePricing,
   repriceOfferLine,
   repriceOfferLines,
 } from "@/lib/offer-revision-pricing";
-import { round2 } from "@/lib/utils";
 import { STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 
 // --- Helpers ---

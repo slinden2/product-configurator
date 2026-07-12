@@ -1628,7 +1628,7 @@ export async function updateRevisionDiscountWithAudit(data: {
 
     // Re-derive every line's net_price from its stored list_price in one set-based
     // UPDATE (pure arithmetic, no BOM rebuild, no per-line round-trip). Mirrors
-    // computeNetPrice in lib/utils — Postgres round() and Math.round both round
+    // computeNetPrice in lib/money — Postgres round() and Math.round both round
     // half away from zero for non-negative money values.
     const factor = 1 - Number(data.discount_pct) / 100;
     await tx

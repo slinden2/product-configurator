@@ -9,12 +9,12 @@ import {
   EUR_FMT,
   fillRowWithBorder,
 } from "@/lib/excel/workbook-builder";
+import { formatDiscountPctLabel } from "@/lib/money";
 import type {
   OfferExportLine,
   OfferRevisionExportData,
 } from "@/lib/offer-export";
 import { sumSurchargeTotal } from "@/lib/offer-surcharges";
-import { formatDiscountPctLabel } from "@/lib/utils";
 
 /**
  * Builds the customer-facing offer workbook for one revision. A revision can own

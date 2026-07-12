@@ -9,8 +9,8 @@ import {
 } from "@/db/queries";
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
+import { computeNetPrice, round2 } from "@/lib/money";
 import { computeOfferListPricing, type OfferLineItem } from "@/lib/offer";
-import { computeNetPrice, round2 } from "@/lib/utils";
 import type { SettingRow } from "@/types";
 
 export interface LinePricing {

@@ -19,13 +19,8 @@ import type {
 } from "@/lib/configuration/build-as-sold-diff";
 import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
-import {
-  cn,
-  formatDateDDMMYYYYHHMM,
-  formatDelta,
-  formatEur,
-  formatPct,
-} from "@/lib/utils";
+import { formatDelta, formatPct } from "@/lib/money";
+import { cn, formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
 import AbsorbMarginButton from "./absorb-margin-button";
 
 interface Props {

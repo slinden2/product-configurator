@@ -9,7 +9,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MSG } from "@/lib/messages";
-import { formatPct } from "@/lib/utils";
+import { formatPct } from "@/lib/money";
 
 interface AbsorbMarginButtonProps {
   confId: number;

@@ -5,7 +5,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import type { AsSoldDiff } from "@/lib/configuration/build-as-sold-diff";
 import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
-import { formatDelta, formatEur, formatPct } from "@/lib/utils";
+import { formatDelta, formatPct } from "@/lib/money";
+import { formatEur } from "@/lib/utils";
 
 // The absorb/renegotiate buttons import server actions, which transitively pull
 // in the db client (throws without DATABASE_URL in jsdom) — mock the modules.

@@ -16,11 +16,12 @@ import {
   rowBg,
 } from "@/components/pdf/scaffolding";
 import { COLORS } from "@/lib/excel/workbook-builder";
+import { formatDiscountPctLabel } from "@/lib/money";
 import type {
   OfferExportLine,
   OfferRevisionExportData,
 } from "@/lib/offer-export";
-import { formatDiscountPctLabel, formatEur } from "@/lib/utils";
+import { formatEur } from "@/lib/utils";
 
 export interface OfferPdfMeta {
   offerNumber: string;
