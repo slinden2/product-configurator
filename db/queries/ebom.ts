@@ -34,7 +34,7 @@ export async function searchPartNumbers(query: string, limit = 20) {
 
 // --- Engineering BOM ---
 
-export async function getEngineeringBomItems(confId: number) {
+export async function getEngineeringBomItems(configId: number) {
   return db
     .select({
       id: engineeringBomItems.id,
@@ -58,7 +58,7 @@ export async function getEngineeringBomItems(confId: number) {
     })
     .from(engineeringBomItems)
     .leftJoin(partNumbers, eq(engineeringBomItems.pn, partNumbers.pn))
-    .where(eq(engineeringBomItems.configuration_id, confId))
+    .where(eq(engineeringBomItems.configuration_id, configId))
     .orderBy(
       asc(engineeringBomItems.category),
       asc(engineeringBomItems.category_index),
@@ -76,8 +76,8 @@ export type EngineeringBomItemWithPart = Awaited<
  * computation needs — with no ordering, since the rows are aggregated, not
  * displayed. Configs without an EBOM simply contribute no rows.
  */
-export async function getEngineeringBomItemsForConfigs(confIds: number[]) {
-  if (confIds.length === 0) return [];
+export async function getEngineeringBomItemsForConfigs(configIds: number[]) {
+  if (configIds.length === 0) return [];
   return db
     .select({
       configuration_id: engineeringBomItems.configuration_id,
@@ -88,7 +88,7 @@ export async function getEngineeringBomItemsForConfigs(confIds: number[]) {
       is_deleted: engineeringBomItems.is_deleted,
     })
     .from(engineeringBomItems)
-    .where(inArray(engineeringBomItems.configuration_id, confIds));
+    .where(inArray(engineeringBomItems.configuration_id, configIds));
 }
 
 /**
@@ -147,11 +147,11 @@ export async function getAssemblyChildren(parentPn: string) {
 }
 
 export async function hasEngineeringBom(
-  confId: number,
+  configId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) {
   const row = await txOrDb.query.engineeringBomItems.findFirst({
-    where: eq(engineeringBomItems.configuration_id, confId),
+    where: eq(engineeringBomItems.configuration_id, configId),
     columns: { id: true },
   });
   return row !== undefined;
@@ -173,10 +173,10 @@ export async function insertEngineeringBomItems(
  * can display removed items with visual distinction and allow restoration.
  */
 export async function deleteAllEngineeringBomItems(
-  confId: number,
+  configId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) {
   await txOrDb
     .delete(engineeringBomItems)
-    .where(eq(engineeringBomItems.configuration_id, confId));
+    .where(eq(engineeringBomItems.configuration_id, configId));
 }

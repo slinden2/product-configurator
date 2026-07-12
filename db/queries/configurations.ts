@@ -32,7 +32,7 @@ import {
 } from "../transformations";
 import { hasEngineeringBom } from "./ebom";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";
-import { getUserData, type UserData } from "./users";
+import type { UserData } from "./users";
 
 export type AllConfigurations = Awaited<
   ReturnType<typeof getUserConfigurations>
@@ -408,7 +408,7 @@ export const deleteConfiguration = async (
 };
 
 export const updateConfiguration = async (
-  confId: number,
+  configId: number,
   configurationData: UpdateConfigSchema,
   expectedStatus: ConfigurationStatusType,
   txOrDb: DatabaseType | TransactionType = db,
@@ -420,7 +420,7 @@ export const updateConfiguration = async (
     .set(setData)
     .where(
       and(
-        eq(configurations.id, confId),
+        eq(configurations.id, configId),
         eq(configurations.status, expectedStatus),
       ),
     )
@@ -437,7 +437,7 @@ export const updateConfiguration = async (
 };
 
 export const touchConfigurationUpdatedAt = async (
-  confId: number,
+  configId: number,
   expectedStatus: ConfigurationStatusType,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
@@ -446,7 +446,7 @@ export const touchConfigurationUpdatedAt = async (
     .set({ updated_at: new Date() })
     .where(
       and(
-        eq(configurations.id, confId),
+        eq(configurations.id, configId),
         eq(configurations.status, expectedStatus),
       ),
     )
@@ -465,7 +465,7 @@ export const touchConfigurationUpdatedAt = async (
 // either its transition committed first (the WHERE misses → 409) or its UPDATE
 // blocks on this row lock until our transaction commits (#240).
 export const assertConfigurationStatus = async (
-  confId: number,
+  configId: number,
   expectedStatus: ConfigurationStatusType,
   tx: TransactionType,
 ) => {
@@ -474,7 +474,7 @@ export const assertConfigurationStatus = async (
     .from(configurations)
     .where(
       and(
-        eq(configurations.id, confId),
+        eq(configurations.id, configId),
         eq(configurations.status, expectedStatus),
       ),
     )
@@ -486,12 +486,12 @@ export const assertConfigurationStatus = async (
 };
 
 export const updateConfigStatus = async (
-  confId: number,
+  configId: number,
   user: NonNullable<UserData>,
   statusData: ConfigStatusSchema,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
-  const configuration = await getConfiguration(confId, txOrDb);
+  const configuration = await getConfiguration(configId, txOrDb);
 
   if (!configuration) {
     throw new QueryError(MSG.config.notFound);
@@ -519,7 +519,7 @@ export const updateConfigStatus = async (
   }
 
   if (statusData.status === "TECH_APPROVED") {
-    const bomExists = await hasEngineeringBom(confId, txOrDb);
+    const bomExists = await hasEngineeringBom(configId, txOrDb);
     if (!bomExists) {
       throw new QueryError(MSG.config.approvedRequiresBom);
     }
@@ -533,7 +533,7 @@ export const updateConfigStatus = async (
       statusData.status,
     ) === "forward"
   ) {
-    const bays = await getWashBaysByConfigId(confId, txOrDb);
+    const bays = await getWashBaysByConfigId(configId, txOrDb);
     if (!hasQualifyingEnergyChainBay(bays)) {
       throw new QueryError(MSG.config.energyChainRequiresGantry);
     }
@@ -545,7 +545,10 @@ export const updateConfigStatus = async (
     .update(configurations)
     .set({ status: statusData.status })
     .where(
-      and(eq(configurations.id, confId), eq(configurations.status, fromStatus)),
+      and(
+        eq(configurations.id, configId),
+        eq(configurations.status, fromStatus),
+      ),
     )
     .returning({ id: configurations.id });
 
@@ -559,7 +562,7 @@ export const updateConfigStatus = async (
 };
 
 export const getWaterTankById = async (
-  confId: number,
+  configId: number,
   waterTankId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
@@ -569,7 +572,7 @@ export const getWaterTankById = async (
     .where(
       and(
         eq(waterTanks.id, waterTankId),
-        eq(waterTanks.configuration_id, confId),
+        eq(waterTanks.configuration_id, configId),
       ),
     );
 
@@ -577,7 +580,7 @@ export const getWaterTankById = async (
 };
 
 export const insertWaterTank = async (
-  confId: number,
+  configId: number,
   newWaterTank: WaterTankSchema,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
@@ -585,7 +588,7 @@ export const insertWaterTank = async (
 
   const [inserted] = await txOrDb
     .insert(waterTanks)
-    .values({ ...dbData, configuration_id: confId })
+    .values({ ...dbData, configuration_id: configId })
     .returning({ id: waterTanks.id });
 
   if (!inserted) {
@@ -596,7 +599,7 @@ export const insertWaterTank = async (
 };
 
 export const updateWaterTank = async (
-  confId: number,
+  configId: number,
   waterTankId: number,
   waterTank: WaterTankSchema,
   txOrDb: DatabaseType | TransactionType = db,
@@ -609,7 +612,7 @@ export const updateWaterTank = async (
     .where(
       and(
         eq(waterTanks.id, waterTankId),
-        eq(waterTanks.configuration_id, confId),
+        eq(waterTanks.configuration_id, configId),
       ),
     )
     .returning({ id: waterTanks.id });
@@ -622,7 +625,7 @@ export const updateWaterTank = async (
 };
 
 export const deleteWaterTank = async (
-  confId: number,
+  configId: number,
   waterTankId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
@@ -631,7 +634,7 @@ export const deleteWaterTank = async (
     .where(
       and(
         eq(waterTanks.id, waterTankId),
-        eq(waterTanks.configuration_id, confId),
+        eq(waterTanks.configuration_id, configId),
       ),
     )
     .returning({ id: waterTanks.id });
@@ -644,7 +647,7 @@ export const deleteWaterTank = async (
 };
 
 export const getWashBayById = async (
-  confId: number,
+  configId: number,
   washBayId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
@@ -652,14 +655,14 @@ export const getWashBayById = async (
     .select()
     .from(washBays)
     .where(
-      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, configId)),
     );
 
   return bay;
 };
 
 export const insertWashBay = async (
-  confId: number,
+  configId: number,
   newWashBay: WashBaySchema,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
@@ -667,7 +670,7 @@ export const insertWashBay = async (
 
   const [inserted] = await txOrDb
     .insert(washBays)
-    .values({ ...dbData, configuration_id: confId })
+    .values({ ...dbData, configuration_id: configId })
     .returning({ id: washBays.id });
 
   if (!inserted) {
@@ -678,7 +681,7 @@ export const insertWashBay = async (
 };
 
 export const updateWashBay = async (
-  confId: number,
+  configId: number,
   washBayId: number,
   washBay: WashBaySchema,
   txOrDb: DatabaseType | TransactionType = db,
@@ -689,7 +692,7 @@ export const updateWashBay = async (
     .update(washBays)
     .set(dbData)
     .where(
-      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, configId)),
     )
     .returning({ id: washBays.id });
 
@@ -701,14 +704,14 @@ export const updateWashBay = async (
 };
 
 export const deleteWashBay = async (
-  confId: number,
+  configId: number,
   washBayId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ) => {
   const [deleted] = await txOrDb
     .delete(washBays)
     .where(
-      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, confId)),
+      and(eq(washBays.id, washBayId), eq(washBays.configuration_id, configId)),
     )
     .returning({ id: washBays.id });
 
@@ -721,10 +724,8 @@ export const deleteWashBay = async (
 
 export async function getBOM(id: number, user: NonNullable<UserData>) {
   const configuration = await getConfigurationWithTanksAndBays(id, user);
-  if (configuration) {
-    const bom = BOM.init(configuration);
-    return bom;
-  }
+  if (!configuration) return null;
+  return BOM.init(configuration);
 }
 
 export async function resetWashBayEnergyChainFields(
@@ -771,10 +772,9 @@ export async function resetWashBayNonEnergyChainFields(
     .where(eq(washBays.configuration_id, configurationId));
 }
 
-export async function getConfigurationStatusCounts() {
-  const user = await getUserData();
-  if (!user) return null;
-
+export async function getConfigurationStatusCounts(
+  user: NonNullable<UserData>,
+) {
   const whereClause = configScopeWhere(user);
 
   const result = await db

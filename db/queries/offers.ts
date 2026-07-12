@@ -155,12 +155,23 @@ export async function offerRevisionStatusFor(
 }
 
 /**
+ * ORDER BY terms shared by every "which revision owns this config" lookup:
+ * the in-force accepted revision (`offers.accepted_revision_id`) wins, falling
+ * back to the latest revision. Extracted so the lookups can't drift apart.
+ */
+function acceptedRevisionFirstOrder() {
+  return [
+    sql`(${offerRevisions.id} = ${offers.accepted_revision_id}) DESC NULLS LAST`,
+    desc(offerRevisions.revision_no),
+  ];
+}
+
+/**
  * The offer that owns this configuration — its id (for navigation) and display
  * `offer_number` — or `null` if the config is not an offer line (standalone, or no
- * line yet). Mirrors {@link getOfferLinePricingForConfig}'s ordering so the
- * in-force accepted revision (`offers.accepted_revision_id`) wins, falling back to
- * the latest revision; only `offer_id` drives the link, so the exact revision
- * chosen is immaterial. Used to render a "back to offer" link on config pages.
+ * line yet). Ordered by {@link acceptedRevisionFirstOrder}; only `offer_id` drives
+ * the link, so the exact revision chosen is immaterial. Used to render a
+ * "back to offer" link on config pages.
  */
 export async function getOfferRefForConfig(
   configId: number,
@@ -175,10 +186,7 @@ export async function getOfferRefForConfig(
     )
     .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
     .where(eq(offerRevisionLines.configuration_id, configId))
-    .orderBy(
-      sql`(${offerRevisions.id} = ${offers.accepted_revision_id}) DESC NULLS LAST`,
-      desc(offerRevisions.revision_no),
-    )
+    .orderBy(...acceptedRevisionFirstOrder())
     .limit(1);
 
   return row ?? null;
@@ -552,7 +560,7 @@ export async function offerRevisionLineForConfig(
  * revision (`offers.accepted_revision_id`) is authoritative for the margin
  * baseline; pre-acceptance it falls back to the latest revision's line.
  */
-export async function getOfferLinePricingForConfig(confId: number): Promise<{
+export async function getOfferLinePricingForConfig(configId: number): Promise<{
   id: number;
   offer_id: number;
   revision_id: number;
@@ -594,11 +602,8 @@ export async function getOfferLinePricingForConfig(confId: number): Promise<{
     )
     .leftJoin(userProfiles, eq(offerRevisionLines.absorbed_by, userProfiles.id))
     .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
-    .where(eq(offerRevisionLines.configuration_id, confId))
-    .orderBy(
-      sql`(${offerRevisions.id} = ${offers.accepted_revision_id}) DESC NULLS LAST`,
-      desc(offerRevisions.revision_no),
-    )
+    .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(...acceptedRevisionFirstOrder())
     .limit(1);
 
   if (!row) return null;
@@ -950,6 +955,24 @@ export async function getWorkingRevisionForSend(
 }
 
 /**
+ * Throws unless the revision has at least one line. Shared by the approval
+ * entry gate and the send freeze — an empty revision must never advance
+ * toward the immutable as-sent record.
+ */
+async function assertRevisionNotEmpty(
+  revisionId: number,
+  tx: TransactionType,
+): Promise<void> {
+  const [lineCount] = await tx
+    .select({ count: sql<number>`count(*)` })
+    .from(offerRevisionLines)
+    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
+  if (Number(lineCount?.count ?? 0) === 0) {
+    throw new QueryError(MSG.offer.cannotSendEmpty);
+  }
+}
+
+/**
  * Submits a working revision for manager approval: guards it is still DRAFT and
  * non-empty, flips `status = "PENDING_APPROVAL"`, and audits the transition. The lines
  * must already have been re-priced in the same transaction (submit is the last DRAFT
@@ -965,13 +988,7 @@ export async function submitOfferRevisionForApprovalWithAudit(
 ): Promise<void> {
   // An empty revision must never enter approval — it would freeze as an empty as-sent
   // record at send. Same invariant as the send freeze, enforced here at the entry gate.
-  const [lineCount] = await tx
-    .select({ count: sql<number>`count(*)` })
-    .from(offerRevisionLines)
-    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
-  if (Number(lineCount?.count ?? 0) === 0) {
-    throw new QueryError(MSG.offer.cannotSendEmpty);
-  }
+  await assertRevisionNotEmpty(revisionId, tx);
 
   const [updated] = await tx
     .update(offerRevisions)
@@ -1102,13 +1119,7 @@ export async function markOfferRevisionSentWithAudit(
   // An empty revision must never freeze as the immutable as-sent record. The guard
   // lives in the freeze primitive itself — not only in the send action — so every
   // caller (seed, approval flow) is held to it.
-  const [lineCount] = await tx
-    .select({ count: sql<number>`count(*)` })
-    .from(offerRevisionLines)
-    .where(eq(offerRevisionLines.offer_revision_id, revisionId));
-  if (Number(lineCount?.count ?? 0) === 0) {
-    throw new QueryError(MSG.offer.cannotSendEmpty);
-  }
+  await assertRevisionNotEmpty(revisionId, tx);
 
   const [updated] = await tx
     .update(offerRevisions)

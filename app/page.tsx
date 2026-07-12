@@ -17,11 +17,7 @@ const Dashboard = async () => {
   if (canViewOffer(user.role) && user.role !== "ADMIN") redirect("/offerte");
   if (user.role === "ENGINEER") redirect("/configurazioni");
 
-  const counts = await getConfigurationStatusCounts();
-
-  if (!counts) {
-    redirect("/login");
-  }
+  const counts = await getConfigurationStatusCounts(user);
 
   const countMap = new Map(counts.map((c) => [c.status, c.count]));
   const total = counts.reduce((sum, c) => sum + c.count, 0);
