@@ -27,7 +27,7 @@ export const activityLogs = pgTable(
     action: activityActionEnum().notNull(),
     target_entity: varchar({ length: 100 }).notNull(),
     target_id: varchar({ length: 100 }).notNull(),
-    metadata: jsonb(),
+    metadata: jsonb().$type<Record<string, unknown>>(),
     created_at: timestamp("created_at", { mode: "date", precision: 3 })
       .notNull()
       .defaultNow(),

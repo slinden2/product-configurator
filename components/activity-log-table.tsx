@@ -55,10 +55,15 @@ const ActivityLogTable = ({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                     {entry.metadata
-                      ? Object.entries(
-                          entry.metadata as Record<string, unknown>,
-                        )
-                          .map(([k, v]) => `${k}: ${v}`)
+                      ? Object.entries(entry.metadata)
+                          .map(
+                            ([k, v]) =>
+                              `${k}: ${
+                                typeof v === "object" && v !== null
+                                  ? JSON.stringify(v)
+                                  : String(v)
+                              }`,
+                          )
                           .join(", ")
                       : "—"}
                   </TableCell>
