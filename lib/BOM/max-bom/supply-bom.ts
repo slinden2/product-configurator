@@ -1,6 +1,6 @@
 import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
-import { usesEnergyChain } from "./conditions";
+import { isOMZ, usesEnergyChain, usesHPRoofBarSpinners } from "./conditions";
 
 const PART_NUMBERS = {
   STRAIGHT_SHELF: "1100.019.000",
@@ -61,10 +61,7 @@ const usesShelf = (config: GeneralBOMConfig): boolean => {
 };
 
 const needsAir = (config: GeneralBOMConfig): boolean => {
-  return (
-    config.has_foam ||
-    (config.has_omz_pump && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS")
-  );
+  return config.has_foam || usesHPRoofBarSpinners(config);
 };
 
 const needsProfinet = (config: GeneralBOMConfig): boolean => {
@@ -381,10 +378,7 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [
       usesEnergyChain,
       (config) => config.supply_side === "LEFT",
-      (config) =>
-        config.machine_type === "OMZ" ||
-        (config.has_omz_pump &&
-          config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
+      (config) => isOMZ(config) || usesHPRoofBarSpinners(config),
     ],
     qty: 1,
     _description: "Air tube from shelf to HP valve group (left)",
@@ -394,10 +388,7 @@ export const supplyBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     conditions: [
       usesEnergyChain,
       (config) => config.supply_side === "RIGHT",
-      (config) =>
-        config.machine_type === "OMZ" ||
-        (config.has_omz_pump &&
-          config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"),
+      (config) => isOMZ(config) || usesHPRoofBarSpinners(config),
     ],
     qty: 1,
     _description: "Air tube from shelf to HP valve group (right)",

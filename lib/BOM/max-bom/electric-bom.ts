@@ -4,6 +4,7 @@ import {
   isSTD,
   uses15kwOr30kwPump,
   usesEnergyChain,
+  usesHPRoofBar,
   usesOMZPump,
 } from "./conditions";
 
@@ -73,12 +74,7 @@ export const electricBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.HP_ROOF_BAR_COMMANDS,
-    conditions: [
-      (config) => config.has_omz_pump,
-      (config) =>
-        config.pump_outlet_omz === "HP_ROOF_BAR" ||
-        config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS",
-    ],
+    conditions: [usesHPRoofBar],
     qty: 1,
     _description: "HP roof bar commands",
   },

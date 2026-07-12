@@ -1,6 +1,10 @@
 import type { GeneralBOMConfig } from "@/lib/BOM";
 import type { MaxBOMItem } from "@/lib/BOM/max-bom";
-import { isOMZ } from "@/lib/BOM/max-bom/conditions";
+import {
+  isOMZ,
+  usesEnergyChain,
+  usesHPRoofBar,
+} from "@/lib/BOM/max-bom/conditions";
 
 const PART_NUMBERS = {
   PREWASH_ARCH: "450.36.000",
@@ -38,12 +42,8 @@ const PART_NUMBERS = {
   CHASSIS_WASH_DETERGENT_BAR: "1100.024.140",
 } as const satisfies Record<string, string>;
 
-const hasHpRoofBar = (config: GeneralBOMConfig): boolean =>
-  config.pump_outlet_omz === "HP_ROOF_BAR" ||
-  config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS";
-
 const hasChemicalRoofBar = (config: GeneralBOMConfig): boolean =>
-  hasHpRoofBar(config) && config.has_chemical_roof_bar;
+  usesHPRoofBar(config) && config.has_chemical_roof_bar;
 
 const hasPrewashOrAcidOnBoard = (config: GeneralBOMConfig): boolean =>
   config.chemical_pump_pos === "ONBOARD" || config.acid_pump_pos === "ONBOARD";
@@ -436,7 +436,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_DOUBLE_SUPPLY,
     conditions: [
       (config) => !!config.water_2_type,
-      (config) => config.supply_type !== "ENERGY_CHAIN",
+      (config) => !usesEnergyChain(config),
       (config) => !isOMZ(config),
     ],
     qty: 1,
@@ -447,7 +447,7 @@ export const nozzleBarBOM: MaxBOMItem<GeneralBOMConfig>[] = [
     pn: PART_NUMBERS.FITTINGS_FOR_DOUBLE_SUPPLY_INOX,
     conditions: [
       (config) => !!config.water_2_type,
-      (config) => config.supply_type !== "ENERGY_CHAIN",
+      (config) => !usesEnergyChain(config),
       isOMZ,
     ],
     qty: 1,

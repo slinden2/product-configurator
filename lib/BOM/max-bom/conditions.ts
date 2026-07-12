@@ -25,6 +25,9 @@ export const usesHPRoofBar = (config: GeneralBOMConfig): boolean =>
   (config.pump_outlet_omz === "HP_ROOF_BAR" ||
     config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS");
 
+export const usesHPRoofBarSpinners = (config: GeneralBOMConfig): boolean =>
+  usesOMZPump(config) && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS";
+
 export const usesEnergyChain = (config: GeneralBOMConfig): boolean => {
   return config.supply_type === "ENERGY_CHAIN";
 };

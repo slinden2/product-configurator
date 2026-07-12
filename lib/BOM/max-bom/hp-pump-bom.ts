@@ -8,6 +8,7 @@ import {
   uses75kwPump,
   usesAnyHpPump,
   usesHPRoofBar,
+  usesHPRoofBarSpinners,
   usesOMZPump,
 } from "@/lib/BOM/max-bom/conditions";
 import type {
@@ -91,11 +92,9 @@ const uses15kwPump = (config: GeneralBOMConfig): boolean =>
 const uses30kwPump = (config: GeneralBOMConfig): boolean =>
   config.has_30kw_pump;
 
-const usesHPDeviationValveKit = (config: GeneralBOMConfig) => {
-  return (
-    usesOMZPump(config) && config.pump_outlet_omz === "HP_ROOF_BAR_SPINNERS"
-  );
-};
+// The HP deviation valve kit is needed exactly when the HP roof bar has
+// spinners; the domain-specific name keeps the rules below self-explanatory.
+const usesHPDeviationValveKit = usesHPRoofBarSpinners;
 
 const usesHoseFromShelfToTFitting = (config: GeneralBOMConfig): boolean => {
   return (
@@ -547,7 +546,7 @@ export const hpPumpBOM: MaxBOMItem<GeneralBOMConfig>[] = [
   },
   {
     pn: PART_NUMBERS.HP_ROOF_BAR,
-    conditions: [usesOMZPump, usesHPRoofBar],
+    conditions: [usesHPRoofBar],
     qty: 1,
     _description: "HP roof bar",
   },
