@@ -3,6 +3,8 @@ import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
 import {
+  canHaveAcidPump,
+  canHaveShampooPump,
   showAcidPumpDetails,
   showChemicalPumpDetails,
 } from "@/lib/configuration/display-rules";
@@ -12,7 +14,10 @@ import { selectFieldOptions } from "@/validation/configuration";
 
 const ChemPumpSection = () => {
   const { control } = useFormContext<ConfigSchema>();
-  const brushNumWatch = useWatch<ConfigSchema>({ control, name: "brush_qty" });
+  const brushNumWatch = useWatch<ConfigSchema, "brush_qty">({
+    control,
+    name: "brush_qty",
+  });
   const hasChemicalPumpWatch = useWatch({ control, name: "has_chemical_pump" });
   const hasAcidPumpWatch = useWatch({ control, name: "has_acid_pump" });
 
@@ -22,6 +27,8 @@ const ChemPumpSection = () => {
   const showAcidDetails = showAcidPumpDetails({
     has_acid_pump: hasAcidPumpWatch,
   });
+  const shampooPumpAllowed = canHaveShampooPump({ brush_qty: brushNumWatch });
+  const acidPumpAllowed = canHaveAcidPump({ brush_qty: brushNumWatch });
 
   return (
     <Fieldset
@@ -34,7 +41,7 @@ const ChemPumpSection = () => {
             <CheckboxField<ConfigSchema>
               name="has_shampoo_pump"
               label={CONFIG_FIELD_LABELS.has_shampoo_pump}
-              disabled={brushNumWatch === 0}
+              disabled={!shampooPumpAllowed}
             />
           </div>
           <div className="order-3 my-1 md:my-0 md:order-2">
@@ -68,7 +75,7 @@ const ChemPumpSection = () => {
                   fieldsToReset: ["acid_pump_pos"],
                 },
               ]}
-              disabled={brushNumWatch === 2}
+              disabled={!acidPumpAllowed}
             />
           </div>
         </div>
@@ -112,7 +119,7 @@ const ChemPumpSection = () => {
               dataType="string"
               label={CONFIG_FIELD_LABELS.acid_pump_pos}
               items={selectFieldOptions.chemicalPumpPositions}
-              disabled={brushNumWatch === 2}
+              disabled={!acidPumpAllowed}
             />
           </div>
         )}

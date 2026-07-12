@@ -45,6 +45,19 @@ export const showAcidPumpDetails = (
   c: Pick<ConfigSchema, "has_acid_pump">,
 ): boolean => !!c.has_acid_pump;
 
+/**
+ * Shampoo requires brushes: unavailable only when the user explicitly selected
+ * zero brushes. An unselected brush count keeps the checkbox available
+ * (deliberately laxer than `hasBrushes`, which also excludes `undefined`).
+ */
+export const canHaveShampooPump = (
+  c: Pick<ConfigSchema, "brush_qty">,
+): boolean => c.brush_qty !== 0;
+
+/** The acid pump is not available on two-brush machines. */
+export const canHaveAcidPump = (c: Pick<ConfigSchema, "brush_qty">): boolean =>
+  c.brush_qty !== 2;
+
 // --- Water supply ---
 
 export const isInverterPump1Selected = (
