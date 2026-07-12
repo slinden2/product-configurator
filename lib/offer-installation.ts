@@ -1,7 +1,5 @@
-import { InstallationItemKinds } from "@/types";
+import { InstallationItemKinds, type SettingRow } from "@/types";
 import type { OfferInstallationItem } from "@/validation/offer/offer-settings-schema";
-
-type SettingRow = { kind: string; price: string | number };
 
 /**
  * Builds the per-offer installation items from the admin defaults, one entry

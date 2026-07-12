@@ -404,6 +404,13 @@ export const InstallationItemKindLabels: Record<InstallationItemKind, string> =
     HP_ROOF_BAR: "Barra oscillante",
   };
 
+/**
+ * Structural shape of an admin pricing-settings row (surcharge / installation
+ * defaults): a catalog kind plus its configured price. `price` is
+ * `string | number` because Drizzle returns numeric columns as strings.
+ */
+export type SettingRow = { kind: string; price: string | number };
+
 export interface SelectOption {
   value: string | number;
   label: string;

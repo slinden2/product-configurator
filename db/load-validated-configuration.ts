@@ -1,4 +1,3 @@
-import type { z } from "zod";
 import { db } from "@/db";
 import {
   type DatabaseType,
@@ -7,6 +6,7 @@ import {
   type UserData,
 } from "@/db/queries";
 import { transformDbNullToUndefined } from "@/db/transformations";
+import { parseOrRaw } from "@/lib/parse-or-raw";
 import type { ConfigOrigin, ConfigurationStatusType } from "@/types";
 import {
   type UpdateConfigSchema,
@@ -76,15 +76,4 @@ export async function loadValidatedConfiguration(
     waterTanks,
     washBays,
   };
-}
-
-/**
- * Parses `raw` with `schema`, falling back to the raw value (cast to the schema
- * type) when validation fails. This makes the fallback policy explicit and
- * single-source: stale enum values / removed fields are surfaced as-is rather
- * than crashing the page.
- */
-function parseOrRaw<T>(schema: z.ZodType<T>, raw: unknown): T {
-  const result = schema.safeParse(raw);
-  return result.success ? result.data : (raw as T);
 }

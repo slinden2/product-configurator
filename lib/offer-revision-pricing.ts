@@ -11,6 +11,7 @@ import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { computeOfferListPricing, type OfferLineItem } from "@/lib/offer";
 import { computeNetPrice, round2 } from "@/lib/utils";
+import type { SettingRow } from "@/types";
 
 export interface LinePricing {
   /** Per single unit; quantity is applied at display/summary time, never folded in. */
@@ -20,8 +21,6 @@ export interface LinePricing {
   /** BOM line items + surcharges — feeds the quote view via prepareOfferDisplayData. */
   pricing_snapshot: OfferLineItem[];
 }
-
-type SurchargeSetting = { kind: string; price: string | number };
 
 interface RepriceOpts {
   /** Defaults to true; pass false on first pricing (the OFFER_LINE_ADD log already
@@ -46,7 +45,7 @@ interface RepriceOpts {
 export async function computeLinePricing(
   configuration: ConfigurationWithWaterTanksAndWashBays,
   discountPct: number,
-  surchargeSettings: SurchargeSetting[],
+  surchargeSettings: SettingRow[],
 ): Promise<{ ok: true; pricing: LinePricing } | { ok: false }> {
   const result = await computeOfferListPricing(
     configuration,
@@ -120,7 +119,7 @@ export async function repriceOfferLines(
 async function repriceLineWithSettings(
   configId: number,
   userId: string,
-  surchargeSettings: SurchargeSetting[],
+  surchargeSettings: SettingRow[],
   txOrDb: DatabaseType | TransactionType,
   opts: RepriceOpts = {},
 ): Promise<void> {

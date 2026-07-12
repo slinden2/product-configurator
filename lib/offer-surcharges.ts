@@ -1,7 +1,9 @@
-import { type SurchargeKind, SurchargeKindLabels } from "@/types";
+import {
+  type SettingRow,
+  type SurchargeKind,
+  SurchargeKindLabels,
+} from "@/types";
 import type { OfferSurchargeItem } from "@/validation/offer/offer-pricing-schema";
-
-type SettingRow = { kind: string; price: string | number };
 
 function buildSurcharge(
   kind: SurchargeKind,

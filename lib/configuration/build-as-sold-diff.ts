@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { parseOrRaw } from "@/lib/parse-or-raw";
 import { updateConfigSchema } from "@/validation/config-schema";
 import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 import { updateWashBaySchema } from "@/validation/wash-bay-schema";
@@ -75,12 +75,6 @@ export function parseAsSoldSnapshot(raw: unknown): OfferConfigSnapshot | null {
   };
 }
 
-/** Same fallback policy as `parseOrRaw` in `db/load-validated-configuration.ts`. */
-function parseOrRaw<T>(schema: z.ZodType<T>, raw: unknown): T {
-  const result = schema.safeParse(raw);
-  return result.success ? result.data : (raw as T);
-}
-
 export function buildAsSoldDiff(
   asSold: OfferConfigSnapshot,
   current: OfferConfigSnapshot,
@@ -142,35 +136,36 @@ function diffEntitySections<T extends { id?: unknown }>(
   current: T[],
   options: EntitySectionDiffOptions<T>,
 ): AsSoldDiffSection[] {
-  return pairEntities(asSold, current).map((pair) => {
-    if (!pair.current) {
-      // pairEntities never yields an empty pair, so asSold is set here.
-      const entry = pair.asSold as EntityEntry<T>;
+  const { kept, removed } = pairEntities(asSold, current);
+  return [
+    ...kept.map((pair) => {
+      const section = options.buildCurrentSection(
+        pair.current.entity,
+        pair.current.index + 1,
+      );
+      if (!pair.asSold) {
+        return {
+          title: `${section.title} (${options.addedSuffix})`,
+          rows: flattenRows(section).map((row) => toDiffRow(row, "added")),
+        };
+      }
+      const asSoldSection = options.buildAsSoldSection(
+        pair.asSold.entity,
+        pair.asSold.index + 1,
+      );
+      return {
+        title: section.title,
+        rows: diffRows(flattenRows(asSoldSection), flattenRows(section)),
+      };
+    }),
+    ...removed.map((entry) => {
       const section = options.buildAsSoldSection(entry.entity, entry.index + 1);
       return {
         title: `${section.title} (${options.removedSuffix})`,
         rows: flattenRows(section).map((row) => toDiffRow(row, "removed")),
       };
-    }
-    const section = options.buildCurrentSection(
-      pair.current.entity,
-      pair.current.index + 1,
-    );
-    if (!pair.asSold) {
-      return {
-        title: `${section.title} (${options.addedSuffix})`,
-        rows: flattenRows(section).map((row) => toDiffRow(row, "added")),
-      };
-    }
-    const asSoldSection = options.buildAsSoldSection(
-      pair.asSold.entity,
-      pair.asSold.index + 1,
-    );
-    return {
-      title: section.title,
-      rows: diffRows(flattenRows(asSoldSection), flattenRows(section)),
-    };
-  });
+    }),
+  ];
 }
 
 interface EntityEntry<T> {
@@ -178,21 +173,24 @@ interface EntityEntry<T> {
   index: number;
 }
 
-interface EntityPair<T> {
-  asSold?: EntityEntry<T>;
-  current?: EntityEntry<T>;
+interface PairedEntities<T> {
+  /** Every current entity, with its as-sold counterpart when one exists. */
+  kept: { asSold?: EntityEntry<T>; current: EntityEntry<T> }[];
+  /** As-sold entities with no current counterpart. */
+  removed: EntityEntry<T>[];
 }
 
 /**
  * Pairs sub-record entities by DB `id` (stable post-handoff), so an entity
  * removed from the middle never mispairs the index-titled sections that
  * follow it. Raw-fallback snapshots may lack usable ids — degrade to index
- * pairing in that case.
+ * pairing in that case. Removed-only entities come back in their own list, so
+ * consumers never handle a pair with a missing side.
  */
 function pairEntities<T extends { id?: unknown }>(
   asSold: T[],
   current: T[],
-): EntityPair<T>[] {
+): PairedEntities<T> {
   const hasUsableIds = (list: T[]) =>
     list.every((entity) => typeof entity.id === "number") &&
     new Set(list.map((entity) => entity.id)).size === list.length;
@@ -202,26 +200,27 @@ function pairEntities<T extends { id?: unknown }>(
       asSold.map((entity, index) => [entity.id, { entity, index }]),
     );
     const currentIds = new Set(current.map((entity) => entity.id));
-    return [
-      ...current.map((entity, index) => ({
+    return {
+      kept: current.map((entity, index) => ({
         asSold: asSoldById.get(entity.id),
         current: { entity, index },
       })),
-      ...asSold
-        .map((entity, index) => ({ asSold: { entity, index } }))
-        .filter((pair) => !currentIds.has(pair.asSold.entity.id)),
-    ];
+      removed: asSold
+        .map((entity, index) => ({ entity, index }))
+        .filter((entry) => !currentIds.has(entry.entity.id)),
+    };
   }
 
-  const pairs: EntityPair<T>[] = [];
-  for (let i = 0; i < Math.max(asSold.length, current.length); i++) {
-    pairs.push({
-      asSold: i < asSold.length ? { entity: asSold[i], index: i } : undefined,
-      current:
-        i < current.length ? { entity: current[i], index: i } : undefined,
-    });
-  }
-  return pairs;
+  return {
+    kept: current.map((entity, index) => ({
+      asSold:
+        index < asSold.length ? { entity: asSold[index], index } : undefined,
+      current: { entity, index },
+    })),
+    removed: asSold
+      .map((entity, index) => ({ entity, index }))
+      .slice(current.length),
+  };
 }
 
 function flattenRows(section: ViewSection | undefined): ViewRow[] {

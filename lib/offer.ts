@@ -5,7 +5,7 @@ import {
   sumSurchargeTotal,
 } from "@/lib/offer-surcharges";
 import { computeLinePrice, enrichWithPrices } from "@/lib/pricing";
-import type { BomLineCategory, BomTag } from "@/types";
+import type { BomLineCategory, BomTag, SettingRow } from "@/types";
 import { BomTagLabels, BomTags, STANDARD_MACHINE_HEIGHT_MM } from "@/types";
 import {
   isSurchargeItem,
@@ -254,7 +254,7 @@ export { sumSurchargeTotal } from "@/lib/offer-surcharges";
  */
 export async function computeOfferListPricing(
   configuration: ConfigurationWithWaterTanksAndWashBays,
-  surchargeSettings: { kind: string; price: string | number }[],
+  surchargeSettings: SettingRow[],
 ): Promise<
   { ok: true; items: OfferLineItem[]; total_list_price: number } | { ok: false }
 > {
