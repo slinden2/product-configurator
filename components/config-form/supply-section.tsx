@@ -55,7 +55,10 @@ const SupplySection = () => {
               items={selectFieldOptions.supplyTypes}
               fieldsToResetOnValue={[
                 {
-                  triggerValue: zodEnums.SupplyTypeEnum.enum.BOOM,
+                  triggerValue: [
+                    zodEnums.SupplyTypeEnum.enum.BOOM,
+                    zodEnums.SupplyTypeEnum.enum.STRAIGHT_SHELF,
+                  ],
                   fieldsToReset: ["has_post_frame"],
                   invertTrigger: true,
                   resetToValue: false,

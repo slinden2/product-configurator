@@ -352,6 +352,26 @@ describe("Multi-step field dependency chains", () => {
       expect(getValues().has_post_frame).toBe(false);
     });
 
+    test("changing supply_type from BOOM to STRAIGHT_SHELF retains has_post_frame", async () => {
+      const { getValues } = renderSections(
+        {
+          supply_type: "BOOM",
+          supply_fixing_type: "POST",
+          has_post_frame: true,
+          supply_side: "LEFT",
+        },
+        <SupplySection />,
+      );
+
+      expect(getValues().has_post_frame).toBe(true);
+
+      // STRAIGHT_SHELF + POST is still a valid post-frame combination
+      await selectRadixOption("Tipo di alimentazione", "Mensola dritta");
+
+      expect(getValues().supply_type).toBe("STRAIGHT_SHELF");
+      expect(getValues().has_post_frame).toBe(true);
+    });
+
     test("changing supply_fixing_type away from POST resets has_post_frame", async () => {
       const { getValues } = renderSections(
         {
