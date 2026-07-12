@@ -1,18 +1,17 @@
 import { getAllPriceCoefficients } from "@/db/queries";
-import { collectMaxBomPns, DEFAULT_COEFFICIENT } from "@/lib/pricing";
+import {
+  collectMaxBomPns,
+  computeMaxBomCoefficientDiff,
+  DEFAULT_COEFFICIENT,
+} from "@/lib/pricing";
 import { gestioneRouteGuard } from "../lib/gestione-route-guard";
 import CoefficientsTable from "./coefficients-table";
 
 export default async function CoefficientsPage() {
   await gestioneRouteGuard();
   const rows = await getAllPriceCoefficients();
-  const maxBomPns = collectMaxBomPns();
-
-  const existingPns = new Set(rows.map((r) => r.pn));
-  const missingMaxBomPns = maxBomPns.filter((pn) => !existingPns.has(pn));
-  const orphanPns = rows
-    .filter((r) => r.source === "MAXBOM" && !maxBomPns.includes(r.pn))
-    .map((r) => r.pn);
+  const { missing: missingMaxBomPns, orphans: orphanPns } =
+    computeMaxBomCoefficientDiff(rows, collectMaxBomPns());
 
   return (
     <div className="space-y-6">

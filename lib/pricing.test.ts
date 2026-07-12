@@ -14,6 +14,7 @@ import { isTodoPn } from "@/lib/BOM/max-bom/conditions";
 import {
   collectMaxBomPns,
   computeLinePrice,
+  computeMaxBomCoefficientDiff,
   DEFAULT_COEFFICIENT,
   enrichWithPrices,
 } from "@/lib/pricing";
@@ -57,6 +58,51 @@ describe("collectMaxBomPns", () => {
   test("excludes TODO_PN placeholders", () => {
     const pns = collectMaxBomPns();
     expect(pns.every((p) => !isTodoPn(p))).toBe(true);
+  });
+});
+
+describe("computeMaxBomCoefficientDiff", () => {
+  test("reports every MaxBOM PN as missing when there are no rows", () => {
+    const { missing, orphans } = computeMaxBomCoefficientDiff(
+      [],
+      collectMaxBomPns(),
+    );
+    expect(missing).toEqual(collectMaxBomPns());
+    expect(orphans).toEqual([]);
+  });
+
+  test("reports nothing when every MaxBOM PN has a row", () => {
+    const rows = collectMaxBomPns().map((pn) => ({
+      pn,
+      source: "MAXBOM" as const,
+    }));
+    const { missing, orphans } = computeMaxBomCoefficientDiff(
+      rows,
+      collectMaxBomPns(),
+    );
+    expect(missing).toEqual([]);
+    expect(orphans).toEqual([]);
+  });
+
+  test("flags MAXBOM rows for retired PNs as orphans, but not MANUAL rows", () => {
+    const rows = [
+      { pn: "RETIRED.PN.1", source: "MAXBOM" as const },
+      { pn: "MANUAL.PN.1", source: "MANUAL" as const },
+    ];
+    const { missing, orphans } = computeMaxBomCoefficientDiff(
+      rows,
+      collectMaxBomPns(),
+    );
+    expect(orphans).toEqual(["RETIRED.PN.1"]);
+    expect(missing).toEqual(collectMaxBomPns());
+  });
+
+  test("rows without a source never count as orphans", () => {
+    const { orphans } = computeMaxBomCoefficientDiff(
+      [{ pn: "RETIRED.PN.1" }],
+      collectMaxBomPns(),
+    );
+    expect(orphans).toEqual([]);
   });
 });
 

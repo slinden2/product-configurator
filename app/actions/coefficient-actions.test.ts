@@ -57,7 +57,8 @@ vi.mock("pg", () => ({
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-vi.mock("@/lib/pricing", () => ({
+vi.mock("@/lib/pricing", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/pricing")>()),
   collectMaxBomPns: () => ["ITC-A", "ITC-B", "ITC-C"],
   DEFAULT_COEFFICIENT: 3.0,
 }));

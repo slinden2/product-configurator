@@ -13,7 +13,11 @@ import {
   updatePriceCoefficientByPnWithAudit,
 } from "@/db/queries";
 import { MSG } from "@/lib/messages";
-import { collectMaxBomPns, DEFAULT_COEFFICIENT } from "@/lib/pricing";
+import {
+  collectMaxBomPns,
+  computeMaxBomCoefficientDiff,
+  DEFAULT_COEFFICIENT,
+} from "@/lib/pricing";
 import {
   coefficientPnSchema,
   coefficientSchema,
@@ -180,8 +184,7 @@ export async function syncMaxBomCoefficientsAction() {
   try {
     const maxBomPns = collectMaxBomPns();
     const existing = await getPriceCoefficientsByArray(maxBomPns);
-    const existingSet = new Set(existing.map((r) => r.pn));
-    const missing = maxBomPns.filter((pn) => !existingSet.has(pn));
+    const { missing } = computeMaxBomCoefficientDiff(existing, maxBomPns);
 
     let inserted = 0;
     await db.transaction(async (tx) => {
