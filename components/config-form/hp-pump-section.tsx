@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { Fragment, type ReactNode, useEffect } from "react";
+import { type FieldPath, useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
@@ -9,14 +9,101 @@ import {
 } from "@/lib/configuration/display-rules";
 import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import { withNoSelection } from "@/lib/utils";
+import type { SelectOption } from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 
+type LabeledFieldName = FieldPath<ConfigSchema> &
+  keyof typeof CONFIG_FIELD_LABELS;
+
+interface HpPumpRowProps {
+  checkboxName: LabeledFieldName;
+  outletNames: readonly [LabeledFieldName, LabeledFieldName];
+  options: SelectOption[];
+  extraUncheckResets?: Array<{
+    fieldsToReset: Array<FieldPath<ConfigSchema>>;
+    resetToValue?: unknown;
+  }>;
+  /** Rendered below the first outlet select while the pump is checked. */
+  outlet1Extra?: ReactNode;
+}
+
+const HpPumpRow = ({
+  checkboxName,
+  outletNames,
+  options,
+  extraUncheckResets = [],
+  outlet1Extra,
+}: HpPumpRowProps) => {
+  const { control } = useFormContext<ConfigSchema>();
+  const hasPumpWatch = useWatch({ control, name: checkboxName });
+
+  return (
+    <div className="fs-row">
+      <div className="fs-item">
+        <CheckboxField<ConfigSchema>
+          name={checkboxName}
+          label={CONFIG_FIELD_LABELS[checkboxName]}
+          fieldsToResetOnUncheck={[
+            { fieldsToReset: [...outletNames] },
+            ...extraUncheckResets,
+          ]}
+        />
+      </div>
+      <div className="fs-item">
+        <SelectField<ConfigSchema>
+          name={outletNames[0]}
+          dataType="string"
+          label={CONFIG_FIELD_LABELS[outletNames[0]]}
+          disabled={!hasPumpWatch}
+          items={withNoSelection(options)}
+        />
+        {hasPumpWatch && outlet1Extra && (
+          <div className="md:mt-2">{outlet1Extra}</div>
+        )}
+      </div>
+      <div className="fs-item">
+        <SelectField<ConfigSchema>
+          name={outletNames[1]}
+          dataType="string"
+          label={CONFIG_FIELD_LABELS[outletNames[1]]}
+          disabled={!hasPumpWatch}
+          items={withNoSelection(options)}
+        />
+      </div>
+    </div>
+  );
+};
+
+const hpPumpRows: HpPumpRowProps[] = [
+  {
+    checkboxName: "has_75kw_pump",
+    outletNames: ["pump_outlet_1_75kw", "pump_outlet_2_75kw"],
+    options: selectFieldOptions.hpPumpOutlet75kwTypes,
+  },
+  {
+    checkboxName: "has_15kw_pump",
+    outletNames: ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
+    options: selectFieldOptions.hpPumpOutlet15kwTypes,
+    extraUncheckResets: [
+      { fieldsToReset: ["has_15kw_pump_softstart"], resetToValue: false },
+    ],
+    outlet1Extra: (
+      <CheckboxField<ConfigSchema>
+        name="has_15kw_pump_softstart"
+        label={CONFIG_FIELD_LABELS.has_15kw_pump_softstart}
+      />
+    ),
+  },
+  {
+    checkboxName: "has_30kw_pump",
+    outletNames: ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
+    options: selectFieldOptions.hpPumpOutlet30kwTypes,
+  },
+];
+
 const HPPumpSection = () => {
   const { control, setValue } = useFormContext<ConfigSchema>();
-  const has15kwPumpWatch = useWatch({ control, name: "has_15kw_pump" });
-  const has30kwPumpWatch = useWatch({ control, name: "has_30kw_pump" });
-  const has75kwPumpWatch = useWatch({ control, name: "has_75kw_pump" });
   const hasOMZPumpWatch = useWatch({ control, name: "has_omz_pump" });
   const omzPumpOutletWatch = useWatch({ control, name: "pump_outlet_omz" });
   const pumpOutlet1_15kw = useWatch({ control, name: "pump_outlet_1_15kw" });
@@ -52,114 +139,12 @@ const HPPumpSection = () => {
       description="Seleziona le pompe alta pressione e le tipologie di uscite da includere nella configurazione"
     >
       <div className="space-y-6 md:space-y-3">
-        <div className="fs-row">
-          <div className="fs-item">
-            <CheckboxField<ConfigSchema>
-              name="has_75kw_pump"
-              label={CONFIG_FIELD_LABELS.has_75kw_pump}
-              fieldsToResetOnUncheck={[
-                {
-                  fieldsToReset: ["pump_outlet_1_75kw", "pump_outlet_2_75kw"],
-                },
-              ]}
-            />
-          </div>
-          <div className="fs-item">
-            <SelectField<ConfigSchema>
-              name="pump_outlet_1_75kw"
-              dataType="string"
-              label={CONFIG_FIELD_LABELS.pump_outlet_1_75kw}
-              disabled={!has75kwPumpWatch}
-              items={withNoSelection(selectFieldOptions.hpPumpOutlet75kwTypes)}
-            />
-          </div>
-          <div className="fs-item">
-            <SelectField<ConfigSchema>
-              name="pump_outlet_2_75kw"
-              dataType="string"
-              label={CONFIG_FIELD_LABELS.pump_outlet_2_75kw}
-              disabled={!has75kwPumpWatch}
-              items={withNoSelection(selectFieldOptions.hpPumpOutlet75kwTypes)}
-            />
-          </div>
-        </div>
-        <hr className="border-border" />
-        <div className="fs-row">
-          <div className="fs-item">
-            <CheckboxField<ConfigSchema>
-              name="has_15kw_pump"
-              label={CONFIG_FIELD_LABELS.has_15kw_pump}
-              fieldsToResetOnUncheck={[
-                {
-                  fieldsToReset: ["pump_outlet_1_15kw", "pump_outlet_2_15kw"],
-                },
-                {
-                  fieldsToReset: ["has_15kw_pump_softstart"],
-                  resetToValue: false,
-                },
-              ]}
-            />
-          </div>
-          <div className="fs-item">
-            <SelectField<ConfigSchema>
-              name="pump_outlet_1_15kw"
-              dataType="string"
-              label={CONFIG_FIELD_LABELS.pump_outlet_1_15kw}
-              disabled={!has15kwPumpWatch}
-              items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
-            />
-            {has15kwPumpWatch && (
-              <div className="md:mt-2">
-                <CheckboxField<ConfigSchema>
-                  name="has_15kw_pump_softstart"
-                  label={CONFIG_FIELD_LABELS.has_15kw_pump_softstart}
-                />
-              </div>
-            )}
-          </div>
-          <div className="fs-item">
-            <SelectField<ConfigSchema>
-              name="pump_outlet_2_15kw"
-              dataType="string"
-              label={CONFIG_FIELD_LABELS.pump_outlet_2_15kw}
-              disabled={!has15kwPumpWatch}
-              items={withNoSelection(selectFieldOptions.hpPumpOutlet15kwTypes)}
-            />
-          </div>
-        </div>
-        <hr className="border-border" />
-        <div className="fs-row">
-          <div className="fs-item">
-            <CheckboxField<ConfigSchema>
-              name="has_30kw_pump"
-              label={CONFIG_FIELD_LABELS.has_30kw_pump}
-              fieldsToResetOnUncheck={[
-                {
-                  fieldsToReset: ["pump_outlet_1_30kw", "pump_outlet_2_30kw"],
-                },
-              ]}
-            />
-          </div>
-          <div className="fs-item">
-            <SelectField<ConfigSchema>
-              name="pump_outlet_1_30kw"
-              dataType="string"
-              label={CONFIG_FIELD_LABELS.pump_outlet_1_30kw}
-              disabled={!has30kwPumpWatch}
-              items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
-            />
-          </div>
-          <div className="fs-item">
-            <SelectField<ConfigSchema>
-              name="pump_outlet_2_30kw"
-              dataType="string"
-              label={CONFIG_FIELD_LABELS.pump_outlet_2_30kw}
-              disabled={!has30kwPumpWatch}
-              items={withNoSelection(selectFieldOptions.hpPumpOutlet30kwTypes)}
-            />
-          </div>
-        </div>
-        <hr className="border-border" />
+        {hpPumpRows.map((row) => (
+          <Fragment key={row.checkboxName}>
+            <HpPumpRow {...row} />
+            <hr className="border-border" />
+          </Fragment>
+        ))}
         <div className="fs-row">
           <div className="fs-item">
             <CheckboxField<ConfigSchema>
