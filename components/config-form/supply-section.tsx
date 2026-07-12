@@ -81,6 +81,7 @@ const SupplySection = () => {
                   triggerValue: zodEnums.SupplyFixingTypeEnum.enum.POST,
                   fieldsToReset: ["has_post_frame"],
                   invertTrigger: true,
+                  resetToValue: false,
                 },
               ]}
             />

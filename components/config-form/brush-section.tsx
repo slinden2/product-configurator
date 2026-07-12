@@ -30,20 +30,21 @@ const BrushSection = () => {
               fieldsToResetOnValue={[
                 {
                   triggerValue: 0,
-                  fieldsToReset: [
-                    "brush_type",
-                    "brush_color",
-                    "has_shampoo_pump",
-                  ],
+                  fieldsToReset: ["brush_type", "brush_color"],
+                },
+                {
+                  triggerValue: 0,
+                  fieldsToReset: ["has_shampoo_pump"],
+                  resetToValue: false,
                 },
                 {
                   triggerValue: 2,
-                  fieldsToReset: [
-                    "has_acid_pump",
-                    "acid_pump_pos",
-                    "has_omz_pump",
-                    "pump_outlet_omz",
-                  ],
+                  fieldsToReset: ["acid_pump_pos", "pump_outlet_omz"],
+                },
+                {
+                  triggerValue: 2,
+                  fieldsToReset: ["has_acid_pump", "has_omz_pump"],
+                  resetToValue: false,
                 },
               ]}
             />

@@ -49,8 +49,8 @@ describe("Multi-step field dependency chains", () => {
       expect(getValues().brush_qty).toBe(0);
       expect(getValues().brush_type).toBeUndefined();
       expect(getValues().brush_color).toBeUndefined();
-      // has_shampoo_pump is also reset by the brush_qty=0 trigger
-      expect(getValues().has_shampoo_pump).toBeUndefined();
+      // Boolean dependents reset to false (the schema default), not undefined
+      expect(getValues().has_shampoo_pump).toBe(false);
     });
 
     test("changing brush_qty from 3 to 2 resets acid pump and OMZ fields", async () => {
@@ -71,10 +71,10 @@ describe("Multi-step field dependency chains", () => {
       await selectRadixOption("Numero di spazzole", "Due spazzole");
 
       expect(getValues().brush_qty).toBe(2);
-      // Acid pump and OMZ fields should be reset
-      expect(getValues().has_acid_pump).toBeUndefined();
+      // Acid pump and OMZ fields should be reset; booleans to false
+      expect(getValues().has_acid_pump).toBe(false);
       expect(getValues().acid_pump_pos).toBeUndefined();
-      expect(getValues().has_omz_pump).toBeUndefined();
+      expect(getValues().has_omz_pump).toBe(false);
       expect(getValues().pump_outlet_omz).toBeUndefined();
       // Type and color should remain unchanged
       expect(getValues().brush_type).toBe("THREAD");
@@ -389,7 +389,7 @@ describe("Multi-step field dependency chains", () => {
       await selectRadixOption("Tipo di fissaggio", "Staffa a muro");
 
       expect(getValues().supply_fixing_type).toBe("WALL");
-      expect(getValues().has_post_frame).toBeUndefined();
+      expect(getValues().has_post_frame).toBe(false);
     });
   });
 });
