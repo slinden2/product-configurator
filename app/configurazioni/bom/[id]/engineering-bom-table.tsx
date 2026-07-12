@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowDownUp,
   Check,
   ChevronDown,
   ChevronRight,
@@ -12,13 +11,14 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { Fragment, useEffect, useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getAssemblyChildrenAction } from "@/app/actions/bom-lines-actions";
 import {
   toggleDeleteEngineeringBomItemAction,
   updateEngineeringBomItemQtyAction,
 } from "@/app/actions/engineering-bom-actions";
+import { BomTableHeads } from "@/components/shared/bom-table-heads";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { EngineeringBomItemWithPart } from "@/db/queries";
+import { useSortedRows } from "@/hooks/use-sorted-rows";
 import { exportBomToXls } from "@/lib/BOM/export-xlsx";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
@@ -42,30 +43,12 @@ interface EngineeringBomTableProps {
   editable: boolean;
 }
 
-interface SortState {
-  key: "pn" | "description" | null;
-  direction: "asc" | "desc";
-}
-
-function sortByPn(arr: EngineeringBomItemWithPart[]) {
-  return [...arr].sort((a, b) => a.pn.localeCompare(b.pn));
-}
-
 const EngineeringBomTable = ({
   items,
   confId,
   editable,
 }: EngineeringBomTableProps) => {
-  const [dataArr, setDataArr] = useState(() => sortByPn(items));
-  const [sorting, setSorting] = useState<SortState>({
-    key: "pn",
-    direction: "asc",
-  });
-  // Sync local state when items prop changes (e.g. after adding a row)
-  useEffect(() => {
-    setDataArr(sortByPn(items));
-    setSorting({ key: "pn", direction: "asc" });
-  }, [items]);
+  const { dataArr, setDataArr, sortTable } = useSortedRows(items);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editQty, setEditQty] = useState<string>("");
   const [expandedRowIds, setExpandedRowIds] = useState<Set<number>>(new Set());
@@ -81,21 +64,6 @@ const EngineeringBomTable = ({
       }
       return next;
     });
-  }
-
-  function sortTable(key: SortState["key"]) {
-    if (!key) return;
-    let direction: SortState["direction"] = "asc";
-    if (sorting.key === key) {
-      direction = sorting.direction === "asc" ? "desc" : "asc";
-    }
-    const sortedData = [...dataArr].sort((a, b) => {
-      if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
-      if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
-      return 0;
-    });
-    setDataArr(sortedData);
-    setSorting({ key, direction });
   }
 
   function startEdit(item: EngineeringBomItemWithPart) {
@@ -182,26 +150,7 @@ const EngineeringBomTable = ({
     <Table className="mb-3 rounded-lg font-mono">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-16 hidden sm:table-cell">POS</TableHead>
-          <TableHead
-            className="w-32 py-2 cursor-pointer whitespace-nowrap"
-            onClick={() => sortTable("pn")}
-          >
-            <span className="flex items-center">
-              Codice <ArrowDownUp size={16} className="ml-1" />
-            </span>
-          </TableHead>
-          <TableHead
-            className="w-full py-2 cursor-pointer"
-            onClick={() => sortTable("description")}
-          >
-            <span className="flex items-center">
-              Descrizione <ArrowDownUp size={16} className="ml-1" />
-            </span>
-          </TableHead>
-          <TableHead className="w-24 py-2 text-center whitespace-nowrap">
-            Qtà
-          </TableHead>
+          <BomTableHeads onSort={sortTable} />
           {editable && (
             <TableHead className="w-24 py-2 text-center whitespace-nowrap">
               Azioni
