@@ -7,7 +7,14 @@ import {
   View,
 } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
-import ItecoLogo from "@/components/pdf/iteco-logo";
+import {
+  hex,
+  PdfFooter,
+  PdfHeader,
+  PdfMetaLine,
+  pdfStyles,
+  rowBg,
+} from "@/components/pdf/scaffolding";
 import { COLORS } from "@/lib/excel/workbook-builder";
 import type {
   OfferExportLine,
@@ -24,30 +31,7 @@ export interface OfferPdfMeta {
   generatorInitials: string;
 }
 
-const hex = (color: string) => `#${color}`;
-
 const styles = StyleSheet.create({
-  page: {
-    paddingTop: 36,
-    paddingHorizontal: 36,
-    paddingBottom: 56,
-    fontSize: 9,
-    fontFamily: "Helvetica",
-    color: "#1a1a1a",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: "Helvetica-Bold",
-    color: "#14529f",
-    marginBottom: 6,
-  },
-  metaLine: { marginBottom: 2, color: "#444444" },
   sectionTitle: {
     backgroundColor: hex(COLORS.sectionTitleBg),
     color: hex(COLORS.sectionTitleFont),
@@ -92,19 +76,6 @@ const styles = StyleSheet.create({
   colQty: { width: "8%", textAlign: "right" },
   colPrice: { width: "22%", textAlign: "right" },
   summaryLabel: { width: "78%" },
-  footer: {
-    position: "absolute",
-    bottom: 24,
-    left: 36,
-    right: 36,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 0.5,
-    borderTopColor: "#cccccc",
-    paddingTop: 4,
-    fontSize: 8,
-    color: "#666666",
-  },
 });
 
 interface PdfRowItem {
@@ -115,12 +86,8 @@ interface PdfRowItem {
   price: number | null;
 }
 
-const rowBg = (index: number) => ({
-  backgroundColor: hex(index % 2 === 0 ? COLORS.white : COLORS.lightGray),
-});
-
 const ColumnHeaderRow = ({ netOnly }: { netOnly: boolean }) => (
-  <View style={[styles.row, styles.headerRow]} wrap={false}>
+  <View style={[pdfStyles.row, styles.headerRow]} wrap={false}>
     <Text style={styles.colPn}>Codice</Text>
     <Text style={netOnly ? styles.colDescriptionWide : styles.colDescription}>
       Descrizione
@@ -139,7 +106,7 @@ const ItemRow = ({
   index: number;
   netOnly: boolean;
 }) => (
-  <View style={[styles.row, rowBg(index)]} wrap={false}>
+  <View style={[pdfStyles.row, rowBg(index)]} wrap={false}>
     <Text style={styles.colPn}>{item.pn}</Text>
     <Text style={netOnly ? styles.colDescriptionWide : styles.colDescription}>
       {item.description}
@@ -154,7 +121,7 @@ const ItemRow = ({
 );
 
 const SubtotalRow = ({ label, total }: { label: string; total: number }) => (
-  <View style={[styles.row, styles.subtotalRow]} wrap={false}>
+  <View style={[pdfStyles.row, styles.subtotalRow]} wrap={false}>
     <Text style={styles.summaryLabel}>{label}</Text>
     <Text style={styles.colPrice}>{formatEur(total)}</Text>
   </View>
@@ -212,7 +179,7 @@ const SummaryRow = ({
   total: number | null;
   style: PdfStyle;
 }) => (
-  <View style={[styles.row, style]} wrap={false}>
+  <View style={[pdfStyles.row, style]} wrap={false}>
     <Text style={styles.summaryLabel}>{label}</Text>
     <Text style={styles.colPrice}>
       {total === null ? "" : formatEur(total)}
@@ -313,21 +280,17 @@ export const OfferPdfDocument = ({ data, meta }: OfferPdfDocumentProps) => {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Offerta {meta.offerNumber}</Text>
-            <Text style={styles.metaLine}>Revisione {data.revisionNo}</Text>
-            <Text style={styles.metaLine}>{meta.customerName}</Text>
-            {data.customerAddress && (
-              <Text style={styles.metaLine}>{data.customerAddress}</Text>
-            )}
-            {data.customerEmail && (
-              <Text style={styles.metaLine}>{data.customerEmail}</Text>
-            )}
-          </View>
-          <ItecoLogo width={120} />
-        </View>
+      <Page size="A4" style={pdfStyles.page}>
+        <PdfHeader title={`Offerta ${meta.offerNumber}`}>
+          <PdfMetaLine>Revisione {data.revisionNo}</PdfMetaLine>
+          <PdfMetaLine>{meta.customerName}</PdfMetaLine>
+          {data.customerAddress && (
+            <PdfMetaLine>{data.customerAddress}</PdfMetaLine>
+          )}
+          {data.customerEmail && (
+            <PdfMetaLine>{data.customerEmail}</PdfMetaLine>
+          )}
+        </PdfHeader>
 
         {data.lines.map((line) => (
           <OfferLineSection key={line.title} line={line} netOnly={netOnly} />
@@ -375,14 +338,7 @@ export const OfferPdfDocument = ({ data, meta }: OfferPdfDocumentProps) => {
           />
         )}
 
-        <View style={styles.footer} fixed>
-          <Text>{generatedLine}</Text>
-          <Text
-            render={({ pageNumber, totalPages }) =>
-              `Pagina ${pageNumber} di ${totalPages}`
-            }
-          />
-        </View>
+        <PdfFooter generatedLine={generatedLine} />
       </Page>
     </Document>
   );

@@ -7,7 +7,14 @@ import {
   View,
 } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
-import ItecoLogo from "@/components/pdf/iteco-logo";
+import {
+  hex,
+  PdfFooter,
+  PdfHeader,
+  PdfMetaLine,
+  pdfStyles,
+  rowBg,
+} from "@/components/pdf/scaffolding";
 import {
   buildCompleteConfigViewSections,
   type ViewSection,
@@ -25,30 +32,7 @@ export interface ConfigPdfMeta {
   generatorEmail: string | null;
 }
 
-const hex = (color: string) => `#${color}`;
-
 const styles = StyleSheet.create({
-  page: {
-    paddingTop: 36,
-    paddingHorizontal: 36,
-    paddingBottom: 56,
-    fontSize: 9,
-    fontFamily: "Helvetica",
-    color: "#1a1a1a",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: "Helvetica-Bold",
-    color: "#14529f",
-    marginBottom: 6,
-  },
-  metaLine: { marginBottom: 2, color: "#444444" },
   groupTitle: {
     fontFamily: "Helvetica-Bold",
     fontSize: 13,
@@ -84,23 +68,6 @@ const styles = StyleSheet.create({
   },
   colLabel: { width: "55%", color: "#444444" },
   colValue: { width: "45%", fontFamily: "Helvetica-Bold" },
-  footer: {
-    position: "absolute",
-    bottom: 24,
-    left: 36,
-    right: 36,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 0.5,
-    borderTopColor: "#cccccc",
-    paddingTop: 4,
-    fontSize: 8,
-    color: "#666666",
-  },
-});
-
-const rowBg = (index: number) => ({
-  backgroundColor: hex(index % 2 === 0 ? COLORS.white : COLORS.lightGray),
 });
 
 const SectionBlock = ({ section }: { section: ViewSection }) => (
@@ -117,7 +84,7 @@ const SectionBlock = ({ section }: { section: ViewSection }) => (
         )}
         {group.rows.map((field, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: rows are static and positional; labels can repeat within a section
-          <View key={index} style={[styles.row, rowBg(index)]} wrap={false}>
+          <View key={index} style={[pdfStyles.row, rowBg(index)]} wrap={false}>
             <Text style={styles.colLabel}>{field.label}</Text>
             <Text style={styles.colValue}>{field.value}</Text>
           </View>
@@ -152,16 +119,12 @@ export const ConfigPdfDocument = ({
 
   return (
     <Document title={`Configurazione ${meta.confId}`} author="ITECO SRL">
-      <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Configurazione</Text>
-            <Text style={styles.metaLine}>Configurazione #{meta.confId}</Text>
-            <Text style={styles.metaLine}>Cliente: {meta.clientName}</Text>
-            <Text style={styles.metaLine}>{generatedLine}</Text>
-          </View>
-          <ItecoLogo width={120} />
-        </View>
+      <Page size="A4" style={pdfStyles.page}>
+        <PdfHeader title="Configurazione">
+          <PdfMetaLine>Configurazione #{meta.confId}</PdfMetaLine>
+          <PdfMetaLine>Cliente: {meta.clientName}</PdfMetaLine>
+          <PdfMetaLine>{generatedLine}</PdfMetaLine>
+        </PdfHeader>
 
         {groups.map((group) => (
           <View key={group.title ?? "config"}>
@@ -176,14 +139,7 @@ export const ConfigPdfDocument = ({
           </View>
         ))}
 
-        <View style={styles.footer} fixed>
-          <Text>{generatedLine}</Text>
-          <Text
-            render={({ pageNumber, totalPages }) =>
-              `Pagina ${pageNumber} di ${totalPages}`
-            }
-          />
-        </View>
+        <PdfFooter generatedLine={generatedLine} />
       </Page>
     </Document>
   );
