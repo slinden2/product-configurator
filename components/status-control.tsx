@@ -86,11 +86,12 @@ const StatusControl = ({
       } catch (err) {
         console.error(err);
         toast.error(MSG.toast.statusUpdateFailed);
+      } finally {
+        // Close the confirmation dialog once the action settles (success or
+        // failure) — `finally` also covers early returns, matching
+        // configuration-row's modal cleanup.
+        setPendingTarget(null);
       }
-      // Close the confirmation dialog once the action settles (success or
-      // failure). Placed after try/catch rather than in a `finally`, per the
-      // project loading-state convention.
-      setPendingTarget(null);
     });
   };
 

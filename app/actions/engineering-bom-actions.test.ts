@@ -117,10 +117,9 @@ import {
   updateEngineeringBomItemQtyAction,
 } from "@/app/actions/engineering-bom-actions";
 import { MSG } from "@/lib/messages";
+import type { ActionResult } from "@/types";
 
 // --- Helpers ---
-
-type ActionResult = { success: boolean; error?: string };
 
 const CONF_ID = 1;
 const ITEM_ID = 10;

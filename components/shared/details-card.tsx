@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface DetailsCardProps {
   clientName: string;
@@ -12,7 +13,7 @@ const DetailsCard = ({
   className,
 }: DetailsCardProps) => {
   return (
-    <Card className={`mb-8${className ? ` ${className}` : ""}`}>
+    <Card className={cn("mb-8", className)}>
       <CardHeader>
         <CardTitle className="text-2xl">Dettagli</CardTitle>
       </CardHeader>

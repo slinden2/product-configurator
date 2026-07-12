@@ -411,6 +411,16 @@ export const InstallationItemKindLabels: Record<InstallationItemKind, string> =
  */
 export type SettingRow = { kind: string; price: string | number };
 
+/**
+ * De-facto result shape of server-action mutations that carry no data
+ * payload: `{ success, error? }` (see .claude/rules/forms.md — the client
+ * resets from its own values and relies on revalidatePath for server truth).
+ */
+export interface ActionResult {
+  success: boolean;
+  error?: string;
+}
+
 export interface SelectOption {
   value: string | number;
   label: string;

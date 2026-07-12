@@ -19,6 +19,7 @@ import {
   buttonVariants,
 } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { MSG } from "@/lib/messages";
 
 interface ConfirmOptions {
   title: string;
@@ -61,7 +62,7 @@ export function AsyncActionButton({
         if (successMsg) toast.success(successMsg);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : (errorMsg ?? "Errore."),
+          err instanceof Error ? err.message : (errorMsg ?? MSG.db.unknown),
         );
       }
     });

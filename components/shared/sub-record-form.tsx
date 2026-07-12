@@ -18,17 +18,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { isConfigLocked } from "@/lib/access";
 import { MSG } from "@/lib/messages";
 import type {
+  ActionResult,
   ConfigOrigin,
   ConfigurationStatusType,
   OfferStatusType,
   Role,
 } from "@/types";
-
-// Shared result type for server actions
-interface ActionResult {
-  success: boolean;
-  error?: string;
-}
 
 // --- Generic Props Interface ---
 interface SubRecordFormProps<

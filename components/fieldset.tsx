@@ -19,9 +19,11 @@ const Fieldset = ({ children, title, description, ...rest }: Props) => {
     <Card {...rest} className="overflow-hidden shadow-lg mb-8">
       <CardHeader className="border-b bg-card-foreground/5">
         <CardTitle className="text-xl text-foreground">{title}</CardTitle>
-        <CardDescription className="text-muted-foreground">
-          {description || ""}
-        </CardDescription>
+        {description && (
+          <CardDescription className="text-muted-foreground">
+            {description}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="pt-6">{children}</CardContent>
     </Card>
