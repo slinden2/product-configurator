@@ -97,8 +97,7 @@ const ConfigForm = ({
   const form = useForm<ConfigInputSchema, unknown, ConfigSchema>({
     resolver: zodResolver(configSchema, {
       error: (issue) => {
-        const i = issue as { code: string; expected?: string };
-        if (i.code === "invalid_type" && i.expected === "undefined") {
+        if (issue.code === "invalid_type" && issue.expected === "undefined") {
           return "Valore non valido.";
         }
         return undefined;

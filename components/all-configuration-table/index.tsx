@@ -57,7 +57,7 @@ const AllConfigurationsTable = async ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {configurations && configurations.length > 0 ? (
+            {configurations.length > 0 ? (
               configurations.map((configuration) => (
                 <ConfigurationRow
                   key={configuration.id}

@@ -23,9 +23,7 @@ import { MSG } from "@/lib/messages";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 
 interface ConfigurationRowProps {
-  configuration: NonNullable<AllConfigurations> extends Array<infer T>
-    ? T
-    : never;
+  configuration: AllConfigurations[number];
   user: NonNullable<UserData>;
 }
 
