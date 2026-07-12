@@ -81,49 +81,6 @@ export async function getFullPriceCoefficientByPn(pn: string): Promise<
   return row;
 }
 
-export async function createPriceCoefficient(data: {
-  pn: string;
-  coefficient: string;
-  source: CoefficientSource;
-  is_custom: boolean;
-  updated_by: string | null;
-}): Promise<{ id: number; pn: string }> {
-  const [row] = await db
-    .insert(priceCoefficients)
-    .values(data)
-    .returning({ id: priceCoefficients.id, pn: priceCoefficients.pn });
-  return row;
-}
-
-export async function updatePriceCoefficientByPn(data: {
-  pn: string;
-  coefficient: string;
-  is_custom: boolean;
-  updated_by: string | null;
-}): Promise<{ pn: string } | undefined> {
-  const [row] = await db
-    .update(priceCoefficients)
-    .set({
-      coefficient: data.coefficient,
-      is_custom: data.is_custom,
-      updated_by: data.updated_by,
-      updated_at: new Date(),
-    })
-    .where(eq(priceCoefficients.pn, data.pn))
-    .returning({ pn: priceCoefficients.pn });
-  return row;
-}
-
-export async function deletePriceCoefficientByPn(
-  pn: string,
-): Promise<{ pn: string } | undefined> {
-  const [row] = await db
-    .delete(priceCoefficients)
-    .where(eq(priceCoefficients.pn, pn))
-    .returning({ pn: priceCoefficients.pn });
-  return row;
-}
-
 export async function insertMissingMaxBomCoefficients(
   pns: string[],
   defaultCoefficient: string,

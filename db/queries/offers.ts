@@ -120,7 +120,7 @@ export async function canAccessOffer(
  * revision lifecycle (editable only while the revision is DRAFT). Post-acceptance
  * a config can sit on multiple revisions (renegotiations); the latest one governs.
  */
-export async function getOfferRevisionStatusForConfig(
+async function getOfferRevisionStatusForConfig(
   configId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ): Promise<OfferStatusType | null> {
@@ -203,7 +203,7 @@ export async function offerRefFor(
  * from the max existing number for the year; relies on the `offer_number` UNIQUE
  * to reject the rare concurrent collision (caller surfaces a retry message).
  */
-export async function generateOfferNumber(
+async function generateOfferNumber(
   txOrDb: DatabaseType | TransactionType = db,
 ): Promise<string> {
   const year = new Date().getFullYear();

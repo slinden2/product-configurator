@@ -19,18 +19,6 @@ export async function getSurchargeSettings(
   });
 }
 
-export async function getSurchargeSettingByKind(
-  kind: SurchargeKind,
-): Promise<SurchargeSetting> {
-  const row = await db.query.surchargeSettings.findFirst({
-    where: eq(surchargeSettings.kind, kind),
-  });
-  if (!row) {
-    throw new QueryError(MSG.surcharge.notFound);
-  }
-  return row;
-}
-
 /**
  * Updates a surcharge price and writes the audit log in a single transaction.
  * Both writes succeed or both roll back — the audit entry cannot be silently
