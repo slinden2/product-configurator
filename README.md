@@ -74,6 +74,27 @@ TSE_DB_NAME=ITECO
 npm run drizzle:push
 ```
 
+### Supabase configuration as code
+
+Hosted Supabase service and Auth settings live in `supabase/config.toml`. This
+project does not run Supabase locally: development uses a separate hosted Supabase
+project, while the application schema and seed data remain owned by Drizzle and
+`db/seed.ts`.
+
+To compare the tracked settings with the hosted development project and apply them,
+first review `supabase/config.toml`, then run:
+
+```bash
+npx supabase login
+npx supabase link --project-ref <development-project-ref>
+npm run supabase:config:push
+```
+
+The link is machine-local (`supabase/.temp/` is ignored), and the CLI displays the
+remote diff before asking for confirmation. The canonical Auth Site URL is
+`https://config.itecosrl.com`; localhost redirects allow the Next.js development
+server to use the hosted development Supabase project.
+
 ### 4. Seed the database
 
 ```bash
@@ -107,6 +128,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run seed` | Seed the database |
 | `npm run seed:reset` | Reset and reseed the database |
 | `npm run drizzle:push` | Push schema to dev database |
+| `npm run supabase:config:push` | Push config to the linked Supabase project |
 | `npm run erp:sync` | Sync product data from TSE (dev) |
 | `npm run erp:sync:prod` | Sync product data from TSE (prod) |
 | `npm run review` | On-demand Codex code review of committed branch changes |
