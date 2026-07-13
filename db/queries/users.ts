@@ -1,4 +1,4 @@
-import { asc, countDistinct, eq, max } from "drizzle-orm";
+import { asc, countDistinct, eq, max, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { activityLogs, configurations, userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
@@ -53,6 +53,7 @@ export type UserWithStats = {
   initials: string | null;
   manager_id: string | null;
   is_active: boolean;
+  deactivated_at: Date | null;
   last_login_at: Date | null;
   configCount: number;
   lastActivity: Date | null;
@@ -67,6 +68,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       initials: userProfiles.initials,
       manager_id: userProfiles.manager_id,
       is_active: userProfiles.is_active,
+      deactivated_at: userProfiles.deactivated_at,
       last_login_at: userProfiles.last_login_at,
       configCount: countDistinct(configurations.id),
       lastActivity: max(activityLogs.created_at),
@@ -81,6 +83,7 @@ export async function getAllUsersWithStats(): Promise<UserWithStats[]> {
       userProfiles.initials,
       userProfiles.manager_id,
       userProfiles.is_active,
+      userProfiles.deactivated_at,
       userProfiles.last_login_at,
     )
     .orderBy(asc(userProfiles.email));
@@ -163,13 +166,79 @@ export async function activateUserWithAudit(data: {
 
     await tx
       .update(userProfiles)
-      .set({ is_active: true })
+      .set({ is_active: true, deactivated_at: null })
       .where(eq(userProfiles.id, data.userId));
 
     await insertActivityLog(
       {
         userId: data.activatedBy,
         action: "USER_ACTIVATE",
+        targetEntity: "user_profile",
+        targetId: data.userId,
+        metadata: {},
+      },
+      tx,
+    );
+  });
+}
+
+export async function deactivateUserWithAudit(data: {
+  userId: string;
+  deactivatedBy: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    // Lock the row so a concurrent deactivation cannot double-log the audit
+    // entry. Re-reading `role` inside the lock closes the TOCTOU window with a
+    // concurrent role change.
+    const [targetRow] = await tx
+      .select({
+        id: userProfiles.id,
+        role: userProfiles.role,
+        is_active: userProfiles.is_active,
+      })
+      .from(userProfiles)
+      .where(eq(userProfiles.id, data.userId))
+      .for("update");
+
+    if (!targetRow) throw new QueryError(MSG.users.notFound);
+    // ADMIN accounts are immutable via the UI (same stance as role changes),
+    // so the admin count can never silently decrease.
+    if (targetRow.role === "ADMIN") {
+      throw new QueryError(MSG.users.cannotDeactivateAdmin);
+    }
+    // Also rejects pending (never-activated) profiles: deactivating them would
+    // silently overwrite the "In attesa" state.
+    if (!targetRow.is_active) {
+      throw new QueryError(MSG.users.alreadyInactive);
+    }
+
+    await tx
+      .update(userProfiles)
+      .set({ is_active: false, deactivated_at: new Date() })
+      .where(eq(userProfiles.id, data.userId));
+
+    // Terminate the user's live sessions in the same transaction. Clearing
+    // `is_active` alone does not revoke an issued Supabase session: the refresh
+    // token keeps minting access tokens, because GoTrue knows nothing about this
+    // flag. Deleting the `auth.sessions` rows is exactly what a global sign-out
+    // does (`auth.refresh_tokens` cascades), so the refresh token stops working.
+    //
+    // GoTrue exposes no admin "log out by user id" endpoint, and banning the
+    // auth user is the wrong tool: `signInWithPassword` then fails with
+    // `user_banned` even for a *wrong* password, which would leak account
+    // enumeration and preempt the deactivated-account message in `signIn`.
+    //
+    // Already-issued access tokens stay valid until they expire; that window is
+    // harmless because `getUserData` fails closed on `is_active` and the table
+    // carries no RLS write policy.
+    await tx.execute(
+      sql`delete from auth.sessions where user_id = ${data.userId}::uuid`,
+    );
+
+    await insertActivityLog(
+      {
+        userId: data.deactivatedBy,
+        action: "USER_DEACTIVATE",
         targetEntity: "user_profile",
         targetId: data.userId,
         metadata: {},
@@ -209,16 +278,25 @@ export async function assignManagerWithAudit(data: {
       throw new QueryError(MSG.users.invalidManager);
     }
 
-    // The manager must still exist and be a SALES_MANAGER at write time; lock it
-    // too so a concurrent demotion cannot interleave.
+    // The manager must still exist and be an active SALES_MANAGER at write
+    // time; lock it too so a concurrent demotion or deactivation cannot
+    // interleave.
     if (data.managerId !== null) {
       const [managerRow] = await tx
-        .select({ id: userProfiles.id, role: userProfiles.role })
+        .select({
+          id: userProfiles.id,
+          role: userProfiles.role,
+          is_active: userProfiles.is_active,
+        })
         .from(userProfiles)
         .where(eq(userProfiles.id, data.managerId))
         .for("update");
 
-      if (!managerRow || managerRow.role !== "SALES_MANAGER") {
+      if (
+        !managerRow ||
+        managerRow.role !== "SALES_MANAGER" ||
+        !managerRow.is_active
+      ) {
         throw new QueryError(MSG.users.invalidManager);
       }
     }

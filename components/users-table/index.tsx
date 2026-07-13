@@ -27,10 +27,12 @@ const headers = [
 ];
 
 const UsersTable = ({ users, currentUserId }: UsersTableProps) => {
-  // Candidate managers a SALES user can be assigned to.
+  // Candidate managers a SALES user can be assigned to. Inactive managers are
+  // kept in the list (disabled in the picker) so a row whose assigned manager
+  // was deactivated can still render it.
   const managers = users
     .filter((u) => u.role === "SALES_MANAGER")
-    .map((u) => ({ id: u.id, email: u.email }));
+    .map((u) => ({ id: u.id, email: u.email, isActive: u.is_active }));
 
   return (
     <div className="rounded-md sm:border">

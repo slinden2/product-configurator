@@ -7,6 +7,7 @@ const mockGetUserData = vi.fn();
 const mockChangeUserRoleWithAudit = vi.fn();
 const mockAssignManagerWithAudit = vi.fn();
 const mockActivateUserWithAudit = vi.fn();
+const mockDeactivateUserWithAudit = vi.fn();
 const mockLogActivity = vi.fn();
 const mockFindFirst = vi.fn();
 const mockResetPasswordForEmail = vi.fn();
@@ -19,6 +20,8 @@ vi.mock("@/db/queries", () => ({
     mockAssignManagerWithAudit(...args),
   activateUserWithAudit: (...args: unknown[]) =>
     mockActivateUserWithAudit(...args),
+  deactivateUserWithAudit: (...args: unknown[]) =>
+    mockDeactivateUserWithAudit(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
     constructor(message: string) {
@@ -69,6 +72,7 @@ import {
   activateUserAction,
   assignManagerAction,
   changeUserRoleAction,
+  deactivateUserAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
 import { QueryError } from "@/db/queries";
@@ -239,7 +243,11 @@ describe("changeUserRoleAction", () => {
 
 describe("assignManagerAction", () => {
   const salesTarget = { id: TARGET_ID, role: "SALES" as const };
-  const salesManager = { id: MANAGER_ID, role: "SALES_MANAGER" as const };
+  const salesManager = {
+    id: MANAGER_ID,
+    role: "SALES_MANAGER" as const,
+    is_active: true,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -274,6 +282,19 @@ describe("assignManagerAction", () => {
     mockFindFirst
       .mockResolvedValueOnce(salesTarget)
       .mockResolvedValueOnce({ id: MANAGER_ID, role: "SALES" });
+    const result = await assignManagerAction({
+      userId: TARGET_ID,
+      managerId: MANAGER_ID,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.users.invalidManager);
+    expect(mockAssignManagerWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the manager is deactivated", async () => {
+    mockFindFirst
+      .mockResolvedValueOnce(salesTarget)
+      .mockResolvedValueOnce({ ...salesManager, is_active: false });
     const result = await assignManagerAction({
       userId: TARGET_ID,
       managerId: MANAGER_ID,
@@ -369,6 +390,91 @@ describe("activateUserAction", () => {
   test("returns db error message on DatabaseError", async () => {
     mockActivateUserWithAudit.mockRejectedValue(createDatabaseError("pg"));
     const result = await activateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.db.error);
+  });
+});
+
+// ── deactivateUserAction ─────────────────────────────────────────────────────
+
+describe("deactivateUserAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue(adminUser);
+    mockDeactivateUserWithAudit.mockResolvedValue(undefined);
+    mockFindFirst.mockResolvedValue(targetUser);
+  });
+
+  test("returns validation error for a non-uuid userId", async () => {
+    const result = await deactivateUserAction({ userId: "not-a-uuid" });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.auth.invalidData);
+    expect(mockDeactivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects unauthenticated users", async () => {
+    mockGetUserData.mockResolvedValue(null);
+    const result = await deactivateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    expect(mockDeactivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects non-ADMIN users", async () => {
+    mockGetUserData.mockResolvedValue(engineerUser);
+    const result = await deactivateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.auth.unauthorized);
+    expect(mockDeactivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects self-deactivation", async () => {
+    const result = await deactivateUserAction({ userId: ADMIN_ID });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error).toBe(MSG.users.cannotDeactivateSelf);
+    expect(mockDeactivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("returns notFound when target user does not exist", async () => {
+    mockFindFirst.mockResolvedValue(undefined);
+    const result = await deactivateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.users.notFound);
+    expect(mockDeactivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects deactivation of another ADMIN", async () => {
+    mockFindFirst.mockResolvedValue({ id: TARGET_ID, role: "ADMIN" });
+    const result = await deactivateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error).toBe(MSG.users.cannotDeactivateAdmin);
+    expect(mockDeactivateUserWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("deactivates the user with audit and revalidates", async () => {
+    const result = await deactivateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(true);
+    expect(mockDeactivateUserWithAudit).toHaveBeenCalledWith({
+      userId: TARGET_ID,
+      deactivatedBy: ADMIN_ID,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/gestione/utenti");
+  });
+
+  test("surfaces QueryError messages (already inactive) verbatim", async () => {
+    mockDeactivateUserWithAudit.mockRejectedValue(
+      new QueryError(MSG.users.alreadyInactive),
+    );
+    const result = await deactivateUserAction({ userId: TARGET_ID });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe(MSG.users.alreadyInactive);
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  test("returns db error message on DatabaseError", async () => {
+    mockDeactivateUserWithAudit.mockRejectedValue(createDatabaseError("pg"));
+    const result = await deactivateUserAction({ userId: TARGET_ID });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe(MSG.db.error);
   });

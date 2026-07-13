@@ -20,6 +20,7 @@ export const MSG = {
     userUnauthorized: "Utente non autorizzato.",
     accountPendingActivation:
       "Account in attesa di attivazione da parte di un amministratore.",
+    accountDeactivated: "Account disattivato. Contatta un amministratore.",
     missingResetCode: "Codice di reimpostazione mancante.",
     genericError: "Errore durante l'autenticazione.",
     invalidData: "Dati di autenticazione non validi.",
@@ -83,8 +84,13 @@ export const MSG = {
     invalidManager: "Il responsabile selezionato non è valido.",
     adminOnly: "Accesso riservato agli amministratori.",
     alreadyActive: "L'utente è già attivo.",
+    alreadyInactive: "L'utente non è attivo.",
+    cannotDeactivateSelf: "Non puoi disattivare il tuo account.",
+    cannotDeactivateAdmin: "Non è possibile disattivare un utente ADMIN.",
     statusActive: "Attivo",
     statusPending: "In attesa",
+    statusDeactivated: "Disattivato",
+    managerInactiveSuffix: "(non attivo)",
   },
   db: {
     error: "Errore del database.",
@@ -167,6 +173,8 @@ export const MSG = {
     passwordResetFailed: "Impossibile inviare l'email di reimpostazione.",
     userActivated: "Utente attivato.",
     userActivateFailed: "Impossibile attivare l'utente.",
+    userDeactivated: "Utente disattivato.",
+    userDeactivateFailed: "Impossibile disattivare l'utente.",
     signupCheckEmail:
       "Registrazione completata. Controlla la tua email per confermare l'account.",
     logoutError: "Errore durante la disconnessione.",
@@ -223,6 +231,11 @@ export const MSG = {
     title: "Conferma attivazione utente",
     body: "L'utente potrà accedere all'applicazione con il ruolo assegnato. Continuare?",
     confirm: "Attiva utente",
+  },
+  deactivateUserConfirm: {
+    title: "Conferma disattivazione utente",
+    body: "L'utente non potrà più accedere all'applicazione. Le configurazioni, le offerte e le attività esistenti resteranno visibili e potrai riattivarlo in seguito. Continuare?",
+    confirm: "Disattiva utente",
   },
   energyChainWall: {
     supplySection:

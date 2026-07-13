@@ -68,7 +68,10 @@ describe("activateUserWithAudit — locked activation with audit", () => {
   test("activates an inactive user and writes the audit entry in the same transaction", async () => {
     selectResults = [[{ id: "target", is_active: false }]];
     await expect(activateUserWithAudit(ARGS)).resolves.toBeUndefined();
-    expect(mockUpdateSet).toHaveBeenCalledWith({ is_active: true });
+    expect(mockUpdateSet).toHaveBeenCalledWith({
+      is_active: true,
+      deactivated_at: null,
+    });
     expect(mockUpdateWhere).toHaveBeenCalledTimes(1);
     expect(mockInsertValues).toHaveBeenCalledTimes(1);
     expect(mockInsertValues).toHaveBeenCalledWith(
@@ -79,5 +82,17 @@ describe("activateUserWithAudit — locked activation with audit", () => {
         target_id: "target",
       }),
     );
+  });
+
+  test("re-activates a deactivated user, clearing deactivated_at", async () => {
+    selectResults = [
+      [{ id: "target", is_active: false, deactivated_at: new Date() }],
+    ];
+    await expect(activateUserWithAudit(ARGS)).resolves.toBeUndefined();
+    expect(mockUpdateSet).toHaveBeenCalledWith({
+      is_active: true,
+      deactivated_at: null,
+    });
+    expect(mockInsertValues).toHaveBeenCalledTimes(1);
   });
 });

@@ -269,6 +269,34 @@ describe("signIn", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
+  test("denies login with the deactivated message when deactivated_at is set", async () => {
+    mockSignInWithPassword.mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    });
+    mockFindFirst.mockResolvedValue({
+      id: mockUser.id,
+      email: mockUser.email,
+      is_active: false,
+      deactivated_at: new Date(),
+    });
+    mockSignOut.mockResolvedValue({ error: null });
+
+    const result = await signIn({
+      email: "test@itecosrl.com",
+      password: "password123",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.accountDeactivated,
+    });
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
   test("returns success and skips profile creation when user already exists", async () => {
     mockSignInWithPassword.mockResolvedValue({
       data: { user: mockUser },

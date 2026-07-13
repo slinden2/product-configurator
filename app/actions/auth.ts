@@ -114,9 +114,13 @@ export async function signIn(formData: LoginSchema) {
 
     if (!existingUser.is_active) {
       await supabase.auth.signOut();
+      // deactivated_at distinguishes an admin-deactivated account from a
+      // profile still waiting for its first activation.
       return {
         success: false as const,
-        error: MSG.auth.accountPendingActivation,
+        error: existingUser.deactivated_at
+          ? MSG.auth.accountDeactivated
+          : MSG.auth.accountPendingActivation,
       };
     }
 

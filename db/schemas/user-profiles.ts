@@ -33,6 +33,10 @@ export const userProfiles = pgTable(
     // First-login profiles start inactive and must be activated by an ADMIN
     // before the user can access the app.
     is_active: boolean().notNull().default(true),
+    // Set when an ADMIN deactivates the user, cleared on (re)activation; null
+    // for pending profiles. Non-null implies is_active = false and
+    // distinguishes "deactivated" from "never activated".
+    deactivated_at: timestamp("deactivated_at", { mode: "date", precision: 3 }),
     initials: varchar({ length: 3 }),
     last_login_at: timestamp("last_login_at", { mode: "date", precision: 3 }),
     // Self-referential link to the SALES_MANAGER a SALES user reports to.
@@ -53,18 +57,16 @@ export const userProfiles = pgTable(
       for: "insert",
       withCheck: sql`(SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
     }),
-    pgPolicy("Allow users to update own profile or ADMIN to update any", {
-      as: "permissive",
-      to: authenticatedRole,
-      for: "update",
-      using: sql`auth.uid() = id OR (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
-      withCheck: sql`auth.uid() = id OR (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
-    }),
-    pgPolicy("Allow only ADMIN to delete profiles", {
-      as: "permissive",
-      to: authenticatedRole,
-      for: "delete",
-      using: sql`(SELECT role FROM user_profiles WHERE id = auth.uid()) = 'ADMIN'`,
-    }),
+    // No UPDATE policy: with RLS enabled and no permissive policy, every write
+    // through the Supabase API roles is denied. Server Actions are unaffected —
+    // Drizzle connects as `postgres`, which owns the table and bypasses RLS.
+    //
+    // A "users may update their own profile" policy used to live here. It let
+    // any authenticated user PATCH their own row through the public PostgREST
+    // endpoint (the URL and anon key ship to the browser), so a deactivated user
+    // holding a still-valid JWT could set `is_active` back to true and clear
+    // `deactivated_at` — self-reactivation — and any user could promote
+    // themselves to ADMIN. Administrative columns are writable only via the
+    // audited Server Actions in `app/actions/user-actions.ts`.
   ],
 ).enableRLS();

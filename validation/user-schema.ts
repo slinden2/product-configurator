@@ -22,3 +22,8 @@ export const activateUserSchema = z.object({
   userId: z.uuid(),
 });
 export type ActivateUserSchema = z.infer<typeof activateUserSchema>;
+
+export const deactivateUserSchema = z.object({
+  userId: z.uuid(),
+});
+export type DeactivateUserSchema = z.infer<typeof deactivateUserSchema>;

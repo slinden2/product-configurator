@@ -77,10 +77,22 @@ describe("assignManagerWithAudit — in-transaction role re-validation", () => {
     expect(mockUpdateWhere).not.toHaveBeenCalled();
   });
 
+  test("rejects a manager that has been deactivated", async () => {
+    selectResults = [
+      [{ id: "target", role: "SALES", manager_id: null }],
+      [{ id: "manager", role: "SALES_MANAGER", is_active: false }],
+    ];
+    await expect(assignManagerWithAudit(ARGS)).rejects.toThrow(
+      MSG.users.invalidManager,
+    );
+    expect(mockUpdateWhere).not.toHaveBeenCalled();
+    expect(mockInsertValues).not.toHaveBeenCalled();
+  });
+
   test("writes manager_id + audit when both roles are valid", async () => {
     selectResults = [
       [{ id: "target", role: "SALES", manager_id: "old" }],
-      [{ id: "manager", role: "SALES_MANAGER" }],
+      [{ id: "manager", role: "SALES_MANAGER", is_active: true }],
     ];
     await expect(assignManagerWithAudit(ARGS)).resolves.toBeUndefined();
     expect(mockUpdateWhere).toHaveBeenCalledTimes(1);

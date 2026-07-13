@@ -8,6 +8,7 @@ import {
   activateUserWithAudit,
   assignManagerWithAudit,
   changeUserRoleWithAudit,
+  deactivateUserWithAudit,
   logActivity,
 } from "@/db/queries";
 import { userProfiles } from "@/db/schemas";
@@ -17,6 +18,7 @@ import {
   activateUserSchema,
   assignManagerSchema,
   changeRoleSchema,
+  deactivateUserSchema,
   sendPasswordResetSchema,
 } from "@/validation/user-schema";
 import { authorizeAdmin } from "./lib/authorize";
@@ -102,13 +104,13 @@ export async function assignManagerAction(formData: unknown) {
     return { success: false as const, error: MSG.users.invalidManager };
   }
 
-  // A manager must exist and actually be a SALES_MANAGER.
+  // A manager must exist and actually be an active SALES_MANAGER.
   if (managerId !== null) {
     const manager = await db.query.userProfiles.findFirst({
       where: eq(userProfiles.id, managerId),
-      columns: { id: true, role: true },
+      columns: { id: true, role: true, is_active: true },
     });
-    if (!manager || manager.role !== "SALES_MANAGER") {
+    if (!manager || manager.role !== "SALES_MANAGER" || !manager.is_active) {
       return { success: false as const, error: MSG.users.invalidManager };
     }
   }
@@ -143,6 +145,48 @@ export async function activateUserAction(formData: unknown) {
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to activate user:");
+  }
+}
+
+export async function deactivateUserAction(formData: unknown) {
+  const validation = deactivateUserSchema.safeParse(formData);
+  if (!validation.success) {
+    return { success: false as const, error: MSG.auth.invalidData };
+  }
+
+  const { userId } = validation.data;
+
+  const auth = await authorizeAdmin();
+  if (!auth.success) return { success: false as const, error: auth.error };
+  const { user } = auth;
+
+  if (userId === user.id) {
+    return { success: false as const, error: MSG.users.cannotDeactivateSelf };
+  }
+
+  const targetUser = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.id, userId),
+    columns: { id: true, role: true },
+  });
+
+  if (!targetUser) {
+    return { success: false as const, error: MSG.users.notFound };
+  }
+
+  // ADMIN accounts are immutable via the UI (same stance as role changes), so
+  // the admin count can never silently decrease.
+  if (targetUser.role === "ADMIN") {
+    return { success: false as const, error: MSG.users.cannotDeactivateAdmin };
+  }
+
+  try {
+    // Already-inactive and role guards re-run inside the locked transaction.
+    await deactivateUserWithAudit({ userId, deactivatedBy: user.id });
+
+    revalidatePath("/gestione/utenti");
+    return { success: true as const };
+  } catch (err) {
+    return mapActionError(err, "Failed to deactivate user:");
   }
 }
 

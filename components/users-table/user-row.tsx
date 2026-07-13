@@ -1,6 +1,6 @@
 "use client";
 
-import { History, Mail, UserCheck } from "lucide-react";
+import { History, Mail, UserCheck, UserX } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import {
   activateUserAction,
   assignManagerAction,
   changeUserRoleAction,
+  deactivateUserAction,
   sendPasswordResetAction,
 } from "@/app/actions/user-actions";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -30,7 +31,7 @@ import { ASSIGNABLE_ROLES, RoleLabels } from "@/types";
 interface UserRowProps {
   user: UserWithStats;
   currentUserId: string;
-  managers: { id: string; email: string }[];
+  managers: { id: string; email: string; isActive: boolean }[];
 }
 
 // Sentinel for the "no manager" option (Radix Select disallows empty values).
@@ -40,9 +41,11 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   const isCurrentUser = user.id === currentUserId;
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [activateConfirmOpen, setActivateConfirmOpen] = useState(false);
+  const [deactivateConfirmOpen, setDeactivateConfirmOpen] = useState(false);
   const [isChangingRole, startRoleChange] = useTransition();
   const [isAssigningManager, startManagerAssign] = useTransition();
   const [isActivating, startActivate] = useTransition();
+  const [isDeactivating, startDeactivate] = useTransition();
   const [isResettingPassword, startPasswordReset] = useTransition();
 
   const handleRoleChange = (newRole: string) => {
@@ -80,8 +83,17 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
   };
 
   // Only SALES agents are assigned to a manager; the pickable managers are the
-  // SALES_MANAGER users.
+  // active SALES_MANAGER users. A deactivated manager stays listed (disabled)
+  // only while still assigned to this row, so the Select can render it.
   const canAssignManager = user.role === "SALES";
+  const managerOptions = managers.filter(
+    (m) => m.isActive || m.id === user.manager_id,
+  );
+
+  // Client mirror of the server guards: no self-deactivation, ADMIN accounts
+  // are immutable.
+  const canDeactivate =
+    user.is_active && !isCurrentUser && user.role !== "ADMIN";
 
   const handleActivate = () => {
     startActivate(async () => {
@@ -96,6 +108,23 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
         toast.error(MSG.toast.userActivateFailed);
       } finally {
         setActivateConfirmOpen(false);
+      }
+    });
+  };
+
+  const handleDeactivate = () => {
+    startDeactivate(async () => {
+      try {
+        const result = await deactivateUserAction({ userId: user.id });
+        if (result.success) {
+          toast.success(MSG.toast.userDeactivated);
+        } else {
+          toast.error(result.error ?? MSG.toast.userDeactivateFailed);
+        }
+      } catch {
+        toast.error(MSG.toast.userDeactivateFailed);
+      } finally {
+        setDeactivateConfirmOpen(false);
       }
     });
   };
@@ -148,6 +177,8 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
         <TableCell>
           {user.is_active ? (
             <Badge variant="outline">{MSG.users.statusActive}</Badge>
+          ) : user.deactivated_at ? (
+            <Badge variant="destructive">{MSG.users.statusDeactivated}</Badge>
           ) : (
             <Badge variant="secondary">{MSG.users.statusPending}</Badge>
           )}
@@ -156,7 +187,7 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
           {canAssignManager ? (
             <Select
               value={user.manager_id ?? NO_MANAGER_VALUE}
-              disabled={isAssigningManager || managers.length === 0}
+              disabled={isAssigningManager || managerOptions.length === 0}
               onValueChange={handleManagerChange}
             >
               <SelectTrigger className="w-44">
@@ -164,9 +195,15 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_MANAGER_VALUE}>Nessuno</SelectItem>
-                {managers.map((manager) => (
-                  <SelectItem key={manager.id} value={manager.id}>
-                    {manager.email}
+                {managerOptions.map((manager) => (
+                  <SelectItem
+                    key={manager.id}
+                    value={manager.id}
+                    disabled={!manager.isActive}
+                  >
+                    {manager.isActive
+                      ? manager.email
+                      : `${manager.email} ${MSG.users.managerInactiveSuffix}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -194,6 +231,16 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
               >
                 <UserCheck />
                 Attiva utente
+              </DropdownMenuItem>
+            )}
+            {canDeactivate && (
+              <DropdownMenuItem
+                disabled={isDeactivating}
+                onSelect={() => setDeactivateConfirmOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <UserX />
+                Disattiva utente
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
@@ -226,6 +273,21 @@ const UserRow = ({ user, currentUserId, managers }: UserRowProps) => {
         confirmVariant="default"
         onConfirm={handleActivate}
         isConfirming={isActivating}
+      />
+      <ConfirmModal
+        isOpen={deactivateConfirmOpen}
+        onOpenChange={setDeactivateConfirmOpen}
+        title={MSG.deactivateUserConfirm.title}
+        description={
+          <>
+            {MSG.deactivateUserConfirm.body} Utente:{" "}
+            <span className="font-semibold">{user.email}</span>.
+          </>
+        }
+        confirmText={MSG.deactivateUserConfirm.confirm}
+        confirmVariant="destructive"
+        onConfirm={handleDeactivate}
+        isConfirming={isDeactivating}
       />
       <ConfirmModal
         isOpen={resetConfirmOpen}
