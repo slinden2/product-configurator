@@ -21,6 +21,13 @@ export const coefficientSourceEnum = pgEnum(
 
 export const priceCoefficients = pgTable("price_coefficients", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  // pn is an ERP catalog code, intentionally NOT FK-constrained to part_numbers.pn.
+  // Coefficients are not part of the ERP sync: MAXBOM rows are seeded from the static
+  // MaxBOM rule catalog (collectMaxBomPns, lib/pricing.ts) independent of part_numbers,
+  // and manual rows may be created before a pn is imported — so a coefficient can
+  // reference a pn absent from part_numbers. A real FK would break
+  // insertMissingMaxBomCoefficients / manual creation; getAllPriceCoefficients
+  // (db/queries/coefficients.ts) LEFT JOINs part_numbers to tolerate this.
   pn: varchar({ length: 25 }).unique().notNull(),
   coefficient: numeric({ precision: 5, scale: 2 }).notNull().default("3.00"),
   source: coefficientSourceEnum("source").notNull(),

@@ -15,6 +15,15 @@ export const bomLines = pgTable(
   "bom_lines",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    // parent_pn / child_pn are ERP catalog codes, intentionally NOT FK-constrained
+    // to part_numbers.pn. bom_lines and part_numbers are populated from two
+    // independent ERP queries with different filters: fetch-part-numbers-query.sql
+    // INNER JOINs description/production-data and filters on empty language/option,
+    // while fetch-bom-structure-query.sql has no such constraint — so a parent/child
+    // pn can legitimately reference a pn the part-numbers extract excludes (import
+    // ordering does not prevent this). A real FK would fail the batchUpsertBomStructure
+    // transaction (lib/db-sync/sync-logic.ts) on any such orphan; downstream reads
+    // instead skip dangling children (getAssemblyChildren, db/queries/ebom.ts).
     parent_pn: varchar("parent_pn", { length: 25 }).notNull(),
     child_pn: varchar("child_pn", { length: 25 }).notNull(),
     qty: numeric("qty", { precision: 10, scale: 3 }).notNull(),
