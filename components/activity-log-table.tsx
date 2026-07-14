@@ -11,24 +11,31 @@ import type { ActivityLogEntry } from "@/db/queries";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { ActivityActionLabels } from "@/types";
 
+// The per-user log has no actor column, the global one joins the actor's email.
+type ActivityLogTableEntry = ActivityLogEntry & { user_email?: string };
+
 interface ActivityLogTableProps {
-  entries: ActivityLogEntry[];
+  entries: ActivityLogTableEntry[];
   page: number;
   totalCount: number;
   pageSize: number;
-  userId: string;
+  buildHref: (page: number) => string;
+  /** Adds the "Utente" column — for the cross-user (global) log. */
+  showUser?: boolean;
 }
 
-const headers = ["Azione", "Entità", "Dettagli", "Data"];
+const BASE_HEADERS = ["Azione", "Entità", "Dettagli", "Data"];
 
 const ActivityLogTable = ({
   entries,
   page,
   totalCount,
   pageSize,
-  userId,
+  buildHref,
+  showUser = false,
 }: ActivityLogTableProps) => {
   const totalPages = Math.ceil(totalCount / pageSize);
+  const headers = showUser ? ["Utente", ...BASE_HEADERS] : BASE_HEADERS;
 
   return (
     <div className="w-full">
@@ -47,6 +54,11 @@ const ActivityLogTable = ({
             {entries.length > 0 ? (
               entries.map((entry) => (
                 <TableRow key={entry.id}>
+                  {showUser && (
+                    <TableCell className="text-sm text-muted-foreground">
+                      {entry.user_email ?? "—"}
+                    </TableCell>
+                  )}
                   <TableCell className="text-sm font-medium">
                     {ActivityActionLabels[entry.action]}
                   </TableCell>
@@ -85,7 +97,7 @@ const ActivityLogTable = ({
       <PaginationControls
         page={page}
         totalPages={totalPages}
-        buildHref={(p) => `/gestione/utenti/${userId}?page=${p}`}
+        buildHref={buildHref}
       />
     </div>
   );

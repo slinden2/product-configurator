@@ -55,7 +55,7 @@ const UserDetailPage = async (props: {
         page={page}
         totalCount={totalCount}
         pageSize={PAGE_SIZE}
-        userId={id}
+        buildHref={(p) => `/gestione/utenti/${id}?page=${p}`}
       />
     </div>
   );

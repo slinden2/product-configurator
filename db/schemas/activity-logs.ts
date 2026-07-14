@@ -33,6 +33,13 @@ export const activityLogs = pgTable(
       .defaultNow(),
   },
   // Postgres does not auto-index FK columns; the table grows unboundedly and
-  // is joined per user in getAllUsersWithStats.
-  (t) => [index("activity_logs_user_id_idx").on(t.user_id)],
+  // is joined per user in getAllUsersWithStats. The created_at index serves the
+  // global audit page, which pages the whole table ordered by created_at DESC
+  // (a plain btree scans backwards, so no explicit DESC ordering is needed).
+  // The action/user filters deliberately get no index of their own: they either
+  // ride this scan or the user_id index above.
+  (t) => [
+    index("activity_logs_user_id_idx").on(t.user_id),
+    index("activity_logs_created_at_idx").on(t.created_at),
+  ],
 ).enableRLS();
