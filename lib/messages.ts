@@ -109,6 +109,7 @@ export const MSG = {
     configSaveUnknown:
       "Errore sconosciuto durante il salvataggio della configurazione.",
     offerCreated: "Offerta creata.",
+    offerHeaderUpdated: "Dati cliente aggiornati.",
     offerLineCreated: "Configurazione aggiunta all'offerta.",
     offerLineRemoved: "Configurazione rimossa dall'offerta.",
     offerRevisionSent: "Revisione inviata.",
@@ -275,6 +276,8 @@ export const MSG = {
       "Non è possibile modificare l'offerta in questo stato della configurazione.",
     notFound: "Offerta non trovata.",
     createFailed: "Impossibile creare l'offerta.",
+    headerEditSentWarning:
+      "La revisione corrente è già uscita dalla bozza. Correggendo i dati cliente cambieranno anche i documenti riesportati dalle revisioni già inviate.",
     numberRetry:
       "Numero offerta già in uso, riprova. Se il problema persiste, contatta l'amministratore.",
     lineCannotEdit:

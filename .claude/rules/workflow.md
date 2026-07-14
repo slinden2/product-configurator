@@ -19,11 +19,31 @@ A configuration's `origin` (`db/queries/`, `types/index.ts`) decides which lifec
 ### Configuration customer name
 
 `offers.customer_name` is the sole authoritative customer name for OFFER configurations. Their
-`configurations.name` value is retained as a non-authoritative compatibility shadow because the same
-column remains required and authoritative for STANDALONE configurations. Offer-config reads resolve the
-customer through `offer_revision_lines → offer_revisions → offers`; creation, edits, and clone-forward
-also populate the shadow from the offer header. The configuration form never exposes that field for an
-OFFER config. STANDALONE name validation and behavior are unchanged.
+`configurations.name` value is retained as a non-authoritative shadow because the same column remains
+required and authoritative for STANDALONE configurations. The configuration *list* resolves the customer
+through `offer_revision_lines → offer_revisions → offers` (`resolveConfigurationClientNames`), but every
+config **detail** surface — view page, BOM page and its Excel export, config PDF, margin page — renders
+the shadow column directly. Keeping it in sync is therefore load-bearing, not cosmetic. Creation, edits,
+and clone-forward all populate it from the offer header. The configuration form never exposes that field
+for an OFFER config. STANDALONE name validation and behavior are unchanged.
+
+**Header edits** (`updateOfferHeaderAction` → `updateOfferHeaderWithAudit`): the customer name, address
+and email are editable **at any lifecycle stage** by offer-access roles — the header is the offer's stable
+spine (lifecycle and pricing live on the revisions), so a typo stays correctable after a revision is sent
+or accepted. Gated by `authorizeOfferLifecycleAction` (access + scope) only, never by revision status.
+Two consequences are deliberate:
+
+- **Exports of already-sent revisions change retroactively.** `buildOfferRevisionExportData` reads the
+  live header, so re-exporting a sent quote after a correction yields a document that differs from the one
+  the customer received. The dialog warns once the working revision leaves `DRAFT`.
+- **The shadow re-sync is status-blind.** A `customer_name` change rewrites `configurations.name` for every
+  OFFER config under the offer — `TECH_APPROVED` and `CLOSED` included — inside the header's transaction,
+  **without consulting `isEditable`**. This is a system-derived write to a shadow column, the same class as
+  the ENGINEER renegotiation-repricing seam below; leaving a frozen config stale would keep showing the
+  wrong customer on its detail pages forever. Do **not** "fix" it by adding a status gate. `name` is in
+  `BOM_EXEMPT_FIELDS`, so no BOM invalidation or reprice fires, and it is excluded from the as-sold diff
+  (`build-as-sold-diff.ts`) — a commercial rename is not engineering drift and must not raise a margin
+  alert.
 
 ## Configuration Status Machine
 

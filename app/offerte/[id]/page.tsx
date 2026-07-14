@@ -36,6 +36,7 @@ import AcceptRevisionButton from "./accept-revision-button";
 import ApproveRevisionButton from "./approve-revision-button";
 import CreateRevisionButton from "./create-revision-button";
 import DiscardRevisionButton from "./discard-revision-button";
+import EditOfferHeaderButton from "./edit-offer-header-button";
 import OfferExportButtons from "./export-offer-buttons";
 import QuoteView from "./quote-view";
 import RecordOutcomeButton from "./record-outcome-button";
@@ -137,9 +138,18 @@ const OfferDetail = async (props: OfferDetailProps) => {
     <div className="space-y-6">
       <div className="sm:flex sm:items-start sm:gap-2">
         <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Offerta {offer.offer_number}
-          </h1>
+          <div className="flex items-center gap-1 mb-2">
+            <h1 className="text-3xl font-bold">Offerta {offer.offer_number}</h1>
+            {/* The header is offer-level, not revision-scoped: correctable at any
+                lifecycle stage, so this affordance is never gated on the revision. */}
+            <EditOfferHeaderButton
+              offerId={offer.id}
+              customerName={offer.customer_name}
+              customerAddress={offer.customer_address}
+              customerEmail={offer.customer_email}
+              revisionSent={!commercialEditable}
+            />
+          </div>
           <p className="text-muted-foreground">{offer.customer_name}</p>
           {offer.customer_address && (
             <p className="text-sm text-muted-foreground">
