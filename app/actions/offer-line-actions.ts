@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { addOfferLine, removeOfferLine } from "@/db/queries";
+import { OFFER_CONFIG_NAME_PLACEHOLDER } from "@/lib/configuration/constants";
 import { MSG } from "@/lib/messages";
 import { repriceOfferLine } from "@/lib/offer-revision-pricing";
 import { configSchema } from "@/validation/config-schema";
@@ -20,7 +21,14 @@ export const addOfferLineAction = async (
   offerId: number,
   formData: unknown,
 ) => {
-  const validation = configSchema.safeParse(formData);
+  // OFFER configs do not own a customer-name field. Supply a validation-only
+  // placeholder here; addOfferLine replaces it with the authoritative offer
+  // header value inside the locked transaction.
+  const offerConfigData =
+    typeof formData === "object" && formData !== null
+      ? { ...formData, name: OFFER_CONFIG_NAME_PLACEHOLDER }
+      : formData;
+  const validation = configSchema.safeParse(offerConfigData);
 
   if (!validation.success) {
     return {

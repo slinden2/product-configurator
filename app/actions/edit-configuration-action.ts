@@ -95,7 +95,16 @@ export const editConfigurationAction = async (
 
       await updateConfiguration(
         confId,
-        { ...validation.data, user_id: configuration.user_id },
+        {
+          ...validation.data,
+          // OFFER customer names are owned by the offer header. Ignore any
+          // stale/tampered form value and keep the compatibility shadow aligned.
+          name:
+            configuration.origin === "OFFER"
+              ? configuration.name
+              : validation.data.name,
+          user_id: configuration.user_id,
+        },
         configuration.status,
         tx,
       );

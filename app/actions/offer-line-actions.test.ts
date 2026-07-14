@@ -54,6 +54,7 @@ import {
   removeOfferLineAction,
 } from "@/app/actions/offer-line-actions";
 import { QueryError } from "@/db/queries";
+import { OFFER_CONFIG_NAME_PLACEHOLDER } from "@/lib/configuration/constants";
 import { MSG } from "@/lib/messages";
 
 const OFFER_ID = 5;
@@ -128,7 +129,21 @@ describe("addOfferLineAction", () => {
     expect(result).toEqual({ success: true, id: CONFIG_ID });
     expect(mockAddOfferLine).toHaveBeenCalledWith(
       OFFER_ID,
-      expect.objectContaining({ name: "Test Config" }),
+      expect.objectContaining({ name: OFFER_CONFIG_NAME_PLACEHOLDER }),
+      "u1",
+      TX,
+    );
+  });
+
+  test("does not require a customer name in the offer configuration payload", async () => {
+    const { name: _name, ...configWithoutName } = makeValidConfig();
+
+    const result = await addOfferLineAction(OFFER_ID, configWithoutName);
+
+    expect(result).toEqual({ success: true, id: CONFIG_ID });
+    expect(mockAddOfferLine).toHaveBeenCalledWith(
+      OFFER_ID,
+      expect.objectContaining({ name: OFFER_CONFIG_NAME_PLACEHOLDER }),
       "u1",
       TX,
     );

@@ -65,6 +65,39 @@ describe("ConfigForm", () => {
         screen.getByRole("button", { name: /annulla/i }),
       ).toBeInTheDocument();
     });
+
+    test("keeps the required customer field for standalone configurations", () => {
+      render(<ConfigForm />);
+
+      expect(screen.getByLabelText("Nome del cliente")).toBeInTheDocument();
+    });
+
+    test("shows the offer customer as static text without an input", () => {
+      render(<ConfigForm offerId={12} offerCustomerName="Cliente offerta" />);
+
+      expect(
+        screen.queryByLabelText("Nome del cliente"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Nome del cliente")).toBeInTheDocument();
+      expect(screen.getByText("Cliente offerta")).toBeInTheDocument();
+    });
+
+    test("shows the resolved customer as static text when editing an offer config", () => {
+      render(
+        <ConfigForm
+          id={1}
+          configuration={makeValidConfig({ name: "Cliente intestatario" })}
+          status="IN_TECH_REVIEW"
+          origin="OFFER"
+          userRole="ENGINEER"
+        />,
+      );
+
+      expect(
+        screen.queryByLabelText("Nome del cliente"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Cliente intestatario")).toBeInTheDocument();
+    });
   });
 
   describe("Disabled state", () => {

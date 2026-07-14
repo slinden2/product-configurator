@@ -16,6 +16,15 @@ A configuration's `origin` (`db/queries/`, `types/index.ts`) decides which lifec
   revision is accepted the config is handed off and is governed by the **config status machine**, exactly
   like a standalone config.
 
+### Configuration customer name
+
+`offers.customer_name` is the sole authoritative customer name for OFFER configurations. Their
+`configurations.name` value is retained as a non-authoritative compatibility shadow because the same
+column remains required and authoritative for STANDALONE configurations. Offer-config reads resolve the
+customer through `offer_revision_lines → offer_revisions → offers`; creation, edits, and clone-forward
+also populate the shadow from the offer header. The configuration form never exposes that field for an
+OFFER config. STANDALONE name validation and behavior are unchanged.
+
 ## Configuration Status Machine
 
 **DRAFT → SALES_APPROVED → IN_TECH_REVIEW → TECH_APPROVED → CLOSED**

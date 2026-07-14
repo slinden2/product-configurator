@@ -82,10 +82,17 @@ function makeRevision() {
 
 describe("QuoteView", () => {
   test("renders a per-line breakdown, the unavailable state, and discounted totals", () => {
-    render(<QuoteView offerId={5} revision={makeRevision()} editable={true} />);
+    render(
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        revision={makeRevision()}
+        editable={true}
+      />,
+    );
 
-    expect(screen.getByText("Pos. 1 — Bus")).toBeInTheDocument();
-    expect(screen.getByText("Pos. 2 — Truck")).toBeInTheDocument();
+    expect(screen.getByText("Pos. 1 — Cliente offerta")).toBeInTheDocument();
+    expect(screen.getByText("Pos. 2 — Cliente offerta")).toBeInTheDocument();
     expect(screen.getByText(/Prezzo non disponibile/)).toBeInTheDocument();
     expect(screen.getByText("Sconto 10%")).toBeInTheDocument();
     expect(screen.getByText("Totale scontato")).toBeInTheDocument();
@@ -95,7 +102,12 @@ describe("QuoteView", () => {
 
   test("hides the settings controls when the revision is not editable", () => {
     render(
-      <QuoteView offerId={5} revision={makeRevision()} editable={false} />,
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        revision={makeRevision()}
+        editable={false}
+      />,
     );
     expect(screen.queryByTestId("settings-card")).not.toBeInTheDocument();
   });

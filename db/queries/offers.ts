@@ -22,7 +22,11 @@ import type { OfferHeaderInput } from "@/validation/offer/offer-schema";
 import type { OfferInstallationItem } from "@/validation/offer/offer-settings-schema";
 import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-schema";
 import { insertActivityLog } from "./activity";
-import { cloneConfigurationRows, insertConfiguration } from "./configurations";
+import {
+  cloneConfigurationRows,
+  insertConfiguration,
+  resolveConfigurationClientName,
+} from "./configurations";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";
 import type { UserData } from "./users";
 
@@ -434,7 +438,12 @@ export async function addOfferLine(
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
-    columns: { id: true, user_id: true, accepted_revision_id: true },
+    columns: {
+      id: true,
+      user_id: true,
+      customer_name: true,
+      accepted_revision_id: true,
+    },
     with: {
       revisions: {
         orderBy: [desc(offerRevisions.revision_no)],
@@ -457,7 +466,7 @@ export async function addOfferLine(
   }
 
   const { id: configId } = await insertConfiguration(
-    configData,
+    { ...configData, name: offer.customer_name },
     offer.user_id,
     "OFFER",
     tx,
@@ -504,13 +513,18 @@ export async function loadConfigForPricing(
   configId: number,
   txOrDb: DatabaseType | TransactionType = db,
 ): Promise<ConfigurationWithWaterTanksAndWashBays | undefined> {
-  return txOrDb.query.configurations.findFirst({
+  const configuration = await txOrDb.query.configurations.findFirst({
     where: eq(configurations.id, configId),
     with: {
       water_tanks: { orderBy: [asc(waterTanks.id)] },
       wash_bays: { orderBy: [asc(washBays.id)] },
     },
   });
+  if (!configuration) return undefined;
+  return {
+    ...configuration,
+    name: await resolveConfigurationClientName(configuration, txOrDb),
+  };
 }
 
 /**
@@ -670,7 +684,12 @@ export async function createOfferRevisionFrom(
 
   const offer = await tx.query.offers.findFirst({
     where: eq(offers.id, offerId),
-    columns: { id: true, user_id: true, accepted_revision_id: true },
+    columns: {
+      id: true,
+      user_id: true,
+      customer_name: true,
+      accepted_revision_id: true,
+    },
     with: {
       revisions: {
         orderBy: [desc(offerRevisions.revision_no)],
@@ -747,7 +766,7 @@ export async function createOfferRevisionFrom(
       {
         // Offer configs are owned by the offer owner, not the acting user.
         userId: offer.user_id,
-        name: line.configuration.name,
+        name: offer.customer_name,
         status: "DRAFT",
         origin: "OFFER",
       },

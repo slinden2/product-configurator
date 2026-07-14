@@ -118,6 +118,7 @@ function frozenOffer() {
   return {
     id: 5,
     user_id: "owner",
+    customer_name: "Cliente offerta",
     accepted_revision_id: null,
     revisions: [
       // Latest (working) revision — frozen, so a new one may be cloned.
@@ -181,7 +182,7 @@ describe("createOfferRevisionFrom", () => {
     // Config is cloned into a fresh DRAFT, OFFER-owned row (owned by the offer owner).
     const [configInsert] = valuesFor(configurations);
     expect(configInsert).toMatchObject({
-      name: "Config A",
+      name: "Cliente offerta",
       status: "DRAFT",
       origin: "OFFER",
       user_id: "owner",

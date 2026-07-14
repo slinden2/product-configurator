@@ -74,9 +74,7 @@ export function buildOfferRevisionExportData(
     );
     if (!displayData) continue;
     lines.push({
-      title: `Pos. ${line.position + 1} — ${
-        line.configuration.name || "Configurazione"
-      }`,
+      title: `Pos. ${line.position + 1} — ${offer.customer_name}`,
       quantity: line.quantity,
       unitListPrice: Number(line.list_price),
       data: displayData,

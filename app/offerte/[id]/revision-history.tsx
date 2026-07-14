@@ -100,6 +100,7 @@ const RevisionHistory = ({
               </div>
               <QuoteView
                 offerId={offer.id}
+                customerName={offer.customer_name}
                 revision={revision}
                 editable={false}
               />

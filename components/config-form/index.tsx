@@ -60,6 +60,8 @@ interface ConfigurationFormProps {
    * navigation returns to the offer detail.
    */
   offerId?: number;
+  /** Authoritative offer-header customer for a new OFFER configuration. */
+  offerCustomerName?: string;
   userRole?: Role;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
@@ -75,6 +77,7 @@ const ConfigForm = ({
   origin,
   offerRevisionStatus,
   offerId,
+  offerCustomerName,
   userRole,
   formKey,
   onDirtyChange,
@@ -103,9 +106,14 @@ const ConfigForm = ({
         return undefined;
       },
     }),
-    defaultValues: configuration
-      ? Object.assign({}, configDefaults, configuration)
-      : configDefaults,
+    defaultValues: Object.assign(
+      {},
+      configDefaults,
+      configuration ??
+        (offerCustomerName === undefined
+          ? undefined
+          : { name: offerCustomerName }),
+    ),
   });
 
   useEffect(() => {
@@ -220,7 +228,10 @@ const ConfigForm = ({
         >
           <FormDisabledContext.Provider value={formIsDisabled}>
             <fieldset disabled={formIsDisabled}>
-              <GeneralSection />
+              <GeneralSection
+                showClientName={!offerId && origin !== "OFFER"}
+                clientName={offerCustomerName ?? configuration?.name}
+              />
               <BrushSection />
               <ChemPumpSection />
               <WaterSupplySection />

@@ -101,8 +101,8 @@ describe("buildOfferRevisionExportData", () => {
     ]);
     const data = buildOfferRevisionExportData(offer, revision);
     expect(data.lines.map((l) => l.title)).toEqual([
-      "Pos. 1 — Config A",
-      "Pos. 2 — Config B",
+      "Pos. 1 — ACME",
+      "Pos. 2 — ACME",
     ]);
     expect(data.offerNumber).toBe("OFF-7");
     expect(data.revisionNo).toBe(3);

@@ -46,6 +46,7 @@ interface ConfigurationFormProps {
   offerRevisionStatus?: OfferStatusType;
   /** Set in the offer-line create flow; threaded to ConfigForm's create branch. */
   offerId?: number;
+  offerCustomerName?: string;
   userRole?: Role;
   initialWaterTanks?: UpdateWaterTankSchema[];
   initialWashBays?: UpdateWashBaySchema[];
@@ -101,6 +102,7 @@ const FormContainer = ({
   origin,
   offerRevisionStatus,
   offerId,
+  offerCustomerName,
   userRole,
   initialWaterTanks,
   initialWashBays,
@@ -216,7 +218,9 @@ const FormContainer = ({
   };
 
   if (!confId || !confStatus) {
-    return <ConfigForm offerId={offerId} />;
+    return (
+      <ConfigForm offerId={offerId} offerCustomerName={offerCustomerName} />
+    );
   }
 
   return (

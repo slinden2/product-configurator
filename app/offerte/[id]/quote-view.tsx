@@ -15,11 +15,17 @@ import LineBreakdown from "./line-breakdown";
 
 interface Props {
   offerId: number;
+  customerName: string;
   revision: OfferWithRevisionAndLines["revisions"][number];
   editable: boolean;
 }
 
-export default function QuoteView({ offerId, revision, editable }: Props) {
+export default function QuoteView({
+  offerId,
+  customerName,
+  revision,
+  editable,
+}: Props) {
   const lines = revision.lines;
   const discountPct = Number(revision.discount_pct);
   const settings = parseOfferSettings(revision);
@@ -53,9 +59,7 @@ export default function QuoteView({ offerId, revision, editable }: Props) {
           line.pricing_snapshot,
           discountPct,
         );
-        const title = `Pos. ${line.position + 1} — ${
-          line.configuration.name || "Configurazione"
-        }`;
+        const title = `Pos. ${line.position + 1} — ${customerName}`;
 
         if (!displayData) {
           return (

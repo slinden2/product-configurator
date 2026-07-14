@@ -284,6 +284,31 @@ describe("editConfigurationAction", () => {
     );
   });
 
+  test("re-syncs the OFFER name shadow from the resolved offer customer", async () => {
+    const offerCustomerName = "Cliente intestatario offerta";
+    mockGetUserData.mockResolvedValue({
+      id: "admin-user",
+      role: "ADMIN",
+      initials: "AU",
+    });
+    mockGetConfigurationWithTanksAndBays.mockResolvedValue(
+      mockConfig({ origin: "OFFER", name: offerCustomerName }),
+    );
+
+    const result = await editConfigurationAction(
+      CONF_ID,
+      makeValidFormData({ name: "Valore shadow obsoleto" }),
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(mockUpdateConfiguration).toHaveBeenCalledWith(
+      CONF_ID,
+      expect.objectContaining({ name: offerCustomerName }),
+      "DRAFT",
+      mockTx,
+    );
+  });
+
   test("reprices on a surcharge-only (BOM-exempt) edit, without BOM invalidation", async () => {
     mockGetUserData.mockResolvedValue({
       id: "admin-user",

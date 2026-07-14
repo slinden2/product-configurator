@@ -223,7 +223,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
                   <TableRow key={line.id}>
                     <TableCell>{line.position + 1}</TableCell>
                     <TableCell className="font-medium">
-                      {line.configuration.name || "Configurazione"}
+                      {offer.customer_name}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
@@ -257,9 +257,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
                           <RemoveLineButton
                             offerId={offer.id}
                             configId={line.configuration.id}
-                            configName={
-                              line.configuration.name || "Configurazione"
-                            }
+                            configName={offer.customer_name}
                           />
                         )}
                       </div>
@@ -281,6 +279,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
       {revision && (
         <QuoteView
           offerId={offer.id}
+          customerName={offer.customer_name}
           revision={revision}
           editable={commercialEditable}
         />

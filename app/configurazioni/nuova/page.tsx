@@ -39,7 +39,10 @@ const NewConfiguration = async (props: {
             {offer.offer_number}.
           </p>
         </div>
-        <FormContainer offerId={offerId} />
+        <FormContainer
+          offerId={offerId}
+          offerCustomerName={offer.customer_name}
+        />
       </div>
     );
   }

@@ -6,6 +6,9 @@ import {
   type NewConfiguration,
   type NewWashBay,
   type NewWaterTank,
+  offerRevisionLines,
+  offerRevisions,
+  offers,
   userProfiles,
   washBays,
   waterTanks,
@@ -157,7 +160,7 @@ export async function getUserConfigurations(
     ? and(scopeWhere, technicalQueueWhere)
     : technicalQueueWhere;
 
-  const [data, countResult] = await Promise.all([
+  const [rows, countResult] = await Promise.all([
     db.query.configurations.findMany({
       where: whereClause,
       columns: {
@@ -188,7 +191,85 @@ export async function getUserConfigurations(
       .where(whereClause),
   ]);
 
+  const data = await resolveConfigurationClientNames(rows);
+
   return { data, totalCount: Number(countResult[0].count) };
+}
+
+/**
+ * Resolves the customer displayed for a configuration. The offer header is the
+ * authoritative source for OFFER rows; `configurations.name` remains required
+ * and authoritative only for STANDALONE rows. For OFFER rows that column is a
+ * compatibility shadow and is never the display source.
+ */
+export async function resolveConfigurationClientName(
+  configuration: { id: number; name: string; origin: ConfigOrigin },
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<string> {
+  if (configuration.origin !== "OFFER") {
+    return configuration.name;
+  }
+
+  const [row] = await txOrDb
+    .select({ customerName: offers.customer_name })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
+    .where(eq(offerRevisionLines.configuration_id, configuration.id))
+    .orderBy(desc(offerRevisions.revision_no))
+    .limit(1);
+
+  return row?.customerName ?? configuration.name;
+}
+
+/**
+ * Batch equivalent of {@link resolveConfigurationClientName} for list loads.
+ * Resolves every OFFER row in one query and preserves the input row shape and
+ * order. A missing offer line falls back to the compatibility shadow name.
+ */
+export async function resolveConfigurationClientNames<
+  T extends { id: number; name: string; origin: ConfigOrigin },
+>(
+  configurationsToResolve: T[],
+  txOrDb: DatabaseType | TransactionType = db,
+): Promise<T[]> {
+  const offerConfigurationIds = configurationsToResolve
+    .filter((configuration) => configuration.origin === "OFFER")
+    .map((configuration) => configuration.id);
+
+  if (offerConfigurationIds.length === 0) {
+    return configurationsToResolve;
+  }
+
+  const rows = await txOrDb
+    .select({
+      configurationId: offerRevisionLines.configuration_id,
+      customerName: offers.customer_name,
+    })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
+    .where(inArray(offerRevisionLines.configuration_id, offerConfigurationIds))
+    .orderBy(desc(offerRevisions.revision_no));
+
+  const customerNameByConfigurationId = new Map<number, string>();
+  for (const row of rows) {
+    if (!customerNameByConfigurationId.has(row.configurationId)) {
+      customerNameByConfigurationId.set(row.configurationId, row.customerName);
+    }
+  }
+
+  return configurationsToResolve.map((configuration) => ({
+    ...configuration,
+    name:
+      customerNameByConfigurationId.get(configuration.id) ?? configuration.name,
+  }));
 }
 
 export async function getConfigurationWithTanksAndBays(
@@ -213,7 +294,12 @@ export async function getConfigurationWithTanksAndBays(
     return null;
   }
 
-  return response;
+  return response
+    ? {
+        ...response,
+        name: await resolveConfigurationClientName(response, txOrDb),
+      }
+    : response;
 }
 
 export async function getConfiguration(
@@ -223,7 +309,12 @@ export async function getConfiguration(
   const response = await txOrDb.query.configurations.findFirst({
     where: eq(configurations.id, id),
   });
-  return response;
+  return response
+    ? {
+        ...response,
+        name: await resolveConfigurationClientName(response, txOrDb),
+      }
+    : response;
 }
 
 export async function getWashBaysByConfigId(
@@ -245,15 +336,16 @@ export async function getConfigsForEnergyChainCheck(
   txOrDb: DatabaseType | TransactionType = db,
 ) {
   if (configIds.length === 0) return [];
-  return txOrDb.query.configurations.findMany({
+  const rows = await txOrDb.query.configurations.findMany({
     where: inArray(configurations.id, configIds),
-    columns: { id: true, name: true, supply_type: true },
+    columns: { id: true, name: true, origin: true, supply_type: true },
     with: {
       wash_bays: {
         columns: { has_gantry: true, energy_chain_width: true },
       },
     },
   });
+  return resolveConfigurationClientNames(rows, txOrDb);
 }
 
 export const insertConfiguration = async (

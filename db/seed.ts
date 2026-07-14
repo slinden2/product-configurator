@@ -284,11 +284,13 @@ const CONFIG_OWNER_EMAILS = [
 // Origin discriminator per seeded configuration (aligned with confArr order).
 const CONFIG_ORIGINS: ConfigOrigin[] = ["OFFER", "STANDALONE", "STANDALONE"];
 
-// The Playwright E2E account (e2e/auth.setup.ts). Role SALES matches its prior
-// login-created profile. Seeded with DEV_PASSWORD like every other account.
+// The Playwright E2E account (e2e/auth.setup.ts). Role ENGINEER: the specs
+// exercise the standalone technical config form (/configurazioni/nuova with no
+// offerId), which canManageStandaloneConfigs gates to ENGINEER/ADMIN. Seeded
+// with DEV_PASSWORD like every other account.
 const E2E_USER: SeedUser = {
   email: E2E_USER_EMAIL,
-  role: "SALES",
+  role: "ENGINEER",
   initials: "E2E",
 };
 
