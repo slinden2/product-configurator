@@ -1867,6 +1867,117 @@ export async function updateRevisionSettingsWithAudit(data: {
 }
 
 /**
+ * Updates the offer header's customer fields and writes the audit log in the same
+ * transaction. Deliberately **not** revision-gated: the header is the offer's stable
+ * spine (lifecycle and pricing live on the revisions), so a typo in a customer name
+ * or email stays correctable at any lifecycle stage. Access and scope are the action's
+ * job (`authorizeOfferLifecycleAction`); the only guard here is existence.
+ *
+ * A `customer_name` change fans out to `configurations.name` for every OFFER config
+ * under the offer — **status-blind, `isEditable` deliberately not consulted**. That
+ * column is the offer header's shadow, not engineering data: it is the display source
+ * on every config detail surface (view page, BOM page and its export, config PDF), so
+ * leaving it stale on a TECH_APPROVED/CLOSED config would keep showing the wrong
+ * customer forever. This is a system-derived write, the same class as the ENGINEER
+ * renegotiation-repricing seam (see `.claude/rules/workflow.md`). The acceptance flow
+ * already writes `configurations` status-blind under this same lock.
+ *
+ * Opens with the offer row lock — the serialization point of every structural offer
+ * transaction. That matters here: acceptance freezes the configs' names into
+ * `as_sold_snapshot`, so without the lock a concurrent header edit could interleave
+ * and freeze a half-old snapshot.
+ *
+ * Returns the synced configuration ids so the caller can revalidate their pages; the
+ * list is empty when the name did not change.
+ */
+export async function updateOfferHeaderWithAudit(data: {
+  offerId: number;
+  header: OfferHeaderInput;
+  updated_by: string;
+}): Promise<{ configIds: number[] }> {
+  return db.transaction(async (tx) => {
+    await lockOfferRow(data.offerId, tx);
+
+    const [existing] = await tx
+      .select({
+        customer_name: offers.customer_name,
+        customer_address: offers.customer_address,
+        customer_email: offers.customer_email,
+      })
+      .from(offers)
+      .where(eq(offers.id, data.offerId));
+
+    // lockOfferRow is a bare `select ... for update`, so existence is proven here.
+    if (!existing) throw new QueryError(MSG.offer.notFound);
+
+    // Blank optional fields are stored as NULL, mirroring insertOffer — otherwise an
+    // edited row would hold "" where a created row holds null.
+    const next = {
+      customer_name: data.header.customer_name,
+      customer_address: data.header.customer_address || null,
+      customer_email: data.header.customer_email || null,
+    };
+
+    const [updated] = await tx
+      .update(offers)
+      .set({ ...next, updated_at: new Date() })
+      .where(eq(offers.id, data.offerId))
+      .returning({ id: offers.id });
+
+    // Nothing to compare-and-swap against (the header has no status), so this can only
+    // mean the offer vanished between the locked read and the update.
+    if (!updated) throw new QueryError(MSG.offer.notFound);
+
+    // Only a name change touches the shadow: an address/email edit must not bump the
+    // configs' updated_at and reshuffle the engineers' technical queue.
+    let configIds: number[] = [];
+    if (existing.customer_name !== next.customer_name) {
+      // Distinct is load-bearing, not defensive: a renegotiation revision references the
+      // same configuration_id as the accepted revision it re-quotes, so a renegotiated
+      // offer yields the same config on more than one line.
+      const rows = await tx
+        .selectDistinct({ id: offerRevisionLines.configuration_id })
+        .from(offerRevisionLines)
+        .innerJoin(
+          offerRevisions,
+          eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+        )
+        .where(eq(offerRevisions.offer_id, data.offerId));
+      configIds = rows.map((row) => row.id);
+
+      if (configIds.length > 0) {
+        await tx
+          .update(configurations)
+          .set({ name: next.customer_name })
+          .where(
+            and(
+              inArray(configurations.id, configIds),
+              eq(configurations.origin, "OFFER"),
+            ),
+          );
+      }
+    }
+
+    await insertActivityLog(
+      {
+        userId: data.updated_by,
+        action: "OFFER_UPDATE",
+        targetEntity: "offer",
+        targetId: data.offerId.toString(),
+        metadata: {
+          old_value: existing,
+          new_value: next,
+          syncedConfigIds: configIds,
+        },
+      },
+      tx,
+    );
+
+    return { configIds };
+  });
+}
+
+/**
  * Persists a margin absorb sign-off on an offer revision line and writes the
  * audit log in a single transaction. Opens with the offer row lock — the
  * serialization point of every acceptance transaction — and re-checks the

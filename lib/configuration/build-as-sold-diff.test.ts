@@ -68,6 +68,22 @@ describe("buildAsSoldDiff", () => {
     expect(diff.hasChanges).toBe(false);
   });
 
+  it("ignores a customer rename — name mirrors the offer header, not engineering drift", () => {
+    // Editing the offer header (#265) re-syncs `configurations.name` on every OFFER
+    // config, including frozen ones. Without the exemption that would surface on the
+    // margin sign-off page as a bogus "the config changed after it was sold" row.
+    const diff = buildAsSoldDiff(
+      makeSnapshot({
+        configuration: makeValidConfig({ name: "Rossi Trasporti" }),
+      }),
+      makeSnapshot({
+        configuration: makeValidConfig({ name: "Rossi Logistica" }),
+      }),
+    );
+    expect(diff.hasChanges).toBe(false);
+    expect(allRows(diff)).toEqual([]);
+  });
+
   it("reports a changed field with both formatted values", () => {
     const diff = buildAsSoldDiff(
       makeSnapshot({

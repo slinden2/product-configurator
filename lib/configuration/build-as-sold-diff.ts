@@ -104,6 +104,14 @@ export function buildAsSoldDiff(
   return { sections, hasChanges: sections.length > 0 };
 }
 
+/**
+ * `name` is the offer header's customer-name shadow on an OFFER config, and this diff
+ * only ever runs on offer lines. Editing the header re-syncs the shadow, which would
+ * otherwise surface here as engineering drift ("Nome: Vecchio → Nuovo") on the margin
+ * sign-off page — a commercial rename is not a change to what was engineered.
+ */
+const DIFF_EXEMPT_CONFIG_KEYS = new Set(["name"]);
+
 function diffConfigSections(
   asSold: OfferConfigSnapshot,
   current: OfferConfigSnapshot,
@@ -118,7 +126,7 @@ function diffConfigSections(
     rows: diffRows(
       flattenRows(asSoldByTitle.get(section.title)),
       flattenRows(section),
-    ),
+    ).filter((row) => !DIFF_EXEMPT_CONFIG_KEYS.has(row.key)),
   }));
 }
 

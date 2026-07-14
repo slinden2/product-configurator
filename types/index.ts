@@ -236,6 +236,7 @@ export const ActivityActions = [
   "WASH_BAY_DELETE",
   "BOM_INVALIDATE",
   "USER_DEACTIVATE",
+  "OFFER_UPDATE",
 ] as const;
 export type ActivityAction = (typeof ActivityActions)[number];
 
@@ -287,6 +288,7 @@ export const ActivityActionLabels: Record<ActivityAction, string> = {
   WASH_BAY_DELETE: "Eliminazione pista",
   BOM_INVALIDATE: "Invalidazione distinta",
   USER_DEACTIVATE: "Disattivazione utente",
+  OFFER_UPDATE: "Modifica intestazione offerta",
 };
 
 export const CoefficientSources = ["MAXBOM", "MANUAL"] as const;
