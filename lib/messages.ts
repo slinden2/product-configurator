@@ -116,6 +116,7 @@ export const MSG = {
     offerRevisionApproved: "Revisione approvata per l'invio.",
     offerRevisionReturnedToDraft: "Revisione riportata in bozza.",
     offerRevisionCreated: "Nuova revisione creata.",
+    offerRevisionDiscarded: "Revisione scartata.",
     offerRenegotiationCreated: "Rinegoziazione creata.",
     offerRevisionAccepted:
       "Offerta accettata: configurazioni in lavorazione tecnica.",
@@ -313,6 +314,11 @@ export const MSG = {
       "Annullare l'accettazione? La revisione tornerà «Inviata», l'offerta si sbloccherà e le configurazioni torneranno in bozza (uscendo dall'ufficio tecnico). Usa solo per correggere un'accettazione errata.",
     workingRevisionExists:
       "Esiste già una revisione di lavoro non ancora inviata. Completane l'invio prima di crearne una nuova.",
+    cannotDiscard: "Solo una revisione in bozza può essere scartata.",
+    cannotDiscardFirstRevision:
+      "La prima revisione non può essere scartata: un'offerta deve sempre avere almeno una revisione.",
+    unauthorizedDiscardRenegotiation:
+      "Solo i direttori vendite e gli ADMIN possono scartare una revisione di rinegoziazione.",
     submitConfirm:
       "Inviare questa revisione in approvazione? Le configurazioni si bloccheranno finché un responsabile non la approva o la riporta in bozza.",
     approveConfirm:
@@ -341,6 +347,10 @@ export const MSG = {
       "Le configurazioni di una rinegoziazione non sono modificabili: solo prezzi e condizioni commerciali.",
     renegotiateConfirm:
       "Avviare una rinegoziazione? Verrà creata una nuova revisione con le configurazioni correnti (sola lettura) e i prezzi ricalcolati; le condizioni commerciali saranno modificabili fino all'invio.",
+    discardConfirm:
+      "Scartare questa revisione? La revisione e le configurazioni clonate al suo interno verranno eliminate definitivamente. L'offerta tornerà alla revisione precedente e il numero di revisione verrà riutilizzato. L'operazione non è reversibile.",
+    discardRenegotiationConfirm:
+      "Scartare questa rinegoziazione? La revisione e le sue righe verranno eliminate definitivamente e l'offerta tornerà alla revisione accettata in vigore. Le configurazioni dell'ufficio tecnico non vengono toccate. L'operazione non è reversibile.",
     removeLineConfirm: {
       title: "Rimuovere la configurazione?",
       description: (name: string) =>

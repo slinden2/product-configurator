@@ -21,6 +21,8 @@ const mockRepriceOfferLines = vi.fn();
 const mockLoadValidatedConfiguration = vi.fn();
 const mockGetConfigsForEnergyChainCheck = vi.fn();
 const mockLockOfferRow = vi.fn();
+const mockDiscardDraftRevisionWithAudit = vi.fn();
+const mockGetOfferWithRevisionAndLines = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -40,6 +42,10 @@ vi.mock("@/db/queries", () => ({
     mockCreateOfferRevisionFrom(...args),
   createRenegotiationRevisionFrom: (...args: unknown[]) =>
     mockCreateRenegotiationRevisionFrom(...args),
+  discardDraftRevisionWithAudit: (...args: unknown[]) =>
+    mockDiscardDraftRevisionWithAudit(...args),
+  getOfferWithRevisionAndLines: (...args: unknown[]) =>
+    mockGetOfferWithRevisionAndLines(...args),
   getWorkingRevisionForSend: (...args: unknown[]) =>
     mockGetWorkingRevisionForSend(...args),
   getConfigsForEnergyChainCheck: (...args: unknown[]) =>
@@ -95,6 +101,7 @@ import {
   approveRevisionAction,
   createRenegotiationRevisionAction,
   createRevisionAction,
+  discardDraftRevisionAction,
   recordRevisionOutcomeAction,
   rejectRevisionAction,
   sendRevisionAction,
@@ -1013,5 +1020,158 @@ describe("recordRevisionOutcomeAction", () => {
       error: MSG.offer.cannotRecordOutcome,
     });
     expect(mockRecordOfferRevisionOutcomeWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe("discardDraftRevisionAction", () => {
+  /** History with the working DRAFT (rev 3) on top and a SENT predecessor to fall back to. */
+  function offerWithDraft() {
+    return {
+      id: OFFER_ID,
+      revisions: [
+        { id: REVISION_ID, revision_no: 3, status: "DRAFT", lines: [] },
+        {
+          id: 6,
+          revision_no: 2,
+          status: "SENT",
+          lines: [{ as_sold_frozen_at: null }],
+        },
+      ],
+    };
+  }
+
+  /** Offer accepted at rev 2 (as-sold frozen), with rev 3 an open renegotiation DRAFT. */
+  function offerWithRenegotiationDraft() {
+    return {
+      id: OFFER_ID,
+      revisions: [
+        { id: REVISION_ID, revision_no: 3, status: "DRAFT", lines: [] },
+        {
+          id: 6,
+          revision_no: 2,
+          status: "ACCEPTED",
+          lines: [{ as_sold_frozen_at: new Date("2026-01-01T00:00:00.000Z") }],
+        },
+      ],
+    };
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserData.mockResolvedValue({ id: "s1", role: "SALES" });
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "DRAFT",
+    });
+    mockGetOfferWithRevisionAndLines.mockResolvedValue(offerWithDraft());
+    mockDiscardDraftRevisionWithAudit.mockResolvedValue({
+      revisionNo: 3,
+      deletedConfigIds: [21, 22],
+    });
+  });
+
+  test("discards the working draft in-tx and revalidates the offer routes", async () => {
+    const result = await discardDraftRevisionAction(OFFER_ID);
+
+    expect(result).toEqual({ success: true });
+    // `false` = not a renegotiation; the helper re-derives it under the lock.
+    expect(mockDiscardDraftRevisionWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "s1",
+      false,
+      {},
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(`/offerte/${OFFER_ID}`);
+    expect(revalidatePath).toHaveBeenCalledWith("/offerte");
+  });
+
+  test("rejects ENGINEER (no offer access)", async () => {
+    mockGetUserData.mockResolvedValue({ id: "e1", role: "ENGINEER" });
+    const result = await discardDraftRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.unauthorized });
+    expect(mockDiscardDraftRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("returns notFound when the offer is out of scope", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue(null);
+    const result = await discardDraftRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.notFound });
+    expect(mockDiscardDraftRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects a revision that has left DRAFT", async () => {
+    mockGetOfferWorkingRevision.mockResolvedValue({
+      id: REVISION_ID,
+      status: "PENDING_APPROVAL",
+    });
+    const result = await discardDraftRevisionAction(OFFER_ID);
+    expect(result).toEqual({ success: false, error: MSG.offer.lineCannotEdit });
+    expect(mockDiscardDraftRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("refuses to discard the only revision (an offer is never left headless)", async () => {
+    const offer = offerWithDraft();
+    offer.revisions = [offer.revisions[0]];
+    mockGetOfferWithRevisionAndLines.mockResolvedValue(offer);
+
+    const result = await discardDraftRevisionAction(OFFER_ID);
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.cannotDiscardFirstRevision,
+    });
+    expect(mockDiscardDraftRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+  ] as const)("rejects %s on a renegotiation draft (management decision, like opening one)", async (role) => {
+    mockGetUserData.mockResolvedValue({ id: "s1", role });
+    mockGetOfferWithRevisionAndLines.mockResolvedValue(
+      offerWithRenegotiationDraft(),
+    );
+
+    const result = await discardDraftRevisionAction(OFFER_ID);
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.unauthorizedDiscardRenegotiation,
+    });
+    expect(mockDiscardDraftRevisionWithAudit).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    "ADMIN",
+    "SALES_DIRECTOR",
+  ] as const)("%s may discard a renegotiation draft", async (role) => {
+    mockGetUserData.mockResolvedValue({ id: "d1", role });
+    mockGetOfferWithRevisionAndLines.mockResolvedValue(
+      offerWithRenegotiationDraft(),
+    );
+
+    const result = await discardDraftRevisionAction(OFFER_ID);
+
+    expect(result).toEqual({ success: true });
+    // `true` tells the helper to drop lines only — the live engineering configs survive.
+    expect(mockDiscardDraftRevisionWithAudit).toHaveBeenCalledWith(
+      OFFER_ID,
+      REVISION_ID,
+      "d1",
+      true,
+      {},
+    );
+  });
+
+  test("surfaces a guard error from the helper and does not revalidate", async () => {
+    mockDiscardDraftRevisionWithAudit.mockRejectedValue(
+      new QueryError(MSG.offer.cannotDiscard),
+    );
+
+    const result = await discardDraftRevisionAction(OFFER_ID);
+
+    expect(result).toEqual({ success: false, error: MSG.offer.cannotDiscard });
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

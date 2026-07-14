@@ -13,7 +13,10 @@ import {
 } from "@/db/schemas";
 import { canAccessAllOffers, canViewOffer } from "@/lib/access";
 import { MSG } from "@/lib/messages";
-import { firstAcceptedRevisionNo } from "@/lib/offer-renegotiation";
+import {
+  firstAcceptedRevisionNo,
+  isRenegotiationRevision,
+} from "@/lib/offer-renegotiation";
 import type { ConfigOrigin, OfferStatusType, TransportMode } from "@/types";
 import { OPEN_REVISION_STATUSES } from "@/types";
 import type { ConfigSchema } from "@/validation/config-schema";
@@ -24,6 +27,7 @@ import type { OfferConfigSnapshot } from "@/validation/offer-config-snapshot-sch
 import { insertActivityLog } from "./activity";
 import {
   cloneConfigurationRows,
+  deleteConfiguration,
   insertConfiguration,
   resolveConfigurationClientName,
 } from "./configurations";
@@ -933,6 +937,130 @@ export async function createRenegotiationRevisionFrom(
     revisionNo: newRevisionNo,
     configIds,
   };
+}
+
+/**
+ * Hard-deletes the working DRAFT revision — the inverse of {@link createOfferRevisionFrom}
+ * (#266). A clone-forward draft is pure derived data (pre-handoff DRAFT configs, invisible
+ * to engineering, no BOM, no snapshots), so deleting it restores the offer to its pre-clone
+ * state. `revision_no` is computed as `latest.revision_no + 1` and the unique
+ * (offer_id, revision_no) frees the number on delete, so the next create reuses it — no gaps
+ * in customer-facing numbering.
+ *
+ * `expectRenegotiation` is the caller's derivation, which it used to pick the role gate
+ * (discarding a renegotiation is ADMIN/SALES_DIRECTOR only). We re-derive it here under the
+ * lock and refuse on disagreement, so the authorization the action granted still describes
+ * the row we are about to delete.
+ *
+ * Audited in the caller's transaction; the audit row is the only surviving trace (there is
+ * no soft-delete status).
+ */
+export async function discardDraftRevisionWithAudit(
+  offerId: number,
+  revisionId: number,
+  userId: string,
+  expectRenegotiation: boolean,
+  // Required: the deletes and the OFFER_REVISION_DISCARD audit must commit atomically.
+  tx: TransactionType,
+): Promise<{ revisionNo: number; deletedConfigIds: number[] }> {
+  // Serialize lifecycle mutations on this offer: a concurrent submit/send/create blocks
+  // here until we commit, so the status read below can't go stale under us.
+  await lockOfferRow(offerId, tx);
+
+  const offer = await tx.query.offers.findFirst({
+    where: eq(offers.id, offerId),
+    columns: { id: true },
+    with: {
+      revisions: {
+        orderBy: [desc(offerRevisions.revision_no)],
+        with: {
+          lines: {
+            columns: {
+              id: true,
+              configuration_id: true,
+              as_sold_frozen_at: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!offer) throw new QueryError(MSG.offer.notFound);
+
+  // Only the working revision can be discarded: `revisions` is desc by revision_no, so
+  // [0] is the latest. Discarding anything else would punch a hole in the history.
+  const latest = offer.revisions[0];
+  if (!latest || latest.id !== revisionId) {
+    throw new QueryError(MSG.offer.notFound);
+  }
+  if (latest.status !== "DRAFT") {
+    throw new QueryError(MSG.offer.cannotDiscard);
+  }
+  // An offer must always keep at least one revision: "the latest revision is the working
+  // copy" is load-bearing — every revisions[0] read assumes it exists. Deleting the whole
+  // offer is out of scope.
+  if (offer.revisions.length < 2) {
+    throw new QueryError(MSG.offer.cannotDiscardFirstRevision);
+  }
+
+  const firstAcceptedNo = firstAcceptedRevisionNo(offer.revisions);
+  const isRenegotiation = isRenegotiationRevision(
+    latest.revision_no,
+    firstAcceptedNo,
+  );
+  if (isRenegotiation !== expectRenegotiation) {
+    throw new QueryError(MSG.offer.cannotDiscard);
+  }
+
+  // A renegotiation's lines reference the LIVE engineering configurations read-only —
+  // the very same rows the accepted revision's frozen lines point at (no deep-clone; see
+  // createRenegotiationRevisionFrom). Deleting them would destroy engineering's work and
+  // gut the as-sold record, so a renegotiation discard drops lines only. The restrict FK
+  // on offer_revision_lines.configuration_id is just the backstop; this branch is the guard.
+  const deletedConfigIds = isRenegotiation
+    ? []
+    : latest.lines.map((line) => line.configuration_id);
+
+  // Status-guarded so a concurrent submit that commits between the read above and here
+  // can't be silently clobbered. The lines cascade away with the revision row.
+  const [deleted] = await tx
+    .delete(offerRevisions)
+    .where(
+      and(
+        eq(offerRevisions.id, revisionId),
+        eq(offerRevisions.status, "DRAFT"),
+      ),
+    )
+    .returning({ id: offerRevisions.id });
+  if (!deleted) throw new QueryError(MSG.offer.cannotDiscard);
+
+  // Configs last: configuration_id is onDelete restrict, so this would fail while the
+  // lines still referenced them (same ordering as removeOfferLine). Each delete cascades
+  // to water tanks, wash bays and EBOM items, and is itself status-guarded on DRAFT —
+  // a pre-handoff offer config is DRAFT by construction.
+  for (const configId of deletedConfigIds) {
+    await deleteConfiguration(configId, "DRAFT", tx);
+  }
+
+  await insertActivityLog(
+    {
+      userId,
+      action: "OFFER_REVISION_DISCARD",
+      targetEntity: "offer",
+      targetId: String(offerId),
+      metadata: {
+        revisionId,
+        revisionNo: latest.revision_no,
+        renegotiation: isRenegotiation,
+        lineCount: latest.lines.length,
+        deletedConfigIds,
+      },
+    },
+    tx,
+  );
+
+  return { revisionNo: latest.revision_no, deletedConfigIds };
 }
 
 /**

@@ -15,7 +15,9 @@ import {
   approveOfferRevisionWithAudit,
   createOfferRevisionFrom,
   createRenegotiationRevisionFrom,
+  discardDraftRevisionWithAudit,
   getConfigsForEnergyChainCheck,
+  getOfferWithRevisionAndLines,
   getWorkingRevisionForSend,
   lockOfferRow,
   markOfferRevisionSentWithAudit,
@@ -31,6 +33,10 @@ import {
 import { canApproveRevision, canRenegotiateOffer } from "@/lib/access";
 import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
 import { MSG } from "@/lib/messages";
+import {
+  firstAcceptedRevisionNo,
+  isRenegotiationRevision,
+} from "@/lib/offer-renegotiation";
 import { repriceOfferLines } from "@/lib/offer-revision-pricing";
 import {
   type OfferSettings,
@@ -317,6 +323,72 @@ export async function createRevisionAction(
     return { success: true as const, data: { revisionNo: newRevisionNo } };
   } catch (err) {
     return mapActionError(err, "Failed to create offer revision:");
+  }
+}
+
+/**
+ * Discards the working DRAFT revision (#266): the exact inverse of
+ * {@link createRevisionAction}, hard-deleting the revision, its lines and — for a
+ * clone-forward draft — the configurations it owns, so an agent who cloned the wrong
+ * source revision is no longer stuck (the only other exits from DRAFT lead forward
+ * through the approval gate).
+ *
+ * `authorizeRevisionAction` supplies offer access + scope + "the working revision is
+ * DRAFT". Discarding a **renegotiation** draft is additionally gated to
+ * ADMIN / SALES_DIRECTOR, symmetric with who may open one
+ * ({@link createRenegotiationRevisionAction}); the state guards and the
+ * lines-only cascade live in `discardDraftRevisionWithAudit`, under the offer row lock.
+ */
+export async function discardDraftRevisionAction(offerId: number) {
+  const auth = await authorizeRevisionAction(offerId);
+  if (!auth.success) return auth;
+  const { user, revision } = auth;
+
+  // The full history: renegotiation-ness is derived from the whole revision list
+  // (lib/offer-renegotiation.ts), and a predecessor must exist to fall back to.
+  const offer = await getOfferWithRevisionAndLines(offerId, user);
+  if (!offer) return { success: false as const, error: MSG.offer.notFound };
+
+  const working = offer.revisions[0];
+  if (!working) return { success: false as const, error: MSG.offer.notFound };
+  // An offer must always keep at least one revision (re-checked in-tx under the lock).
+  if (offer.revisions.length < 2) {
+    return {
+      success: false as const,
+      error: MSG.offer.cannotDiscardFirstRevision,
+    };
+  }
+
+  const isRenegotiation = isRenegotiationRevision(
+    working.revision_no,
+    firstAcceptedRevisionNo(offer.revisions),
+  );
+  if (isRenegotiation && !canRenegotiateOffer(user.role)) {
+    return {
+      success: false as const,
+      error: MSG.offer.unauthorizedDiscardRenegotiation,
+    };
+  }
+
+  try {
+    await db.transaction((tx) =>
+      discardDraftRevisionWithAudit(
+        offerId,
+        revision.id,
+        user.id,
+        isRenegotiation,
+        tx,
+      ),
+    );
+
+    // Mirrors createRevisionAction: pre-handoff OFFER configs never surface in the
+    // technical queue (getUserConfigurations = STANDALONE ∪ OFFER SALES_APPROVED+), so
+    // deleting them changes nothing under /configurazioni.
+    revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/offerte");
+    return { success: true as const };
+  } catch (err) {
+    return mapActionError(err, "Failed to discard offer revision:");
   }
 }
 

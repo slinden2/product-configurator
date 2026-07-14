@@ -35,6 +35,7 @@ import { OfferStatusLabels, OPEN_REVISION_STATUSES } from "@/types";
 import AcceptRevisionButton from "./accept-revision-button";
 import ApproveRevisionButton from "./approve-revision-button";
 import CreateRevisionButton from "./create-revision-button";
+import DiscardRevisionButton from "./discard-revision-button";
 import OfferExportButtons from "./export-offer-buttons";
 import QuoteView from "./quote-view";
 import RecordOutcomeButton from "./record-outcome-button";
@@ -91,6 +92,14 @@ const OfferDetail = async (props: OfferDetailProps) => {
     !OPEN_REVISION_STATUSES.includes(revision.status) &&
     isAccepted &&
     canRenegotiateOffer(user.role);
+  // Discard the working draft (#266): only a DRAFT that has a predecessor to fall back on
+  // (an offer must always keep at least one revision — revision 1 is never discardable).
+  // Discarding a renegotiation is management-only, symmetric with who may open one.
+  const canDiscardRevision =
+    !!revision &&
+    revision.status === "DRAFT" &&
+    offer.revisions.length > 1 &&
+    (!workingIsRenegotiation || canRenegotiateOffer(user.role));
   // ADMIN-only correction: undo a mistaken acceptance. Offered only on the in-force
   // first-acceptance revision (a renegotiation re-acceptance is out of scope, blocked
   // server-side too); the action re-checks role, state, and the engineering guard.
@@ -153,6 +162,14 @@ const OfferDetail = async (props: OfferDetailProps) => {
             )}
             {revision.status === "DRAFT" && lines.length > 0 && (
               <SubmitForApprovalButton offerId={offer.id} />
+            )}
+            {/* Deliberately outside the `lines.length > 0` guard above: an empty draft is
+                exactly the one an agent most wants to throw away. */}
+            {canDiscardRevision && (
+              <DiscardRevisionButton
+                offerId={offer.id}
+                renegotiation={workingIsRenegotiation}
+              />
             )}
             {revision.status === "PENDING_APPROVAL" && canApprove && (
               <>
