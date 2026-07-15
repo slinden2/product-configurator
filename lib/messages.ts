@@ -346,6 +346,8 @@ export const MSG = {
       "Solo i direttori vendite e gli ADMIN possono avviare una rinegoziazione.",
     renegotiationNotAccepted:
       "La rinegoziazione è possibile solo su un'offerta accettata.",
+    renegotiationNoAlert:
+      "La rinegoziazione è disponibile solo quando almeno una riga accettata ha un margine sotto soglia da decidere.",
     renegotiationLinesLocked:
       "Le configurazioni di una rinegoziazione non sono modificabili: solo prezzi e condizioni commerciali.",
     renegotiateConfirm:
