@@ -102,7 +102,9 @@ export default function OfferMarginOverview({
                 <TableHead className="text-right">
                   {MSG.marginReview.colMargin}
                 </TableHead>
-                <TableHead className="sr-only">Azioni</TableHead>
+                <TableHead className="sr-only">
+                  {MSG.marginReview.colActions}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

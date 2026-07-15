@@ -403,7 +403,6 @@ export const MSG = {
     signOffNoteLabel: "Nota",
     renegotiateButton: "Rinegozia",
     renegotiateConfirmTitle: "Avviare una rinegoziazione?",
-    renegotiationOpen: "Rinegoziazione in corso",
     // Offer-level margin hub (overview of the accepted revision's frozen lines).
     overviewTitle: "Marginalità dell'offerta",
     overviewSubtitle: (revisionNo: number) =>
@@ -412,6 +411,7 @@ export const MSG = {
     colConfiguration: "Configurazione",
     colState: "Stato margine",
     colMargin: "Marginalità",
+    colActions: "Azioni",
     lineLabel: (position: number) => `Configurazione ${position}`,
     analyzeLink: "Analizza",
     renegotiationOpenDetail: (revisionNo: number, statusLabel: string) =>
