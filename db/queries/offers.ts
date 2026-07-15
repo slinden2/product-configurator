@@ -567,19 +567,19 @@ export async function offerRevisionLineForConfig(
 }
 
 /**
- * Reads the offer revision line pricing for a configuration, for the margin page:
- * the as-sent `pricing_snapshot` (revenue reference) plus the derived net/list prices,
- * the revision discount/status, the at-acceptance as-sold freeze and the absorb
- * sign-off (with the absorber's email for display). Returns null for a config that
- * is not an offer line (e.g. standalone). A config referenced by renegotiation
- * revisions has one line per revision: the line on the **in-force accepted**
- * revision (`offers.accepted_revision_id`) is authoritative for the margin
- * baseline; pre-acceptance it falls back to the latest revision's line.
+ * Offer revision line pricing for the margin surfaces: the as-sent
+ * `pricing_snapshot` (revenue reference) plus the derived net/list prices, the
+ * revision discount/status/number, the owning offer's in-force
+ * `accepted_revision_id`, the at-acceptance as-sold freeze and the absorb
+ * sign-off (with the absorber's email for display).
  */
-export async function getOfferLinePricingForConfig(configId: number): Promise<{
+export type OfferLinePricing = {
   id: number;
+  configuration_id: number;
   offer_id: number;
   revision_id: number;
+  revision_no: number;
+  accepted_revision_id: number | null;
   pricing_snapshot: OfferLineItem[] | null;
   net_price: string;
   list_price: string;
@@ -592,41 +592,85 @@ export async function getOfferLinePricingForConfig(configId: number): Promise<{
   absorbed_at: Date | null;
   absorbed_margin_percent: string | null;
   absorbed_note: string | null;
-} | null> {
-  const [row] = await db
-    .select({
-      id: offerRevisionLines.id,
-      offer_id: offerRevisions.offer_id,
-      revision_id: offerRevisions.id,
-      pricing_snapshot: offerRevisionLines.pricing_snapshot,
-      net_price: offerRevisionLines.net_price,
-      list_price: offerRevisionLines.list_price,
-      discount_pct: offerRevisions.discount_pct,
-      revisionStatus: offerRevisions.status,
-      as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
-      as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
-      absorbed_by: offerRevisionLines.absorbed_by,
-      absorbed_by_email: userProfiles.email,
-      absorbed_at: offerRevisionLines.absorbed_at,
-      absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
-      absorbed_note: offerRevisionLines.absorbed_note,
-    })
+};
+
+/** Column selection shared by the by-config and by-line pricing lookups. */
+const offerLinePricingColumns = {
+  id: offerRevisionLines.id,
+  configuration_id: offerRevisionLines.configuration_id,
+  offer_id: offerRevisions.offer_id,
+  revision_id: offerRevisions.id,
+  revision_no: offerRevisions.revision_no,
+  accepted_revision_id: offers.accepted_revision_id,
+  pricing_snapshot: offerRevisionLines.pricing_snapshot,
+  net_price: offerRevisionLines.net_price,
+  list_price: offerRevisionLines.list_price,
+  discount_pct: offerRevisions.discount_pct,
+  revisionStatus: offerRevisions.status,
+  as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
+  as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+  absorbed_by: offerRevisionLines.absorbed_by,
+  absorbed_by_email: userProfiles.email,
+  absorbed_at: offerRevisionLines.absorbed_at,
+  absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
+  absorbed_note: offerRevisionLines.absorbed_note,
+} as const;
+
+/** The select + joins both pricing lookups share; callers add where/order. */
+function offerLinePricingBase() {
+  return db
+    .select(offerLinePricingColumns)
     .from(offerRevisionLines)
     .innerJoin(
       offerRevisions,
       eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
     )
     .leftJoin(userProfiles, eq(offerRevisionLines.absorbed_by, userProfiles.id))
-    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
-    .where(eq(offerRevisionLines.configuration_id, configId))
-    .orderBy(...acceptedRevisionFirstOrder())
-    .limit(1);
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id));
+}
 
-  if (!row) return null;
+function toOfferLinePricing(
+  row: Awaited<ReturnType<typeof offerLinePricingBase>>[number],
+): OfferLinePricing {
   return {
     ...row,
     pricing_snapshot: (row.pricing_snapshot as OfferLineItem[] | null) ?? null,
   };
+}
+
+/**
+ * Resolves the pricing line owning `configId`, for the config-keyed margin
+ * detail page. Returns null for a config that is not an offer line (e.g.
+ * standalone). A config referenced by renegotiation revisions has one line per
+ * revision: the line on the **in-force accepted** revision
+ * (`offers.accepted_revision_id`) is authoritative for the margin baseline;
+ * pre-acceptance it falls back to the latest revision's line.
+ */
+export async function getOfferLinePricingForConfig(
+  configId: number,
+): Promise<OfferLinePricing | null> {
+  const [row] = await offerLinePricingBase()
+    .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(...acceptedRevisionFirstOrder())
+    .limit(1);
+
+  return row ? toOfferLinePricing(row) : null;
+}
+
+/**
+ * Resolves a specific pricing line by its own id, for the line-keyed absorb
+ * action initiated from the offer margin hub. Unlike the by-config lookup this
+ * is unambiguous post-renegotiation; the caller verifies `revision_id ===
+ * accepted_revision_id` to reject a superseded accepted line.
+ */
+export async function getOfferLinePricingForLine(
+  lineId: number,
+): Promise<OfferLinePricing | null> {
+  const [row] = await offerLinePricingBase()
+    .where(eq(offerRevisionLines.id, lineId))
+    .limit(1);
+
+  return row ? toOfferLinePricing(row) : null;
 }
 
 /** Persists a recomputed line's list/net price and pricing snapshot. */
