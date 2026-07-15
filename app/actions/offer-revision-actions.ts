@@ -32,6 +32,10 @@ import {
 } from "@/db/queries";
 import { canApproveRevision, canRenegotiateOffer } from "@/lib/access";
 import { violatesEnergyChainInvariant } from "@/lib/configuration/energy-chain";
+import {
+  computeLineMarginAlerts,
+  hasActiveMarginAlert,
+} from "@/lib/margin-alerts";
 import { MSG } from "@/lib/messages";
 import {
   firstAcceptedRevisionNo,
@@ -411,6 +415,27 @@ export async function createRenegotiationRevisionAction(offerId: number) {
       success: false as const,
       error: MSG.offer.renegotiationUnauthorized,
     };
+  }
+
+  // #269: renegotiation is a margin remedy — require at least one accepted line
+  // with an active margin alert. Only gate when an accepted revision exists; the
+  // not-accepted state is caught by createRenegotiationRevisionFrom below, which
+  // keeps returning its own MSG.offer.renegotiationNotAccepted.
+  const offer = await getOfferWithRevisionAndLines(offerId, user);
+  const acceptedRevision = offer?.revisions.find(
+    (rev) => rev.id === offer.accepted_revision_id,
+  );
+  if (acceptedRevision) {
+    const alerts = await computeLineMarginAlerts(
+      acceptedRevision.lines,
+      Number(acceptedRevision.discount_pct),
+    );
+    if (!hasActiveMarginAlert(alerts.values())) {
+      return {
+        success: false as const,
+        error: MSG.offer.renegotiationNoAlert,
+      };
+    }
   }
 
   try {

@@ -1,6 +1,4 @@
-import { AlertTriangle, Handshake, Lock, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import RenegotiateRevisionButton from "@/components/offer/renegotiate-revision-button";
+import { AlertTriangle, Lock, ShieldCheck } from "lucide-react";
 import Banner from "@/components/shared/banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +19,6 @@ import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { formatDelta, formatPct } from "@/lib/money";
 import { cn, formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
-import AbsorbMarginButton from "./absorb-margin-button";
 
 interface Props {
   comparison: MarginComparison;
@@ -37,28 +34,17 @@ interface Props {
   /** True when a freeze exists but the snapshot could not be compared. */
   asSoldDiffUnavailable?: boolean;
   /**
-   * Absorb sign-off context (#84); null when the line is not eligible (no
-   * accepted/frozen offer line). `signOff` carries the recorded decision, if
-   * any — it stays visible even when a re-alert is active.
+   * Recorded absorb sign-off (#84), shown read-only; null when the line is not
+   * eligible (no accepted/frozen offer line) or was never absorbed. The absorb
+   * decision itself is taken on the offer margin hub, not on this page.
    */
   absorb?: {
-    confId: number;
     signOff: {
       byLabel: string;
       at: Date;
       marginPct: number;
       note: string | null;
     } | null;
-  } | null;
-  /**
-   * Renegotiation context (#85), the other arm of the margin decision point;
-   * null when the line is not eligible (same eligibility as `absorb`). `open`
-   * is true while the offer already has an open working revision — the
-   * renegotiate button then yields to a link to the offer.
-   */
-  renegotiation?: {
-    offerId: number;
-    open: boolean;
   } | null;
 }
 
@@ -95,12 +81,7 @@ function StatTile({
   );
 }
 
-function SummaryCard({
-  comparison,
-  discountPct,
-  absorb,
-  renegotiation,
-}: Props) {
+function SummaryCard({ comparison, discountPct, absorb }: Props) {
   const {
     hasEbom,
     offerMargin,
@@ -127,43 +108,16 @@ function SummaryCard({
       </CardHeader>
       <CardContent className="space-y-6">
         {alertActive && (
-          <div className="space-y-3">
-            <Banner
-              variant="error"
-              icon={<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />}
-              title="Marginalità sotto la soglia minima"
-            >
-              La marginalità dopo la progettazione (
-              {formatPct(currentMargin.marginPct)}) è inferiore alla soglia
-              minima del {formatPct(thresholdPct)}.
-            </Banner>
-            <div className="flex flex-wrap items-center gap-2">
-              {absorb && (
-                <AbsorbMarginButton
-                  confId={absorb.confId}
-                  marginPct={currentMargin.marginPct}
-                  thresholdPct={thresholdPct}
-                />
-              )}
-              {renegotiation &&
-                (renegotiation.open ? (
-                  <Link
-                    href={`/offerte/${renegotiation.offerId}`}
-                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                  >
-                    <Handshake className="h-4 w-4" />
-                    {MSG.marginReview.renegotiationOpen}
-                  </Link>
-                ) : (
-                  <RenegotiateRevisionButton
-                    offerId={renegotiation.offerId}
-                    navigateTo={`/offerte/${renegotiation.offerId}`}
-                    variant="outline"
-                    size="sm"
-                  />
-                ))}
-            </div>
-          </div>
+          <Banner
+            variant="error"
+            icon={<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />}
+            title="Marginalità sotto la soglia minima"
+          >
+            La marginalità dopo la progettazione (
+            {formatPct(currentMargin.marginPct)}) è inferiore alla soglia minima
+            del {formatPct(thresholdPct)}. La decisione (assorbimento o
+            rinegoziazione) si gestisce dalla pagina dell&apos;offerta.
+          </Banner>
         )}
 
         {absorb?.signOff && (
@@ -564,7 +518,6 @@ export default function MarginReviewView({
   asSoldDiff = null,
   asSoldDiffUnavailable = false,
   absorb = null,
-  renegotiation = null,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -583,7 +536,6 @@ export default function MarginReviewView({
         comparison={comparison}
         discountPct={discountPct}
         absorb={absorb}
-        renegotiation={renegotiation}
       />
       {asSoldFrozenAt && (
         <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />

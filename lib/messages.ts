@@ -346,6 +346,8 @@ export const MSG = {
       "Solo i direttori vendite e gli ADMIN possono avviare una rinegoziazione.",
     renegotiationNotAccepted:
       "La rinegoziazione è possibile solo su un'offerta accettata.",
+    renegotiationNoAlert:
+      "La rinegoziazione è disponibile solo quando almeno una riga accettata ha un margine sotto soglia da decidere.",
     renegotiationLinesLocked:
       "Le configurazioni di una rinegoziazione non sono modificabili: solo prezzi e condizioni commerciali.",
     renegotiateConfirm:
@@ -401,6 +403,25 @@ export const MSG = {
     signOffNoteLabel: "Nota",
     renegotiateButton: "Rinegozia",
     renegotiateConfirmTitle: "Avviare una rinegoziazione?",
-    renegotiationOpen: "Rinegoziazione in corso",
+    // Offer-level margin hub (overview of the accepted revision's frozen lines).
+    overviewTitle: "Marginalità dell'offerta",
+    overviewSubtitle: (revisionNo: number) =>
+      `Righe della revisione accettata n. ${revisionNo}`,
+    overviewEmpty: "Nessuna riga da analizzare per questa revisione.",
+    colConfiguration: "Configurazione",
+    colState: "Stato margine",
+    colMargin: "Marginalità",
+    colActions: "Azioni",
+    lineLabel: (position: number) => `Configurazione ${position}`,
+    analyzeLink: "Analizza",
+    renegotiationOpenDetail: (revisionNo: number, statusLabel: string) =>
+      `Rinegoziazione in corso: Rev. ${revisionNo} — ${statusLabel}`,
+    state: {
+      aboveThreshold: "Sopra soglia",
+      belowThreshold: "Sotto soglia — decisione richiesta",
+      absorbed: "Assorbito",
+      absorbedEroded: "Assorbito, ma eroso di nuovo — decisione richiesta",
+      unavailable: "Margine non disponibile",
+    },
   },
 } as const;

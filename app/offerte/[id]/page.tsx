@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import BackButton from "@/components/back-button";
-import RenegotiateRevisionButton from "@/components/offer/renegotiate-revision-button";
+import OfferMarginOverview from "@/components/offer/offer-margin-overview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +23,16 @@ import {
 } from "@/lib/access";
 import {
   computeLineMarginAlerts,
+  hasActiveMarginAlert,
   type LineMarginAlert,
 } from "@/lib/margin-alerts";
 import { MSG } from "@/lib/messages";
 import { buildOfferRevisionExportData } from "@/lib/offer-export";
+import {
+  buildMarginOverviewRows,
+  deriveRenegotiationHubState,
+  marginHubAcceptedRevision,
+} from "@/lib/offer-margin-hub";
 import {
   firstAcceptedRevisionNo,
   isRenegotiationRevision,
@@ -86,13 +92,43 @@ const OfferDetail = async (props: OfferDetailProps) => {
     !!revision &&
     !OPEN_REVISION_STATUSES.includes(revision.status) &&
     !isAccepted;
-  // Renegotiation (post-acceptance re-quote) is the management counterpart: accepted
-  // offer, no open working revision, ADMIN/SALES_DIRECTOR only.
+
+  // Derived margin alerts: only for the accepted revision's frozen lines, and
+  // only computed for roles allowed to see margin data (ADMIN/SALES_DIRECTOR) —
+  // server-side, so margin figures never reach other roles' payloads. The map is
+  // keyed by line id (for the hub); a config-keyed copy backs the inline table
+  // badge (which also renders on an open renegotiation's rows — same configs,
+  // new lines). `marginHubAcceptedRevision` folds the role gate and the
+  // superseded-safe `accepted_revision_id` match, so it is null for unauthorized
+  // roles and no alerts are computed.
+  const canSeeMargin = canViewMarginReview(user.role);
+  const acceptedRevision = marginHubAcceptedRevision(
+    canSeeMargin,
+    offer.revisions,
+    offer.accepted_revision_id,
+  );
+  let marginAlerts = new Map<number, LineMarginAlert>();
+  if (acceptedRevision) {
+    marginAlerts = await computeLineMarginAlerts(
+      acceptedRevision.lines,
+      Number(acceptedRevision.discount_pct),
+    );
+  }
+  const marginAlertsByConfig = new Map<number, LineMarginAlert>();
+  for (const alert of marginAlerts.values()) {
+    marginAlertsByConfig.set(alert.configurationId, alert);
+  }
+
+  // Renegotiation (post-acceptance re-quote) is the management counterpart:
+  // accepted offer, no open working revision, ADMIN/SALES_DIRECTOR only, and
+  // narrowed (#269) to require at least one accepted line with an active margin
+  // alert — renegotiation is a margin remedy, not a free re-quote.
   const canRenegotiate =
     !!revision &&
     !OPEN_REVISION_STATUSES.includes(revision.status) &&
     isAccepted &&
-    canRenegotiateOffer(user.role);
+    canRenegotiateOffer(user.role) &&
+    hasActiveMarginAlert(marginAlerts.values());
   // Discard the working draft (#266): only a DRAFT that has a predecessor to fall back on
   // (an offer must always keep at least one revision — revision 1 is never discardable).
   // Discarding a renegotiation is management-only, symmetric with who may open one.
@@ -115,24 +151,18 @@ const OfferDetail = async (props: OfferDetailProps) => {
   const canApprove = canApproveRevision(user.role);
   const lines = revision?.lines ?? [];
 
-  // Derived margin alerts: only for the accepted revision's frozen lines, and
-  // only computed for roles allowed to see margin data (ADMIN/SALES_DIRECTOR) —
-  // server-side, so margin figures never reach other roles' payloads. Keyed by
-  // configuration id so the badges also render on an open renegotiation's rows
-  // (same configs, different lines).
-  const acceptedRevision = offer.revisions.find(
-    (rev) => rev.id === offer.accepted_revision_id,
+  // Margin hub view-model: one row per accepted-revision line with an explicit
+  // state, plus the renegotiation affordance. Both empty/none for unauthorized
+  // roles (acceptedRevision is null then). See lib/offer-margin-hub.
+  const marginOverviewRows = buildMarginOverviewRows(
+    acceptedRevision,
+    marginAlerts,
   );
-  const marginAlertsByConfig = new Map<number, LineMarginAlert>();
-  if (canViewMarginReview(user.role) && acceptedRevision) {
-    const alerts = await computeLineMarginAlerts(
-      acceptedRevision.lines,
-      Number(acceptedRevision.discount_pct),
-    );
-    for (const alert of alerts.values()) {
-      marginAlertsByConfig.set(alert.configurationId, alert);
-    }
-  }
+  const renegotiationHub = deriveRenegotiationHubState(
+    canRenegotiate,
+    revision,
+    workingIsRenegotiation,
+  );
 
   return (
     <div className="space-y-6">
@@ -206,7 +236,6 @@ const OfferDetail = async (props: OfferDetailProps) => {
               </>
             )}
             {canCreateRevision && <CreateRevisionButton offerId={offer.id} />}
-            {canRenegotiate && <RenegotiateRevisionButton offerId={offer.id} />}
             {canUnaccept && <UnacceptRevisionButton offerId={offer.id} />}
             {canExportOfferRevision(revision.status) && (
               <OfferExportButtons
@@ -302,6 +331,15 @@ const OfferDetail = async (props: OfferDetailProps) => {
           </Table>
         </div>
       </div>
+
+      {acceptedRevision && (
+        <OfferMarginOverview
+          offerId={offer.id}
+          acceptedRevisionNo={acceptedRevision.revision_no}
+          rows={marginOverviewRows}
+          renegotiation={renegotiationHub}
+        />
+      )}
 
       {revision && (
         <QuoteView

@@ -23,6 +23,8 @@ const mockGetConfigsForEnergyChainCheck = vi.fn();
 const mockLockOfferRow = vi.fn();
 const mockDiscardDraftRevisionWithAudit = vi.fn();
 const mockGetOfferWithRevisionAndLines = vi.fn();
+const mockComputeLineMarginAlerts = vi.fn();
+const mockHasActiveMarginAlert = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
@@ -75,6 +77,13 @@ vi.mock("@/db", () => ({
 
 vi.mock("@/lib/offer-revision-pricing", () => ({
   repriceOfferLines: (...args: unknown[]) => mockRepriceOfferLines(...args),
+}));
+
+vi.mock("@/lib/margin-alerts", () => ({
+  computeLineMarginAlerts: (...args: unknown[]) =>
+    mockComputeLineMarginAlerts(...args),
+  hasActiveMarginAlert: (...args: unknown[]) =>
+    mockHasActiveMarginAlert(...args),
 }));
 
 vi.mock("@/db/load-validated-configuration", () => ({
@@ -638,6 +647,13 @@ describe("createRenegotiationRevisionAction", () => {
       configIds: [21, 22],
     });
     mockRepriceOfferLines.mockResolvedValue(undefined);
+    // #269 alert gate: an accepted revision whose lines have an active alert.
+    mockGetOfferWithRevisionAndLines.mockResolvedValue({
+      accepted_revision_id: REVISION_ID,
+      revisions: [{ id: REVISION_ID, discount_pct: "0", lines: [] }],
+    });
+    mockComputeLineMarginAlerts.mockResolvedValue(new Map());
+    mockHasActiveMarginAlert.mockReturnValue(true);
   });
 
   test("creates the renegotiation revision and re-prices its lines in-tx", async () => {
@@ -664,6 +680,16 @@ describe("createRenegotiationRevisionAction", () => {
     expect(result).toEqual({ success: true, data: { revisionNo: 3 } });
   });
 
+  test("rejects when no accepted line has an active margin alert (#269)", async () => {
+    mockHasActiveMarginAlert.mockReturnValue(false);
+    const result = await createRenegotiationRevisionAction(OFFER_ID);
+    expect(result).toEqual({
+      success: false,
+      error: MSG.offer.renegotiationNoAlert,
+    });
+    expect(mockCreateRenegotiationRevisionFrom).not.toHaveBeenCalled();
+  });
+
   test.each([
     "SALES",
     "SALES_MANAGER",
@@ -685,6 +711,12 @@ describe("createRenegotiationRevisionAction", () => {
   });
 
   test("surfaces the not-accepted guard error", async () => {
+    // Not accepted → no accepted revision → the alert gate is skipped and the
+    // query-layer guard fires from createRenegotiationRevisionFrom.
+    mockGetOfferWithRevisionAndLines.mockResolvedValue({
+      accepted_revision_id: null,
+      revisions: [],
+    });
     mockCreateRenegotiationRevisionFrom.mockRejectedValue(
       new QueryError(MSG.offer.renegotiationNotAccepted),
     );
