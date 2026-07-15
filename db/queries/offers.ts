@@ -594,32 +594,34 @@ export type OfferLinePricing = {
   absorbed_note: string | null;
 };
 
-/** Column selection shared by the by-config and by-line pricing lookups. */
-const offerLinePricingColumns = {
-  id: offerRevisionLines.id,
-  configuration_id: offerRevisionLines.configuration_id,
-  offer_id: offerRevisions.offer_id,
-  revision_id: offerRevisions.id,
-  revision_no: offerRevisions.revision_no,
-  accepted_revision_id: offers.accepted_revision_id,
-  pricing_snapshot: offerRevisionLines.pricing_snapshot,
-  net_price: offerRevisionLines.net_price,
-  list_price: offerRevisionLines.list_price,
-  discount_pct: offerRevisions.discount_pct,
-  revisionStatus: offerRevisions.status,
-  as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
-  as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
-  absorbed_by: offerRevisionLines.absorbed_by,
-  absorbed_by_email: userProfiles.email,
-  absorbed_at: offerRevisionLines.absorbed_at,
-  absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
-  absorbed_note: offerRevisionLines.absorbed_note,
-} as const;
-
-/** The select + joins both pricing lookups share; callers add where/order. */
+/**
+ * The select + joins both pricing lookups share; callers add where/order. Kept
+ * as a function (not a module-level select) so the Drizzle column references
+ * evaluate lazily at query time — a top-level literal would run during the
+ * import cycle, before the schema bindings are initialized.
+ */
 function offerLinePricingBase() {
   return db
-    .select(offerLinePricingColumns)
+    .select({
+      id: offerRevisionLines.id,
+      configuration_id: offerRevisionLines.configuration_id,
+      offer_id: offerRevisions.offer_id,
+      revision_id: offerRevisions.id,
+      revision_no: offerRevisions.revision_no,
+      accepted_revision_id: offers.accepted_revision_id,
+      pricing_snapshot: offerRevisionLines.pricing_snapshot,
+      net_price: offerRevisionLines.net_price,
+      list_price: offerRevisionLines.list_price,
+      discount_pct: offerRevisions.discount_pct,
+      revisionStatus: offerRevisions.status,
+      as_sold_snapshot: offerRevisionLines.as_sold_snapshot,
+      as_sold_frozen_at: offerRevisionLines.as_sold_frozen_at,
+      absorbed_by: offerRevisionLines.absorbed_by,
+      absorbed_by_email: userProfiles.email,
+      absorbed_at: offerRevisionLines.absorbed_at,
+      absorbed_margin_percent: offerRevisionLines.absorbed_margin_percent,
+      absorbed_note: offerRevisionLines.absorbed_note,
+    })
     .from(offerRevisionLines)
     .innerJoin(
       offerRevisions,

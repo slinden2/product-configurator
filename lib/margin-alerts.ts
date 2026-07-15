@@ -69,7 +69,7 @@ export type MarginLineState =
 export function classifyMarginLineState(
   alert: LineMarginAlert | undefined,
 ): MarginLineState {
-  if (!alert || !alert.hasEbom) return "MARGIN_UNAVAILABLE";
+  if (!alert?.hasEbom) return "MARGIN_UNAVAILABLE";
   const absorbed = alert.absorbedMarginPct !== null;
   if (alert.alertActive)
     return absorbed ? "ABSORBED_ERODED" : "BELOW_THRESHOLD";

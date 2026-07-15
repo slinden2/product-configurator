@@ -23,13 +23,13 @@ vi.mock("@/lib/offer", () => ({
 
 // --- Imports (after mocks) ---
 
+import { buildMarginComparison, type EbomCostItem } from "@/lib/margin";
 import {
   classifyMarginLineState,
   computeLineMarginAlerts,
   hasActiveMarginAlert,
   type LineMarginAlert,
 } from "@/lib/margin-alerts";
-import { buildMarginComparison, type EbomCostItem } from "@/lib/margin";
 
 const CONF_ID = 42;
 const LINE_ID = 11;

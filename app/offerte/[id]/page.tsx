@@ -158,7 +158,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
             position: line.position,
             state: classifyMarginLineState(alert),
             // Never surface the phantom 100% of a missing EBOM as a number.
-            marginPct: alert && alert.hasEbom ? alert.marginPct : null,
+            marginPct: alert?.hasEbom ? alert.marginPct : null,
             thresholdPct: alert?.thresholdPct ?? 0,
           };
         })
