@@ -3,10 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ConfigurationStatusBadge from "@/components/all-configuration-table/configuration-status-badge";
 import BackButton from "@/components/back-button";
-import OfferMarginOverview, {
-  type MarginOverviewRow,
-  type RenegotiationHubState,
-} from "@/components/offer/offer-margin-overview";
+import OfferMarginOverview from "@/components/offer/offer-margin-overview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +22,17 @@ import {
   canViewMarginReview,
 } from "@/lib/access";
 import {
-  classifyMarginLineState,
   computeLineMarginAlerts,
   hasActiveMarginAlert,
   type LineMarginAlert,
 } from "@/lib/margin-alerts";
 import { MSG } from "@/lib/messages";
 import { buildOfferRevisionExportData } from "@/lib/offer-export";
+import {
+  buildMarginOverviewRows,
+  deriveRenegotiationHubState,
+  marginHubAcceptedRevision,
+} from "@/lib/offer-margin-hub";
 import {
   firstAcceptedRevisionNo,
   isRenegotiationRevision,
@@ -97,13 +98,17 @@ const OfferDetail = async (props: OfferDetailProps) => {
   // server-side, so margin figures never reach other roles' payloads. The map is
   // keyed by line id (for the hub); a config-keyed copy backs the inline table
   // badge (which also renders on an open renegotiation's rows — same configs,
-  // new lines).
-  const acceptedRevision = offer.revisions.find(
-    (rev) => rev.id === offer.accepted_revision_id,
-  );
+  // new lines). `marginHubAcceptedRevision` folds the role gate and the
+  // superseded-safe `accepted_revision_id` match, so it is null for unauthorized
+  // roles and no alerts are computed.
   const canSeeMargin = canViewMarginReview(user.role);
+  const acceptedRevision = marginHubAcceptedRevision(
+    canSeeMargin,
+    offer.revisions,
+    offer.accepted_revision_id,
+  );
   let marginAlerts = new Map<number, LineMarginAlert>();
-  if (canSeeMargin && acceptedRevision) {
+  if (acceptedRevision) {
     marginAlerts = await computeLineMarginAlerts(
       acceptedRevision.lines,
       Number(acceptedRevision.discount_pct),
@@ -147,33 +152,17 @@ const OfferDetail = async (props: OfferDetailProps) => {
   const lines = revision?.lines ?? [];
 
   // Margin hub view-model: one row per accepted-revision line with an explicit
-  // state, plus the renegotiation affordance. Only built for authorized roles.
-  const marginOverviewRows: MarginOverviewRow[] =
-    canSeeMargin && acceptedRevision
-      ? acceptedRevision.lines.map((line) => {
-          const alert = marginAlerts.get(line.id);
-          return {
-            lineId: line.id,
-            configId: line.configuration.id,
-            position: line.position,
-            state: classifyMarginLineState(alert),
-            // Never surface the phantom 100% of a missing EBOM as a number.
-            marginPct: alert?.hasEbom ? alert.marginPct : null,
-            thresholdPct: alert?.thresholdPct ?? 0,
-          };
-        })
-      : [];
-  const renegotiationHub: RenegotiationHubState = canRenegotiate
-    ? { kind: "available" }
-    : workingIsRenegotiation &&
-        revision &&
-        OPEN_REVISION_STATUSES.includes(revision.status)
-      ? {
-          kind: "open",
-          revisionNo: revision.revision_no,
-          statusLabel: OfferStatusLabels[revision.status],
-        }
-      : { kind: "none" };
+  // state, plus the renegotiation affordance. Both empty/none for unauthorized
+  // roles (acceptedRevision is null then). See lib/offer-margin-hub.
+  const marginOverviewRows = buildMarginOverviewRows(
+    acceptedRevision,
+    marginAlerts,
+  );
+  const renegotiationHub = deriveRenegotiationHubState(
+    canRenegotiate,
+    revision,
+    workingIsRenegotiation,
+  );
 
   return (
     <div className="space-y-6">
@@ -343,7 +332,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
         </div>
       </div>
 
-      {canSeeMargin && acceptedRevision && (
+      {acceptedRevision && (
         <OfferMarginOverview
           offerId={offer.id}
           acceptedRevisionNo={acceptedRevision.revision_no}

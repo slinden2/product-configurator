@@ -16,27 +16,15 @@ import {
 import type { MarginLineState } from "@/lib/margin-alerts";
 import { MSG } from "@/lib/messages";
 import { formatPct } from "@/lib/money";
+import type {
+  MarginOverviewRow,
+  RenegotiationHubState,
+} from "@/lib/offer-margin-hub";
 import { cn } from "@/lib/utils";
 
-export type MarginOverviewRow = {
-  lineId: number;
-  configId: number;
-  /** Zero-based position on the accepted revision; displayed 1-based. */
-  position: number;
-  state: MarginLineState;
-  /** Live margin; null when the state is MARGIN_UNAVAILABLE. */
-  marginPct: number | null;
-  thresholdPct: number;
-};
-
-/**
- * The renegotiation affordance for the hub: an enabled button, an
- * already-open renegotiation to point at, or nothing.
- */
-export type RenegotiationHubState =
-  | { kind: "available" }
-  | { kind: "open"; revisionNo: number; statusLabel: string }
-  | { kind: "none" };
+// The view-model types live in the pure helper module (lib/offer-margin-hub);
+// re-exported here so existing importers of this component keep working.
+export type { MarginOverviewRow, RenegotiationHubState };
 
 interface Props {
   offerId: number;
