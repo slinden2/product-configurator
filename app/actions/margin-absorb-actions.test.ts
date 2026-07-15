@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // --- Mocks ---
 
 const mockGetUserData = vi.fn();
-const mockGetOfferLinePricingForConfig = vi.fn();
+const mockGetOfferLinePricingForLine = vi.fn();
 const mockGetEngineeringBomItems = vi.fn();
 const mockAbsorbOfferLineMarginWithAudit = vi.fn();
 const mockEnrichWithCosts = vi.fn();
@@ -12,8 +12,8 @@ const mockPrepareOfferDisplayData = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
-  getOfferLinePricingForConfig: (...args: unknown[]) =>
-    mockGetOfferLinePricingForConfig(...args),
+  getOfferLinePricingForLine: (...args: unknown[]) =>
+    mockGetOfferLinePricingForLine(...args),
   getEngineeringBomItems: (...args: unknown[]) =>
     mockGetEngineeringBomItems(...args),
   absorbOfferLineMarginWithAudit: (...args: unknown[]) =>
@@ -58,12 +58,16 @@ const LINE_ID = 11;
 const OFFER_ID = 5;
 const REVISION_ID = 7;
 
-/** An accepted, frozen, not-yet-absorbed line row for the config. */
+/** An accepted, frozen, in-force, not-yet-absorbed line row. */
 function makeLine(overrides: Record<string, unknown> = {}) {
   return {
     id: LINE_ID,
+    configuration_id: CONF_ID,
     offer_id: OFFER_ID,
     revision_id: REVISION_ID,
+    revision_no: 3,
+    // In-force by default: revision_id === accepted_revision_id.
+    accepted_revision_id: REVISION_ID,
     pricing_snapshot: [{ pn: "A" }],
     net_price: "1000.00",
     list_price: "1200.00",
@@ -96,7 +100,7 @@ describe("absorbLineMarginAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "ADMIN" });
-    mockGetOfferLinePricingForConfig.mockResolvedValue(makeLine());
+    mockGetOfferLinePricingForLine.mockResolvedValue(makeLine());
     // Live margin: revenue 1000, EBOM cost 800 → 20% (below the 30% threshold).
     mockPrepareOfferDisplayData.mockReturnValue({
       displayData: { discounted_total: 1000 },
@@ -109,7 +113,7 @@ describe("absorbLineMarginAction", () => {
   // --- Happy path & integrity ---
 
   test("records the sign-off with the server-computed margin (never the client's)", async () => {
-    const result = await absorbLineMarginAction(CONF_ID, { note: "ok" });
+    const result = await absorbLineMarginAction(LINE_ID, { note: "ok" });
     expect(result).toEqual({ success: true });
     expect(mockAbsorbOfferLineMarginWithAudit).toHaveBeenCalledWith({
       lineId: LINE_ID,
@@ -124,7 +128,7 @@ describe("absorbLineMarginAction", () => {
   });
 
   test("revalidates the margin page, the offer detail and the offer list", async () => {
-    await absorbLineMarginAction(CONF_ID, {});
+    await absorbLineMarginAction(LINE_ID, {});
     expect(revalidatePath).toHaveBeenCalledWith(
       `/configurazioni/marginalita/${CONF_ID}`,
     );
@@ -133,14 +137,14 @@ describe("absorbLineMarginAction", () => {
   });
 
   test("normalizes a missing or blank note to null", async () => {
-    await absorbLineMarginAction(CONF_ID, {});
+    await absorbLineMarginAction(LINE_ID, {});
     expect(mockAbsorbOfferLineMarginWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({ note: null }),
     );
 
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "ADMIN" });
-    mockGetOfferLinePricingForConfig.mockResolvedValue(makeLine());
+    mockGetOfferLinePricingForLine.mockResolvedValue(makeLine());
     mockPrepareOfferDisplayData.mockReturnValue({
       displayData: { discounted_total: 1000 },
     });
@@ -148,14 +152,14 @@ describe("absorbLineMarginAction", () => {
     mockEnrichWithCosts.mockResolvedValue([makeEbomRow(800)]);
     mockAbsorbOfferLineMarginWithAudit.mockResolvedValue(undefined);
 
-    await absorbLineMarginAction(CONF_ID, { note: "   " });
+    await absorbLineMarginAction(LINE_ID, { note: "   " });
     expect(mockAbsorbOfferLineMarginWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({ note: null }),
     );
   });
 
   test("rejects a note longer than 500 characters before touching auth", async () => {
-    const result = await absorbLineMarginAction(CONF_ID, {
+    const result = await absorbLineMarginAction(LINE_ID, {
       note: "x".repeat(501),
     });
     expect(result).toEqual({
@@ -166,7 +170,7 @@ describe("absorbLineMarginAction", () => {
     expect(mockAbsorbOfferLineMarginWithAudit).not.toHaveBeenCalled();
   });
 
-  test("rejects a non-positive or non-integer confId", async () => {
+  test("rejects a non-positive or non-integer lineId", async () => {
     expect(await absorbLineMarginAction(0, {})).toEqual({
       success: false,
       error: MSG.config.notFound,
@@ -186,7 +190,7 @@ describe("absorbLineMarginAction", () => {
     "ENGINEER",
   ])("rejects %s (margin review is ADMIN / SALES_DIRECTOR only)", async (role) => {
     mockGetUserData.mockResolvedValue({ id: "u2", role });
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.marginReview.absorbUnauthorized,
@@ -196,7 +200,7 @@ describe("absorbLineMarginAction", () => {
 
   test.each(["ADMIN", "SALES_DIRECTOR"])("allows %s", async (role) => {
     mockGetUserData.mockResolvedValue({ id: "u3", role });
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({ success: true });
     expect(mockAbsorbOfferLineMarginWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({ absorbedBy: "u3" }),
@@ -205,7 +209,7 @@ describe("absorbLineMarginAction", () => {
 
   test("rejects an unauthenticated user", async () => {
     mockGetUserData.mockResolvedValue(null);
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.auth.userNotAuthenticated,
@@ -215,9 +219,9 @@ describe("absorbLineMarginAction", () => {
 
   // --- State gates ---
 
-  test("rejects a config without an offer line", async () => {
-    mockGetOfferLinePricingForConfig.mockResolvedValue(null);
-    const result = await absorbLineMarginAction(CONF_ID, {});
+  test("rejects a line that does not exist", async () => {
+    mockGetOfferLinePricingForLine.mockResolvedValue(null);
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.marginReview.absorbNotAccepted,
@@ -230,8 +234,22 @@ describe("absorbLineMarginAction", () => {
     ["a line without the as-sold freeze", { as_sold_frozen_at: null }],
     ["a line without a pricing snapshot", { pricing_snapshot: null }],
   ])("rejects %s", async (_label, overrides) => {
-    mockGetOfferLinePricingForConfig.mockResolvedValue(makeLine(overrides));
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    mockGetOfferLinePricingForLine.mockResolvedValue(makeLine(overrides));
+    const result = await absorbLineMarginAction(LINE_ID, {});
+    expect(result).toEqual({
+      success: false,
+      error: MSG.marginReview.absorbNotAccepted,
+    });
+    expect(mockAbsorbOfferLineMarginWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("rejects a superseded accepted line (not the in-force accepted revision)", async () => {
+    // A renegotiation re-acceptance leaves the prior revision ACCEPTED and
+    // frozen; only the line on accepted_revision_id may be absorbed.
+    mockGetOfferLinePricingForLine.mockResolvedValue(
+      makeLine({ accepted_revision_id: 999 }),
+    );
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.marginReview.absorbNotAccepted,
@@ -243,7 +261,7 @@ describe("absorbLineMarginAction", () => {
 
   test("rejects when the margin is not below threshold (nothing to sign off)", async () => {
     mockEnrichWithCosts.mockResolvedValue([makeEbomRow(600)]); // 40% ≥ 30%
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.marginReview.absorbNotActive,
@@ -252,10 +270,10 @@ describe("absorbLineMarginAction", () => {
   });
 
   test("rejects a re-absorb when the existing sign-off already covers the live margin", async () => {
-    mockGetOfferLinePricingForConfig.mockResolvedValue(
+    mockGetOfferLinePricingForLine.mockResolvedValue(
       makeLine({ absorbed_margin_percent: "20.00" }), // live is 20% → covered
     );
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.marginReview.absorbNotActive,
@@ -264,10 +282,10 @@ describe("absorbLineMarginAction", () => {
   });
 
   test("allows a re-absorb after further drift below the absorbed margin", async () => {
-    mockGetOfferLinePricingForConfig.mockResolvedValue(
+    mockGetOfferLinePricingForLine.mockResolvedValue(
       makeLine({ absorbed_margin_percent: "25.00" }), // live 20% < absorbed 25%
     );
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({ success: true });
     expect(mockAbsorbOfferLineMarginWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({ absorbedMarginPct: "20.00" }),
@@ -280,7 +298,7 @@ describe("absorbLineMarginAction", () => {
     mockAbsorbOfferLineMarginWithAudit.mockRejectedValue(
       new QueryError(MSG.marginReview.absorbNotAccepted),
     );
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({
       success: false,
       error: MSG.marginReview.absorbNotAccepted,
@@ -292,13 +310,13 @@ describe("absorbLineMarginAction", () => {
     mockAbsorbOfferLineMarginWithAudit.mockRejectedValue(
       new (DatabaseError as unknown as new (m: string) => Error)("boom"),
     );
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({ success: false, error: MSG.db.error });
   });
 
   test("maps an unknown error to the unknown message", async () => {
     mockAbsorbOfferLineMarginWithAudit.mockRejectedValue(new Error("boom"));
-    const result = await absorbLineMarginAction(CONF_ID, {});
+    const result = await absorbLineMarginAction(LINE_ID, {});
     expect(result).toEqual({ success: false, error: MSG.db.unknown });
   });
 });

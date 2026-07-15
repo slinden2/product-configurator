@@ -12,19 +12,21 @@ import { MSG } from "@/lib/messages";
 import { formatPct } from "@/lib/money";
 
 interface AbsorbMarginButtonProps {
-  confId: number;
+  /** The accepted revision line to absorb; the action re-verifies it in-force. */
+  lineId: number;
   /** Live margin shown in the confirmation copy (the server recomputes it). */
   marginPct: number;
   thresholdPct: number;
 }
 
 /**
- * Absorb sign-off entry point (#84): opens a confirmation with an optional
- * note and records the decision to accept the eroded margin. Only rendered
- * when the margin alert is active, for `canViewMarginReview` roles.
+ * Absorb sign-off entry point (#84), initiated per line from the offer margin
+ * hub: opens a confirmation with an optional note and records the decision to
+ * accept the eroded margin. Only rendered for a line with an active alert, for
+ * `canViewMarginReview` roles.
  */
 const AbsorbMarginButton = ({
-  confId,
+  lineId,
   marginPct,
   thresholdPct,
 }: AbsorbMarginButtonProps) => {
@@ -37,7 +39,7 @@ const AbsorbMarginButton = ({
     startTransition(async () => {
       try {
         const trimmed = note.trim();
-        const res = await absorbLineMarginAction(confId, {
+        const res = await absorbLineMarginAction(lineId, {
           note: trimmed.length > 0 ? trimmed : undefined,
         });
         if (!res.success) {

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   absorbOfferLineMarginWithAudit,
   getEngineeringBomItems,
-  getOfferLinePricingForConfig,
+  getOfferLinePricingForLine,
   getUserData,
 } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
@@ -37,10 +37,12 @@ import { mapActionError } from "./lib/map-action-error";
  * fetch is needed — the same reasoning as the margin page itself.
  */
 export async function absorbLineMarginAction(
-  confId: number,
+  lineId: number,
   input: MarginAbsorbInput,
 ) {
-  if (!Number.isInteger(confId) || confId <= 0)
+  // The hub passes the accepted revision line's own id (not a config id). Reuse
+  // the generic not-found message rather than adding a near-duplicate string.
+  if (!Number.isInteger(lineId) || lineId <= 0)
     return { success: false as const, error: MSG.config.notFound };
 
   const parsed = marginAbsorbSchema.safeParse(input);
@@ -60,12 +62,16 @@ export async function absorbLineMarginAction(
       error: MSG.marginReview.absorbUnauthorized,
     };
 
-  const line = await getOfferLinePricingForConfig(confId);
+  const line = await getOfferLinePricingForLine(lineId);
+  // Must be the offer's in-force accepted, frozen line. Line-keyed we can be
+  // handed a superseded ACCEPTED line (a renegotiation supersedes but leaves the
+  // prior revision ACCEPTED); revision_id === accepted_revision_id rejects it.
   if (
     !line ||
     line.revisionStatus !== "ACCEPTED" ||
     line.as_sold_frozen_at === null ||
-    line.pricing_snapshot === null
+    line.pricing_snapshot === null ||
+    line.revision_id !== line.accepted_revision_id
   ) {
     return {
       success: false as const,
@@ -86,7 +92,7 @@ export async function absorbLineMarginAction(
     };
   const revenue = displayData.discounted_total;
 
-  const ebomRows = await getEngineeringBomItems(confId);
+  const ebomRows = await getEngineeringBomItems(line.configuration_id);
   const enriched = await enrichWithCosts(
     ebomRows.filter((row) => !row.is_deleted),
   );
@@ -122,7 +128,7 @@ export async function absorbLineMarginAction(
     await absorbOfferLineMarginWithAudit({
       lineId: line.id,
       offerId: line.offer_id,
-      configId: confId,
+      configId: line.configuration_id,
       revisionId: line.revision_id,
       absorbedBy: user.id,
       absorbedMarginPct: liveMarginPct.toFixed(2),
@@ -130,7 +136,7 @@ export async function absorbLineMarginAction(
       note,
     });
 
-    revalidatePath(`/configurazioni/marginalita/${confId}`);
+    revalidatePath(`/configurazioni/marginalita/${line.configuration_id}`);
     revalidatePath(`/offerte/${line.offer_id}`);
     revalidatePath("/offerte");
     return { success: true as const };
