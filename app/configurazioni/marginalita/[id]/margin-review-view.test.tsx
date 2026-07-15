@@ -1,26 +1,14 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import type { AsSoldDiff } from "@/lib/configuration/build-as-sold-diff";
 import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { formatDelta, formatPct } from "@/lib/money";
 import { formatEur } from "@/lib/utils";
-
-// The absorb/renegotiate buttons import server actions, which transitively pull
-// in the db client (throws without DATABASE_URL in jsdom) — mock the modules.
-vi.mock("@/app/actions/margin-absorb-actions", () => ({
-  absorbLineMarginAction: vi.fn(),
-}));
-vi.mock("@/app/actions/offer-revision-actions", () => ({
-  createRenegotiationRevisionAction: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
-}));
-
+// Analysis-only page: the decision actions (absorb / renegotiate) moved to the
+// offer margin hub, so this view no longer imports any server action.
 import MarginReviewView from "./margin-review-view";
 
 // --- Helpers ---
@@ -234,92 +222,6 @@ describe("MarginReviewView", () => {
     });
   });
 
-  describe("renegotiation entry point", () => {
-    test("shows the renegotiate button next to the alert when no renegotiation is open", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison({
-            belowThreshold: true,
-            alertActive: true,
-          })}
-          discountPct={0}
-          absorb={{ confId: 1, signOff: null }}
-          renegotiation={{ offerId: 5, open: false }}
-        />,
-      );
-
-      expect(
-        screen.getByRole("button", {
-          name: MSG.marginReview.renegotiateButton,
-        }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: MSG.marginReview.absorbButton }),
-      ).toBeInTheDocument();
-    });
-
-    test("yields to a link to the offer while a renegotiation is open", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison({
-            belowThreshold: true,
-            alertActive: true,
-          })}
-          discountPct={0}
-          absorb={{ confId: 1, signOff: null }}
-          renegotiation={{ offerId: 5, open: true }}
-        />,
-      );
-
-      expect(
-        screen.queryByRole("button", {
-          name: MSG.marginReview.renegotiateButton,
-        }),
-      ).not.toBeInTheDocument();
-      const link = screen.getByRole("link", {
-        name: new RegExp(MSG.marginReview.renegotiationOpen),
-      });
-      expect(link).toHaveAttribute("href", "/offerte/5");
-    });
-
-    test("hides the renegotiation entry point when the alert is not active", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison()}
-          discountPct={0}
-          absorb={{ confId: 1, signOff: null }}
-          renegotiation={{ offerId: 5, open: false }}
-        />,
-      );
-
-      expect(
-        screen.queryByRole("button", {
-          name: MSG.marginReview.renegotiateButton,
-        }),
-      ).not.toBeInTheDocument();
-    });
-
-    test("hides the renegotiate button when the renegotiation context is missing", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison({
-            belowThreshold: true,
-            alertActive: true,
-          })}
-          discountPct={0}
-          absorb={{ confId: 1, signOff: null }}
-          renegotiation={null}
-        />,
-      );
-
-      expect(
-        screen.queryByRole("button", {
-          name: MSG.marginReview.renegotiateButton,
-        }),
-      ).not.toBeInTheDocument();
-    });
-  });
-
   describe("absorb sign-off", () => {
     const SIGN_OFF = {
       byLabel: "director@iteco.it",
@@ -328,60 +230,12 @@ describe("MarginReviewView", () => {
       note: "Cliente strategico",
     };
 
-    test("shows the absorb button only when the alert is active and absorb is set", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison({
-            belowThreshold: true,
-            alertActive: true,
-          })}
-          discountPct={0}
-          absorb={{ confId: 1, signOff: null }}
-        />,
-      );
-
-      expect(
-        screen.getByRole("button", { name: MSG.marginReview.absorbButton }),
-      ).toBeInTheDocument();
-    });
-
-    test("hides the absorb button when absorb context is missing", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison({
-            belowThreshold: true,
-            alertActive: true,
-          })}
-          discountPct={0}
-          absorb={null}
-        />,
-      );
-
-      expect(
-        screen.queryByRole("button", { name: MSG.marginReview.absorbButton }),
-      ).not.toBeInTheDocument();
-    });
-
-    test("hides the absorb button when the alert is not active", () => {
-      render(
-        <MarginReviewView
-          comparison={makeComparison()}
-          discountPct={0}
-          absorb={{ confId: 1, signOff: SIGN_OFF }}
-        />,
-      );
-
-      expect(
-        screen.queryByRole("button", { name: MSG.marginReview.absorbButton }),
-      ).not.toBeInTheDocument();
-    });
-
     test("renders the sign-off (who / when / margin / note) even without an active alert", () => {
       render(
         <MarginReviewView
           comparison={makeComparison()}
           discountPct={0}
-          absorb={{ confId: 1, signOff: SIGN_OFF }}
+          absorb={{ signOff: SIGN_OFF }}
         />,
       );
 
@@ -401,7 +255,7 @@ describe("MarginReviewView", () => {
             absorbedMarginPct: 22.5,
           })}
           discountPct={0}
-          absorb={{ confId: 1, signOff: SIGN_OFF }}
+          absorb={{ signOff: SIGN_OFF }}
         />,
       );
 
@@ -416,7 +270,7 @@ describe("MarginReviewView", () => {
         <MarginReviewView
           comparison={makeComparison()}
           discountPct={0}
-          absorb={{ confId: 1, signOff: null }}
+          absorb={{ signOff: null }}
         />,
       );
 
