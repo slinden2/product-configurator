@@ -13,7 +13,14 @@ import { prepareOfferDisplayData } from "@/lib/offer";
 export interface LineMarginAlert {
   lineId: number;
   configurationId: number;
-  /** Live gross margin percentage of the current EBOM vs the as-sold revenue. */
+  /**
+   * Live gross margin percentage of the current EBOM vs the as-sold revenue.
+   * ⚠ Meaningless when `hasEbom` is false: with no engineering BOM the cost is
+   * treated as 0, so this reads a phantom 100% (the same reason
+   * `buildMarginComparison` forces a 0 placeholder). Callers MUST branch on
+   * `hasEbom` — never present this number for a line without an EBOM. Use
+   * {@link classifyMarginLineState} rather than reading this directly.
+   */
   marginPct: number;
   thresholdPct: number;
   /**
@@ -22,6 +29,61 @@ export interface LineMarginAlert {
    * drops below the absorbed margin).
    */
   alertActive: boolean;
+  /**
+   * Whether the line's configuration has a non-deleted engineering BOM. When
+   * false the margin is not yet computable and the line is "margin unavailable"
+   * — never a healthy margin.
+   */
+  hasEbom: boolean;
+  /**
+   * The margin percentage recorded by a prior absorb sign-off (the re-alert
+   * baseline), or null when the line has never been absorbed.
+   */
+  absorbedMarginPct: number | null;
+}
+
+/**
+ * Explicit per-line margin state for the offer-level margin hub, distinguishing
+ * the cases the raw `marginPct`/`alertActive` pair cannot on its own:
+ * - `MARGIN_UNAVAILABLE` — no snapshot and/or no EBOM (never a 100% margin).
+ * - `BELOW_THRESHOLD` — under threshold, no absorb sign-off: decision required.
+ * - `ABSORBED_ERODED` — absorbed before, but the live margin dropped below the
+ *   absorbed baseline again: decision required.
+ * - `ABSORBED` — an absorb sign-off is on record and currently covers the line.
+ * - `ABOVE_THRESHOLD` — margin at or above threshold, no decision needed.
+ */
+export type MarginLineState =
+  | "ABOVE_THRESHOLD"
+  | "BELOW_THRESHOLD"
+  | "ABSORBED"
+  | "ABSORBED_ERODED"
+  | "MARGIN_UNAVAILABLE";
+
+/**
+ * Classifies a line's margin state from its alert. `undefined` (the line was
+ * skipped — no snapshot) and a line with no EBOM both resolve to
+ * `MARGIN_UNAVAILABLE`, so the hub never presents a phantom 100% as healthy.
+ * A recorded absorb sign-off keeps a line in the `ABSORBED*` family even if the
+ * live margin has since recovered above threshold — the decision stays on record.
+ */
+export function classifyMarginLineState(
+  alert: LineMarginAlert | undefined,
+): MarginLineState {
+  if (!alert || !alert.hasEbom) return "MARGIN_UNAVAILABLE";
+  const absorbed = alert.absorbedMarginPct !== null;
+  if (alert.alertActive)
+    return absorbed ? "ABSORBED_ERODED" : "BELOW_THRESHOLD";
+  return absorbed ? "ABSORBED" : "ABOVE_THRESHOLD";
+}
+
+/** True when any of the given line alerts is currently raised. */
+export function hasActiveMarginAlert(
+  alerts: Iterable<LineMarginAlert>,
+): boolean {
+  for (const alert of alerts) {
+    if (alert.alertActive) return true;
+  }
+  return false;
 }
 
 type AlertInputLine = {
@@ -40,9 +102,11 @@ type AlertInputLine = {
  * so the offer badge and that page can never disagree. The threshold is picked
  * automatically from the line configuration's product category.
  *
- * Non-frozen lines, lines without a snapshot and configs without an EBOM are
- * skipped or resolve to no alert. Costs are fetched in one batch query plus a
- * single part-number lookup regardless of line count.
+ * Non-frozen lines and lines without a snapshot are skipped (no map entry).
+ * A frozen line whose config has no non-deleted EBOM gets an entry with
+ * `hasEbom: false` and no active alert — "margin unavailable", not a healthy
+ * 100% (see {@link classifyMarginLineState}). Costs are fetched in one batch
+ * query plus a single part-number lookup regardless of line count.
  */
 export async function computeLineMarginAlerts(
   lines: AlertInputLine[],
@@ -85,6 +149,13 @@ export async function computeLineMarginAlerts(
     const thresholdPct = getMarginThresholdForCategory(
       getConfigurationProductCategory(),
     );
+    // The batch fetch keeps soft-deleted rows, so "has an EBOM" must exclude
+    // them — otherwise an all-deleted BOM would read as a healthy margin.
+    const hasEbom = ebomItems.some((item) => !item.is_deleted);
+    const absorbedMarginPct =
+      line.absorbed_margin_percent === null
+        ? null
+        : Number(line.absorbed_margin_percent);
 
     alerts.set(line.id, {
       lineId: line.id,
@@ -95,10 +166,10 @@ export async function computeLineMarginAlerts(
         revenue,
         ebomItems,
         thresholdPct,
-        line.absorbed_margin_percent === null
-          ? null
-          : Number(line.absorbed_margin_percent),
+        absorbedMarginPct,
       ),
+      hasEbom,
+      absorbedMarginPct,
     });
   }
 
