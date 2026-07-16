@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from "drizzle-orm";
 import { DatabaseError } from "pg";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
@@ -7,7 +8,7 @@ export function mapActionError(err: unknown, logContext?: string) {
   if (err instanceof QueryError) {
     return { success: false as const, error: err.message };
   }
-  if (err instanceof DatabaseError) {
+  if (err instanceof DatabaseError || err instanceof DrizzleQueryError) {
     return { success: false as const, error: MSG.db.error };
   }
   return { success: false as const, error: MSG.db.unknown };

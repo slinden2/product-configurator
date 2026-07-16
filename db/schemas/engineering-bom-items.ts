@@ -47,7 +47,7 @@ export const engineeringBomItems = pgTable(
     // (is_custom) reference engineer-authored non-catalog part numbers that do not yet
     // exist in the ERP — engineers add them so their workflow isn't interrupted, and the
     // pns are imported into the ERP later. A real FK here would block that intended flow.
-    pn: varchar("pn", { length: 25 }).notNull(),
+    pn: varchar("pn", { length: 50 }).notNull(),
     is_custom: boolean("is_custom").notNull().default(false),
     description: varchar("description", { length: 255 }).notNull(),
     qty: integer("qty").notNull(),
