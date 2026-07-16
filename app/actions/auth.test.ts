@@ -437,9 +437,9 @@ describe("forgotPassword", () => {
     );
   });
 
-  test("returns error when Supabase fails", async () => {
+  test("returns generic error when Supabase fails", async () => {
     mockResetPasswordForEmail.mockResolvedValue({
-      error: { message: "Rate limited" },
+      error: { message: "Something went wrong", status: 500 },
     });
 
     const result = await forgotPassword({ email: "test@itecosrl.com" });
@@ -447,6 +447,19 @@ describe("forgotPassword", () => {
     expect(result).toEqual({
       success: false,
       error: MSG.auth.genericError,
+    });
+  });
+
+  test("returns rate limit error on 429", async () => {
+    mockResetPasswordForEmail.mockResolvedValue({
+      error: { message: "email rate limit exceeded", status: 429 },
+    });
+
+    const result = await forgotPassword({ email: "test@itecosrl.com" });
+
+    expect(result).toEqual({
+      success: false,
+      error: MSG.auth.rateLimitExceeded,
     });
   });
 

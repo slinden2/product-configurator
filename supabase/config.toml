@@ -40,7 +40,7 @@ minimum_password_length = 6
 password_requirements = ""
 
 [auth.rate_limit]
-email_sent = 2
+email_sent = 30
 sms_sent = 30
 anonymous_users = 30
 token_refresh = 150
@@ -56,7 +56,7 @@ double_confirm_changes = true
 enable_confirmations = true
 secure_password_change = false
 max_frequency = "1m"
-otp_length = 6
+otp_length = 8
 otp_expiry = 3600
 
 [auth.sms]

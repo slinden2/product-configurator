@@ -221,7 +221,11 @@ export async function sendPasswordResetAction(formData: unknown) {
     );
 
     if (error) {
-      return { success: false as const, error: MSG.auth.genericError };
+      const msg =
+        error.status === 429
+          ? MSG.auth.rateLimitExceeded
+          : MSG.auth.genericError;
+      return { success: false as const, error: msg };
     }
 
     // Best-effort: the Supabase email side effect cannot be rolled back by a

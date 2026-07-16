@@ -168,7 +168,9 @@ export async function forgotPassword(formData: AuthSchema) {
   );
 
   if (error) {
-    return { success: false as const, error: MSG.auth.genericError };
+    const msg =
+      error.status === 429 ? MSG.auth.rateLimitExceeded : MSG.auth.genericError;
+    return { success: false as const, error: msg };
   }
 
   return { success: true as const };

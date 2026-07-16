@@ -23,6 +23,7 @@ export const MSG = {
     accountDeactivated: "Account disattivato. Contatta un amministratore.",
     missingResetCode: "Codice di reimpostazione mancante.",
     genericError: "Errore durante l'autenticazione.",
+    rateLimitExceeded: "Troppi tentativi. Riprova tra qualche minuto.",
     invalidData: "Dati di autenticazione non validi.",
     emailDomainNotAllowed:
       "Solo indirizzi email @itecosrl.com sono consentiti.",
