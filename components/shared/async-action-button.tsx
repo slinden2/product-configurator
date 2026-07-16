@@ -29,6 +29,20 @@ interface ConfirmOptions {
   confirmVariant?: "default" | "destructive";
 }
 
+interface ActionResult {
+  success: boolean;
+  error?: string;
+}
+
+function isFailedActionResult(value: unknown): value is ActionResult {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "success" in value &&
+    (value as ActionResult).success === false
+  );
+}
+
 interface AsyncActionButtonProps
   extends Omit<ButtonProps, "onClick" | "disabled"> {
   action: () => Promise<unknown>;
@@ -58,7 +72,11 @@ export function AsyncActionButton({
   const handleAction = () => {
     startTransition(async () => {
       try {
-        await action();
+        const result = await action();
+        if (isFailedActionResult(result)) {
+          toast.error(result.error ?? errorMsg ?? MSG.db.unknown);
+          return;
+        }
         if (successMsg) toast.success(successMsg);
       } catch (err) {
         toast.error(
