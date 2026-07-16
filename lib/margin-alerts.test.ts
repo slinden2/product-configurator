@@ -237,4 +237,39 @@ describe("computeLineMarginAlerts", () => {
       comparison.currentMargin.marginPct,
     );
   });
+
+  test("projected mode (requireFrozen: false): a non-frozen line is included", async () => {
+    // The working (renegotiation) DRAFT line has no as-sold freeze but carries
+    // live pricing; requireFrozen: false lets it produce a projected alert.
+    mockEnrichWithCosts.mockResolvedValue([makeEnrichedRow(CONF_ID, 800)]); // 20%
+    const alerts = await computeLineMarginAlerts(
+      [makeLine({ as_sold_frozen_at: null })],
+      10,
+      { requireFrozen: false },
+    );
+    const alert = alerts.get(LINE_ID);
+    expect(alert).toMatchObject({ hasEbom: true, alertActive: true });
+    expect(classifyMarginLineState(alert)).toBe("BELOW_THRESHOLD");
+  });
+
+  test("projected mode: a healthy non-frozen line is ABOVE_THRESHOLD", async () => {
+    mockEnrichWithCosts.mockResolvedValue([makeEnrichedRow(CONF_ID, 600)]); // 40%
+    const alerts = await computeLineMarginAlerts(
+      [makeLine({ as_sold_frozen_at: null })],
+      10,
+      { requireFrozen: false },
+    );
+    expect(classifyMarginLineState(alerts.get(LINE_ID))).toBe(
+      "ABOVE_THRESHOLD",
+    );
+  });
+
+  test("projected mode still skips a line without a snapshot", async () => {
+    const alerts = await computeLineMarginAlerts(
+      [makeLine({ as_sold_frozen_at: null, pricing_snapshot: null })],
+      10,
+      { requireFrozen: false },
+    );
+    expect(alerts.get(LINE_ID)).toBeUndefined();
+  });
 });

@@ -95,31 +95,46 @@ type AlertInputLine = {
 };
 
 /**
- * Live per-line margin alerts for the accepted revision's frozen lines.
- * Revenue is the per-unit discounted offer total from the line's
- * `pricing_snapshot` (quantity intentionally ignored) and cost is the current
- * EBOM at today's catalog cost — the same semantics as the margin review page,
- * so the offer badge and that page can never disagree. The threshold is picked
- * automatically from the line configuration's product category.
+ * Live per-line margin alerts. Revenue is the per-unit discounted offer total
+ * from the line's `pricing_snapshot` (quantity intentionally ignored) and cost
+ * is the current EBOM at today's catalog cost — the same semantics as the
+ * margin review page, so the offer badge and that page can never disagree. The
+ * threshold is picked automatically from the line configuration's product
+ * category.
  *
- * Non-frozen lines and lines without a snapshot are skipped (no map entry).
- * A frozen line whose config has no non-deleted EBOM gets an entry with
- * `hasEbom: false` and no active alert — "margin unavailable", not a healthy
- * 100% (see {@link classifyMarginLineState}). Costs are fetched in one batch
- * query plus a single part-number lookup regardless of line count.
+ * Two modes, controlled by `requireFrozen` (default `true`):
+ * - **Accepted (frozen), the default** — only lines with an as-sold freeze
+ *   (`as_sold_frozen_at !== null`) are considered. This is the in-force margin
+ *   baseline: the customer's quoted price frozen at acceptance vs live cost.
+ * - **Projected (`requireFrozen: false`)** — the working (renegotiation)
+ *   revision's DRAFT lines, which are not frozen. Revenue comes from each line's
+ *   live `pricing_snapshot` + the *working* revision's discount, so the margin
+ *   tracks the discount the director is currently tuning. Draft lines carry no
+ *   absorb sign-off, so `absorbedMarginPct` is null and the alert reduces to the
+ *   raw below-threshold fact.
+ *
+ * Lines without a snapshot are always skipped (no map entry). A considered line
+ * whose config has no non-deleted EBOM gets an entry with `hasEbom: false` and
+ * no active alert — "margin unavailable", not a healthy 100% (see
+ * {@link classifyMarginLineState}). Costs are fetched in one batch query plus a
+ * single part-number lookup regardless of line count.
  */
 export async function computeLineMarginAlerts(
   lines: AlertInputLine[],
   discountPct: number,
+  options: { requireFrozen?: boolean } = {},
 ): Promise<Map<number, LineMarginAlert>> {
-  const frozenLines = lines.filter(
-    (line) => line.as_sold_frozen_at !== null && line.pricing_snapshot !== null,
+  const { requireFrozen = true } = options;
+  const eligibleLines = lines.filter(
+    (line) =>
+      line.pricing_snapshot !== null &&
+      (!requireFrozen || line.as_sold_frozen_at !== null),
   );
   const alerts = new Map<number, LineMarginAlert>();
-  if (frozenLines.length === 0) return alerts;
+  if (eligibleLines.length === 0) return alerts;
 
   const ebomRows = await getEngineeringBomItemsForConfigs(
-    frozenLines.map((line) => line.configuration_id),
+    eligibleLines.map((line) => line.configuration_id),
   );
   const enriched = await enrichWithCosts(ebomRows);
 
@@ -137,7 +152,7 @@ export async function computeLineMarginAlerts(
     ebomByConfig.set(row.configuration_id, items);
   }
 
-  for (const line of frozenLines) {
+  for (const line of eligibleLines) {
     const { displayData } = prepareOfferDisplayData(
       line.pricing_snapshot,
       discountPct,
