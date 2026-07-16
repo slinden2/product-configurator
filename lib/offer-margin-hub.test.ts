@@ -19,7 +19,9 @@ vi.mock("@/lib/offer", () => ({
 import type { LineMarginAlert } from "@/lib/margin-alerts";
 import {
   buildMarginOverviewRows,
+  buildProjectedMarginOverview,
   deriveRenegotiationHubState,
+  hasProjectableRenegotiation,
   marginHubAcceptedRevision,
 } from "@/lib/offer-margin-hub";
 
@@ -196,6 +198,65 @@ describe("deriveRenegotiationHubState", () => {
   test("none when there is no working revision", () => {
     expect(deriveRenegotiationHubState(false, undefined, true)).toEqual({
       kind: "none",
+    });
+  });
+});
+
+describe("hasProjectableRenegotiation", () => {
+  // Working revision id 7; the in-force accepted revision is id 5.
+  const draft = { id: 7, status: "DRAFT" as const };
+
+  test("true for a DRAFT renegotiation distinct from the accepted revision", () => {
+    expect(hasProjectableRenegotiation(draft, 5, true)).toBe(true);
+  });
+
+  test("true for a SENT renegotiation (in flight, not yet a customer outcome)", () => {
+    // SENT is not in OPEN_REVISION_STATUSES, but it is still a live proposal.
+    expect(
+      hasProjectableRenegotiation({ id: 7, status: "SENT" }, 5, true),
+    ).toBe(true);
+  });
+
+  test("false when the working revision is not a renegotiation", () => {
+    expect(hasProjectableRenegotiation(draft, 5, false)).toBe(false);
+  });
+
+  test("false when the working revision IS the in-force accepted one (accepted renegotiation)", () => {
+    // A re-accepted renegotiation became the baseline: nothing to project against.
+    expect(
+      hasProjectableRenegotiation({ id: 5, status: "ACCEPTED" }, 5, true),
+    ).toBe(false);
+  });
+
+  test.each([
+    "ACCEPTED",
+    "REJECTED",
+    "EXPIRED",
+  ] as const)("false for the terminal customer outcome %s", (status) => {
+    expect(hasProjectableRenegotiation({ id: 7, status }, 5, true)).toBe(false);
+  });
+
+  test("false when there is no working revision", () => {
+    expect(hasProjectableRenegotiation(undefined, 5, true)).toBe(false);
+  });
+});
+
+describe("buildProjectedMarginOverview", () => {
+  test("carries the working revision number, localized status, and rows", () => {
+    const alerts = new Map<number, LineMarginAlert>([
+      [1, makeAlert({ lineId: 1, alertActive: true })],
+    ]);
+    const overview = buildProjectedMarginOverview(
+      { revision_no: 3, status: "DRAFT", lines: [makeLine(1, 101, 0)] },
+      alerts,
+    );
+    expect(overview.revisionNo).toBe(3);
+    expect(overview.statusLabel).toBe("Bozza");
+    expect(overview.rows).toHaveLength(1);
+    expect(overview.rows[0]).toMatchObject({
+      lineId: 1,
+      configId: 101,
+      state: "BELOW_THRESHOLD",
     });
   });
 });

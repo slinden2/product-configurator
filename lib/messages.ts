@@ -407,6 +407,13 @@ export const MSG = {
     overviewTitle: "Marginalità dell'offerta",
     overviewSubtitle: (revisionNo: number) =>
       `Righe della revisione accettata n. ${revisionNo}`,
+    overviewSubtitleProjected: (revisionNo: number) =>
+      `Proiezione — revisione di rinegoziazione n. ${revisionNo}, non ancora accettata`,
+    // Revision selector (shown only while a renegotiation is in flight).
+    selectorAccepted: "Revisione accettata",
+    selectorProjected: "Proiezione (rinegoziazione)",
+    projectedNote:
+      "Proiezione della revisione di rinegoziazione: i margini riflettono lo sconto in lavorazione e non sono ancora in vigore. Modifica lo sconto e invia la rinegoziazione per applicarli; la revisione accettata resta valida finché la rinegoziazione non viene accettata.",
     overviewEmpty: "Nessuna riga da analizzare per questa revisione.",
     colConfiguration: "Configurazione",
     colState: "Stato margine",

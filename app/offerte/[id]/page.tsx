@@ -30,8 +30,11 @@ import { MSG } from "@/lib/messages";
 import { buildOfferRevisionExportData } from "@/lib/offer-export";
 import {
   buildMarginOverviewRows,
+  buildProjectedMarginOverview,
   deriveRenegotiationHubState,
+  hasProjectableRenegotiation,
   marginHubAcceptedRevision,
+  type ProjectedMarginOverview,
 } from "@/lib/offer-margin-hub";
 import {
   firstAcceptedRevisionNo,
@@ -163,6 +166,29 @@ const OfferDetail = async (props: OfferDetailProps) => {
     revision,
     workingIsRenegotiation,
   );
+
+  // Projected (working-revision) margin overview for the hub's revision selector.
+  // Computed only when a live renegotiation exists (hasProjectableRenegotiation),
+  // so the extra EBOM query runs only when the selector will show. The DRAFT
+  // renegotiation lines carry live re-derived pricing but no as-sold freeze, so
+  // the alerts use the non-frozen path (requireFrozen: false).
+  let projectedOverview: ProjectedMarginOverview | null = null;
+  if (
+    acceptedRevision &&
+    revision &&
+    hasProjectableRenegotiation(
+      revision,
+      offer.accepted_revision_id,
+      workingIsRenegotiation,
+    )
+  ) {
+    const projectedAlerts = await computeLineMarginAlerts(
+      revision.lines,
+      Number(revision.discount_pct),
+      { requireFrozen: false },
+    );
+    projectedOverview = buildProjectedMarginOverview(revision, projectedAlerts);
+  }
 
   return (
     <div className="space-y-6">
@@ -333,10 +359,20 @@ const OfferDetail = async (props: OfferDetailProps) => {
       </div>
 
       {acceptedRevision && (
+        // Keyed on projection presence so the selector resets to its default
+        // when a renegotiation appears/disappears (e.g. right after "Rinegozia"
+        // on this same page). Without a changing key the hub's already-mounted
+        // useState would survive the revalidate and keep showing "accepted".
+        // The key is stable across repricing (same revision_no), so an engineer
+        // edit updates the numbers without snapping the user off their tab.
         <OfferMarginOverview
+          key={
+            projectedOverview ? `proj-${projectedOverview.revisionNo}` : "base"
+          }
           offerId={offer.id}
           acceptedRevisionNo={acceptedRevision.revision_no}
           rows={marginOverviewRows}
+          projected={projectedOverview}
           renegotiation={renegotiationHub}
         />
       )}

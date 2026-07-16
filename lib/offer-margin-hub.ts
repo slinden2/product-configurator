@@ -9,6 +9,18 @@ import {
   OPEN_REVISION_STATUSES,
 } from "@/types";
 
+/**
+ * Terminal customer outcomes of a revision. A renegotiation that has reached one
+ * of these is no longer "in flight", so its margins are not worth projecting next
+ * to the accepted baseline (ACCEPTED became the new baseline; REJECTED/EXPIRED are
+ * dead proposals).
+ */
+const TERMINAL_OUTCOME_STATUSES: OfferStatusType[] = [
+  "ACCEPTED",
+  "REJECTED",
+  "EXPIRED",
+];
+
 export type MarginOverviewRow = {
   lineId: number;
   configId: number;
@@ -106,4 +118,59 @@ export function deriveRenegotiationHubState(
     };
   }
   return { kind: "none" };
+}
+
+/**
+ * The projected (working-revision) margin overview shown behind the hub's
+ * revision selector, next to the in-force accepted rows.
+ */
+export type ProjectedMarginOverview = {
+  /** The working (renegotiation) revision's number. */
+  revisionNo: number;
+  /** Localized status label of the working revision (e.g. "Bozza", "Inviata"). */
+  statusLabel: string;
+  rows: MarginOverviewRow[];
+};
+
+/**
+ * Whether the working revision is a *live* renegotiation whose margins are worth
+ * projecting next to the accepted baseline: a renegotiation (derived), not the
+ * in-force accepted revision itself (an accepted renegotiation *became* the
+ * baseline), and not past a terminal customer outcome (a REJECTED/EXPIRED
+ * proposal is dead). The page uses this to decide whether to compute projected
+ * alerts at all — so the extra EBOM query only runs when the selector will show.
+ */
+export function hasProjectableRenegotiation(
+  workingRevision: { id: number; status: OfferStatusType } | undefined,
+  acceptedRevisionId: number | null,
+  workingIsRenegotiation: boolean,
+): boolean {
+  return (
+    !!workingRevision &&
+    workingIsRenegotiation &&
+    workingRevision.id !== acceptedRevisionId &&
+    !TERMINAL_OUTCOME_STATUSES.includes(workingRevision.status)
+  );
+}
+
+/**
+ * Assembles the projected overview from the working revision and its projected
+ * alerts (computed via `computeLineMarginAlerts(..., { requireFrozen: false })`).
+ * Rows reuse {@link buildMarginOverviewRows}, so a draft line with no EBOM still
+ * classifies as MARGIN_UNAVAILABLE rather than a phantom 100%. Call only when
+ * {@link hasProjectableRenegotiation} is true.
+ */
+export function buildProjectedMarginOverview(
+  workingRevision: {
+    revision_no: number;
+    status: OfferStatusType;
+    lines: HubLine[];
+  },
+  alerts: Map<number, LineMarginAlert>,
+): ProjectedMarginOverview {
+  return {
+    revisionNo: workingRevision.revision_no,
+    statusLabel: OfferStatusLabels[workingRevision.status],
+    rows: buildMarginOverviewRows(workingRevision, alerts),
+  };
 }

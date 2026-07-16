@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { MSG } from "@/lib/messages";
 import { formatPct } from "@/lib/money";
@@ -19,6 +20,7 @@ vi.mock("next/navigation", () => ({
 
 import OfferMarginOverview, {
   type MarginOverviewRow,
+  type ProjectedMarginOverview,
   type RenegotiationHubState,
 } from "./offer-margin-overview";
 
@@ -70,9 +72,43 @@ function makeRows(): MarginOverviewRow[] {
   ];
 }
 
+/** Two projected (working-revision) rows: one healthy, one below threshold. */
+function makeProjectedRows(): MarginOverviewRow[] {
+  return [
+    {
+      lineId: 11,
+      configId: 201,
+      position: 0,
+      state: "ABOVE_THRESHOLD",
+      marginPct: 34,
+      thresholdPct: 30,
+    },
+    {
+      lineId: 12,
+      configId: 202,
+      position: 1,
+      state: "BELOW_THRESHOLD",
+      marginPct: 22,
+      thresholdPct: 30,
+    },
+  ];
+}
+
+function makeProjected(
+  overrides: Partial<ProjectedMarginOverview> = {},
+): ProjectedMarginOverview {
+  return {
+    revisionNo: 3,
+    statusLabel: "Bozza",
+    rows: makeProjectedRows(),
+    ...overrides,
+  };
+}
+
 function renderOverview(
   overrides: {
     rows?: MarginOverviewRow[];
+    projected?: ProjectedMarginOverview | null;
     renegotiation?: RenegotiationHubState;
   } = {},
 ) {
@@ -81,6 +117,7 @@ function renderOverview(
       offerId={7}
       acceptedRevisionNo={2}
       rows={overrides.rows ?? makeRows()}
+      projected={overrides.projected ?? null}
       renegotiation={overrides.renegotiation ?? { kind: "none" }}
     />,
   );
@@ -213,5 +250,76 @@ describe("OfferMarginOverview", () => {
       screen.getByText(MSG.marginReview.overviewEmpty),
     ).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+});
+
+describe("OfferMarginOverview — revision selector", () => {
+  test("shows no selector, subtitle stays the accepted one, when there is no projection", () => {
+    renderOverview();
+
+    expect(
+      screen.queryByRole("tab", { name: MSG.marginReview.selectorProjected }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(MSG.marginReview.overviewSubtitle(2)),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(MSG.marginReview.projectedNote),
+    ).not.toBeInTheDocument();
+  });
+
+  test("defaults to the projected view: loud subtitle, note, projected rows, no absorb", () => {
+    renderOverview({ projected: makeProjected() });
+
+    // Loud "not yet accepted" subtitle + projected note.
+    expect(
+      screen.getByText(MSG.marginReview.overviewSubtitleProjected(3)),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(MSG.marginReview.projectedNote),
+    ).toBeInTheDocument();
+    // The accepted subtitle is not shown while projecting.
+    expect(
+      screen.queryByText(MSG.marginReview.overviewSubtitle(2)),
+    ).not.toBeInTheDocument();
+
+    // The projected rows are shown; their Analizza link carries the working param.
+    expect(within(rowFor(2)).getByRole("link")).toHaveAttribute(
+      "href",
+      "/configurazioni/marginalita/202?revision=working",
+    );
+
+    // Absorb never appears on a projection, even for the below-threshold row.
+    expect(
+      screen.queryByRole("button", { name: MSG.marginReview.absorbButton }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("switching to the accepted tab restores the accepted rows, absorb, and links", async () => {
+    const user = userEvent.setup();
+    renderOverview({ projected: makeProjected() });
+
+    await user.click(
+      screen.getByRole("tab", { name: MSG.marginReview.selectorAccepted }),
+    );
+
+    // Accepted subtitle + no projected note.
+    expect(
+      screen.getByText(MSG.marginReview.overviewSubtitle(2)),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(MSG.marginReview.projectedNote),
+    ).not.toBeInTheDocument();
+
+    // The two accepted decision-required rows regain their absorb button.
+    expect(
+      screen.getAllByRole("button", { name: MSG.marginReview.absorbButton }),
+    ).toHaveLength(2);
+
+    // Analizza links now carry the accepted param.
+    expect(within(rowFor(2)).getByRole("link")).toHaveAttribute(
+      "href",
+      "/configurazioni/marginalita/102?revision=accepted",
+    );
   });
 });
