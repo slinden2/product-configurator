@@ -67,6 +67,16 @@ const STATE_VARIANT: Record<MarginLineState, BadgeProps["variant"]> = {
   MARGIN_UNAVAILABLE: "outline",
 };
 
+/**
+ * Accepted-view label overrides while a renegotiation is in flight: the
+ * decision has been taken (renegotiate), so "decisione richiesta" would nag
+ * for a choice that is already pending the customer's answer.
+ */
+const STATE_LABEL_RENEGOTIATING: Partial<Record<MarginLineState, string>> = {
+  BELOW_THRESHOLD: MSG.marginReview.stateRenegotiating.belowThreshold,
+  ABSORBED_ERODED: MSG.marginReview.stateRenegotiating.absorbedEroded,
+};
+
 /** The two states that still need a management decision (absorb / renegotiate). */
 function decisionRequired(state: MarginLineState): boolean {
   return state === "BELOW_THRESHOLD" || state === "ABSORBED_ERODED";
@@ -81,9 +91,11 @@ function decisionRequired(state: MarginLineState): boolean {
  * When `projected` is supplied (a live renegotiation exists), a revision selector
  * toggles between the in-force **accepted** rows and the **projected** rows of the
  * working renegotiation, defaulting to the projection — so a director tuning the
- * discount sees the resulting margin immediately. Absorb is an accepted-only
- * action: a DRAFT renegotiation line cannot be absorbed (the server rejects it),
- * so the absorb button is hidden in the projected view.
+ * discount sees the resulting margin immediately. A projection also means the
+ * margin decision point is suspended: absorb and renegotiate are its two
+ * branches, so while the renegotiation is in flight the absorb button is hidden
+ * in both views and the accepted view's "decisione richiesta" badges swap to
+ * "rinegoziazione in corso" (the server rejects a mid-renegotiation absorb too).
  */
 export default function OfferMarginOverview({
   offerId,
@@ -97,6 +109,9 @@ export default function OfferMarginOverview({
   );
   const showingProjected = view === "projected" && !!projected;
   const activeRows = showingProjected ? projected.rows : rows;
+  // The page computes `projected` exactly when a renegotiation is in flight
+  // (hasProjectableRenegotiation), so its presence is the suspension signal.
+  const renegotiationInFlight = !!projected;
 
   return (
     <Card>
@@ -158,7 +173,10 @@ export default function OfferMarginOverview({
                   </TableCell>
                   <TableCell>
                     <Badge variant={STATE_VARIANT[row.state]}>
-                      {STATE_LABEL[row.state]}
+                      {(!showingProjected &&
+                        renegotiationInFlight &&
+                        STATE_LABEL_RENEGOTIATING[row.state]) ||
+                        STATE_LABEL[row.state]}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
@@ -166,16 +184,20 @@ export default function OfferMarginOverview({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {/* Absorb is an accepted-only decision: you cannot absorb a
-                          projection (the DRAFT renegotiation line is not frozen and
-                          the server rejects it), so it never shows in projected view. */}
-                      {!showingProjected && decisionRequired(row.state) && (
-                        <AbsorbMarginButton
-                          lineId={row.lineId}
-                          marginPct={row.marginPct ?? 0}
-                          thresholdPct={row.thresholdPct}
-                        />
-                      )}
+                      {/* Absorb is suspended while a renegotiation is in flight
+                          (a projection exists): the decision point's other branch
+                          is already pending the customer, and the server rejects
+                          a mid-renegotiation absorb. No projection also means the
+                          accepted rows are the only ones rendered, so this never
+                          shows on a projected (non-frozen) line either. */}
+                      {!renegotiationInFlight &&
+                        decisionRequired(row.state) && (
+                          <AbsorbMarginButton
+                            lineId={row.lineId}
+                            marginPct={row.marginPct ?? 0}
+                            thresholdPct={row.thresholdPct}
+                          />
+                        )}
                       <Link
                         href={
                           projected

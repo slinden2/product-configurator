@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockGetUserData = vi.fn();
 const mockGetOfferLinePricingForLine = vi.fn();
+const mockGetOfferRevisionsForDerivation = vi.fn();
 const mockGetEngineeringBomItems = vi.fn();
 const mockAbsorbOfferLineMarginWithAudit = vi.fn();
 const mockEnrichWithCosts = vi.fn();
@@ -14,6 +15,8 @@ vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getOfferLinePricingForLine: (...args: unknown[]) =>
     mockGetOfferLinePricingForLine(...args),
+  getOfferRevisionsForDerivation: (...args: unknown[]) =>
+    mockGetOfferRevisionsForDerivation(...args),
   getEngineeringBomItems: (...args: unknown[]) =>
     mockGetEngineeringBomItems(...args),
   absorbOfferLineMarginWithAudit: (...args: unknown[]) =>
@@ -96,11 +99,23 @@ function makeEbomRow(cost: number) {
   };
 }
 
+/** The offer's revision set with no renegotiation in flight: the accepted one. */
+function makeRevisions() {
+  return [
+    {
+      revision_no: 3,
+      status: "ACCEPTED",
+      lines: [{ as_sold_frozen_at: new Date("2026-06-01T09:00:00Z") }],
+    },
+  ];
+}
+
 describe("absorbLineMarginAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "ADMIN" });
     mockGetOfferLinePricingForLine.mockResolvedValue(makeLine());
+    mockGetOfferRevisionsForDerivation.mockResolvedValue(makeRevisions());
     // Live margin: revenue 1000, EBOM cost 800 → 20% (below the 30% threshold).
     mockPrepareOfferDisplayData.mockReturnValue({
       displayData: { discounted_total: 1000 },
@@ -145,6 +160,7 @@ describe("absorbLineMarginAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue({ id: "u1", role: "ADMIN" });
     mockGetOfferLinePricingForLine.mockResolvedValue(makeLine());
+    mockGetOfferRevisionsForDerivation.mockResolvedValue(makeRevisions());
     mockPrepareOfferDisplayData.mockReturnValue({
       displayData: { discounted_total: 1000 },
     });
@@ -255,6 +271,39 @@ describe("absorbLineMarginAction", () => {
       error: MSG.marginReview.absorbNotAccepted,
     });
     expect(mockAbsorbOfferLineMarginWithAudit).not.toHaveBeenCalled();
+  });
+
+  // --- Renegotiation-in-flight gate ---
+
+  test.each([
+    "DRAFT",
+    "PENDING_APPROVAL",
+    "APPROVED_TO_SEND",
+    "SENT",
+  ])("rejects while a %s renegotiation is in flight (decision point suspended)", async (status) => {
+    mockGetOfferRevisionsForDerivation.mockResolvedValue([
+      ...makeRevisions(),
+      { revision_no: 4, status, lines: [{ as_sold_frozen_at: null }] },
+    ]);
+    const result = await absorbLineMarginAction(LINE_ID, {});
+    expect(result).toEqual({
+      success: false,
+      error: MSG.marginReview.absorbRenegotiationInFlight,
+    });
+    expect(mockAbsorbOfferLineMarginWithAudit).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    "REJECTED",
+    "EXPIRED",
+  ])("allows absorb again once the renegotiation is %s (the decision point returns)", async (status) => {
+    mockGetOfferRevisionsForDerivation.mockResolvedValue([
+      ...makeRevisions(),
+      { revision_no: 4, status, lines: [{ as_sold_frozen_at: null }] },
+    ]);
+    const result = await absorbLineMarginAction(LINE_ID, {});
+    expect(result).toEqual({ success: true });
+    expect(mockAbsorbOfferLineMarginWithAudit).toHaveBeenCalled();
   });
 
   // --- Alert-active gate & re-absorb rule ---

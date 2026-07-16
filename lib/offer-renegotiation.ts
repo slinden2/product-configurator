@@ -14,9 +14,26 @@
  * acceptances would stop deriving as renegotiation once the pointer moves).
  */
 
+import type { OfferStatusType } from "@/types";
+
+/**
+ * Terminal customer outcomes of a revision. A renegotiation that has reached
+ * one of these is no longer in flight: ACCEPTED became the new baseline, while
+ * REJECTED/EXPIRED are dead proposals (the margin decision point returns).
+ */
+export const TERMINAL_OUTCOME_STATUSES: OfferStatusType[] = [
+  "ACCEPTED",
+  "REJECTED",
+  "EXPIRED",
+];
+
 interface RevisionForDerivation {
   revision_no: number;
   lines: { as_sold_frozen_at: Date | null }[];
+}
+
+interface RevisionForInFlightCheck extends RevisionForDerivation {
+  status: OfferStatusType;
 }
 
 /**
@@ -43,4 +60,29 @@ export function isRenegotiationRevision(
   firstAcceptedNo: number | null,
 ): boolean {
   return firstAcceptedNo !== null && revisionNo > firstAcceptedNo;
+}
+
+/**
+ * Whether the offer has a renegotiation **in flight**: its working revision
+ * (the highest `revision_no`) derives as a renegotiation and has not reached a
+ * terminal customer outcome. Deliberately wider than `OPEN_REVISION_STATUSES`
+ * — a SENT renegotiation is still pending the customer's answer. Absorb and
+ * renegotiate are the two branches of one margin decision point, so while this
+ * is true the absorb sign-off is suspended; it returns when the renegotiation
+ * is discarded, rejected or expires (on re-acceptance the baseline resets
+ * instead).
+ */
+export function hasRenegotiationInFlight(
+  revisions: RevisionForInFlightCheck[],
+): boolean {
+  if (revisions.length === 0) return false;
+  const working = revisions.reduce((latest, rev) =>
+    rev.revision_no > latest.revision_no ? rev : latest,
+  );
+  return (
+    isRenegotiationRevision(
+      working.revision_no,
+      firstAcceptedRevisionNo(revisions),
+    ) && !TERMINAL_OUTCOME_STATUSES.includes(working.status)
+  );
 }

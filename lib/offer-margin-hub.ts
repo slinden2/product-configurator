@@ -3,23 +3,12 @@ import {
   type LineMarginAlert,
   type MarginLineState,
 } from "@/lib/margin-alerts";
+import { TERMINAL_OUTCOME_STATUSES } from "@/lib/offer-renegotiation";
 import {
   OfferStatusLabels,
   type OfferStatusType,
   OPEN_REVISION_STATUSES,
 } from "@/types";
-
-/**
- * Terminal customer outcomes of a revision. A renegotiation that has reached one
- * of these is no longer "in flight", so its margins are not worth projecting next
- * to the accepted baseline (ACCEPTED became the new baseline; REJECTED/EXPIRED are
- * dead proposals).
- */
-const TERMINAL_OUTCOME_STATUSES: OfferStatusType[] = [
-  "ACCEPTED",
-  "REJECTED",
-  "EXPIRED",
-];
 
 export type MarginOverviewRow = {
   lineId: number;

@@ -295,7 +295,7 @@ describe("OfferMarginOverview — revision selector", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("switching to the accepted tab restores the accepted rows, absorb, and links", async () => {
+  test("switching to the accepted tab restores the accepted rows and links, absorb stays suspended", async () => {
     const user = userEvent.setup();
     renderOverview({ projected: makeProjected() });
 
@@ -311,15 +311,55 @@ describe("OfferMarginOverview — revision selector", () => {
       screen.queryByText(MSG.marginReview.projectedNote),
     ).not.toBeInTheDocument();
 
-    // The two accepted decision-required rows regain their absorb button.
+    // A projection means a renegotiation is in flight: the decision point is
+    // suspended, so even the accepted decision-required rows offer no absorb.
     expect(
-      screen.getAllByRole("button", { name: MSG.marginReview.absorbButton }),
-    ).toHaveLength(2);
+      screen.queryByRole("button", { name: MSG.marginReview.absorbButton }),
+    ).not.toBeInTheDocument();
 
     // Analizza links now carry the accepted param.
     expect(within(rowFor(2)).getByRole("link")).toHaveAttribute(
       "href",
       "/configurazioni/marginalita/102?revision=accepted",
     );
+  });
+
+  test("swaps the decision-required badges to 'rinegoziazione in corso' on the accepted view only", async () => {
+    const user = userEvent.setup();
+    renderOverview({
+      projected: makeProjected(),
+      renegotiation: { kind: "open", revisionNo: 3, statusLabel: "Bozza" },
+    });
+
+    // Projected view keeps the plain labels (the projection IS the renegotiation).
+    expect(
+      screen.getByText(MSG.marginReview.state.belowThreshold),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("tab", { name: MSG.marginReview.selectorAccepted }),
+    );
+
+    // Accepted view: both decision-required states read "rinegoziazione in
+    // corso" instead of nagging for a decision that is already pending.
+    expect(
+      screen.getByText(MSG.marginReview.stateRenegotiating.belowThreshold),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(MSG.marginReview.stateRenegotiating.absorbedEroded),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(MSG.marginReview.state.belowThreshold),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(MSG.marginReview.state.absorbedEroded),
+    ).not.toBeInTheDocument();
+    // The other states keep their plain labels.
+    expect(
+      screen.getByText(MSG.marginReview.state.aboveThreshold),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(MSG.marginReview.state.absorbed),
+    ).toBeInTheDocument();
   });
 });

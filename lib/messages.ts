@@ -397,6 +397,8 @@ export const MSG = {
       "Nessuna riga d'offerta accettata e congelata per questa configurazione.",
     absorbNotActive:
       "La marginalità non è sotto soglia: nessuna decisione da registrare.",
+    absorbRenegotiationInFlight:
+      "Rinegoziazione in corso: l'accettazione del margine ridotto è sospesa fino all'esito della rinegoziazione.",
     signOffTitle: "Margine ridotto accettato",
     signOffBody: (by: string, at: string, marginPct: string) =>
       `Accettato da ${by} il ${at} con marginalità ${marginPct}.`,
@@ -429,6 +431,12 @@ export const MSG = {
       absorbed: "Assorbito",
       absorbedEroded: "Assorbito, ma eroso di nuovo — decisione richiesta",
       unavailable: "Margine non disponibile",
+    },
+    // Accepted-view variants while a renegotiation is in flight: the decision
+    // has been taken (renegotiate), so "decisione richiesta" would be false.
+    stateRenegotiating: {
+      belowThreshold: "Sotto soglia — rinegoziazione in corso",
+      absorbedEroded: "Assorbito, ma eroso di nuovo — rinegoziazione in corso",
     },
   },
 } as const;

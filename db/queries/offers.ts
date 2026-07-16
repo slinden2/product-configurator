@@ -693,6 +693,27 @@ export async function getOfferLinePricingForLine(
   return row ? toOfferLinePricing(row) : null;
 }
 
+/**
+ * Every revision of an offer in the shape the renegotiation derivation needs
+ * (`lib/offer-renegotiation`): revision number, lifecycle status and the lines'
+ * as-sold freeze markers. Backs the absorb action's in-flight-renegotiation
+ * gate — absorb and renegotiate are the two branches of one decision point, so
+ * the sign-off is suspended while a renegotiation is pending.
+ */
+export async function getOfferRevisionsForDerivation(offerId: number): Promise<
+  {
+    revision_no: number;
+    status: OfferStatusType;
+    lines: { as_sold_frozen_at: Date | null }[];
+  }[]
+> {
+  return db.query.offerRevisions.findMany({
+    where: eq(offerRevisions.offer_id, offerId),
+    columns: { revision_no: true, status: true },
+    with: { lines: { columns: { as_sold_frozen_at: true } } },
+  });
+}
+
 /** Persists a recomputed line's list/net price and pricing snapshot. */
 export async function updateOfferRevisionLinePricing(
   lineId: number,

@@ -5,6 +5,7 @@ import {
   absorbOfferLineMarginWithAudit,
   getEngineeringBomItems,
   getOfferLinePricingForLine,
+  getOfferRevisionsForDerivation,
   getUserData,
 } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
@@ -19,6 +20,7 @@ import {
 } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { prepareOfferDisplayData } from "@/lib/offer";
+import { hasRenegotiationInFlight } from "@/lib/offer-renegotiation";
 import {
   type MarginAbsorbInput,
   marginAbsorbSchema,
@@ -76,6 +78,19 @@ export async function absorbLineMarginAction(
     return {
       success: false as const,
       error: MSG.marginReview.absorbNotAccepted,
+    };
+  }
+
+  // Absorb and renegotiate are the two branches of one decision point: while a
+  // renegotiation is in flight (SENT included — the customer's answer is
+  // pending) the sign-off is suspended. It returns when the renegotiation is
+  // discarded, rejected or expires; on re-acceptance the baseline resets
+  // instead.
+  const revisions = await getOfferRevisionsForDerivation(line.offer_id);
+  if (hasRenegotiationInFlight(revisions)) {
+    return {
+      success: false as const,
+      error: MSG.marginReview.absorbRenegotiationInFlight,
     };
   }
 
