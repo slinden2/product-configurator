@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test } from "vitest";
 import type { AsSoldDiff } from "@/lib/configuration/build-as-sold-diff";
 import type { LineDiffRow, MarginComparison } from "@/lib/margin";
@@ -634,6 +635,130 @@ describe("MarginReviewView", () => {
       expect(
         within(totaleRow as HTMLElement).getAllByText(eur(0)).length,
       ).toBeGreaterThan(0);
+    });
+  });
+
+  describe("revision selector (projected renegotiation)", () => {
+    const FROZEN_AT = new Date("2026-01-15T10:30:00Z");
+    const COMPARISON_TITLE = "Confronto: accettato → proiezione";
+
+    // Accepted line: below threshold (the reason to renegotiate).
+    const acceptedComparison = makeComparison({
+      currentMargin: {
+        revenue: 1000,
+        cost: 800,
+        marginValue: 200,
+        marginPct: 20,
+      },
+      belowThreshold: true,
+      alertActive: true,
+    });
+
+    // Projected line: same live cost (800), the director lowered the discount so
+    // revenue rose 1000 → 1150, recovering the margin to 30,4% (above threshold).
+    function makeProjectedProp(
+      overrides: Partial<{
+        revisionNo: number;
+        statusLabel: string;
+        comparison: MarginComparison;
+        discountPct: number;
+      }> = {},
+    ) {
+      return {
+        revisionNo: 3,
+        statusLabel: "Bozza",
+        discountPct: 5,
+        comparison: makeComparison({
+          currentMargin: {
+            revenue: 1150,
+            cost: 800,
+            marginValue: 350,
+            marginPct: 30.4,
+          },
+          belowThreshold: false,
+          alertActive: false,
+        }),
+        ...overrides,
+      };
+    }
+
+    function renderWithProjection(
+      extra: { initialView?: "accepted" | "projected" } = {},
+    ) {
+      return render(
+        <MarginReviewView
+          comparison={acceptedComparison}
+          discountPct={0}
+          asSoldFrozenAt={FROZEN_AT}
+          asSoldDiff={makeAsSoldDiff()}
+          projected={makeProjectedProp()}
+          {...extra}
+        />,
+      );
+    }
+
+    test("shows no selector when there is no projection", () => {
+      render(
+        <MarginReviewView comparison={makeComparison()} discountPct={0} />,
+      );
+
+      expect(
+        screen.queryByRole("tab", { name: MSG.marginReview.selectorProjected }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("defaults to the projection: banner + comparison card, no freeze/as-sold", () => {
+      renderWithProjection();
+
+      // Loud projection banner replaces the frozen-as-sold note.
+      expect(
+        screen.getByText(/Proiezione rinegoziazione \(rev\. 3/),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Configurazione congelata come venduta il/),
+      ).not.toBeInTheDocument();
+
+      // The accepted→projection comparison replaces the as-sold diff card.
+      expect(screen.getByText(COMPARISON_TITLE)).toBeInTheDocument();
+      expect(
+        screen.queryByText(MSG.marginReview.asSoldDiffTitle),
+      ).not.toBeInTheDocument();
+
+      // Before/after: price +150,00 €, margin 20% → 30,4% (+10,4 pp).
+      expect(screen.getByText(delta(150))).toBeInTheDocument();
+      expect(screen.getByText("+10,4%")).toBeInTheDocument();
+    });
+
+    test("switching to the accepted tab restores the frozen note and as-sold diff", async () => {
+      const user = userEvent.setup();
+      renderWithProjection();
+
+      await user.click(
+        screen.getByRole("tab", { name: MSG.marginReview.selectorAccepted }),
+      );
+
+      expect(
+        screen.getByText(/Configurazione congelata come venduta il/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(MSG.marginReview.asSoldDiffTitle),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(COMPARISON_TITLE)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Proiezione rinegoziazione/),
+      ).not.toBeInTheDocument();
+    });
+
+    test("initialView 'accepted' starts on the accepted view", () => {
+      renderWithProjection({ initialView: "accepted" });
+
+      expect(
+        screen.getByText(/Configurazione congelata come venduta il/),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Proiezione rinegoziazione/),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(COMPARISON_TITLE)).not.toBeInTheDocument();
     });
   });
 });

@@ -660,6 +660,24 @@ export async function getOfferLinePricingForConfig(
 }
 
 /**
+ * Every pricing line owning `configId`, ordered {@link acceptedRevisionFirstOrder}
+ * (the in-force accepted line first, then by latest revision). Post-acceptance a
+ * config has one line per revision — its frozen accepted line plus one per
+ * renegotiation revision — so the margin detail page uses the full set to drive
+ * the accepted-vs-projected revision selector. Returns [] for a config that is
+ * not an offer line (e.g. standalone).
+ */
+export async function getOfferLinePricingLinesForConfig(
+  configId: number,
+): Promise<OfferLinePricing[]> {
+  const rows = await offerLinePricingBase()
+    .where(eq(offerRevisionLines.configuration_id, configId))
+    .orderBy(...acceptedRevisionFirstOrder());
+
+  return rows.map(toOfferLinePricing);
+}
+
+/**
  * Resolves a specific pricing line by its own id, for the line-keyed absorb
  * action initiated from the offer margin hub. Unlike the by-config lookup this
  * is unambiguous post-renegotiation; the caller verifies `revision_id ===

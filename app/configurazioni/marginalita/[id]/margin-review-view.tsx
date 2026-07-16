@@ -1,4 +1,7 @@
+"use client";
+
 import { AlertTriangle, Lock, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import Banner from "@/components/shared/banner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   AsSoldDiff,
   AsSoldDiffStatus,
@@ -19,6 +23,9 @@ import type { LineDiffRow, MarginComparison } from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { formatDelta, formatPct } from "@/lib/money";
 import { cn, formatDateDDMMYYYYHHMM, formatEur } from "@/lib/utils";
+
+/** Which revision's margins the selector is currently showing. */
+type MarginView = "accepted" | "projected";
 
 interface Props {
   comparison: MarginComparison;
@@ -46,6 +53,22 @@ interface Props {
       note: string | null;
     } | null;
   } | null;
+  /**
+   * The working (renegotiation) revision's projected view, or null when no live
+   * renegotiation exists. When present a revision selector appears and defaults
+   * to the projection (unless `initialView` overrides). The projected comparison
+   * uses the working line's live pricing vs the same live EBOM cost; it has no
+   * as-sold freeze, so its analog of the as-sold diff is the accepted→projected
+   * before/after card.
+   */
+  projected?: {
+    revisionNo: number;
+    statusLabel: string;
+    comparison: MarginComparison;
+    discountPct: number;
+  } | null;
+  /** Initial selector value (from the hub's ?revision link); defaults to projected. */
+  initialView?: MarginView;
 }
 
 /** Red when cost grew (delta > 0), green when it shrank. */
@@ -511,6 +534,123 @@ function LineDiffCard({
   );
 }
 
+/** Green when the value moved the margin-favorable way (up), red when down. */
+function gainClass(delta: number): string {
+  if (delta > 0) return "text-green-600 dark:text-green-400";
+  if (delta < 0) return "text-destructive";
+  return "text-muted-foreground";
+}
+
+/** Signed percentage-point label: 6.8 → "+6,8%", -3.2 → "-3,2%". */
+function formatPctDelta(delta: number): string {
+  const sign = delta > 0 ? "+" : delta < 0 ? "-" : "";
+  return `${sign}${formatPct(Math.abs(delta))}`;
+}
+
+/**
+ * Before/after of the accepted line vs the projected renegotiation line. The
+ * engineering cost is identical on both sides (same live EBOM), so only the price
+ * — and therefore the post-engineering margin — moves: exactly the lever the
+ * director is tuning. This is the projected view's analog of the as-sold diff,
+ * which is vacuous for a draft line that references the current config.
+ */
+function AcceptedVsProjectedCard({
+  accepted,
+  projected,
+}: {
+  accepted: MarginComparison;
+  projected: MarginComparison;
+}) {
+  const acceptedRevenue = accepted.currentMargin.revenue;
+  const projectedRevenue = projected.currentMargin.revenue;
+  const priceDelta = projectedRevenue - acceptedRevenue;
+
+  const acceptedMarginPct = accepted.currentMargin.marginPct;
+  const projectedMarginPct = projected.currentMargin.marginPct;
+  const marginDelta = projectedMarginPct - acceptedMarginPct;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">
+          Confronto: accettato → proiezione
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="h-auto py-1 px-0">Metrica</TableHead>
+              <TableHead className="h-auto py-1 px-0 text-right">
+                Accettato
+              </TableHead>
+              <TableHead className="h-auto py-1 px-0 text-right">
+                Proiezione
+              </TableHead>
+              <TableHead className="h-auto py-1 pl-0 pr-4 text-right">
+                Variazione
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow className="border-0 hover:bg-muted/40">
+              <TableCell className="py-1.5 px-0">Prezzo offerta</TableCell>
+              <TableCell className="py-1.5 px-0 text-right tabular-nums">
+                {formatEur(acceptedRevenue)}
+              </TableCell>
+              <TableCell className="py-1.5 px-0 text-right tabular-nums font-medium">
+                {formatEur(projectedRevenue)}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  "py-1.5 pl-0 pr-4 text-right tabular-nums font-medium",
+                  gainClass(priceDelta),
+                )}
+              >
+                {formatDelta(priceDelta)}
+              </TableCell>
+            </TableRow>
+            <TableRow className="border-0 hover:bg-muted/40">
+              <TableCell className="py-1.5 px-0">
+                Marginalità dopo progettazione
+              </TableCell>
+              <TableCell className="py-1.5 px-0 text-right tabular-nums">
+                {formatPct(acceptedMarginPct)}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  "py-1.5 px-0 text-right tabular-nums font-semibold",
+                  projected.belowThreshold
+                    ? "text-destructive"
+                    : "text-green-600 dark:text-green-400",
+                )}
+              >
+                {formatPct(projectedMarginPct)}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  "py-1.5 pl-0 pr-4 text-right tabular-nums font-medium",
+                  gainClass(marginDelta),
+                )}
+              >
+                {formatPctDelta(marginDelta)}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+
+        <p className="text-sm text-muted-foreground">
+          {projected.belowThreshold
+            ? `La marginalità proiettata resta sotto la soglia minima del ${formatPct(projected.thresholdPct)}: riduci ancora lo sconto della rinegoziazione.`
+            : `La marginalità proiettata supera la soglia minima del ${formatPct(projected.thresholdPct)}.`}{" "}
+          Il costo di progettazione è invariato: la rinegoziazione agisce solo
+          sul prezzo.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function MarginReviewView({
   comparison,
   discountPct,
@@ -518,35 +658,91 @@ export default function MarginReviewView({
   asSoldDiff = null,
   asSoldDiffUnavailable = false,
   absorb = null,
+  projected = null,
+  initialView,
 }: Props) {
+  const [view, setView] = useState<MarginView>(
+    projected ? (initialView ?? "projected") : "accepted",
+  );
+  const showingProjected = view === "projected" && !!projected;
+
+  const activeComparison = showingProjected ? projected.comparison : comparison;
+  const activeDiscount = showingProjected ? projected.discountPct : discountPct;
+
   return (
     <div className="space-y-6">
-      {asSoldFrozenAt && (
-        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-          <Lock className="h-4 w-4 shrink-0" />
-          <span>
-            Configurazione congelata come venduta il{" "}
-            <span className="font-medium text-foreground">
-              {formatDateDDMMYYYYHHMM(asSoldFrozenAt)}
-            </span>
-          </span>
+      {projected && (
+        <div className="flex justify-end">
+          <Tabs
+            value={view}
+            onValueChange={(value) => setView(value as MarginView)}
+          >
+            <TabsList>
+              <TabsTrigger value="projected">
+                {MSG.marginReview.selectorProjected}
+              </TabsTrigger>
+              <TabsTrigger value="accepted">
+                {MSG.marginReview.selectorAccepted}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       )}
-      <SummaryCard
-        comparison={comparison}
-        discountPct={discountPct}
-        absorb={absorb}
-      />
-      {asSoldFrozenAt && (
-        <AsSoldDiffCard diff={asSoldDiff} unavailable={asSoldDiffUnavailable} />
+
+      {showingProjected ? (
+        <div className="flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span>
+            <span className="font-medium">
+              Proiezione rinegoziazione (rev. {projected.revisionNo} —{" "}
+              {projected.statusLabel})
+            </span>
+            : i valori riflettono lo sconto in lavorazione e non sono ancora in
+            vigore. La revisione accettata resta valida finché la rinegoziazione
+            non viene accettata.
+          </span>
+        </div>
+      ) : (
+        asSoldFrozenAt && (
+          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            <Lock className="h-4 w-4 shrink-0" />
+            <span>
+              Configurazione congelata come venduta il{" "}
+              <span className="font-medium text-foreground">
+                {formatDateDDMMYYYYHHMM(asSoldFrozenAt)}
+              </span>
+            </span>
+          </div>
+        )
       )}
-      {comparison.hasEbom && (
+
+      <SummaryCard
+        comparison={activeComparison}
+        discountPct={activeDiscount}
+        absorb={showingProjected ? null : absorb}
+      />
+
+      {showingProjected ? (
+        <AcceptedVsProjectedCard
+          accepted={comparison}
+          projected={projected.comparison}
+        />
+      ) : (
+        asSoldFrozenAt && (
+          <AsSoldDiffCard
+            diff={asSoldDiff}
+            unavailable={asSoldDiffUnavailable}
+          />
+        )
+      )}
+
+      {activeComparison.hasEbom && (
         <LineDiffCard
-          lineDiff={comparison.lineDiff}
-          frozen={!!asSoldFrozenAt}
+          lineDiff={activeComparison.lineDiff}
+          frozen={!showingProjected && !!asSoldFrozenAt}
         />
       )}
-      <TagBreakdownCard comparison={comparison} />
+      <TagBreakdownCard comparison={activeComparison} />
     </div>
   );
 }

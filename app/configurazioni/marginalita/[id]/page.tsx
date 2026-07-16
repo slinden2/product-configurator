@@ -5,9 +5,10 @@ import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
   getConfiguration,
   getEngineeringBomItems,
-  getOfferLinePricingForConfig,
+  getOfferLinePricingLinesForConfig,
   getOfferRefForConfig,
   getUserData,
+  type OfferLinePricing,
 } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
 import { enrichWithCosts } from "@/lib/BOM";
@@ -16,19 +17,29 @@ import {
   buildAsSoldDiff,
   parseAsSoldSnapshot,
 } from "@/lib/configuration/build-as-sold-diff";
-import { buildMarginComparison, type EbomCostItem } from "@/lib/margin";
+import {
+  buildMarginComparison,
+  type EbomCostItem,
+  type MarginComparison,
+} from "@/lib/margin";
 import { MSG } from "@/lib/messages";
 import { prepareOfferDisplayData } from "@/lib/offer";
+import { hasProjectableRenegotiation } from "@/lib/offer-margin-hub";
+import { OfferStatusLabels } from "@/types";
 import MarginReviewView from "./margin-review-view";
 
 interface MarginReviewPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ revision?: string }>;
 }
 
 const MarginReviewPage = async (props: MarginReviewPageProps) => {
   const params = await props.params;
   const confId = parseInt(params.id, 10);
   if (Number.isNaN(confId)) notFound();
+  // The hub's "Analizza" link carries the selected view (?revision=working|accepted)
+  // so drilling in preserves it; default (and any other value) is the projection.
+  const { revision: revisionParam } = await props.searchParams;
 
   const user = await getUserData();
   if (!user) redirect("/login");
@@ -41,14 +52,18 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   // The margin page is ADMIN/SALES_DIRECTOR-only, both of which have offer access,
   // so the "back to offer" ref is always appropriate here (null only for the rare
   // standalone config reaching this page).
-  const [configuration, linePricing, ebomRows, offer] = await Promise.all([
+  const [configuration, lines, ebomRows, offer] = await Promise.all([
     getConfiguration(confId),
-    getOfferLinePricingForConfig(confId),
+    getOfferLinePricingLinesForConfig(confId),
     getEngineeringBomItems(confId),
     getOfferRefForConfig(confId),
   ]);
 
   if (!configuration) notFound();
+
+  // accepted-first ordering → lines[0] is the in-force accepted line (post-
+  // acceptance) or the latest line (pre-acceptance) — the baseline view.
+  const primaryLine = lines[0] ?? null;
 
   const header = (
     <>
@@ -61,9 +76,9 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="inline-block">Marginalità</h1>
-          {offer && linePricing && (
+          {offer && primaryLine && (
             <p className="text-sm text-muted-foreground">
-              Offerta {offer.offerNumber} · Revisione {linePricing.revision_no}
+              Offerta {offer.offerNumber} · Revisione {primaryLine.revision_no}
             </p>
           )}
         </div>
@@ -84,20 +99,11 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     </div>
   );
 
-  // Revenue reference: the offer revision line's as-sent quote (pricing_snapshot),
-  // discounted by the revision header discount, incl. surcharges. Null until the
-  // owning revision has been submitted/sent.
-  const items = linePricing?.pricing_snapshot ?? null;
-  const discountPct = linePricing ? Number(linePricing.discount_pct) : 0;
-  const { displayData } = items
-    ? prepareOfferDisplayData(items, discountPct)
-    : { displayData: null };
-
-  if (!linePricing || !items || !displayData)
-    return emptyState(MSG.marginReview.noOffer);
+  if (!primaryLine) return emptyState(MSG.marginReview.noOffer);
 
   // EBOM cost basis: current catalog cost of the non-deleted engineering BOM.
-  // When no EBOM exists the engineering side renders as 0 placeholders.
+  // Shared by both the accepted and projected comparisons — the engineering cost
+  // is a property of the live config, not of the revision being priced.
   const activeEbomRows = ebomRows.filter((row) => !row.is_deleted);
   const enriched = await enrichWithCosts(activeEbomRows);
   const ebomItems: EbomCostItem[] = enriched.map((row) => ({
@@ -109,35 +115,49 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
     is_deleted: row.is_deleted,
   }));
 
-  const offerBomItems = [
-    ...displayData.general.flatMap((group) => group.items),
-    ...displayData.waterTanks.flatMap((section) => section.items),
-    ...displayData.washBays.flatMap((section) => section.items),
-  ];
+  // A margin comparison for one pricing line: revenue is that line's as-sent quote
+  // (pricing_snapshot) discounted by its revision header discount, vs the shared
+  // live EBOM cost. Returns null until the owning revision has a snapshot.
+  const buildLineComparison = (
+    line: OfferLinePricing,
+  ): { comparison: MarginComparison; discountPct: number } | null => {
+    const items = line.pricing_snapshot;
+    if (!items) return null;
+    const discountPct = Number(line.discount_pct);
+    const { displayData } = prepareOfferDisplayData(items, discountPct);
+    if (!displayData) return null;
+    const offerBomItems = [
+      ...displayData.general.flatMap((group) => group.items),
+      ...displayData.waterTanks.flatMap((section) => section.items),
+      ...displayData.washBays.flatMap((section) => section.items),
+    ];
+    const absorbedMarginPct =
+      line.absorbed_margin_percent === null
+        ? null
+        : Number(line.absorbed_margin_percent);
+    return {
+      comparison: buildMarginComparison(
+        displayData.discounted_total,
+        offerBomItems,
+        ebomItems,
+        undefined,
+        absorbedMarginPct,
+      ),
+      discountPct,
+    };
+  };
 
-  // The threshold defaults to the configuration's product-category value
-  // (single category today — rollover gantries). The absorbed margin, when a
-  // sign-off exists, silences the alert until the live margin drops below it.
-  const absorbedMarginPct =
-    linePricing.absorbed_margin_percent === null
-      ? null
-      : Number(linePricing.absorbed_margin_percent);
-  const comparison = buildMarginComparison(
-    displayData.discounted_total,
-    offerBomItems,
-    ebomItems,
-    undefined,
-    absorbedMarginPct,
-  );
+  const baseData = buildLineComparison(primaryLine);
+  if (!baseData) return emptyState(MSG.marginReview.noOffer);
 
   // As-sold drift: compare the at-acceptance snapshot with the current
   // engineering config (same form shape on both sides). Only computed once a
   // freeze exists — pre-acceptance lines have no as-sold baseline to drift from.
-  const asSoldFrozenAt = linePricing?.as_sold_frozen_at ?? null;
+  const asSoldFrozenAt = primaryLine.as_sold_frozen_at ?? null;
   let asSoldDiff: AsSoldDiff | null = null;
   let asSoldDiffUnavailable = false;
   if (asSoldFrozenAt) {
-    const snapshot = parseAsSoldSnapshot(linePricing?.as_sold_snapshot);
+    const snapshot = parseAsSoldSnapshot(primaryLine.as_sold_snapshot);
     const currentConfig = snapshot
       ? await loadValidatedConfiguration(confId, user)
       : null;
@@ -151,32 +171,77 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   // Absorb sign-off context: only post-acceptance frozen lines carry a recorded
   // decision. Shown read-only here (who/when/margin/note); the absorb/renegotiate
   // decision itself is taken on the offer margin hub, not on this analysis page.
+  const primaryAbsorbedMarginPct =
+    primaryLine.absorbed_margin_percent === null
+      ? null
+      : Number(primaryLine.absorbed_margin_percent);
   const absorb =
-    linePricing.revisionStatus === "ACCEPTED" && asSoldFrozenAt
+    primaryLine.revisionStatus === "ACCEPTED" && asSoldFrozenAt
       ? {
           signOff:
-            linePricing.absorbed_at !== null && absorbedMarginPct !== null
+            primaryLine.absorbed_at !== null &&
+            primaryAbsorbedMarginPct !== null
               ? {
-                  byLabel: linePricing.absorbed_by_email ?? "—",
-                  at: linePricing.absorbed_at,
-                  marginPct: absorbedMarginPct,
-                  note: linePricing.absorbed_note,
+                  byLabel: primaryLine.absorbed_by_email ?? "—",
+                  at: primaryLine.absorbed_at,
+                  marginPct: primaryAbsorbedMarginPct,
+                  note: primaryLine.absorbed_note,
                 }
               : null,
         }
       : null;
+
+  // Projected (working-revision) view: the config's renegotiation line, when a
+  // live renegotiation exists. The working line carries live re-derived pricing
+  // but no as-sold freeze; its margin projects the renegotiated discount against
+  // the same live EBOM cost. `hasProjectableRenegotiation` keeps the rule
+  // identical to the offer hub.
+  const acceptedRevisionId = primaryLine.accepted_revision_id;
+  const workingLine = lines.reduce<OfferLinePricing | null>(
+    (latest, line) =>
+      latest && latest.revision_no >= line.revision_no ? latest : line,
+    null,
+  );
+  let projected: {
+    revisionNo: number;
+    statusLabel: string;
+    comparison: MarginComparison;
+    discountPct: number;
+  } | null = null;
+  if (
+    workingLine &&
+    hasProjectableRenegotiation(
+      { id: workingLine.revision_id, status: workingLine.revisionStatus },
+      acceptedRevisionId,
+      workingLine.revision_no > primaryLine.revision_no,
+    )
+  ) {
+    const projectedData = buildLineComparison(workingLine);
+    if (projectedData) {
+      projected = {
+        revisionNo: workingLine.revision_no,
+        statusLabel: OfferStatusLabels[workingLine.revisionStatus],
+        comparison: projectedData.comparison,
+        discountPct: projectedData.discountPct,
+      };
+    }
+  }
+
+  const initialView = revisionParam === "accepted" ? "accepted" : "projected";
 
   return (
     <div className="space-y-6">
       {header}
 
       <MarginReviewView
-        comparison={comparison}
-        discountPct={discountPct}
+        comparison={baseData.comparison}
+        discountPct={baseData.discountPct}
         asSoldFrozenAt={asSoldFrozenAt}
         asSoldDiff={asSoldDiff}
         asSoldDiffUnavailable={asSoldDiffUnavailable}
         absorb={absorb}
+        projected={projected}
+        initialView={initialView}
       />
     </div>
   );
