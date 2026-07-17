@@ -54,6 +54,16 @@ export const canViewBom = (role: Role): boolean =>
 export const canManageStandaloneConfigs = (role: Role): boolean =>
   ENGINEERING_ROLES.includes(role);
 
+/**
+ * Roles that see the technical (configuration) side of the dashboard: the
+ * intake / in-review queue cards and the configuration pipeline row. Same set
+ * as {@link canManageStandaloneConfigs} (ENGINEERING_ROLES), so the dashboard
+ * never shows a card linking into /configurazioni for a role that page would
+ * redirect away.
+ */
+export const canViewTechnicalQueue = (role: Role): boolean =>
+  ENGINEERING_ROLES.includes(role);
+
 export const canViewOffer = (role: Role): boolean => OFFER_ROLES.includes(role);
 
 /**

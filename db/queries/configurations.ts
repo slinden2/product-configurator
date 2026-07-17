@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { cache } from "react";
 import { db } from "@/db";
 import {
   type ConfigurationWithWaterTanksAndWashBays,
@@ -894,36 +895,51 @@ export async function getConfigIntakeCount(
     eq(configurations.status, "SALES_APPROVED"),
   );
 
+  // A raw sql fragment has no schema column mapping, so min() timestamps
+  // arrive as strings — normalize to Date before returning.
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
-      oldestDate: sql<Date | null>`min(${configurations.updated_at})`,
+      oldestDate: sql<string | Date | null>`min(${configurations.updated_at})`,
     })
     .from(configurations)
     .where(whereClause);
 
-  return { count: row.count, oldestDate: row.oldestDate };
+  return {
+    count: row.count,
+    oldestDate: row.oldestDate == null ? null : new Date(row.oldestDate),
+  };
 }
 
-export async function getConfigTechnicalQueueCounts(
-  user: NonNullable<UserData>,
-) {
-  const scopeWhere = configScopeWhere(user);
-  const technicalQueueWhere = or(
-    eq(configurations.origin, "STANDALONE"),
-    and(
-      eq(configurations.origin, "OFFER"),
-      inArray(configurations.status, HANDED_OFF_STATUSES),
-    ),
-  );
-  const whereClause = and(scopeWhere, technicalQueueWhere);
+export const getConfigTechnicalQueueCounts = cache(
+  async (user: NonNullable<UserData>) => {
+    const scopeWhere = configScopeWhere(user);
+    const technicalQueueWhere = or(
+      eq(configurations.origin, "STANDALONE"),
+      and(
+        eq(configurations.origin, "OFFER"),
+        inArray(configurations.status, HANDED_OFF_STATUSES),
+      ),
+    );
+    const whereClause = and(scopeWhere, technicalQueueWhere);
 
-  return db
-    .select({
-      status: configurations.status,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(configurations)
-    .where(whereClause)
-    .groupBy(configurations.status);
-}
+    // A raw sql fragment has no schema column mapping, so min() timestamps
+    // arrive as strings — normalize to Date before returning.
+    const rows = await db
+      .select({
+        status: configurations.status,
+        count: sql<number>`count(*)::int`,
+        oldestDate: sql<
+          string | Date | null
+        >`min(${configurations.updated_at})`,
+      })
+      .from(configurations)
+      .where(whereClause)
+      .groupBy(configurations.status);
+
+    return rows.map((row) => ({
+      ...row,
+      oldestDate: row.oldestDate == null ? null : new Date(row.oldestDate),
+    }));
+  },
+);

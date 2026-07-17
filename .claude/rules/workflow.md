@@ -215,8 +215,10 @@ renegotiation repricing.
 - **Technical queue:** `getUserConfigurations` returns the engineer/admin queue — STANDALONE (all statuses)
   ∪ OFFER (`SALES_APPROVED`+). Pre-handoff offer configs never appear there.
 
-**Landing:** the home page (`app/page.tsx`) redirects each role to its primary workspace — SALES roles →
-`/offerte`, ENGINEER → `/configurazioni`, ADMIN → the cross-status dashboard.
+**Landing:** the home page (`app/page.tsx`) is the role-aware dashboard shared by every role — no per-role
+redirects. Each role sees its scoped slice: offer queues + offer pipeline for `canViewOffer` roles (scoped
+by `offerScopeWhere`), technical queues + configuration pipeline for ENGINEER/ADMIN
+(`canViewTechnicalQueue`), margin card for ADMIN/SALES_DIRECTOR (`canViewMarginReview`).
 
 **Validation:** Every Server Action MUST run `isEditable(status, role, origin, offerRevisionStatus?)` before
 any DB update, and `canAccessConfiguration` (or fetch via the scoped `getConfigurationWithTanksAndBays`) for

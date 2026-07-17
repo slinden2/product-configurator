@@ -59,7 +59,7 @@ the engineering status machine. Full rules: `.claude/rules/workflow.md`.
 ### Routing & Pages
 
 - **Auth group:** `(auth)/` route group — `login`, `signup`, `recupera-password`, `resetta-password`
-- **Landing:** `/` (`app/page.tsx`) redirects by role — SALES → `/offerte`, ENGINEER → `/configurazioni`, ADMIN → dashboard.
+- **Landing:** `/` (`app/page.tsx`) is the role-aware dashboard for every role — offer queue cards + offer pipeline for `canViewOffer` roles (scoped by `offerScopeWhere`), technical queue cards + configuration pipeline for ENGINEER/ADMIN (`canViewTechnicalQueue`), margin card for ADMIN/SALES_DIRECTOR (`canViewMarginReview`).
 - **Offers (sales):** `offerte/` (list), `offerte/nuova`, `offerte/[id]` (detail + revision workflow). Gated by `canViewOffer` (ENGINEER excluded).
 - **Configurations (engineer/admin technical queue):** `configurazioni/` (list — standalone all-statuses + handed-off offer configs), `configurazioni/nuova`, `configurazioni/modifica/[id]`, `configurazioni/visualizza/[id]`, `configurazioni/bom/[id]`, `configurazioni/marginalita/[id]`. The old `configurazioni/offerta/[id]` route is **retired**.
 - **Admin:** `gestione/utenti/` for user management

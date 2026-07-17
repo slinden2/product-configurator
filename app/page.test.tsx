@@ -52,7 +52,7 @@ beforeEach(() => {
   mockGetConfigTechnicalQueueCounts.mockResolvedValue([]);
 });
 
-describe("Dashboard landing redirect", () => {
+describe("Dashboard landing", () => {
   test("unauthenticated users go to /login", async () => {
     expect(await landingFor(null)).toBe("/login");
   });
@@ -60,19 +60,10 @@ describe("Dashboard landing redirect", () => {
   test.each([
     "SALES",
     "SALES_MANAGER",
-  ] as const)("%s lands on /offerte", async (role) => {
-    expect(await landingFor(role)).toBe("/offerte");
-  });
-
-  test("ENGINEER lands on /configurazioni", async () => {
-    expect(await landingFor("ENGINEER")).toBe("/configurazioni");
-  });
-
-  test("ADMIN stays on the dashboard overview", async () => {
-    expect(await landingFor("ADMIN")).toBeNull();
-  });
-
-  test("SALES_DIRECTOR stays on the dashboard overview", async () => {
-    expect(await landingFor("SALES_DIRECTOR")).toBeNull();
+    "SALES_DIRECTOR",
+    "ENGINEER",
+    "ADMIN",
+  ] as const)("%s stays on the dashboard", async (role) => {
+    expect(await landingFor(role)).toBeNull();
   });
 });

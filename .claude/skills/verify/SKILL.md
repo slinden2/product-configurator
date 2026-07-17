@@ -19,8 +19,8 @@ Needs the seeded Supabase/Postgres from `.env` (already configured). If data loo
 - `admin@itecosrl.com` (ADMIN), `engineer@itecosrl.com` (ENGINEER),
   `director@itecosrl.com` (SALES_DIRECTOR), `manager@itecosrl.com` (SALES_MANAGER),
   `agent@itecosrl.com` (SALES)
-- Login form at `/login`: fill Email + Password, click "Accedi". Role decides the landing redirect
-  (SALES → /offerte, ENGINEER → /configurazioni, ADMIN → dashboard).
+- Login form at `/login`: fill Email + Password, click "Accedi". Every role lands on the `/`
+  role-aware dashboard; sections vary by role.
 
 ## Drive (playwright-cli skill)
 

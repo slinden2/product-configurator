@@ -41,7 +41,7 @@ const MainNav = ({ user, role }: MainNavProps) => {
 
   const routes = [
     {
-      label: "Home",
+      label: "Dashboard",
       href: "/",
       active: pathname === "/",
     },

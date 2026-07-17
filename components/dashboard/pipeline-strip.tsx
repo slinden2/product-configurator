@@ -3,6 +3,7 @@ import {
   getConfigTechnicalQueueCounts,
   getOfferRevisionQueueCounts,
 } from "@/db/queries";
+import { canViewOffer, canViewTechnicalQueue } from "@/lib/access";
 import { STATUS_CONFIG } from "@/lib/status-config";
 import { cn } from "@/lib/utils";
 import { ConfigurationStatus, OfferStatus, OfferStatusLabels } from "@/types";
@@ -12,14 +13,18 @@ interface PipelineStripProps {
 }
 
 export async function PipelineStrip({ user }: PipelineStripProps) {
-  const isAdmin = user.role === "ADMIN";
+  const showOfferQueues = canViewOffer(user.role);
+  const showTechnicalQueues = canViewTechnicalQueue(user.role);
+  if (!showOfferQueues && !showTechnicalQueues) return null;
 
   const [offerCounts, configCounts] = await Promise.all([
-    getOfferRevisionQueueCounts(user),
-    isAdmin ? getConfigTechnicalQueueCounts(user) : null,
+    showOfferQueues ? getOfferRevisionQueueCounts(user) : null,
+    showTechnicalQueues ? getConfigTechnicalQueueCounts(user) : null,
   ]);
 
-  const offerCountMap = new Map(offerCounts.map((q) => [q.status, q.count]));
+  const offerCountMap = offerCounts
+    ? new Map(offerCounts.map((q) => [q.status, q.count]))
+    : null;
   const configCountMap = configCounts
     ? new Map(configCounts.map((q) => [q.status, q.count]))
     : null;
@@ -28,21 +33,23 @@ export async function PipelineStrip({ user }: PipelineStripProps) {
     <section>
       <h2 className="text-lg font-semibold mb-3">Pipeline</h2>
       <div className="space-y-3">
-        <div>
-          <p className="text-xs text-muted-foreground mb-1.5 uppercase tracking-wide">
-            Offerte
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {OfferStatus.map((status) => (
-              <PipelineChip
-                key={status}
-                label={OfferStatusLabels[status]}
-                count={offerCountMap.get(status) ?? 0}
-              />
-            ))}
+        {showOfferQueues && offerCountMap && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1.5 uppercase tracking-wide">
+              Offerte
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {OfferStatus.map((status) => (
+                <PipelineChip
+                  key={status}
+                  label={OfferStatusLabels[status]}
+                  count={offerCountMap.get(status) ?? 0}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-        {isAdmin && configCountMap && (
+        )}
+        {showTechnicalQueues && configCountMap && (
           <div>
             <p className="text-xs text-muted-foreground mb-1.5 uppercase tracking-wide">
               Configurazioni

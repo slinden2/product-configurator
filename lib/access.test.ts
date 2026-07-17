@@ -9,6 +9,7 @@ import {
   canViewBom,
   canViewMarginReview,
   canViewOffer,
+  canViewTechnicalQueue,
   isConfigLocked,
 } from "@/lib/access";
 import type { OfferStatusType, Role } from "@/types";
@@ -92,6 +93,23 @@ describe("canManageStandaloneConfigs", () => {
     "SALES_DIRECTOR",
   ] as Role[])("%s does not (sales work from offers)", (role) => {
     expect(canManageStandaloneConfigs(role)).toBe(false);
+  });
+});
+
+describe("canViewTechnicalQueue", () => {
+  test.each([
+    "ENGINEER",
+    "ADMIN",
+  ] as const)("%s sees the technical dashboard section", (role) => {
+    expect(canViewTechnicalQueue(role)).toBe(true);
+  });
+
+  test.each([
+    "SALES",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as Role[])("%s does not (offer side only)", (role) => {
+    expect(canViewTechnicalQueue(role)).toBe(false);
   });
 });
 

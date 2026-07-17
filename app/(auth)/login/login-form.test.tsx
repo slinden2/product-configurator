@@ -68,7 +68,7 @@ describe("LoginForm", () => {
   });
 
   describe("Form submission", () => {
-    test("calls signIn and redirects to / on success, letting the landing page route by role", async () => {
+    test("calls signIn and redirects to the / dashboard on success", async () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 

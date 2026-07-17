@@ -19,7 +19,7 @@ const LoginForm = () => {
   const onSubmit = async (formData: LoginSchema) => {
     const response = await signIn(formData);
     if (response.success) {
-      // "/" owns the per-role landing redirect; duplicating it here would drift.
+      // "/" is the role-aware dashboard shared by every role.
       router.push("/");
     } else {
       toast.error(response.error);

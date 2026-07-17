@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, ilike, inArray, max, or, sql } from "drizzle-orm";
+import { cache } from "react";
 import { db } from "@/db";
 import {
   type ConfigurationWithWaterTanksAndWashBays,
@@ -353,24 +354,25 @@ export type QueueCountRow = {
   oldestDate: Date | null;
 };
 
-export async function getOfferRevisionQueueCounts(
-  user: NonNullable<UserData>,
-): Promise<QueueCountRow[]> {
-  const scopeWhere = offerScopeWhere(user);
-  const scopeJoin = scopeWhere ? sql`and ${scopeWhere}` : sql``;
+export const getOfferRevisionQueueCounts = cache(
+  async (user: NonNullable<UserData>): Promise<QueueCountRow[]> => {
+    const scopeWhere = offerScopeWhere(user);
+    const scopeJoin = scopeWhere ? sql`and ${scopeWhere}` : sql``;
 
-  const result = await db.execute<{
-    status: OfferStatusType;
-    count: number;
-    oldest_date: Date | null;
-  }>(sql`
+    // Raw execute bypasses drizzle's schema-based column mapping, so timestamps
+    // arrive as strings — normalize to Date in the row mapping below.
+    const result = await db.execute<{
+      status: OfferStatusType;
+      count: number;
+      oldest_date: string | Date | null;
+    }>(sql`
     with latest_revisions as (
       select distinct on (r.offer_id)
         r.status,
         r.sent_at,
         r.updated_at
       from offer_revisions r
-      inner join offers o on r.offer_id = o.id
+      inner join offers on r.offer_id = offers.id
       where true ${scopeJoin}
       order by r.offer_id, r.revision_no desc
     )
@@ -385,12 +387,13 @@ export async function getOfferRevisionQueueCounts(
     group by status
   `);
 
-  return result.rows.map((row) => ({
-    status: row.status,
-    count: row.count,
-    oldestDate: row.oldest_date,
-  }));
-}
+    return result.rows.map((row) => ({
+      status: row.status,
+      count: row.count,
+      oldestDate: row.oldest_date == null ? null : new Date(row.oldest_date),
+    }));
+  },
+);
 
 export type MarginSweepLine = {
   id: number;
