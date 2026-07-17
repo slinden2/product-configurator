@@ -2,34 +2,40 @@ import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import AllConfigurationsTable from "@/components/all-configuration-table";
+import { ActiveStatusFilter } from "@/components/shared/active-status-filter";
 import { Button } from "@/components/ui/button";
 import { getUserConfigurations, getUserData } from "@/db/queries";
 import { canManageStandaloneConfigs } from "@/lib/access";
+import { STATUS_CONFIG } from "@/lib/status-config";
+import { parseConfigStatusSlug } from "@/lib/status-slugs";
 
 const PAGE_SIZE = 20;
 
 const Configurations = async (props: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>;
 }) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
-  // The configurations area is the standalone "Technical" list: Engineer/Admin
-  // only. Sales work from offers (/offerte), not from technical configs.
   if (!canManageStandaloneConfigs(user.role)) redirect("/");
 
-  const { page: pageParam } = await props.searchParams;
+  const { page: pageParam, status: statusParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const statusFilter = parseConfigStatusSlug(statusParam);
 
   const { data: configurations, totalCount } = await getUserConfigurations(
     user,
     page,
     PAGE_SIZE,
+    statusFilter,
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   if (page > totalPages) {
-    redirect(`/configurazioni?page=${totalPages}`);
+    const params = new URLSearchParams();
+    if (statusParam && statusFilter) params.set("status", statusParam);
+    params.set("page", String(totalPages));
+    redirect(`/configurazioni?${params.toString()}`);
   }
 
   return (
@@ -47,12 +53,19 @@ const Configurations = async (props: {
           </Link>
         </div>
       </div>
+      {statusFilter && (
+        <ActiveStatusFilter
+          label={STATUS_CONFIG[statusFilter].label}
+          clearHref="/configurazioni"
+        />
+      )}
       <AllConfigurationsTable
         configurations={configurations}
         page={page}
         totalCount={totalCount}
         pageSize={PAGE_SIZE}
         user={user}
+        statusSlug={statusParam}
       />
     </div>
   );

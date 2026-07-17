@@ -16,6 +16,7 @@ interface AllConfigurationsTableProps {
   totalCount: number;
   pageSize: number;
   user: NonNullable<UserData>;
+  statusSlug?: string;
 }
 
 const headers = [
@@ -35,6 +36,7 @@ const AllConfigurationsTable = ({
   totalCount,
   pageSize,
   user,
+  statusSlug,
 }: AllConfigurationsTableProps) => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -73,7 +75,12 @@ const AllConfigurationsTable = ({
       <PaginationControls
         page={page}
         totalPages={totalPages}
-        buildHref={(p) => `/configurazioni?page=${p}`}
+        buildHref={(p) => {
+          const params = new URLSearchParams();
+          if (statusSlug) params.set("status", statusSlug);
+          params.set("page", String(p));
+          return `/configurazioni?${params.toString()}`;
+        }}
       />
     </div>
   );

@@ -119,38 +119,12 @@ type AlertInputLine = {
  * {@link classifyMarginLineState}). Costs are fetched in one batch query plus a
  * single part-number lookup regardless of line count.
  */
-export async function computeLineMarginAlerts(
-  lines: AlertInputLine[],
+function computeAlertsFromEnrichedEbom(
+  eligibleLines: AlertInputLine[],
   discountPct: number,
-  options: { requireFrozen?: boolean } = {},
-): Promise<Map<number, LineMarginAlert>> {
-  const { requireFrozen = true } = options;
-  const eligibleLines = lines.filter(
-    (line) =>
-      line.pricing_snapshot !== null &&
-      (!requireFrozen || line.as_sold_frozen_at !== null),
-  );
+  ebomByConfig: Map<number, EbomCostItem[]>,
+): Map<number, LineMarginAlert> {
   const alerts = new Map<number, LineMarginAlert>();
-  if (eligibleLines.length === 0) return alerts;
-
-  const ebomRows = await getEngineeringBomItemsForConfigs(
-    eligibleLines.map((line) => line.configuration_id),
-  );
-  const enriched = await enrichWithCosts(ebomRows);
-
-  const ebomByConfig = new Map<number, EbomCostItem[]>();
-  for (const row of enriched) {
-    const items = ebomByConfig.get(row.configuration_id) ?? [];
-    items.push({
-      pn: row.pn,
-      description: row.description,
-      qty: row.qty,
-      cost: row.cost,
-      tag: row.tag,
-      is_deleted: row.is_deleted,
-    });
-    ebomByConfig.set(row.configuration_id, items);
-  }
 
   for (const line of eligibleLines) {
     const { displayData } = prepareOfferDisplayData(
@@ -164,8 +138,6 @@ export async function computeLineMarginAlerts(
     const thresholdPct = getMarginThresholdForCategory(
       getConfigurationProductCategory(),
     );
-    // The batch fetch keeps soft-deleted rows, so "has an EBOM" must exclude
-    // them — otherwise an all-deleted BOM would read as a healthy margin.
     const hasEbom = ebomItems.some((item) => !item.is_deleted);
     const absorbedMarginPct =
       line.absorbed_margin_percent === null
@@ -189,4 +161,84 @@ export async function computeLineMarginAlerts(
   }
 
   return alerts;
+}
+
+async function fetchEbomByConfig(
+  configIds: number[],
+): Promise<Map<number, EbomCostItem[]>> {
+  const ebomRows = await getEngineeringBomItemsForConfigs(configIds);
+  const enriched = await enrichWithCosts(ebomRows);
+
+  const ebomByConfig = new Map<number, EbomCostItem[]>();
+  for (const row of enriched) {
+    const items = ebomByConfig.get(row.configuration_id) ?? [];
+    items.push({
+      pn: row.pn,
+      description: row.description,
+      qty: row.qty,
+      cost: row.cost,
+      tag: row.tag,
+      is_deleted: row.is_deleted,
+    });
+    ebomByConfig.set(row.configuration_id, items);
+  }
+  return ebomByConfig;
+}
+
+export async function computeLineMarginAlerts(
+  lines: AlertInputLine[],
+  discountPct: number,
+  options: { requireFrozen?: boolean } = {},
+): Promise<Map<number, LineMarginAlert>> {
+  const { requireFrozen = true } = options;
+  const eligibleLines = lines.filter(
+    (line) =>
+      line.pricing_snapshot !== null &&
+      (!requireFrozen || line.as_sold_frozen_at !== null),
+  );
+  if (eligibleLines.length === 0) return new Map();
+
+  const ebomByConfig = await fetchEbomByConfig(
+    eligibleLines.map((line) => line.configuration_id),
+  );
+
+  return computeAlertsFromEnrichedEbom(
+    eligibleLines,
+    discountPct,
+    ebomByConfig,
+  );
+}
+
+export async function computeLineMarginAlertsBatch(
+  groups: { lines: AlertInputLine[]; discountPct: number }[],
+): Promise<Map<number, LineMarginAlert>> {
+  const allEligible = groups.flatMap((g) =>
+    g.lines.filter(
+      (line) =>
+        line.pricing_snapshot !== null && line.as_sold_frozen_at !== null,
+    ),
+  );
+  if (allEligible.length === 0) return new Map();
+
+  const ebomByConfig = await fetchEbomByConfig(
+    allEligible.map((line) => line.configuration_id),
+  );
+
+  const merged = new Map<number, LineMarginAlert>();
+  for (const group of groups) {
+    const eligible = group.lines.filter(
+      (line) =>
+        line.pricing_snapshot !== null && line.as_sold_frozen_at !== null,
+    );
+    const alerts = computeAlertsFromEnrichedEbom(
+      eligible,
+      group.discountPct,
+      ebomByConfig,
+    );
+    for (const [id, alert] of alerts) {
+      merged.set(id, alert);
+    }
+  }
+
+  return merged;
 }

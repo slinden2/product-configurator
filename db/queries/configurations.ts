@@ -147,6 +147,7 @@ export async function getUserConfigurations(
   user: NonNullable<UserData>,
   page: number = 1,
   pageSize: number = 20,
+  statusFilter?: ConfigurationStatusType,
 ) {
   const scopeWhere = configScopeWhere(user);
   const technicalQueueWhere = or(
@@ -156,9 +157,11 @@ export async function getUserConfigurations(
       inArray(configurations.status, HANDED_OFF_STATUSES),
     ),
   );
-  const whereClause = scopeWhere
-    ? and(scopeWhere, technicalQueueWhere)
-    : technicalQueueWhere;
+  const whereClause = and(
+    scopeWhere,
+    technicalQueueWhere,
+    statusFilter ? eq(configurations.status, statusFilter) : undefined,
+  );
 
   const [rows, countResult] = await Promise.all([
     db.query.configurations.findMany({
@@ -879,4 +882,48 @@ export async function getConfigurationStatusCounts(
     .groupBy(configurations.status);
 
   return result;
+}
+
+export async function getConfigIntakeCount(
+  user: NonNullable<UserData>,
+): Promise<{ count: number; oldestDate: Date | null }> {
+  const scopeWhere = configScopeWhere(user);
+  const whereClause = and(
+    scopeWhere,
+    eq(configurations.origin, "OFFER"),
+    eq(configurations.status, "SALES_APPROVED"),
+  );
+
+  const [row] = await db
+    .select({
+      count: sql<number>`count(*)::int`,
+      oldestDate: sql<Date | null>`min(${configurations.updated_at})`,
+    })
+    .from(configurations)
+    .where(whereClause);
+
+  return { count: row.count, oldestDate: row.oldestDate };
+}
+
+export async function getConfigTechnicalQueueCounts(
+  user: NonNullable<UserData>,
+) {
+  const scopeWhere = configScopeWhere(user);
+  const technicalQueueWhere = or(
+    eq(configurations.origin, "STANDALONE"),
+    and(
+      eq(configurations.origin, "OFFER"),
+      inArray(configurations.status, HANDED_OFF_STATUSES),
+    ),
+  );
+  const whereClause = and(scopeWhere, technicalQueueWhere);
+
+  return db
+    .select({
+      status: configurations.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(configurations)
+    .where(whereClause)
+    .groupBy(configurations.status);
 }

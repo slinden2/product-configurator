@@ -277,8 +277,21 @@ export async function getUserOffers(
   user: NonNullable<UserData>,
   page: number = 1,
   pageSize: number = 20,
+  statusFilter?: OfferStatusType,
 ) {
-  const whereClause = offerScopeWhere(user);
+  const scopeWhere = offerScopeWhere(user);
+  const statusWhere = statusFilter
+    ? sql`exists (
+        select 1 from offer_revisions r
+        where r.offer_id = ${offers.id}
+          and r.status = ${statusFilter}
+          and r.revision_no = (
+            select max(r2.revision_no) from offer_revisions r2
+            where r2.offer_id = ${offers.id}
+          )
+      )`
+    : undefined;
+  const whereClause = and(scopeWhere, statusWhere);
 
   const [data, countResult] = await Promise.all([
     db.query.offers.findMany({
@@ -333,6 +346,123 @@ export async function getUserOffers(
 }
 
 export type AllOffers = Awaited<ReturnType<typeof getUserOffers>>["data"];
+
+export type QueueCountRow = {
+  status: OfferStatusType;
+  count: number;
+  oldestDate: Date | null;
+};
+
+export async function getOfferRevisionQueueCounts(
+  user: NonNullable<UserData>,
+): Promise<QueueCountRow[]> {
+  const scopeWhere = offerScopeWhere(user);
+  const scopeJoin = scopeWhere ? sql`and ${scopeWhere}` : sql``;
+
+  const result = await db.execute<{
+    status: OfferStatusType;
+    count: number;
+    oldest_date: Date | null;
+  }>(sql`
+    with latest_revisions as (
+      select distinct on (r.offer_id)
+        r.status,
+        r.sent_at,
+        r.updated_at
+      from offer_revisions r
+      inner join offers o on r.offer_id = o.id
+      where true ${scopeJoin}
+      order by r.offer_id, r.revision_no desc
+    )
+    select
+      status,
+      count(*)::int as count,
+      case
+        when status = 'SENT' then min(sent_at)
+        else min(updated_at)
+      end as oldest_date
+    from latest_revisions
+    group by status
+  `);
+
+  return result.rows.map((row) => ({
+    status: row.status,
+    count: row.count,
+    oldestDate: row.oldest_date,
+  }));
+}
+
+export type MarginSweepLine = {
+  id: number;
+  configuration_id: number;
+  pricing_snapshot: unknown;
+  as_sold_frozen_at: Date | null;
+  absorbed_margin_percent: string | null;
+  position: number;
+};
+
+export type MarginSweepOffer = {
+  offerId: number;
+  offerNumber: string;
+  discountPct: number;
+  lines: MarginSweepLine[];
+};
+
+export async function getAcceptedOfferLinesForMarginSweep(
+  user: NonNullable<UserData>,
+): Promise<MarginSweepOffer[]> {
+  const scopeWhere = offerScopeWhere(user);
+
+  const rows = await db
+    .select({
+      offerId: offers.id,
+      offerNumber: offers.offer_number,
+      discountPct: offerRevisions.discount_pct,
+      lineId: offerRevisionLines.id,
+      configurationId: offerRevisionLines.configuration_id,
+      pricingSnapshot: offerRevisionLines.pricing_snapshot,
+      asSoldFrozenAt: offerRevisionLines.as_sold_frozen_at,
+      absorbedMarginPercent: offerRevisionLines.absorbed_margin_percent,
+      position: offerRevisionLines.position,
+    })
+    .from(offerRevisionLines)
+    .innerJoin(
+      offerRevisions,
+      eq(offerRevisionLines.offer_revision_id, offerRevisions.id),
+    )
+    .innerJoin(offers, eq(offerRevisions.offer_id, offers.id))
+    .where(
+      and(
+        sql`${offers.accepted_revision_id} = ${offerRevisions.id}`,
+        scopeWhere,
+      ),
+    )
+    .orderBy(asc(offers.offer_number), asc(offerRevisionLines.position));
+
+  const byOffer = new Map<number, MarginSweepOffer>();
+  for (const row of rows) {
+    let offer = byOffer.get(row.offerId);
+    if (!offer) {
+      offer = {
+        offerId: row.offerId,
+        offerNumber: row.offerNumber,
+        discountPct: Number(row.discountPct),
+        lines: [],
+      };
+      byOffer.set(row.offerId, offer);
+    }
+    offer.lines.push({
+      id: row.lineId,
+      configuration_id: row.configurationId,
+      pricing_snapshot: row.pricingSnapshot,
+      as_sold_frozen_at: row.asSoldFrozenAt,
+      absorbed_margin_percent: row.absorbedMarginPercent,
+      position: row.position,
+    });
+  }
+
+  return [...byOffer.values()];
+}
 
 /**
  * Single offer with **all** its revisions ordered newest-first (`revision_no`

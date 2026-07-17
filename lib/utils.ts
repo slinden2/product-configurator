@@ -38,3 +38,14 @@ export const NOT_SELECTED_LABEL = "---";
 export const withNoSelection = (items: SelectOption[]): SelectOption[] => {
   return [{ value: NOT_SELECTED_VALUE, label: NOT_SELECTED_LABEL }, ...items];
 };
+
+export function formatAge(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days === 0) {
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours === 0) return "meno di un'ora";
+    return hours === 1 ? "da 1 ora" : `da ${hours} ore`;
+  }
+  return days === 1 ? "da 1 giorno" : `da ${days} giorni`;
+}

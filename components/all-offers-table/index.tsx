@@ -18,6 +18,7 @@ interface AllOffersTableProps {
   page: number;
   totalCount: number;
   pageSize: number;
+  statusSlug?: string;
 }
 
 const headers = [
@@ -35,6 +36,7 @@ const AllOffersTable = ({
   page,
   totalCount,
   pageSize,
+  statusSlug,
 }: AllOffersTableProps) => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -89,7 +91,12 @@ const AllOffersTable = ({
       <PaginationControls
         page={page}
         totalPages={totalPages}
-        buildHref={(p) => `/offerte?page=${p}`}
+        buildHref={(p) => {
+          const params = new URLSearchParams();
+          if (statusSlug) params.set("status", statusSlug);
+          params.set("page", String(p));
+          return `/offerte?${params.toString()}`;
+        }}
       />
     </div>
   );
