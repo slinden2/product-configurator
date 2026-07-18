@@ -12,7 +12,7 @@ interface ExportButtonProps {
 const ExportButton = ({ exportData }: ExportButtonProps) => (
   <AsyncActionButton
     action={async () => {
-      const { exportBomToXls } = await import("@/lib/BOM/export-xlsx");
+      const { exportBomToXls } = await import("@/lib/BOM/export-xls");
       exportBomToXls(exportData, "exp_config");
     }}
     icon={<Share />}

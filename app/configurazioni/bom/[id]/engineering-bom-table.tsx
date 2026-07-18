@@ -132,7 +132,7 @@ const EngineeringBomTable = ({
         toast.error(MSG.toast.subBomEmpty);
         return;
       }
-      const { exportBomToXls } = await import("@/lib/BOM/export-xlsx");
+      const { exportBomToXls } = await import("@/lib/BOM/export-xls");
       exportBomToXls(result.data, item.pn);
     });
   }
