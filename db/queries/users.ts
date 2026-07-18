@@ -4,7 +4,7 @@ import { activityLogs, configurations, userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import type { Role } from "@/types";
 import { createClient } from "@/utils/supabase/server";
-import { insertActivityLog } from "./activity";
+import { insertActivityLog, logActivity } from "./activity";
 import { QueryError } from "./errors";
 
 export type UserData = Awaited<ReturnType<typeof getUserData>>;
@@ -99,6 +99,56 @@ export async function getUserProfileById(userId: string) {
   return db.query.userProfiles.findFirst({
     where: eq(userProfiles.id, userId),
   });
+}
+
+/**
+ * First-login provisioning + last-login bookkeeping for a Supabase-authenticated
+ * user, keyed by email. When no profile row exists yet, provisions an inactive
+ * `SALES` profile (pending admin activation) and logs `USER_PROFILE_CREATE`; when
+ * the profile exists and is active, stamps `last_login_at`. Returns only the
+ * activation state the caller needs to branch on (pending-activation vs
+ * deactivated vs active), keeping every profile read/write for the login path in
+ * the query layer.
+ */
+export async function provisionUserProfileOnLogin(
+  userId: string,
+  email: string,
+): Promise<{ is_active: boolean; deactivated_at: Date | null }> {
+  const existingUser = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.email, email),
+    columns: { is_active: true, deactivated_at: true },
+  });
+
+  if (!existingUser) {
+    // First login: provision an inactive profile. The user gets no session until
+    // an ADMIN activates the account from the user management area.
+    await db.insert(userProfiles).values({
+      id: userId,
+      email,
+      role: "SALES",
+      is_active: false,
+    });
+    await logActivity({
+      userId,
+      action: "USER_PROFILE_CREATE",
+      targetEntity: "user_profile",
+      targetId: userId,
+      metadata: { email, initial_role: "SALES" },
+    });
+    return { is_active: false, deactivated_at: null };
+  }
+
+  if (existingUser.is_active) {
+    await db
+      .update(userProfiles)
+      .set({ last_login_at: new Date() })
+      .where(eq(userProfiles.id, userId));
+  }
+
+  return {
+    is_active: existingUser.is_active,
+    deactivated_at: existingUser.deactivated_at,
+  };
 }
 
 export async function changeUserRoleWithAudit(data: {

@@ -10,13 +10,7 @@ const mockResetPasswordForEmail = vi.fn();
 const mockExchangeCodeForSession = vi.fn();
 const mockUpdateUser = vi.fn();
 
-const mockFindFirst = vi.fn();
-const mockLogActivity = vi.fn();
-const mockValues = vi.fn();
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockWhere = vi.fn();
-const mockSet = vi.fn(() => ({ where: mockWhere }));
-const mockUpdate = vi.fn(() => ({ set: mockSet }));
+const mockProvisionUserProfileOnLogin = vi.fn();
 
 // --- vi.mock() ---
 
@@ -53,28 +47,9 @@ vi.mock("next/headers", () => ({
     }),
 }));
 
-vi.mock("@/db", () => ({
-  db: {
-    query: {
-      userProfiles: {
-        findFirst: (...args: unknown[]) => mockFindFirst(...args),
-      },
-    },
-    insert: () => mockInsert(),
-    update: () => mockUpdate(),
-  },
-}));
-
-vi.mock("@/db/schemas", () => ({
-  userProfiles: Symbol("userProfiles"),
-}));
-
 vi.mock("@/db/queries", () => ({
-  logActivity: (...args: unknown[]) => mockLogActivity(...args),
-}));
-
-vi.mock("drizzle-orm", () => ({
-  eq: vi.fn(),
+  provisionUserProfileOnLogin: (...args: unknown[]) =>
+    mockProvisionUserProfileOnLogin(...args),
 }));
 
 // --- Imports (after mocks) ---
@@ -205,13 +180,17 @@ describe("signIn", () => {
     vi.clearAllMocks();
   });
 
-  test("provisions an inactive profile on first login and denies the session", async () => {
+  test("denies the session with the pending-activation message when the profile is inactive", async () => {
+    // Covers both first-login provisioning and an existing-but-never-activated
+    // profile: provisionUserProfileOnLogin returns deactivated_at null in both.
     mockSignInWithPassword.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     });
-    mockFindFirst.mockResolvedValue(undefined);
-    mockValues.mockResolvedValue(undefined);
+    mockProvisionUserProfileOnLogin.mockResolvedValue({
+      is_active: false,
+      deactivated_at: null,
+    });
     mockSignOut.mockResolvedValue({ error: null });
 
     const result = await signIn({
@@ -223,48 +202,10 @@ describe("signIn", () => {
       success: false,
       error: MSG.auth.accountPendingActivation,
     });
-    expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith({
-      id: mockUser.id,
-      email: "test@itecosrl.com",
-      role: "SALES",
-      is_active: false,
-    });
-    expect(mockLogActivity).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: mockUser.id,
-        action: "USER_PROFILE_CREATE",
-        targetEntity: "user_profile",
-        targetId: mockUser.id,
-      }),
+    expect(mockProvisionUserProfileOnLogin).toHaveBeenCalledWith(
+      mockUser.id,
+      "test@itecosrl.com",
     );
-    expect(mockSignOut).toHaveBeenCalled();
-    expect(revalidatePath).not.toHaveBeenCalled();
-  });
-
-  test("denies login and keeps no session while the profile is inactive", async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      data: { user: mockUser },
-      error: null,
-    });
-    mockFindFirst.mockResolvedValue({
-      id: mockUser.id,
-      email: mockUser.email,
-      is_active: false,
-    });
-    mockSignOut.mockResolvedValue({ error: null });
-
-    const result = await signIn({
-      email: "test@itecosrl.com",
-      password: "password123",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      error: MSG.auth.accountPendingActivation,
-    });
-    expect(mockInsert).not.toHaveBeenCalled();
-    expect(mockUpdate).not.toHaveBeenCalled();
     expect(mockSignOut).toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
@@ -274,9 +215,7 @@ describe("signIn", () => {
       data: { user: mockUser },
       error: null,
     });
-    mockFindFirst.mockResolvedValue({
-      id: mockUser.id,
-      email: mockUser.email,
+    mockProvisionUserProfileOnLogin.mockResolvedValue({
       is_active: false,
       deactivated_at: new Date(),
     });
@@ -291,23 +230,19 @@ describe("signIn", () => {
       success: false,
       error: MSG.auth.accountDeactivated,
     });
-    expect(mockInsert).not.toHaveBeenCalled();
-    expect(mockUpdate).not.toHaveBeenCalled();
     expect(mockSignOut).toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  test("returns success and skips profile creation when user already exists", async () => {
+  test("returns success and grants the session when the profile is active", async () => {
     mockSignInWithPassword.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     });
-    mockFindFirst.mockResolvedValue({
-      id: mockUser.id,
-      email: mockUser.email,
+    mockProvisionUserProfileOnLogin.mockResolvedValue({
       is_active: true,
+      deactivated_at: null,
     });
-    mockWhere.mockResolvedValue(undefined);
 
     const result = await signIn({
       email: "test@itecosrl.com",
@@ -318,8 +253,7 @@ describe("signIn", () => {
       success: true,
       data: { user: mockUser },
     });
-    expect(mockInsert).not.toHaveBeenCalled();
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSignOut).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
 
@@ -338,16 +272,17 @@ describe("signIn", () => {
       success: false,
       error: MSG.auth.genericError,
     });
-    expect(mockFindFirst).not.toHaveBeenCalled();
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockProvisionUserProfileOnLogin).not.toHaveBeenCalled();
   });
 
-  test("returns error when DB query throws", async () => {
+  test("returns db error when provisioning throws", async () => {
     mockSignInWithPassword.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     });
-    mockFindFirst.mockRejectedValue(new Error("DB connection failed"));
+    mockProvisionUserProfileOnLogin.mockRejectedValue(
+      new Error("DB connection failed"),
+    );
 
     const result = await signIn({
       email: "test@itecosrl.com",
@@ -358,25 +293,7 @@ describe("signIn", () => {
       success: false,
       error: MSG.db.error,
     });
-  });
-
-  test("returns error when DB insert throws", async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      data: { user: mockUser },
-      error: null,
-    });
-    mockFindFirst.mockResolvedValue(undefined);
-    mockValues.mockRejectedValue(new Error("Insert failed"));
-
-    const result = await signIn({
-      email: "test@itecosrl.com",
-      password: "password123",
-    });
-
-    expect(result).toEqual({
-      success: false,
-      error: MSG.db.error,
-    });
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   test("returns validation error for invalid input", async () => {

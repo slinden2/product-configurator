@@ -9,7 +9,7 @@ const mockAssignManagerWithAudit = vi.fn();
 const mockActivateUserWithAudit = vi.fn();
 const mockDeactivateUserWithAudit = vi.fn();
 const mockLogActivity = vi.fn();
-const mockFindFirst = vi.fn();
+const mockGetUserProfileById = vi.fn();
 const mockResetPasswordForEmail = vi.fn();
 
 vi.mock("@/db/queries", () => ({
@@ -22,22 +22,13 @@ vi.mock("@/db/queries", () => ({
     mockActivateUserWithAudit(...args),
   deactivateUserWithAudit: (...args: unknown[]) =>
     mockDeactivateUserWithAudit(...args),
+  getUserProfileById: (...args: unknown[]) => mockGetUserProfileById(...args),
   logActivity: (...args: unknown[]) => mockLogActivity(...args),
   QueryError: class QueryError extends Error {
     constructor(message: string) {
       super(message);
       this.name = "QueryError";
     }
-  },
-}));
-
-vi.mock("@/db", () => ({
-  db: {
-    query: {
-      userProfiles: {
-        findFirst: (...args: unknown[]) => mockFindFirst(...args),
-      },
-    },
   },
 }));
 
@@ -104,7 +95,7 @@ describe("changeUserRoleAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockChangeUserRoleWithAudit.mockResolvedValue(undefined);
-    mockFindFirst.mockResolvedValue(targetUser);
+    mockGetUserProfileById.mockResolvedValue(targetUser);
   });
 
   test("rejects unauthenticated users", async () => {
@@ -150,7 +141,7 @@ describe("changeUserRoleAction", () => {
 
   test("rejects demotion of another ADMIN", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
-    mockFindFirst.mockResolvedValue({ id: TARGET_ID, role: "ADMIN" });
+    mockGetUserProfileById.mockResolvedValue({ id: TARGET_ID, role: "ADMIN" });
     const result = await changeUserRoleAction({
       userId: TARGET_ID,
       newRole: "ENGINEER",
@@ -163,7 +154,7 @@ describe("changeUserRoleAction", () => {
 
   test("returns notFound when target user does not exist", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
-    mockFindFirst.mockResolvedValue(undefined);
+    mockGetUserProfileById.mockResolvedValue(undefined);
     const result = await changeUserRoleAction({
       userId: TARGET_ID,
       newRole: "ENGINEER",
@@ -268,7 +259,10 @@ describe("assignManagerAction", () => {
 
   test("rejects assigning a manager to a non-SALES target", async () => {
     // Target is an ENGINEER — only SALES agents may report to a manager.
-    mockFindFirst.mockResolvedValueOnce({ id: TARGET_ID, role: "ENGINEER" });
+    mockGetUserProfileById.mockResolvedValueOnce({
+      id: TARGET_ID,
+      role: "ENGINEER",
+    });
     const result = await assignManagerAction({
       userId: TARGET_ID,
       managerId: MANAGER_ID,
@@ -279,7 +273,7 @@ describe("assignManagerAction", () => {
   });
 
   test("rejects when the manager is not a SALES_MANAGER", async () => {
-    mockFindFirst
+    mockGetUserProfileById
       .mockResolvedValueOnce(salesTarget)
       .mockResolvedValueOnce({ id: MANAGER_ID, role: "SALES" });
     const result = await assignManagerAction({
@@ -292,7 +286,7 @@ describe("assignManagerAction", () => {
   });
 
   test("rejects when the manager is deactivated", async () => {
-    mockFindFirst
+    mockGetUserProfileById
       .mockResolvedValueOnce(salesTarget)
       .mockResolvedValueOnce({ ...salesManager, is_active: false });
     const result = await assignManagerAction({
@@ -305,7 +299,7 @@ describe("assignManagerAction", () => {
   });
 
   test("assigns a SALES_MANAGER to a SALES target and revalidates", async () => {
-    mockFindFirst
+    mockGetUserProfileById
       .mockResolvedValueOnce(salesTarget)
       .mockResolvedValueOnce(salesManager);
     const result = await assignManagerAction({
@@ -322,7 +316,7 @@ describe("assignManagerAction", () => {
   });
 
   test("clears a manager (managerId null) without a manager lookup", async () => {
-    mockFindFirst.mockResolvedValueOnce(salesTarget);
+    mockGetUserProfileById.mockResolvedValueOnce(salesTarget);
     const result = await assignManagerAction({
       userId: TARGET_ID,
       managerId: null,
@@ -402,7 +396,7 @@ describe("deactivateUserAction", () => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue(adminUser);
     mockDeactivateUserWithAudit.mockResolvedValue(undefined);
-    mockFindFirst.mockResolvedValue(targetUser);
+    mockGetUserProfileById.mockResolvedValue(targetUser);
   });
 
   test("returns validation error for a non-uuid userId", async () => {
@@ -436,7 +430,7 @@ describe("deactivateUserAction", () => {
   });
 
   test("returns notFound when target user does not exist", async () => {
-    mockFindFirst.mockResolvedValue(undefined);
+    mockGetUserProfileById.mockResolvedValue(undefined);
     const result = await deactivateUserAction({ userId: TARGET_ID });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe(MSG.users.notFound);
@@ -444,7 +438,7 @@ describe("deactivateUserAction", () => {
   });
 
   test("rejects deactivation of another ADMIN", async () => {
-    mockFindFirst.mockResolvedValue({ id: TARGET_ID, role: "ADMIN" });
+    mockGetUserProfileById.mockResolvedValue({ id: TARGET_ID, role: "ADMIN" });
     const result = await deactivateUserAction({ userId: TARGET_ID });
     expect(result.success).toBe(false);
     if (!result.success)
@@ -486,7 +480,7 @@ describe("sendPasswordResetAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLogActivity.mockResolvedValue(undefined);
-    mockFindFirst.mockResolvedValue(targetUser);
+    mockGetUserProfileById.mockResolvedValue(targetUser);
     mockResetPasswordForEmail.mockResolvedValue({ error: null });
   });
 
@@ -504,7 +498,7 @@ describe("sendPasswordResetAction", () => {
 
   test("returns notFound when target user does not exist", async () => {
     mockGetUserData.mockResolvedValue(adminUser);
-    mockFindFirst.mockResolvedValue(undefined);
+    mockGetUserProfileById.mockResolvedValue(undefined);
     const result = await sendPasswordResetAction({ userId: TARGET_ID });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe(MSG.users.notFound);

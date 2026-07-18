@@ -1,12 +1,9 @@
 "use server";
 
-import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { logActivity } from "@/db/queries";
-import { userProfiles } from "@/db/schemas";
+import { provisionUserProfileOnLogin } from "@/db/queries";
 import { MSG } from "@/lib/messages";
 import { createClient } from "@/utils/supabase/server";
 import type {
@@ -85,49 +82,23 @@ export async function signIn(formData: LoginSchema) {
   }
 
   try {
-    const existingUser = await db.query.userProfiles.findFirst({
-      where: eq(userProfiles.email, credentials.email),
-    });
+    const profile = await provisionUserProfileOnLogin(
+      data.user.id,
+      credentials.email,
+    );
 
-    if (!existingUser) {
-      // First login: provision an inactive profile. The user gets no session
-      // until an ADMIN activates the account from the user management area.
-      await db.insert(userProfiles).values({
-        id: data.user.id,
-        email: credentials.email,
-        role: "SALES",
-        is_active: false,
-      });
-      await logActivity({
-        userId: data.user.id,
-        action: "USER_PROFILE_CREATE",
-        targetEntity: "user_profile",
-        targetId: data.user.id,
-        metadata: { email: credentials.email, initial_role: "SALES" },
-      });
-      await supabase.auth.signOut();
-      return {
-        success: false as const,
-        error: MSG.auth.accountPendingActivation,
-      };
-    }
-
-    if (!existingUser.is_active) {
+    if (!profile.is_active) {
       await supabase.auth.signOut();
       // deactivated_at distinguishes an admin-deactivated account from a
-      // profile still waiting for its first activation.
+      // profile still waiting for its first activation (freshly provisioned
+      // profiles come back with deactivated_at null → pending activation).
       return {
         success: false as const,
-        error: existingUser.deactivated_at
+        error: profile.deactivated_at
           ? MSG.auth.accountDeactivated
           : MSG.auth.accountPendingActivation,
       };
     }
-
-    await db
-      .update(userProfiles)
-      .set({ last_login_at: new Date() })
-      .where(eq(userProfiles.id, data.user.id));
   } catch (err) {
     console.error(err);
     return { success: false as const, error: MSG.db.error };

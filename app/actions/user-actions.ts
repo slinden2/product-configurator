@@ -1,17 +1,15 @@
 "use server";
 
-import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { db } from "@/db";
 import {
   activateUserWithAudit,
   assignManagerWithAudit,
   changeUserRoleWithAudit,
   deactivateUserWithAudit,
+  getUserProfileById,
   logActivity,
 } from "@/db/queries";
-import { userProfiles } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -44,10 +42,7 @@ export async function changeUserRoleAction(formData: unknown) {
     return { success: false as const, error: MSG.users.cannotPromoteToAdmin };
   }
 
-  const targetUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.id, userId),
-    columns: { id: true, role: true },
-  });
+  const targetUser = await getUserProfileById(userId);
 
   if (!targetUser) {
     return { success: false as const, error: MSG.users.notFound };
@@ -89,10 +84,7 @@ export async function assignManagerAction(formData: unknown) {
     return { success: false as const, error: MSG.users.invalidManager };
   }
 
-  const targetUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.id, userId),
-    columns: { id: true, role: true },
-  });
+  const targetUser = await getUserProfileById(userId);
   if (!targetUser) {
     return { success: false as const, error: MSG.users.notFound };
   }
@@ -106,10 +98,7 @@ export async function assignManagerAction(formData: unknown) {
 
   // A manager must exist and actually be an active SALES_MANAGER.
   if (managerId !== null) {
-    const manager = await db.query.userProfiles.findFirst({
-      where: eq(userProfiles.id, managerId),
-      columns: { id: true, role: true, is_active: true },
-    });
+    const manager = await getUserProfileById(managerId);
     if (!manager || manager.role !== "SALES_MANAGER" || !manager.is_active) {
       return { success: false as const, error: MSG.users.invalidManager };
     }
@@ -164,10 +153,7 @@ export async function deactivateUserAction(formData: unknown) {
     return { success: false as const, error: MSG.users.cannotDeactivateSelf };
   }
 
-  const targetUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.id, userId),
-    columns: { id: true, role: true },
-  });
+  const targetUser = await getUserProfileById(userId);
 
   if (!targetUser) {
     return { success: false as const, error: MSG.users.notFound };
@@ -202,10 +188,7 @@ export async function sendPasswordResetAction(formData: unknown) {
   if (!auth.success) return { success: false as const, error: auth.error };
   const { user } = auth;
 
-  const targetUser = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.id, userId),
-    columns: { id: true, email: true },
-  });
+  const targetUser = await getUserProfileById(userId);
 
   if (!targetUser) {
     return { success: false as const, error: MSG.users.notFound };
