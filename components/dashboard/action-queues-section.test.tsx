@@ -1,17 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { UserData } from "@/db/queries";
+import { makeTestUser } from "@/test/user-test-utils";
 import type { Role } from "@/types";
 
 // --- Mocks (references defined before vi.mock factories run) ---
 const mockGetOfferRevisionQueueCounts = vi.fn();
-const mockGetConfigIntakeCount = vi.fn();
 const mockGetConfigTechnicalQueueCounts = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getOfferRevisionQueueCounts: () => mockGetOfferRevisionQueueCounts(),
-  getConfigIntakeCount: () => mockGetConfigIntakeCount(),
   getConfigTechnicalQueueCounts: () => mockGetConfigTechnicalQueueCounts(),
 }));
 
@@ -25,17 +23,8 @@ const OFFER_CARD_TITLES = [
 ];
 const TECHNICAL_CARD_TITLES = ["Da prendere in carico", "In lavorazione"];
 
-const makeUser = (role: Role) =>
-  ({
-    id: "u1",
-    email: "test@itecosrl.com",
-    role,
-    initials: null,
-    manager_id: null,
-  }) as NonNullable<UserData>;
-
 const renderSection = async (role: Role) =>
-  render(await ActionQueuesSection({ user: makeUser(role) }));
+  render(await ActionQueuesSection({ user: makeTestUser(role) }));
 
 afterEach(cleanup);
 
@@ -55,11 +44,8 @@ beforeEach(() => {
     },
     { status: "SENT", count: 4, oldestDate: new Date("2026-07-04") },
   ]);
-  mockGetConfigIntakeCount.mockResolvedValue({
-    count: 5,
-    oldestDate: new Date("2026-07-05"),
-  });
   mockGetConfigTechnicalQueueCounts.mockResolvedValue([
+    { status: "SALES_APPROVED", count: 5, oldestDate: new Date("2026-07-05") },
     { status: "IN_TECH_REVIEW", count: 6, oldestDate: new Date("2026-07-06") },
     { status: "DRAFT", count: 9, oldestDate: new Date("2026-07-07") },
   ]);
@@ -79,7 +65,6 @@ describe("ActionQueuesSection role matrix", () => {
     for (const title of TECHNICAL_CARD_TITLES) {
       expect(screen.queryByText(title)).not.toBeInTheDocument();
     }
-    expect(mockGetConfigIntakeCount).not.toHaveBeenCalled();
     expect(mockGetConfigTechnicalQueueCounts).not.toHaveBeenCalled();
   });
 
@@ -122,5 +107,16 @@ describe("ActionQueuesSection card content", () => {
       "/configurazioni?status=in-revisione-tecnica",
     );
     expect(card).toHaveTextContent("6");
+  });
+
+  test("the intake card derives from the SALES_APPROVED technical-queue bucket", async () => {
+    await renderSection("ENGINEER");
+
+    const card = screen.getByText("Da prendere in carico").closest("a");
+    expect(card).toHaveAttribute(
+      "href",
+      "/configurazioni?status=approvato-vendite",
+    );
+    expect(card).toHaveTextContent("5");
   });
 });

@@ -40,7 +40,9 @@ export const withNoSelection = (items: SelectOption[]): SelectOption[] => {
 };
 
 export function formatAge(date: Date): string {
-  const diffMs = Date.now() - date.getTime();
+  // Clamped at 0: DB/app clock skew can put a just-written timestamp a moment
+  // in the future, which would otherwise render "da -1 giorni".
+  const diffMs = Math.max(0, Date.now() - date.getTime());
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   if (days === 0) {
     const hours = Math.floor(diffMs / (1000 * 60 * 60));

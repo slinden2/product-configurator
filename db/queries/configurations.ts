@@ -36,6 +36,7 @@ import {
 } from "../transformations";
 import { hasEngineeringBom } from "./ebom";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";
+import { parseDbTimestamp } from "./sql-utils";
 import type { UserData } from "./users";
 
 export type AllConfigurations = Awaited<
@@ -139,28 +140,31 @@ export async function canAccessConfiguration(
   return false;
 }
 
-// Builds the engineer/admin "Technical" config queue: every STANDALONE config
-// (all statuses) plus OFFER-origin configs that have been handed off to
-// engineering (`SALES_APPROVED`+). Pre-handoff offer configs (`DRAFT`)
-// stay in the sales workflow and never surface here.
+// The engineer/admin "Technical" config queue: every STANDALONE config (all
+// statuses) plus OFFER-origin configs that have been handed off to engineering
+// (`SALES_APPROVED`+). Pre-handoff offer configs (`DRAFT`) stay in the sales
+// workflow and never surface here. The single definition shared by the list
+// (`getUserConfigurations`) and the dashboard counts
+// (`getConfigTechnicalQueueCounts`), so the two can never drift.
 // Visibility is further scoped per role via `configScopeWhere`.
-export async function getUserConfigurations(
-  user: NonNullable<UserData>,
-  page: number = 1,
-  pageSize: number = 20,
-  statusFilter?: ConfigurationStatusType,
-) {
-  const scopeWhere = configScopeWhere(user);
-  const technicalQueueWhere = or(
+const technicalQueueWhere = () =>
+  or(
     eq(configurations.origin, "STANDALONE"),
     and(
       eq(configurations.origin, "OFFER"),
       inArray(configurations.status, HANDED_OFF_STATUSES),
     ),
   );
+
+export async function getUserConfigurations(
+  user: NonNullable<UserData>,
+  page: number = 1,
+  pageSize: number = 20,
+  statusFilter?: ConfigurationStatusType,
+) {
   const whereClause = and(
-    scopeWhere,
-    technicalQueueWhere,
+    configScopeWhere(user),
+    technicalQueueWhere(),
     statusFilter ? eq(configurations.status, statusFilter) : undefined,
   );
 
@@ -868,63 +872,10 @@ export async function resetWashBayNonEnergyChainFields(
     .where(eq(washBays.configuration_id, configurationId));
 }
 
-export async function getConfigurationStatusCounts(
-  user: NonNullable<UserData>,
-) {
-  const whereClause = configScopeWhere(user);
-
-  const result = await db
-    .select({
-      status: configurations.status,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(configurations)
-    .where(whereClause)
-    .groupBy(configurations.status);
-
-  return result;
-}
-
-export async function getConfigIntakeCount(
-  user: NonNullable<UserData>,
-): Promise<{ count: number; oldestDate: Date | null }> {
-  const scopeWhere = configScopeWhere(user);
-  const whereClause = and(
-    scopeWhere,
-    eq(configurations.origin, "OFFER"),
-    eq(configurations.status, "SALES_APPROVED"),
-  );
-
-  // A raw sql fragment has no schema column mapping, so min() timestamps
-  // arrive as strings — normalize to Date before returning.
-  const [row] = await db
-    .select({
-      count: sql<number>`count(*)::int`,
-      oldestDate: sql<string | Date | null>`min(${configurations.updated_at})`,
-    })
-    .from(configurations)
-    .where(whereClause);
-
-  return {
-    count: row.count,
-    oldestDate: row.oldestDate == null ? null : new Date(row.oldestDate),
-  };
-}
-
 export const getConfigTechnicalQueueCounts = cache(
   async (user: NonNullable<UserData>) => {
-    const scopeWhere = configScopeWhere(user);
-    const technicalQueueWhere = or(
-      eq(configurations.origin, "STANDALONE"),
-      and(
-        eq(configurations.origin, "OFFER"),
-        inArray(configurations.status, HANDED_OFF_STATUSES),
-      ),
-    );
-    const whereClause = and(scopeWhere, technicalQueueWhere);
+    const whereClause = and(configScopeWhere(user), technicalQueueWhere());
 
-    // A raw sql fragment has no schema column mapping, so min() timestamps
-    // arrive as strings — normalize to Date before returning.
     const rows = await db
       .select({
         status: configurations.status,
@@ -939,7 +890,7 @@ export const getConfigTechnicalQueueCounts = cache(
 
     return rows.map((row) => ({
       ...row,
-      oldestDate: row.oldestDate == null ? null : new Date(row.oldestDate),
+      oldestDate: parseDbTimestamp(row.oldestDate),
     }));
   },
 );

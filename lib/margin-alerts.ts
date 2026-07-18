@@ -95,29 +95,22 @@ type AlertInputLine = {
 };
 
 /**
- * Live per-line margin alerts. Revenue is the per-unit discounted offer total
- * from the line's `pricing_snapshot` (quantity intentionally ignored) and cost
- * is the current EBOM at today's catalog cost — the same semantics as the
- * margin review page, so the offer badge and that page can never disagree. The
- * threshold is picked automatically from the line configuration's product
- * category.
- *
- * Two modes, controlled by `requireFrozen` (default `true`):
- * - **Accepted (frozen), the default** — only lines with an as-sold freeze
- *   (`as_sold_frozen_at !== null`) are considered. This is the in-force margin
- *   baseline: the customer's quoted price frozen at acceptance vs live cost.
- * - **Projected (`requireFrozen: false`)** — the working (renegotiation)
- *   revision's DRAFT lines, which are not frozen. Revenue comes from each line's
- *   live `pricing_snapshot` + the *working* revision's discount, so the margin
- *   tracks the discount the director is currently tuning. Draft lines carry no
- *   absorb sign-off, so `absorbedMarginPct` is null and the alert reduces to the
- *   raw below-threshold fact.
- *
- * Lines without a snapshot are always skipped (no map entry). A considered line
- * whose config has no non-deleted EBOM gets an entry with `hasEbom: false` and
- * no active alert — "margin unavailable", not a healthy 100% (see
- * {@link classifyMarginLineState}). Costs are fetched in one batch query plus a
- * single part-number lookup regardless of line count.
+ * Line eligibility for margin computation: a pricing snapshot is mandatory;
+ * the as-sold freeze is additionally required in frozen mode. The single
+ * definition shared by both entry points, so the dashboard sweep and the
+ * per-offer margin page can never disagree on which lines have alerts.
+ */
+const isEligibleAlertLine = (
+  line: AlertInputLine,
+  requireFrozen: boolean,
+): boolean =>
+  line.pricing_snapshot !== null &&
+  (!requireFrozen || line.as_sold_frozen_at !== null);
+
+/**
+ * Pure margin computation over pre-filtered eligible lines and a pre-fetched,
+ * cost-enriched EBOM map. Eligibility filtering and the EBOM fetch live in the
+ * exported entry points ({@link computeLineMarginAlertsBatch}).
  */
 function computeAlertsFromEnrichedEbom(
   eligibleLines: AlertInputLine[],
@@ -138,6 +131,8 @@ function computeAlertsFromEnrichedEbom(
     const thresholdPct = getMarginThresholdForCategory(
       getConfigurationProductCategory(),
     );
+    // The batch fetch keeps soft-deleted rows, so "has an EBOM" must exclude
+    // them — otherwise an all-deleted BOM would read as a healthy margin.
     const hasEbom = ebomItems.some((item) => !item.is_deleted);
     const absorbedMarginPct =
       line.absorbed_margin_percent === null
@@ -185,39 +180,45 @@ async function fetchEbomByConfig(
   return ebomByConfig;
 }
 
-export async function computeLineMarginAlerts(
-  lines: AlertInputLine[],
-  discountPct: number,
+/**
+ * Live per-line margin alerts across many revisions, each with its own
+ * discount. Revenue is the per-unit discounted offer total from the line's
+ * `pricing_snapshot` (quantity intentionally ignored) and cost is the current
+ * EBOM at today's catalog cost — the same semantics as the margin review page,
+ * so the offer badge and that page can never disagree. The threshold is picked
+ * automatically from the line configuration's product category.
+ *
+ * Two modes, controlled by `requireFrozen` (default `true`):
+ * - **Accepted (frozen), the default** — only lines with an as-sold freeze
+ *   (`as_sold_frozen_at !== null`) are considered. This is the in-force margin
+ *   baseline: the customer's quoted price frozen at acceptance vs live cost.
+ * - **Projected (`requireFrozen: false`)** — the working (renegotiation)
+ *   revision's DRAFT lines, which are not frozen. Revenue comes from each line's
+ *   live `pricing_snapshot` + the *working* revision's discount, so the margin
+ *   tracks the discount the director is currently tuning. Draft lines carry no
+ *   absorb sign-off, so `absorbedMarginPct` is null and the alert reduces to the
+ *   raw below-threshold fact.
+ *
+ * Lines without a snapshot are always skipped (no map entry). A considered line
+ * whose config has no non-deleted EBOM gets an entry with `hasEbom: false` and
+ * no active alert — "margin unavailable", not a healthy 100% (see
+ * {@link classifyMarginLineState}). Costs are fetched in one batch query plus a
+ * single part-number lookup regardless of group or line count.
+ */
+export async function computeLineMarginAlertsBatch(
+  groups: { lines: AlertInputLine[]; discountPct: number }[],
   options: { requireFrozen?: boolean } = {},
 ): Promise<Map<number, LineMarginAlert>> {
   const { requireFrozen = true } = options;
-  const eligibleLines = lines.filter(
-    (line) =>
-      line.pricing_snapshot !== null &&
-      (!requireFrozen || line.as_sold_frozen_at !== null),
-  );
-  if (eligibleLines.length === 0) return new Map();
-
-  const ebomByConfig = await fetchEbomByConfig(
-    eligibleLines.map((line) => line.configuration_id),
-  );
-
-  return computeAlertsFromEnrichedEbom(
-    eligibleLines,
-    discountPct,
-    ebomByConfig,
-  );
-}
-
-export async function computeLineMarginAlertsBatch(
-  groups: { lines: AlertInputLine[]; discountPct: number }[],
-): Promise<Map<number, LineMarginAlert>> {
-  const allEligible = groups.flatMap((g) =>
-    g.lines.filter(
-      (line) =>
-        line.pricing_snapshot !== null && line.as_sold_frozen_at !== null,
-    ),
-  );
+  const eligibleGroups = groups
+    .map((group) => ({
+      discountPct: group.discountPct,
+      lines: group.lines.filter((line) =>
+        isEligibleAlertLine(line, requireFrozen),
+      ),
+    }))
+    .filter((group) => group.lines.length > 0);
+  const allEligible = eligibleGroups.flatMap((group) => group.lines);
   if (allEligible.length === 0) return new Map();
 
   const ebomByConfig = await fetchEbomByConfig(
@@ -225,13 +226,9 @@ export async function computeLineMarginAlertsBatch(
   );
 
   const merged = new Map<number, LineMarginAlert>();
-  for (const group of groups) {
-    const eligible = group.lines.filter(
-      (line) =>
-        line.pricing_snapshot !== null && line.as_sold_frozen_at !== null,
-    );
+  for (const group of eligibleGroups) {
     const alerts = computeAlertsFromEnrichedEbom(
-      eligible,
+      group.lines,
       group.discountPct,
       ebomByConfig,
     );
@@ -241,4 +238,17 @@ export async function computeLineMarginAlertsBatch(
   }
 
   return merged;
+}
+
+/**
+ * Single-revision convenience wrapper over
+ * {@link computeLineMarginAlertsBatch} — see it for the full contract (modes,
+ * eligibility, EBOM semantics).
+ */
+export async function computeLineMarginAlerts(
+  lines: AlertInputLine[],
+  discountPct: number,
+  options: { requireFrozen?: boolean } = {},
+): Promise<Map<number, LineMarginAlert>> {
+  return computeLineMarginAlertsBatch([{ lines, discountPct }], options);
 }

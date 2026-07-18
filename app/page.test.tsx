@@ -4,10 +4,6 @@ import type { Role } from "@/types";
 
 // --- Mocks (references defined before vi.mock factories run) ---
 const mockGetUserData = vi.fn();
-const mockGetOfferRevisionQueueCounts = vi.fn();
-const mockGetConfigIntakeCount = vi.fn();
-const mockGetAcceptedOfferLinesForMarginSweep = vi.fn();
-const mockGetConfigTechnicalQueueCounts = vi.fn();
 const mockRedirect = vi.fn((path: string) => {
   throw new Error(`REDIRECT:${path}`);
 });
@@ -16,18 +12,20 @@ vi.mock("next/navigation", () => ({
   redirect: (path: string) => mockRedirect(path),
 }));
 
+// Only getUserData executes here: `await Dashboard()` returns the element tree
+// WITHOUT rendering the async child sections, so their queries never run. The
+// extra stubs exist solely to satisfy the sections' module-level imports —
+// per-role section behavior is covered by the tests in components/dashboard/.
 vi.mock("@/db/queries", () => ({
   getUserData: () => mockGetUserData(),
-  getOfferRevisionQueueCounts: () => mockGetOfferRevisionQueueCounts(),
-  getConfigIntakeCount: () => mockGetConfigIntakeCount(),
-  getAcceptedOfferLinesForMarginSweep: () =>
-    mockGetAcceptedOfferLinesForMarginSweep(),
-  getConfigTechnicalQueueCounts: () => mockGetConfigTechnicalQueueCounts(),
+  getOfferRevisionQueueCounts: vi.fn(),
+  getAcceptedOfferLinesForMarginSweep: vi.fn(),
+  getConfigTechnicalQueueCounts: vi.fn(),
 }));
 
 vi.mock("@/lib/margin-alerts", () => ({
-  computeLineMarginAlertsBatch: () => new Map(),
-  classifyMarginLineState: () => "ABOVE_THRESHOLD",
+  computeLineMarginAlertsBatch: vi.fn(),
+  classifyMarginLineState: vi.fn(),
 }));
 
 import Dashboard from "./page";
@@ -46,10 +44,6 @@ async function landingFor(role: Role | null): Promise<string | null> {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetOfferRevisionQueueCounts.mockResolvedValue([]);
-  mockGetConfigIntakeCount.mockResolvedValue({ count: 0, oldestDate: null });
-  mockGetAcceptedOfferLinesForMarginSweep.mockResolvedValue([]);
-  mockGetConfigTechnicalQueueCounts.mockResolvedValue([]);
 });
 
 describe("Dashboard landing", () => {

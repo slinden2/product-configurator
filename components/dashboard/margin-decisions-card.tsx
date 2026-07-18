@@ -2,13 +2,17 @@ import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { UserData } from "@/db/queries";
+import type { MarginSweepLine, UserData } from "@/db/queries";
 import { getAcceptedOfferLinesForMarginSweep } from "@/db/queries";
 import { canViewMarginReview } from "@/lib/access";
 import {
   classifyMarginLineState,
   computeLineMarginAlertsBatch,
 } from "@/lib/margin-alerts";
+
+// The dashboard card is a triage surface, not the full review: show the worst
+// offenders and defer the rest to the per-config margin pages.
+const MAX_VISIBLE_ROWS = 8;
 
 interface ActionableAlert {
   lineId: number;
@@ -28,59 +32,54 @@ interface MarginDecisionsCardProps {
 export async function MarginDecisionsCard({ user }: MarginDecisionsCardProps) {
   if (!canViewMarginReview(user.role)) return null;
 
-  const sweepOffers = await getAcceptedOfferLinesForMarginSweep(user);
-  if (sweepOffers.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">
-            Decisioni margine
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Nessuna offerta accettata da analizzare.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const sweepLines = await getAcceptedOfferLinesForMarginSweep(user);
 
-  const alerts = await computeLineMarginAlertsBatch(
-    sweepOffers.map((o) => ({ lines: o.lines, discountPct: o.discountPct })),
-  );
-
-  const lineToOffer = new Map<
+  // The batch computes per revision (one discount each) — group the flat rows
+  // by offer: post-acceptance an offer has exactly one in-force revision.
+  const byOffer = new Map<
     number,
-    { offerId: number; offerNumber: string; position: number }
+    { discountPct: number; lines: MarginSweepLine[] }
   >();
-  for (const offer of sweepOffers) {
-    for (const line of offer.lines) {
-      lineToOffer.set(line.id, {
-        offerId: offer.offerId,
-        offerNumber: offer.offerNumber,
-        position: line.position,
-      });
-    }
+  for (const line of sweepLines) {
+    const group = byOffer.get(line.offerId) ?? {
+      discountPct: line.discountPct,
+      lines: [],
+    };
+    group.lines.push(line);
+    byOffer.set(line.offerId, group);
   }
+
+  const alerts = await computeLineMarginAlertsBatch([...byOffer.values()]);
 
   const actionable: ActionableAlert[] = [];
-  for (const [lineId, alert] of alerts) {
+  for (const line of sweepLines) {
+    const alert = alerts.get(line.id);
     const state = classifyMarginLineState(alert);
     if (state !== "BELOW_THRESHOLD" && state !== "ABSORBED_ERODED") continue;
-    const offerInfo = lineToOffer.get(lineId);
-    if (!offerInfo) continue;
+    if (!alert) continue;
     actionable.push({
-      lineId,
-      configurationId: alert.configurationId,
-      offerId: offerInfo.offerId,
-      offerNumber: offerInfo.offerNumber,
-      position: offerInfo.position,
+      lineId: line.id,
+      configurationId: line.configuration_id,
+      offerId: line.offerId,
+      offerNumber: line.offerNumber,
+      position: line.position,
       marginPct: alert.marginPct,
       thresholdPct: alert.thresholdPct,
       state,
     });
   }
+  // Worst margin deficit first, so the rows above the cap are the ones that
+  // most need a decision.
+  actionable.sort(
+    (a, b) => b.thresholdPct - b.marginPct - (a.thresholdPct - a.marginPct),
+  );
+  const visible = actionable.slice(0, MAX_VISIBLE_ROWS);
+  const overflowCount = actionable.length - visible.length;
+
+  const emptyMessage =
+    sweepLines.length === 0
+      ? "Nessuna offerta accettata da analizzare."
+      : "Nessuna decisione margine richiesta.";
 
   return (
     <Card>
@@ -99,12 +98,10 @@ export async function MarginDecisionsCard({ user }: MarginDecisionsCardProps) {
       </CardHeader>
       <CardContent>
         {actionable.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nessuna decisione margine richiesta.
-          </p>
+          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
           <div className="space-y-2">
-            {actionable.map((a) => (
+            {visible.map((a) => (
               <div
                 key={a.lineId}
                 className="flex items-center justify-between gap-2 text-sm"
@@ -117,7 +114,7 @@ export async function MarginDecisionsCard({ user }: MarginDecisionsCardProps) {
                     {a.offerNumber}
                   </Link>
                   <span className="text-muted-foreground">
-                    riga {a.position}
+                    riga {a.position + 1}
                   </span>
                   <Badge
                     variant={
@@ -137,12 +134,22 @@ export async function MarginDecisionsCard({ user }: MarginDecisionsCardProps) {
                   <Link
                     href={`/configurazioni/marginalita/${a.configurationId}`}
                     className="text-primary hover:underline text-xs"
+                    aria-label={`Analizza margine ${a.offerNumber} riga ${a.position + 1}`}
                   >
                     Analizza
                   </Link>
                 </div>
               </div>
             ))}
+            {overflowCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                …e{" "}
+                {overflowCount === 1
+                  ? "un'altra riga"
+                  : `altre ${overflowCount} righe`}{" "}
+                da valutare
+              </p>
+            )}
           </div>
         )}
       </CardContent>

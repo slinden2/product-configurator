@@ -5,7 +5,6 @@ import {
 } from "@/db/queries";
 import { canViewOffer, canViewTechnicalQueue } from "@/lib/access";
 import { STATUS_CONFIG } from "@/lib/status-config";
-import { cn } from "@/lib/utils";
 import { ConfigurationStatus, OfferStatus, OfferStatusLabels } from "@/types";
 
 interface PipelineStripProps {
@@ -81,12 +80,7 @@ function PipelineChip({
   color?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
-        "text-muted-foreground",
-      )}
-    >
+    <div className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground">
       {color && (
         <span
           className="inline-block h-2 w-2 rounded-full"

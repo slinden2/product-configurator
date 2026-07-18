@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { UserData } from "@/db/queries";
+import { makeTestUser } from "@/test/user-test-utils";
 import type { Role } from "@/types";
 
 // --- Mocks (references defined before vi.mock factories run) ---
@@ -15,17 +15,8 @@ vi.mock("@/db/queries", () => ({
 
 import { PipelineStrip } from "./pipeline-strip";
 
-const makeUser = (role: Role) =>
-  ({
-    id: "u1",
-    email: "test@itecosrl.com",
-    role,
-    initials: null,
-    manager_id: null,
-  }) as NonNullable<UserData>;
-
 const renderStrip = async (role: Role) =>
-  render(await PipelineStrip({ user: makeUser(role) }));
+  render(await PipelineStrip({ user: makeTestUser(role) }));
 
 afterEach(cleanup);
 

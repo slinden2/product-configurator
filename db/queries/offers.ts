@@ -1,4 +1,15 @@
-import { and, asc, desc, eq, ilike, inArray, max, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  max,
+  or,
+  sql,
+} from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import {
@@ -33,6 +44,7 @@ import {
   resolveConfigurationClientName,
 } from "./configurations";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";
+import { parseDbTimestamp } from "./sql-utils";
 import type { UserData } from "./users";
 
 /**
@@ -270,6 +282,23 @@ export async function insertOffer(
 }
 
 /**
+ * The offer's **working revision** (latest by `revision_no`) as a derived
+ * table: one row per offer. The single SQL encoding of "latest revision" —
+ * `getUserOffers`' status filter and `getOfferRevisionQueueCounts` both build
+ * on it, so the dashboard queue cards and the status-filtered list they link
+ * to can never disagree.
+ */
+const latestRevisionsSql = () => sql`
+  select distinct on (r.offer_id)
+    r.offer_id,
+    r.status,
+    r.sent_at,
+    r.updated_at
+  from offer_revisions r
+  order by r.offer_id, r.revision_no desc
+`;
+
+/**
  * Offer-side equivalent of {@link getUserConfigurations}: a scoped, paginated list
  * with each offer's **working revision** (the latest by `revision_no`) status and
  * line count.
@@ -282,14 +311,9 @@ export async function getUserOffers(
 ) {
   const scopeWhere = offerScopeWhere(user);
   const statusWhere = statusFilter
-    ? sql`exists (
-        select 1 from offer_revisions r
-        where r.offer_id = ${offers.id}
-          and r.status = ${statusFilter}
-          and r.revision_no = (
-            select max(r2.revision_no) from offer_revisions r2
-            where r2.offer_id = ${offers.id}
-          )
+    ? sql`${offers.id} in (
+        select lr.offer_id from (${latestRevisionsSql()}) lr
+        where lr.status = ${statusFilter}
       )`
     : undefined;
   const whereClause = and(scopeWhere, statusWhere);
@@ -359,38 +383,29 @@ export const getOfferRevisionQueueCounts = cache(
     const scopeWhere = offerScopeWhere(user);
     const scopeJoin = scopeWhere ? sql`and ${scopeWhere}` : sql``;
 
-    // Raw execute bypasses drizzle's schema-based column mapping, so timestamps
-    // arrive as strings — normalize to Date in the row mapping below.
     const result = await db.execute<{
       status: OfferStatusType;
       count: number;
       oldest_date: string | Date | null;
     }>(sql`
-    with latest_revisions as (
-      select distinct on (r.offer_id)
-        r.status,
-        r.sent_at,
-        r.updated_at
-      from offer_revisions r
-      inner join offers on r.offer_id = offers.id
-      where true ${scopeJoin}
-      order by r.offer_id, r.revision_no desc
-    )
+    with latest_revisions as (${latestRevisionsSql()})
     select
-      status,
+      lr.status,
       count(*)::int as count,
       case
-        when status = 'SENT' then min(sent_at)
-        else min(updated_at)
+        when lr.status = 'SENT' then min(lr.sent_at)
+        else min(lr.updated_at)
       end as oldest_date
-    from latest_revisions
-    group by status
+    from latest_revisions lr
+    inner join offers on lr.offer_id = offers.id
+    where true ${scopeJoin}
+    group by lr.status
   `);
 
     return result.rows.map((row) => ({
       status: row.status,
       count: row.count,
-      oldestDate: row.oldest_date == null ? null : new Date(row.oldest_date),
+      oldestDate: parseDbTimestamp(row.oldest_date),
     }));
   },
 );
@@ -402,18 +417,20 @@ export type MarginSweepLine = {
   as_sold_frozen_at: Date | null;
   absorbed_margin_percent: string | null;
   position: number;
-};
-
-export type MarginSweepOffer = {
   offerId: number;
   offerNumber: string;
   discountPct: number;
-  lines: MarginSweepLine[];
 };
 
+/**
+ * Every alert-eligible line of every in-force accepted revision in scope, flat
+ * and ordered by offer number + position. Eligibility (frozen + priced) is
+ * pushed into SQL so ineligible snapshots never leave the DB — the same rule
+ * as `isEligibleAlertLine` (lib/margin-alerts.ts) in frozen mode.
+ */
 export async function getAcceptedOfferLinesForMarginSweep(
   user: NonNullable<UserData>,
-): Promise<MarginSweepOffer[]> {
+): Promise<MarginSweepLine[]> {
   const scopeWhere = offerScopeWhere(user);
 
   const rows = await db
@@ -437,34 +454,24 @@ export async function getAcceptedOfferLinesForMarginSweep(
     .where(
       and(
         sql`${offers.accepted_revision_id} = ${offerRevisions.id}`,
+        isNotNull(offerRevisionLines.as_sold_frozen_at),
+        isNotNull(offerRevisionLines.pricing_snapshot),
         scopeWhere,
       ),
     )
     .orderBy(asc(offers.offer_number), asc(offerRevisionLines.position));
 
-  const byOffer = new Map<number, MarginSweepOffer>();
-  for (const row of rows) {
-    let offer = byOffer.get(row.offerId);
-    if (!offer) {
-      offer = {
-        offerId: row.offerId,
-        offerNumber: row.offerNumber,
-        discountPct: Number(row.discountPct),
-        lines: [],
-      };
-      byOffer.set(row.offerId, offer);
-    }
-    offer.lines.push({
-      id: row.lineId,
-      configuration_id: row.configurationId,
-      pricing_snapshot: row.pricingSnapshot,
-      as_sold_frozen_at: row.asSoldFrozenAt,
-      absorbed_margin_percent: row.absorbedMarginPercent,
-      position: row.position,
-    });
-  }
-
-  return [...byOffer.values()];
+  return rows.map((row) => ({
+    id: row.lineId,
+    configuration_id: row.configurationId,
+    pricing_snapshot: row.pricingSnapshot,
+    as_sold_frozen_at: row.asSoldFrozenAt,
+    absorbed_margin_percent: row.absorbedMarginPercent,
+    position: row.position,
+    offerId: row.offerId,
+    offerNumber: row.offerNumber,
+    discountPct: Number(row.discountPct),
+  }));
 }
 
 /**

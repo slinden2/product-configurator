@@ -3,6 +3,10 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatAge } from "@/lib/utils";
 
+// A highlight-enabled queue turns amber once its oldest item has waited this
+// long (e.g. a SENT offer a month without an outcome).
+const STALE_HIGHLIGHT_MS = 30 * 24 * 60 * 60 * 1000;
+
 interface QueueCardProps {
   title: string;
   count: number;
@@ -20,10 +24,11 @@ export function QueueCard({
   highlight,
   icon: Icon,
 }: QueueCardProps) {
-  const highlightActive =
+  const highlightActive = Boolean(
     highlight &&
-    oldestDate &&
-    Date.now() - oldestDate.getTime() >= 30 * 24 * 60 * 60 * 1000;
+      oldestDate &&
+      Date.now() - oldestDate.getTime() >= STALE_HIGHLIGHT_MS,
+  );
 
   return (
     <Link href={href} className="block">
