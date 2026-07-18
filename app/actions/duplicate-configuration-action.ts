@@ -52,8 +52,10 @@ export const duplicateConfigurationAction = async (sourceId: unknown) => {
       metadata: { source_id: source.id, source_name: source.name },
     });
 
-    // 8. Revalidate list — edit page for new id is a fresh uncached route
+    // 8. Revalidate list — edit page for new id is a fresh uncached route.
+    // "/" renders the technical queue counts the duplicate adds to.
     revalidatePath("/configurazioni");
+    revalidatePath("/");
 
     return { success: true as const, id: newConfig.id };
   } catch (err) {

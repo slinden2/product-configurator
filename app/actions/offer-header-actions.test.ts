@@ -80,6 +80,7 @@ describe("updateOfferHeaderAction", () => {
     expect(paths).toEqual([
       `/offerte/${OFFER_ID}`,
       "/offerte",
+      "/",
       "/configurazioni",
       `/configurazioni/modifica/${CONFIG_ID}`,
       `/configurazioni/visualizza/${CONFIG_ID}`,
@@ -94,7 +95,8 @@ describe("updateOfferHeaderAction", () => {
     await updateOfferHeaderAction(OFFER_ID, HEADER);
 
     const paths = vi.mocked(revalidatePath).mock.calls.map(([path]) => path);
-    expect(paths).toEqual([`/offerte/${OFFER_ID}`, "/offerte"]);
+    // "/" is always revalidated: the dashboard aggregates the offer queues.
+    expect(paths).toEqual([`/offerte/${OFFER_ID}`, "/offerte", "/"]);
   });
 
   test("rejects an unauthenticated user", async () => {

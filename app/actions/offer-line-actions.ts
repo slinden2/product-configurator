@@ -64,9 +64,10 @@ export const addOfferLineAction = async (
       });
       return configId;
     });
-    // The offer list renders the working revision's line count.
+    // The offer list renders the working revision's line count; "/" its queue ages.
     revalidatePath("/offerte");
     revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/");
     return { success: true as const, id };
   } catch (err) {
     return mapActionError(err, "Failed to add offer line:");
@@ -91,6 +92,7 @@ export const removeOfferLineAction = async (
     // The offer list renders the working revision's line count.
     revalidatePath("/offerte");
     revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/");
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to remove offer line:");

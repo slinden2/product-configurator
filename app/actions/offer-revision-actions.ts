@@ -71,6 +71,8 @@ export async function setRevisionDiscountAction(
     });
 
     revalidatePath(`/offerte/${offerId}`);
+    // "/" renders the offer queue cards (counts + oldest-date ages).
+    revalidatePath("/");
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to set revision discount:");
@@ -103,6 +105,7 @@ export async function setRevisionSettingsAction(
     });
 
     revalidatePath(`/offerte/${offerId}`);
+    revalidatePath("/");
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to set revision settings:");
@@ -130,6 +133,7 @@ async function runRevisionTransition(
 
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
+    revalidatePath("/");
     if (configIds) {
       revalidatePath("/configurazioni");
       for (const configId of configIds) {
@@ -324,6 +328,7 @@ export async function createRevisionAction(
 
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
+    revalidatePath("/");
     return { success: true as const, data: { revisionNo: newRevisionNo } };
   } catch (err) {
     return mapActionError(err, "Failed to create offer revision:");
@@ -390,6 +395,7 @@ export async function discardDraftRevisionAction(offerId: number) {
     // deleting them changes nothing under /configurazioni.
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
+    revalidatePath("/");
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to discard offer revision:");
@@ -455,6 +461,7 @@ export async function createRenegotiationRevisionAction(offerId: number) {
 
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
+    revalidatePath("/");
     // The margin pages show the "renegotiation open" state.
     for (const configId of result.configIds) {
       revalidatePath(`/configurazioni/marginalita/${configId}`);

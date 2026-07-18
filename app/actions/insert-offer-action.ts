@@ -39,6 +39,8 @@ export const insertOfferAction = async (formData: unknown) => {
       targetId: offer.id.toString(),
     });
     revalidatePath("/offerte");
+    // "/" renders the offer queue cards (a new offer adds a DRAFT).
+    revalidatePath("/");
     return { success: true as const, id: offer.id };
   } catch (err) {
     // Concurrent create collided on the generated offer_number — ask to retry.

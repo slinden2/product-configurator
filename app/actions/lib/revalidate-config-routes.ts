@@ -11,8 +11,8 @@ import type { ConfigOrigin } from "@/types";
  * An OFFER line config also surfaces on its offer detail page, so that route is
  * revalidated only for OFFER-origin configs.
  *
- * The admin dashboard (`/`) renders per-status configuration counts, so it is
- * revalidated too.
+ * The role-aware dashboard (`/`) renders the technical queue cards and the
+ * configuration pipeline, so it is revalidated too.
  */
 export function revalidateConfigurationRoutes(
   confId: number,

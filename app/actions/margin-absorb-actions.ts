@@ -154,6 +154,8 @@ export async function absorbLineMarginAction(
     revalidatePath(`/configurazioni/marginalita/${line.configuration_id}`);
     revalidatePath(`/offerte/${line.offer_id}`);
     revalidatePath("/offerte");
+    // "/" renders the margin-decisions card the absorb clears.
+    revalidatePath("/");
     return { success: true as const };
   } catch (err) {
     return mapActionError(err, "Failed to absorb line margin:");

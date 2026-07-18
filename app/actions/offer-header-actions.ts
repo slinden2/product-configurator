@@ -43,6 +43,8 @@ export async function updateOfferHeaderAction(
 
     revalidatePath(`/offerte/${offerId}`);
     revalidatePath("/offerte");
+    // "/" renders the offer queue cards and the margin-decisions card.
+    revalidatePath("/");
 
     // A customer rename re-syncs the configs' name shadow, which is what the technical
     // queue and every config detail surface display. Empty unless the name changed.
