@@ -54,7 +54,7 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       insertAction={insertWaterTankAction}
       editAction={editWaterTankAction}
       deleteAction={deleteWaterTankAction}
-      FieldsComponent={WaterTankFields}
+      fields={<WaterTankFields />}
       formKey={props.formKey}
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}

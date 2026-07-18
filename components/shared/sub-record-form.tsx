@@ -55,8 +55,10 @@ interface SubRecordFormProps<
   ) => Promise<ActionResult>;
   deleteAction: (parentId: number, id: number) => Promise<ActionResult>;
   hasEngineeringBom?: boolean;
-  // Component to render the specific fields
-  FieldsComponent: React.ComponentType;
+  // The entity-specific fields, passed as an element slot. Fields components read
+  // everything from useFormContext, so a plain ReactNode avoids manufacturing a
+  // fresh component type per prop change (which would remount the whole subtree).
+  fields: React.ReactNode;
 }
 
 const SubRecordForm = <
@@ -83,7 +85,7 @@ const SubRecordForm = <
   editAction,
   deleteAction,
   hasEngineeringBom,
-  FieldsComponent,
+  fields,
 }: SubRecordFormProps<TData, TFormSchema>) => {
   type FormData = TData;
 
@@ -292,8 +294,8 @@ const SubRecordForm = <
                     : `Aggiungi ${entityName === "Pista" ? "nuova" : "nuovo"} ${entityName}`
                 }
               >
-                {/* Render the specific fields passed as a component */}
-                <FieldsComponent />
+                {/* Render the specific fields (element slot) */}
+                {fields}
 
                 <div className="flex items-center gap-4 pt-4 border-t border-border mt-4 group-disabled:opacity-50">
                   {/* Delete Button */}

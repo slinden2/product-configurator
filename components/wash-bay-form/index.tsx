@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   deleteWashBayAction,
   editWashBayAction,
@@ -41,18 +40,6 @@ interface WashBayFormProps {
 }
 
 const WashBayForm = (props: WashBayFormProps) => {
-  const FieldsWithSupplyType = useMemo(() => {
-    function Fields() {
-      return (
-        <WashBayFields
-          supplyType={props.supplyType}
-          supplyFixingType={props.supplyFixingType}
-        />
-      );
-    }
-    return Fields;
-  }, [props.supplyType, props.supplyFixingType]);
-
   return (
     <SubRecordForm
       schema={washBaySchema}
@@ -70,7 +57,12 @@ const WashBayForm = (props: WashBayFormProps) => {
       insertAction={insertWashBayAction}
       editAction={editWashBayAction}
       deleteAction={deleteWashBayAction}
-      FieldsComponent={FieldsWithSupplyType}
+      fields={
+        <WashBayFields
+          supplyType={props.supplyType}
+          supplyFixingType={props.supplyFixingType}
+        />
+      }
       formKey={props.formKey}
       onDirtyChange={props.onDirtyChange}
       onSaved={props.onSaved}
