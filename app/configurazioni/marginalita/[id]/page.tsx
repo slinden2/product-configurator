@@ -3,7 +3,7 @@ import ConfigNavigationBar from "@/components/config-navigation-bar";
 import DetailsCard from "@/components/shared/details-card";
 import { loadValidatedConfiguration } from "@/db/load-validated-configuration";
 import {
-  getConfiguration,
+  getConfigurationWithTanksAndBays,
   getEngineeringBomItems,
   getOfferLinePricingLinesForConfig,
   getOfferRefForConfig,
@@ -44,16 +44,23 @@ const MarginReviewPage = async (props: MarginReviewPageProps) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
+  // Page-authoritative auth (doctrine #102): the page runs its own role check
+  // before any data access (layout guards don't gate concurrent page fetches).
   // The margin page exposes cost AND the customer's quoted price together, so it
   // is restricted to management/system roles (ADMIN/SALES_DIRECTOR). ENGINEER —
   // who has no offer access — must never reach it, even by direct URL.
-  if (!canViewMarginReview(user.role)) notFound();
+  // Role-disallowed → the read-only view, which enforces its own scope.
+  if (!canViewMarginReview(user.role)) {
+    redirect(`/configurazioni/visualizza/${confId}`);
+  }
 
   // The margin page is ADMIN/SALES_DIRECTOR-only, both of which have offer access,
   // so the "back to offer" ref is always appropriate here (null only for the rare
-  // standalone config reaching this page).
+  // standalone config reaching this page). The configuration fetch is scoped
+  // (getConfigurationWithTanksAndBays enforces ownership → null when out of scope)
+  // so role and scope are both enforced before any margin data is rendered.
   const [configuration, lines, ebomRows, offer] = await Promise.all([
-    getConfiguration(confId),
+    getConfigurationWithTanksAndBays(confId, user),
     getOfferLinePricingLinesForConfig(confId),
     getEngineeringBomItems(confId),
     getOfferRefForConfig(confId),

@@ -9,13 +9,8 @@ import RegenerateButton from "@/app/configurazioni/bom/[id]/regenerate-button";
 import SnapshotButton from "@/app/configurazioni/bom/[id]/snapshot-button";
 import ConfigNavigationBar from "@/components/config-navigation-bar";
 import DetailsCard from "@/components/shared/details-card";
-import {
-  getBOM,
-  getConfiguration,
-  getUserData,
-  offerRefFor,
-} from "@/db/queries";
-import { canViewOffer } from "@/lib/access";
+import { getBOM, getUserData, offerRefFor } from "@/db/queries";
+import { canViewBom, canViewOffer } from "@/lib/access";
 import { BOM_RULES_VERSION } from "@/lib/BOM/max-bom";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import ExportCostsButton from "./export-costs-button";
@@ -31,15 +26,18 @@ const BOMView = async (props: BOMViewProps) => {
 
   const user = await getUserData();
   if (!user) redirect("/login");
+  // Page-authoritative auth (doctrine #102): the page runs its own role check
+  // before any data access (layout guards don't gate concurrent page fetches).
+  // Role-disallowed → the read-only view, which enforces its own scope.
+  if (!canViewBom(user.role)) redirect(`/configurazioni/visualizza/${confId}`);
 
-  const [bom, configuration] = await Promise.all([
-    getBOM(confId, user),
-    getConfiguration(confId),
-  ]);
-  if (!bom || !configuration) notFound();
+  // getBOM runs the scoped fetch (auth + ownership) → null when out of scope.
+  const bom = await getBOM(confId, user);
+  if (!bom) notFound();
+  const { configuration } = bom;
 
   const [pageData, offer] = await Promise.all([
-    prepareBOMPageData(confId, bom, configuration, user.role),
+    prepareBOMPageData(confId, bom, user.role),
     canViewOffer(user.role)
       ? offerRefFor({ id: confId, origin: configuration.origin })
       : null,

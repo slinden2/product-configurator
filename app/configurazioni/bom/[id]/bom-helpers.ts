@@ -5,7 +5,6 @@ import {
   hasEngineeringBom,
   offerRevisionStatusFor,
 } from "@/db/queries";
-import type { Configuration } from "@/db/schemas";
 import {
   BOM,
   type BOMItemWithCost,
@@ -123,9 +122,11 @@ export interface BOMPageData {
 export async function prepareBOMPageData(
   confId: number,
   bom: BOM,
-  configuration: Configuration,
   userRole: Role,
 ): Promise<BOMPageData> {
+  // Read the scoped configuration the BOM already holds (fetched inside getBOM
+  // via getConfigurationWithTanksAndBays) — never a second, unscoped fetch.
+  const { configuration } = bom;
   const clientName = bom.getClientName();
   const description = bom.getDescription();
   const [
