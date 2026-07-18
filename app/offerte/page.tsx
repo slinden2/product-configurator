@@ -5,6 +5,7 @@ import AllOffersTable from "@/components/all-offers-table";
 import { ActiveStatusFilter } from "@/components/shared/active-status-filter";
 import { Button } from "@/components/ui/button";
 import { getUserData, getUserOffers } from "@/db/queries";
+import { canViewOffer } from "@/lib/access";
 import {
   buildStatusListHref,
   offerStatusToSlug,
@@ -19,6 +20,10 @@ const Offers = async (props: {
 }) => {
   const user = await getUserData();
   if (!user) redirect("/login");
+  // Page-authoritative auth (doctrine #102): every gated page runs its own role
+  // check before any data access — guard layouts are not authoritative. ENGINEER
+  // has no offer area.
+  if (!canViewOffer(user.role)) redirect("/");
 
   const { page: pageParam, status: statusParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);

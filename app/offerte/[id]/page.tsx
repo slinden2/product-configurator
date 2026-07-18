@@ -20,6 +20,7 @@ import {
   canExportOfferRevision,
   canRenegotiateOffer,
   canViewMarginReview,
+  canViewOffer,
 } from "@/lib/access";
 import {
   computeLineMarginAlerts,
@@ -67,6 +68,10 @@ const OfferDetail = async (props: OfferDetailProps) => {
 
   const user = await getUserData();
   if (!user) redirect("/login");
+  // Page-authoritative auth (doctrine #102): every gated page runs its own role
+  // check before any data access — guard layouts are not authoritative. ENGINEER
+  // has no offer area.
+  if (!canViewOffer(user.role)) redirect("/");
 
   // Returns null when the offer doesn't exist or is out of the user's scope.
   const offer = await getOfferWithRevisionAndLines(offerId, user);
