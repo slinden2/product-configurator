@@ -10,8 +10,9 @@ import {
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import { MSG } from "@/lib/messages";
 import { computeNetPrice, round2 } from "@/lib/money";
-import { computeOfferListPricing, type OfferLineItem } from "@/lib/offer";
+import { computeOfferListPricing } from "@/lib/offer";
 import type { SettingRow } from "@/types";
+import type { OfferLineItem } from "@/validation/offer/offer-pricing-schema";
 
 export interface LinePricing {
   /** Per single unit; quantity is applied at display/summary time, never folded in. */

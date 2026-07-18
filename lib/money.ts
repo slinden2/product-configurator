@@ -13,6 +13,17 @@ export function round2(value: number): number {
 }
 
 /**
+ * Applies a header discount to a value without rounding — the raw
+ * `value * (1 - discountPct / 100)`. Single source of truth for the discount
+ * formula. Use for display/section subtotals that are formatted at render time;
+ * {@link computeNetPrice} is the rounded, per-unit variant stored as a line's net
+ * price.
+ */
+export function applyDiscount(value: number, discountPct: number): number {
+  return value * (1 - discountPct / 100);
+}
+
+/**
  * Per-unit net price after a header discount, rounded to cents. Single source of
  * truth for the offer discount rule — keep the SQL recompute in
  * updateRevisionDiscountWithAudit (db/queries/offers.ts) in sync with this
@@ -23,7 +34,7 @@ export function computeNetPrice(
   listPrice: number,
   discountPct: number,
 ): number {
-  return round2(listPrice * (1 - discountPct / 100));
+  return round2(applyDiscount(listPrice, discountPct));
 }
 
 /** Formats a discount percentage for Italian labels: 10 → "10", 10.5 → "10,50". */

@@ -1,5 +1,6 @@
 import type { ConfigurationWithWaterTanksAndWashBays } from "@/db/schemas";
 import { BOM, enrichWithCosts } from "@/lib/BOM";
+import { applyDiscount } from "@/lib/money";
 import {
   resolveOfferSurcharges,
   sumSurchargeTotal,
@@ -13,11 +14,6 @@ import {
   type OfferLineItem,
   type OfferSurchargeItem,
   offerLineItemsSchema,
-} from "@/validation/offer/offer-pricing-schema";
-
-export type {
-  OfferLineItem,
-  OfferSurchargeItem,
 } from "@/validation/offer/offer-pricing-schema";
 
 export interface OfferSectionTotals {
@@ -119,47 +115,33 @@ export async function buildOfferItemsFromLive(
   );
 }
 
-/** Computes section totals, grand total and discounted total from BOM offer line items. */
+/**
+ * Computes section totals, grand total and discounted total from BOM offer line
+ * items. A thin projection of {@link groupItemsForDisplay} (the single bucketing
+ * pass) down to per-section totals, dropping the per-line detail.
+ */
 export function computeOfferTotals(
   items: OfferBomLineItem[],
   discount_pct: number,
 ): OfferTotals {
+  const grouped = groupItemsForDisplay(items, discount_pct);
+
   const general: Partial<Record<BomTag, number>> = {};
-  const waterTankMap = new Map<number, number>();
-  const washBayMap = new Map<number, number>();
-
-  for (const item of items) {
-    if (item.category === "GENERAL") {
-      const tag = item.tag ?? ("MISC" as BomTag);
-      general[tag] = (general[tag] ?? 0) + item.line_total;
-    } else if (item.category === "WATER_TANK") {
-      waterTankMap.set(
-        item.category_index,
-        (waterTankMap.get(item.category_index) ?? 0) + item.line_total,
-      );
-    } else {
-      washBayMap.set(
-        item.category_index,
-        (washBayMap.get(item.category_index) ?? 0) + item.line_total,
-      );
-    }
+  for (const row of grouped.general) {
+    general[row.tag] = row.total;
   }
-
-  const total_list_price = items.reduce((sum, i) => sum + i.line_total, 0);
-  const discounted_total = total_list_price * (1 - discount_pct / 100);
 
   return {
     sectionTotals: {
       general,
-      waterTanks: [...waterTankMap.entries()]
-        .sort(([a], [b]) => a - b)
-        .map(([index, total]) => ({ index, total })),
-      washBays: [...washBayMap.entries()]
-        .sort(([a], [b]) => a - b)
-        .map(([index, total]) => ({ index, total })),
+      waterTanks: grouped.waterTanks.map(({ index, total }) => ({
+        index,
+        total,
+      })),
+      washBays: grouped.washBays.map(({ index, total }) => ({ index, total })),
     },
-    total_list_price,
-    discounted_total,
+    total_list_price: grouped.total_list_price,
+    discounted_total: grouped.discounted_total,
   };
 }
 
@@ -180,7 +162,7 @@ export function groupItemsForDisplay(
     total_list_price += item.line_total;
 
     if (item.category === "GENERAL") {
-      const tag = (item.tag ?? "MISC") as BomTag;
+      const tag = item.tag ?? "MISC";
       generalTotals[tag] = (generalTotals[tag] ?? 0) + item.line_total;
       const bucket = generalItemsByTag.get(tag) ?? [];
       bucket.push(item);
@@ -203,7 +185,7 @@ export function groupItemsForDisplay(
     }
   }
 
-  const discounted_total = total_list_price * (1 - discount_pct / 100);
+  const discounted_total = applyDiscount(total_list_price, discount_pct);
 
   const general: GroupedOfferRow[] = BomTags.filter(
     (tag) => (generalTotals[tag] ?? 0) > 0,
@@ -241,8 +223,6 @@ export function appendSurchargesToOfferItems(
   return [...items, ...surcharges];
 }
 
-export { sumSurchargeTotal } from "@/lib/offer-surcharges";
-
 /**
  * Builds an offer's list-price item set and total from a configuration's live BOM:
  * BOM part items plus the applicable height/paint surcharges. Single source of
@@ -269,7 +249,7 @@ export async function computeOfferListPricing(
   if (!surchargeResult.ok) return { ok: false };
   const { surcharges } = surchargeResult;
 
-  const { total_list_price: bomTotal } = computeOfferTotals(bomItems, 0);
+  const bomTotal = bomItems.reduce((sum, item) => sum + item.line_total, 0);
   return {
     ok: true,
     items: appendSurchargesToOfferItems(bomItems, surcharges),
@@ -310,7 +290,7 @@ export function prepareOfferDisplayData(
     displayData: {
       ...grouped,
       total_list_price: totalListPrice,
-      discounted_total: totalListPrice * (1 - discountPct / 100),
+      discounted_total: applyDiscount(totalListPrice, discountPct),
     },
     surcharges,
   };
