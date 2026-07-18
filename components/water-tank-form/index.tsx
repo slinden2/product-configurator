@@ -28,7 +28,7 @@ interface WaterTankFormProps {
   waterTank?: UpdateWaterTankSchema;
   waterTankIndex?: number;
   onDelete?: (tankId: number) => void;
-  onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void;
+  onAddFormDone?: () => void;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
@@ -50,7 +50,7 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       offerRevisionStatus={props.offerRevisionStatus}
       userRole={props.userRole}
       onDelete={props.onDelete}
-      onSaveSuccess={props.onSaveSuccess}
+      onAddFormDone={props.onAddFormDone}
       insertAction={insertWaterTankAction}
       editAction={editWaterTankAction}
       deleteAction={deleteWaterTankAction}

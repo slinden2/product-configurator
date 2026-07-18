@@ -41,7 +41,10 @@ interface SubRecordFormProps<
   entityName: "Serbatoio" | "Pista"; // Name for UI text (e.g., "Serbatoio")
   entityIndex?: number; // Optional index for titles
   onDelete?: (id: number) => void; // Callback after delete
-  onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void; // Callback after save/update
+  // Called when the add form is finished — created or cancelled — and should be
+  // collapsed. Optional and passed only by the add-form instances; the edit
+  // branch never fires it.
+  onAddFormDone?: () => void;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
@@ -76,7 +79,7 @@ const SubRecordForm = <
   entityName,
   entityIndex,
   onDelete,
-  onSaveSuccess,
+  onAddFormDone,
   formKey,
   onDirtyChange,
   onSaved,
@@ -150,7 +153,7 @@ const SubRecordForm = <
             toast.success(MSG.toast.entityCreated(entityName));
             reset(entityDefaults);
             if (formKey) onSaved?.(formKey);
-            onSaveSuccess(entityName);
+            onAddFormDone?.();
           }
         } catch (err) {
           console.error(`Save ${entityName} Error:`, err);
@@ -169,7 +172,7 @@ const SubRecordForm = <
       entityData,
       entityIndex,
       reset,
-      onSaveSuccess,
+      onAddFormDone,
       editAction,
       insertAction,
       entityDefaults,
@@ -263,17 +266,16 @@ const SubRecordForm = <
   const handleCancel = useCallback(() => {
     reset(entityData ?? entityDefaults);
     if (formKey) onDirtyChange?.(formKey, false);
-    // Hide add form if cancelling add mode
+    // Collapse the add form when cancelling add mode
     if (!isEditing) {
-      onSaveSuccess(entityName);
+      onAddFormDone?.();
     }
   }, [
     reset,
     entityData,
     entityDefaults,
     isEditing,
-    onSaveSuccess,
-    entityName,
+    onAddFormDone,
     formKey,
     onDirtyChange,
   ]);

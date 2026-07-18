@@ -115,7 +115,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           confStatus="DRAFT"
           origin="STANDALONE"
           userRole="ENGINEER"
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -125,15 +125,15 @@ describe("SubRecordForm — WaterTankForm", () => {
       ).toBeInTheDocument();
     });
 
-    test("calls insertAction on submit and fires onSaveSuccess", async () => {
-      const onSaveSuccess = vi.fn();
+    test("calls insertAction on submit and fires onAddFormDone", async () => {
+      const onAddFormDone = vi.fn();
       render(
         <WaterTankForm
           confId={1}
           confStatus="DRAFT"
           origin="STANDALONE"
           userRole="ENGINEER"
-          onSaveSuccess={onSaveSuccess}
+          onAddFormDone={onAddFormDone}
         />,
       );
 
@@ -152,7 +152,7 @@ describe("SubRecordForm — WaterTankForm", () => {
       });
 
       expect(toast.success).toHaveBeenCalledWith("Serbatoio creato.");
-      expect(onSaveSuccess).toHaveBeenCalledWith("Serbatoio");
+      expect(onAddFormDone).toHaveBeenCalled();
     });
   });
 
@@ -167,7 +167,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -187,7 +187,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -221,7 +221,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={onDelete}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -254,7 +254,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={onDelete}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -285,7 +285,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           confStatus="DRAFT"
           origin="STANDALONE"
           userRole="ENGINEER"
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -313,7 +313,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -336,7 +336,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -353,7 +353,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -371,7 +371,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -393,7 +393,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
         />,
@@ -418,7 +418,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
@@ -445,7 +445,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
           onSaved={vi.fn()}
@@ -477,7 +477,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
         />,
@@ -512,7 +512,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
@@ -544,7 +544,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
         />,
@@ -584,7 +584,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={onDirtyChange}
           hasEngineeringBom
@@ -626,7 +626,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           confStatus="DRAFT"
           origin="STANDALONE"
           userRole="ENGINEER"
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="new-tank"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
@@ -663,7 +663,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSubmitFailed={onSubmitFailed}
@@ -690,7 +690,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSubmitFailed={onSubmitFailed}
@@ -723,7 +723,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSaved={onSaved}
@@ -760,7 +760,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           formKey="tank-10"
           onDirtyChange={vi.fn()}
           onSubmitFailed={onSubmitFailed}
@@ -798,7 +798,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           hasEngineeringBom
         />,
       );
@@ -842,7 +842,7 @@ describe("SubRecordForm — WaterTankForm", () => {
           waterTank={makeWaterTank()}
           waterTankIndex={1}
           onDelete={onDelete}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
           hasEngineeringBom
         />,
       );
@@ -884,7 +884,7 @@ describe("SubRecordForm — WashBayForm", () => {
           confStatus="DRAFT"
           origin="STANDALONE"
           userRole="ENGINEER"
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -892,14 +892,14 @@ describe("SubRecordForm — WashBayForm", () => {
     });
 
     test("calls insertAction on submit", async () => {
-      const onSaveSuccess = vi.fn();
+      const onAddFormDone = vi.fn();
       render(
         <WashBayForm
           confId={1}
           confStatus="DRAFT"
           origin="STANDALONE"
           userRole="ENGINEER"
-          onSaveSuccess={onSaveSuccess}
+          onAddFormDone={onAddFormDone}
         />,
       );
 
@@ -914,7 +914,7 @@ describe("SubRecordForm — WashBayForm", () => {
       });
 
       expect(toast.success).toHaveBeenCalledWith("Pista creata.");
-      expect(onSaveSuccess).toHaveBeenCalledWith("Pista");
+      expect(onAddFormDone).toHaveBeenCalled();
     });
   });
 
@@ -929,7 +929,7 @@ describe("SubRecordForm — WashBayForm", () => {
           washBay={makeWashBay()}
           washBayIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -965,7 +965,7 @@ describe("SubRecordForm — WashBayForm", () => {
           washBay={makeWashBay()}
           washBayIndex={1}
           onDelete={onDelete}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -999,7 +999,7 @@ describe("SubRecordForm — WashBayForm", () => {
           washBay={makeWashBay({ has_gantry: true })}
           washBayIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -1020,7 +1020,7 @@ describe("SubRecordForm — WashBayForm", () => {
           washBay={makeWashBay({ has_gantry: false })}
           washBayIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 
@@ -1042,7 +1042,7 @@ describe("SubRecordForm — WashBayForm", () => {
           })}
           washBayIndex={1}
           onDelete={vi.fn()}
-          onSaveSuccess={vi.fn()}
+          onAddFormDone={vi.fn()}
         />,
       );
 

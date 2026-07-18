@@ -70,7 +70,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
         washBay={makeWashBay({ has_gantry: true })}
         washBayIndex={1}
         onDelete={vi.fn()}
-        onSaveSuccess={vi.fn()}
+        onAddFormDone={vi.fn()}
       />,
     );
 
@@ -91,7 +91,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
         washBay={makeWashBay({ has_gantry: true })}
         washBayIndex={1}
         onDelete={vi.fn()}
-        onSaveSuccess={vi.fn()}
+        onAddFormDone={vi.fn()}
       />,
     );
 
@@ -112,7 +112,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
         washBay={makeWashBay({ has_gantry: true })}
         washBayIndex={1}
         onDelete={vi.fn()}
-        onSaveSuccess={vi.fn()}
+        onAddFormDone={vi.fn()}
       />,
     );
 
@@ -142,7 +142,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
         washBay={makeWashBay({ has_gantry: false })}
         washBayIndex={1}
         onDelete={vi.fn()}
-        onSaveSuccess={vi.fn()}
+        onAddFormDone={vi.fn()}
       />,
     );
 
@@ -165,7 +165,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
         washBay={makeWashBay({ has_gantry: true })}
         washBayIndex={1}
         onDelete={vi.fn()}
-        onSaveSuccess={vi.fn()}
+        onAddFormDone={vi.fn()}
       />,
     );
 
@@ -187,7 +187,7 @@ describe("WashBayFields — ENERGY_CHAIN + WALL restrictions", () => {
         washBay={makeWashBay()}
         washBayIndex={1}
         onDelete={vi.fn()}
-        onSaveSuccess={vi.fn()}
+        onAddFormDone={vi.fn()}
       />,
     );
 

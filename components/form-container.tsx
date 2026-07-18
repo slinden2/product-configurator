@@ -209,14 +209,6 @@ const FormContainer = ({
     setWashBays(updatedWashBays);
   };
 
-  const handleSaveSuccess = (entityName: "Serbatoio" | "Pista") => {
-    const setter =
-      entityName === "Serbatoio"
-        ? setShowAddWaterTankForm
-        : setShowAddWashBayForm;
-    setter(false);
-  };
-
   if (!confId || !confStatus) {
     return (
       <ConfigForm offerId={offerId} offerCustomerName={offerCustomerName} />
@@ -292,7 +284,6 @@ const FormContainer = ({
                   waterTank={wt}
                   waterTankIndex={index + 1}
                   onDelete={handleDeleteWaterTank}
-                  onSaveSuccess={handleSaveSuccess}
                   formKey={wt.id?.toString() ?? `tank-${index}`}
                   onDirtyChange={handleDirtyChange}
                   onSaved={handleSaved}
@@ -308,7 +299,7 @@ const FormContainer = ({
                 origin={origin}
                 offerRevisionStatus={offerRevisionStatus}
                 userRole={userRole}
-                onSaveSuccess={handleSaveSuccess}
+                onAddFormDone={() => setShowAddWaterTankForm(false)}
                 formKey="new-tank"
                 onDirtyChange={handleDirtyChange}
                 onSaved={handleSaved}
@@ -350,7 +341,6 @@ const FormContainer = ({
                   washBay={wb}
                   washBayIndex={index + 1}
                   onDelete={handleDeleteWashBay}
-                  onSaveSuccess={handleSaveSuccess}
                   formKey={wb.id?.toString() ?? `bay-${index}`}
                   onDirtyChange={handleDirtyChange}
                   onSaved={handleSaved}
@@ -368,7 +358,7 @@ const FormContainer = ({
                 userRole={userRole}
                 supplyType={configuration?.supply_type}
                 supplyFixingType={configuration?.supply_fixing_type}
-                onSaveSuccess={handleSaveSuccess}
+                onAddFormDone={() => setShowAddWashBayForm(false)}
                 formKey="new-bay"
                 onDirtyChange={handleDirtyChange}
                 onSaved={handleSaved}

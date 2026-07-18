@@ -31,7 +31,7 @@ interface WashBayFormProps {
   washBay?: UpdateWashBaySchema;
   washBayIndex?: number;
   onDelete?: (bayId: number) => void;
-  onSaveSuccess: (entityName: "Serbatoio" | "Pista") => void;
+  onAddFormDone?: () => void;
   formKey?: string;
   onDirtyChange?: (key: string, isDirty: boolean) => void;
   onSaved?: (key: string) => void;
@@ -53,7 +53,7 @@ const WashBayForm = (props: WashBayFormProps) => {
       offerRevisionStatus={props.offerRevisionStatus}
       userRole={props.userRole}
       onDelete={props.onDelete}
-      onSaveSuccess={props.onSaveSuccess}
+      onAddFormDone={props.onAddFormDone}
       insertAction={insertWashBayAction}
       editAction={editWashBayAction}
       deleteAction={deleteWashBayAction}
