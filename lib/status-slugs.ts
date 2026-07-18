@@ -47,3 +47,20 @@ export function parseConfigStatusSlug(
   if (!slug) return undefined;
   return CONFIG_SLUG_TO_STATUS[slug];
 }
+
+/**
+ * Canonical URL for a status-filterable list page (`/offerte`,
+ * `/configurazioni`): optional status filter + page. The single builder shared
+ * by pagination links and page-overflow redirects, so the two can never
+ * disagree on how the filter is carried.
+ */
+export function buildStatusListHref(
+  basePath: string,
+  page: number,
+  statusSlug?: string,
+): string {
+  const params = new URLSearchParams();
+  if (statusSlug) params.set("status", statusSlug);
+  params.set("page", String(page));
+  return `${basePath}?${params.toString()}`;
+}

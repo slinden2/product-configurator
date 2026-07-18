@@ -7,12 +7,16 @@ import { Button } from "@/components/ui/button";
 import { getUserConfigurations, getUserData } from "@/db/queries";
 import { canManageStandaloneConfigs } from "@/lib/access";
 import { STATUS_CONFIG } from "@/lib/status-config";
-import { parseConfigStatusSlug } from "@/lib/status-slugs";
+import {
+  buildStatusListHref,
+  configStatusToSlug,
+  parseConfigStatusSlug,
+} from "@/lib/status-slugs";
 
 const PAGE_SIZE = 20;
 
 const Configurations = async (props: {
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string | string[] }>;
 }) => {
   const user = await getUserData();
   if (!user) redirect("/login");
@@ -21,7 +25,14 @@ const Configurations = async (props: {
 
   const { page: pageParam, status: statusParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
-  const statusFilter = parseConfigStatusSlug(statusParam);
+  const statusFilter = parseConfigStatusSlug(
+    typeof statusParam === "string" ? statusParam : undefined,
+  );
+  // Canonical slug re-derived from the parsed status: an unknown or repeated
+  // `?status=` never propagates into pagination links or redirects.
+  const statusSlug = statusFilter
+    ? configStatusToSlug(statusFilter)
+    : undefined;
 
   const { data: configurations, totalCount } = await getUserConfigurations(
     user,
@@ -32,10 +43,7 @@ const Configurations = async (props: {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   if (page > totalPages) {
-    const params = new URLSearchParams();
-    if (statusParam && statusFilter) params.set("status", statusParam);
-    params.set("page", String(totalPages));
-    redirect(`/configurazioni?${params.toString()}`);
+    redirect(buildStatusListHref("/configurazioni", totalPages, statusSlug));
   }
 
   return (
@@ -65,7 +73,7 @@ const Configurations = async (props: {
         totalCount={totalCount}
         pageSize={PAGE_SIZE}
         user={user}
-        statusSlug={statusParam}
+        statusSlug={statusSlug}
       />
     </div>
   );

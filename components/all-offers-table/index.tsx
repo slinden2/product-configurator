@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { AllOffers } from "@/db/queries";
+import { buildStatusListHref } from "@/lib/status-slugs";
 import { formatDateDDMMYYYYHHMM } from "@/lib/utils";
 import { OfferStatusLabels } from "@/types";
 
@@ -91,12 +92,7 @@ const AllOffersTable = ({
       <PaginationControls
         page={page}
         totalPages={totalPages}
-        buildHref={(p) => {
-          const params = new URLSearchParams();
-          if (statusSlug) params.set("status", statusSlug);
-          params.set("page", String(p));
-          return `/offerte?${params.toString()}`;
-        }}
+        buildHref={(p) => buildStatusListHref("/offerte", p, statusSlug)}
       />
     </div>
   );

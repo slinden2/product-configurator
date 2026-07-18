@@ -5,20 +5,29 @@ import AllOffersTable from "@/components/all-offers-table";
 import { ActiveStatusFilter } from "@/components/shared/active-status-filter";
 import { Button } from "@/components/ui/button";
 import { getUserData, getUserOffers } from "@/db/queries";
-import { parseOfferStatusSlug } from "@/lib/status-slugs";
+import {
+  buildStatusListHref,
+  offerStatusToSlug,
+  parseOfferStatusSlug,
+} from "@/lib/status-slugs";
 import { OfferStatusLabels } from "@/types";
 
 const PAGE_SIZE = 20;
 
 const Offers = async (props: {
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string | string[] }>;
 }) => {
   const user = await getUserData();
   if (!user) redirect("/login");
 
   const { page: pageParam, status: statusParam } = await props.searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
-  const statusFilter = parseOfferStatusSlug(statusParam);
+  const statusFilter = parseOfferStatusSlug(
+    typeof statusParam === "string" ? statusParam : undefined,
+  );
+  // Canonical slug re-derived from the parsed status: an unknown or repeated
+  // `?status=` never propagates into pagination links or redirects.
+  const statusSlug = statusFilter ? offerStatusToSlug(statusFilter) : undefined;
 
   const { data: offers, totalCount } = await getUserOffers(
     user,
@@ -29,10 +38,7 @@ const Offers = async (props: {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   if (page > totalPages) {
-    const params = new URLSearchParams();
-    if (statusParam && statusFilter) params.set("status", statusParam);
-    params.set("page", String(totalPages));
-    redirect(`/offerte?${params.toString()}`);
+    redirect(buildStatusListHref("/offerte", totalPages, statusSlug));
   }
 
   return (
@@ -59,7 +65,7 @@ const Offers = async (props: {
         page={page}
         totalCount={totalCount}
         pageSize={PAGE_SIZE}
-        statusSlug={statusParam}
+        statusSlug={statusSlug}
       />
     </div>
   );

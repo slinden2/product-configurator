@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { AllConfigurations, UserData } from "@/db/queries";
+import { buildStatusListHref } from "@/lib/status-slugs";
 
 interface AllConfigurationsTableProps {
   configurations: AllConfigurations;
@@ -75,12 +76,7 @@ const AllConfigurationsTable = ({
       <PaginationControls
         page={page}
         totalPages={totalPages}
-        buildHref={(p) => {
-          const params = new URLSearchParams();
-          if (statusSlug) params.set("status", statusSlug);
-          params.set("page", String(p));
-          return `/configurazioni?${params.toString()}`;
-        }}
+        buildHref={(p) => buildStatusListHref("/configurazioni", p, statusSlug)}
       />
     </div>
   );
