@@ -1,33 +1,29 @@
 "use client";
 
 import { Share } from "lucide-react";
-import { explodeBomToLeavesAction } from "@/app/actions/bom-lines-actions";
+import { buildBomCostExportAction } from "@/app/actions/bom-lines-actions";
 import { AsyncActionButton } from "@/components/shared/async-action-button";
 import type { UserData } from "@/db/queries";
-import type { BOMItemWithCost } from "@/lib/BOM";
 import { MSG } from "@/lib/messages";
 
 interface ExportCostsButtonProps {
-  exportData: {
-    generalBOM: BOMItemWithCost[];
-    waterTankBOMs: BOMItemWithCost[][];
-    washBayBOMs: BOMItemWithCost[][];
-  };
+  confId: number;
   user: NonNullable<UserData>;
 }
 
-const ExportCostsButton = ({ exportData, user }: ExportCostsButtonProps) => (
+const ExportCostsButton = ({ confId, user }: ExportCostsButtonProps) => (
   <AsyncActionButton
     action={async () => {
-      const result = await explodeBomToLeavesAction(exportData);
+      // The heavy cost enrichment runs here, on click — not on every page view.
+      const result = await buildBomCostExportAction(confId);
       if (!result.success) throw new Error(result.error);
       const { createExcelFile } = await import("./create-excel-file");
       await createExcelFile(
-        exportData.generalBOM,
-        exportData.waterTankBOMs,
-        exportData.washBayBOMs,
+        result.data.generalBOM,
+        result.data.waterTankBOMs,
+        result.data.washBayBOMs,
         user,
-        result.data,
+        result.data.exploded,
       );
     }}
     icon={<Share />}

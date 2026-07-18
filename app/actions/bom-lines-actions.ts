@@ -1,19 +1,21 @@
 "use server";
 
-import { getAssemblyChildren, getUserData } from "@/db/queries";
+import { buildBomCostExportData } from "@/app/configurazioni/bom/[id]/bom-helpers";
+import { getAssemblyChildren, getBOM, getUserData } from "@/db/queries";
 import { canViewBom } from "@/lib/access";
-import type { BOMItemWithCost } from "@/lib/BOM";
 import { explodeBomsToLeaves } from "@/lib/BOM/explode-bom";
 import { MSG } from "@/lib/messages";
 import { mapActionError } from "./lib/map-action-error";
 
-type BOMData = {
-  generalBOM: BOMItemWithCost[];
-  waterTankBOMs: BOMItemWithCost[][];
-  washBayBOMs: BOMItemWithCost[][];
-};
-
-export async function explodeBomToLeavesAction(data: BOMData) {
+/**
+ * Builds the enriched cost-export payload for a configuration's BOM on demand —
+ * only when the user clicks "Esporta costi" — so ordinary BOM page views run zero
+ * cost lookups. Everything is derived server-side from `confId` (no client-supplied
+ * BOM input): a scoped `getBOM` (auth + ownership), the same EBOM-vs-generated cost
+ * basis the page uses, then the leaf explosion. Returns the cost BOMs plus the
+ * exploded leaves, ready for `createExcelFile`.
+ */
+export async function buildBomCostExportAction(confId: number) {
   const user = await getUserData();
   if (!user) {
     return { success: false as const, error: MSG.auth.userNotAuthenticated };
@@ -24,10 +26,17 @@ export async function explodeBomToLeavesAction(data: BOMData) {
   }
 
   try {
-    const exploded = await explodeBomsToLeaves(data);
-    return { success: true as const, data: exploded };
+    const bom = await getBOM(confId, user);
+    if (!bom) {
+      return { success: false as const, error: MSG.config.notFound };
+    }
+
+    const costData = await buildBomCostExportData(bom, confId);
+    const exploded = await explodeBomsToLeaves(costData);
+
+    return { success: true as const, data: { ...costData, exploded } };
   } catch (err) {
-    return mapActionError(err, "Failed to explode BOM to leaves:");
+    return mapActionError(err, "Failed to build BOM cost export:");
   }
 }
 

@@ -52,7 +52,6 @@ const BOMView = async (props: BOMViewProps) => {
     editable,
     ebomGrouped,
     exportData,
-    exportCostsData,
     ebomCreatedAt,
     ebomRulesVersion,
   } = pageData;
@@ -71,7 +70,7 @@ const BOMView = async (props: BOMViewProps) => {
           {!hasEbom && editable && <SnapshotButton confId={confId} />}
           {hasEbom && editable && <RegenerateButton confId={confId} />}
           <ExportButton exportData={exportData} />
-          <ExportCostsButton exportData={exportCostsData} user={user} />
+          <ExportCostsButton confId={confId} user={user} />
         </div>
       </div>
 

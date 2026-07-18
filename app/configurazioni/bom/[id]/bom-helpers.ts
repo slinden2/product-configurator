@@ -98,6 +98,32 @@ export async function buildEbomCostExportData(
   return { generalBOM, waterTankBOMs, washBayBOMs };
 }
 
+export interface BomCostExportData {
+  generalBOM: BOMItemWithCost[];
+  waterTankBOMs: BOMItemWithCost[][];
+  washBayBOMs: BOMItemWithCost[][];
+}
+
+/**
+ * Builds the enriched cost-export BOM on the same EBOM-vs-generated basis the BOM
+ * page renders (EBOM snapshot when one exists, else the freshly generated BOM).
+ * Extracted from `prepareBOMPageData` so the costs export can build it on demand
+ * (`buildBomCostExportAction`) instead of on every page view — `enrichWithCosts`
+ * runs DB part-number cost lookups the page itself never needs.
+ */
+export async function buildBomCostExportData(
+  bom: BOM,
+  confId: number,
+): Promise<BomCostExportData> {
+  if (await hasEngineeringBom(confId)) {
+    const ebomItems = await getEngineeringBomItems(confId);
+    return buildEbomCostExportData(ebomItems.filter((i) => !i.is_deleted));
+  }
+  const { generalBOM, waterTankBOMs, washBayBOMs } =
+    await bom.buildCompleteBOM();
+  return BOM.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
+}
+
 // ── Data orchestration ────────────────────────────────────────────────
 
 export interface BOMPageData {
@@ -110,11 +136,6 @@ export interface BOMPageData {
   editable: boolean;
   ebomGrouped: GroupedEbomItems;
   exportData: BOMItemWithDescription[];
-  exportCostsData: {
-    generalBOM: BOMItemWithCost[];
-    waterTankBOMs: BOMItemWithCost[][];
-    washBayBOMs: BOMItemWithCost[][];
-  };
   ebomCreatedAt: Date | null;
   ebomRulesVersion: string | null;
 }
@@ -153,10 +174,6 @@ export async function prepareBOMPageData(
     ? buildEbomExportData(activeEbomItems)
     : BOM.generateExportData(generalBOM, waterTankBOMs, washBayBOMs);
 
-  const exportCostsData = hasEbom
-    ? await buildEbomCostExportData(activeEbomItems)
-    : await BOM.generateCostExportData(generalBOM, waterTankBOMs, washBayBOMs);
-
   const ebomCreatedAt = getEarliestCreatedAt(ebomItems);
   const ebomRulesVersion = getBomRulesVersion(ebomItems);
 
@@ -170,7 +187,6 @@ export async function prepareBOMPageData(
     editable,
     ebomGrouped,
     exportData,
-    exportCostsData,
     ebomCreatedAt,
     ebomRulesVersion,
   };

@@ -5,11 +5,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockGetUserData = vi.fn();
 const mockGetAssemblyChildren = vi.fn();
+const mockGetBOM = vi.fn();
 const mockExplodeBomsToLeaves = vi.fn();
+const mockBuildBomCostExportData = vi.fn();
 
 vi.mock("@/db/queries", () => ({
   getUserData: (...args: unknown[]) => mockGetUserData(...args),
   getAssemblyChildren: (...args: unknown[]) => mockGetAssemblyChildren(...args),
+  getBOM: (...args: unknown[]) => mockGetBOM(...args),
   QueryError: class QueryError extends Error {
     constructor(message: string) {
       super(message);
@@ -20,6 +23,11 @@ vi.mock("@/db/queries", () => ({
 
 vi.mock("@/lib/BOM/explode-bom", () => ({
   explodeBomsToLeaves: (...args: unknown[]) => mockExplodeBomsToLeaves(...args),
+}));
+
+vi.mock("@/app/configurazioni/bom/[id]/bom-helpers", () => ({
+  buildBomCostExportData: (...args: unknown[]) =>
+    mockBuildBomCostExportData(...args),
 }));
 
 vi.mock("pg", () => ({
@@ -35,7 +43,7 @@ vi.mock("pg", () => ({
 
 import { DatabaseError } from "pg";
 import {
-  explodeBomToLeavesAction,
+  buildBomCostExportAction,
   getAssemblyChildrenAction,
 } from "@/app/actions/bom-lines-actions";
 import { QueryError } from "@/db/queries";
@@ -170,9 +178,12 @@ describe("getAssemblyChildrenAction", () => {
   });
 });
 
-describe("explodeBomToLeavesAction", () => {
-  const BOM_DATA = {
-    generalBOM: [],
+describe("buildBomCostExportAction", () => {
+  const CONF_ID = 42;
+  const MOCK_BOM = { configuration: { id: CONF_ID } };
+
+  const MOCK_COST_DATA = {
+    generalBOM: [{ pn: "G-1", description: "General", qty: 1, cost: 10 }],
     waterTankBOMs: [],
     washBayBOMs: [],
   };
@@ -188,45 +199,64 @@ describe("explodeBomToLeavesAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserData.mockResolvedValue(MOCK_USER);
+    mockGetBOM.mockResolvedValue(MOCK_BOM);
+    mockBuildBomCostExportData.mockResolvedValue(MOCK_COST_DATA);
     mockExplodeBomsToLeaves.mockResolvedValue(MOCK_EXPLODED);
   });
 
-  test("returns exploded leaves for an authorized user", async () => {
-    const result = await explodeBomToLeavesAction(BOM_DATA);
+  test("returns the cost BOMs plus exploded leaves for an authorized user", async () => {
+    const result = await buildBomCostExportAction(CONF_ID);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toEqual(MOCK_EXPLODED);
+      expect(result.data).toEqual({
+        ...MOCK_COST_DATA,
+        exploded: MOCK_EXPLODED,
+      });
     }
-    expect(mockExplodeBomsToLeaves).toHaveBeenCalledWith(BOM_DATA);
+    // Everything derives from confId server-side (no client-supplied BOM).
+    expect(mockGetBOM).toHaveBeenCalledWith(CONF_ID, MOCK_USER);
+    expect(mockBuildBomCostExportData).toHaveBeenCalledWith(MOCK_BOM, CONF_ID);
+    expect(mockExplodeBomsToLeaves).toHaveBeenCalledWith(MOCK_COST_DATA);
   });
 
   test("returns auth error when user is not authenticated", async () => {
     mockGetUserData.mockResolvedValue(null);
-    const result = await explodeBomToLeavesAction(BOM_DATA);
+    const result = await buildBomCostExportAction(CONF_ID);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe(MSG.auth.userNotAuthenticated);
     }
-    expect(mockExplodeBomsToLeaves).not.toHaveBeenCalled();
+    expect(mockGetBOM).not.toHaveBeenCalled();
   });
 
   test.each([
     "SALES",
     "SALES_MANAGER",
     "SALES_DIRECTOR",
-  ])("returns unauthorized error for %s user without exploding", async (role) => {
+  ])("returns unauthorized error for %s user without fetching", async (role) => {
     mockGetUserData.mockResolvedValue({ id: "user-1", role });
-    const result = await explodeBomToLeavesAction(BOM_DATA);
+    const result = await buildBomCostExportAction(CONF_ID);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe(MSG.bom.unauthorized);
     }
+    expect(mockGetBOM).not.toHaveBeenCalled();
+  });
+
+  test("returns not-found when the config is missing or out of scope", async () => {
+    mockGetBOM.mockResolvedValue(null);
+    const result = await buildBomCostExportAction(CONF_ID);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(MSG.config.notFound);
+    }
+    expect(mockBuildBomCostExportData).not.toHaveBeenCalled();
     expect(mockExplodeBomsToLeaves).not.toHaveBeenCalled();
   });
 
   test("returns unknown error message on unexpected error", async () => {
-    mockExplodeBomsToLeaves.mockRejectedValue(new Error("unexpected"));
-    const result = await explodeBomToLeavesAction(BOM_DATA);
+    mockBuildBomCostExportData.mockRejectedValue(new Error("unexpected"));
+    const result = await buildBomCostExportAction(CONF_ID);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe(MSG.db.unknown);
