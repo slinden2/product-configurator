@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { OfferWithRevisionAndLines } from "@/db/queries";
 import { prepareOfferDisplayData } from "@/lib/offer";
 import {
-  computeOfferSummaryExtras,
-  parseOfferSettings,
-} from "@/lib/offer-settings";
+  computeRevisionTotals,
+  deriveOfferSummary,
+  offerLineTitle,
+} from "@/lib/offer-export";
 import { formatEur } from "@/lib/utils";
 import LineBreakdown from "./line-breakdown";
 
@@ -28,21 +29,11 @@ export default function QuoteView({
 }: Props) {
   const lines = revision.lines;
   const discountPct = Number(revision.discount_pct);
-  const settings = parseOfferSettings(revision);
-  const showPrices = !settings.show_net_total_only;
-
-  // Offer-level totals are the sum of each line's stored per-unit pricing × its
-  // quantity. The discounted total (sum of line nets) is authoritative; the header
-  // discount and transport/installation apply once, at the offer level.
-  const totalListPrice = lines.reduce(
-    (sum, line) => sum + Number(line.list_price) * line.quantity,
-    0,
+  const { totalListPrice, discountedTotal } = computeRevisionTotals(revision);
+  const { settings, showPrices, extras } = deriveOfferSummary(
+    revision,
+    discountedTotal,
   );
-  const discountedTotal = lines.reduce(
-    (sum, line) => sum + Number(line.net_price) * line.quantity,
-    0,
-  );
-  const extras = computeOfferSummaryExtras(settings, discountedTotal);
 
   return (
     <div className="space-y-6">
@@ -59,7 +50,7 @@ export default function QuoteView({
           line.pricing_snapshot,
           discountPct,
         );
-        const title = `Pos. ${line.position + 1} — ${customerName}`;
+        const title = offerLineTitle(line.position, customerName);
 
         if (!displayData) {
           return (

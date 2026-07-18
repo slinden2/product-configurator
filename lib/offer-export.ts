@@ -3,6 +3,8 @@ import type { GroupedOfferData } from "@/lib/offer";
 import { prepareOfferDisplayData } from "@/lib/offer";
 import {
   computeOfferSummaryExtras,
+  type OfferDisplaySettings,
+  type OfferSettingsSource,
   type OfferSummaryExtras,
   parseOfferSettings,
 } from "@/lib/offer-settings";
@@ -54,17 +56,69 @@ type OfferHeaderForExport = Pick<
 >;
 
 /**
- * Assembles the export payload for one revision, mirroring the math in
- * QuoteView (app/offerte/[id]/quote-view.tsx): per-line grouped display data,
+ * The "Pos. N — customer" line title shared by the quote view and the export.
+ * `position` is the stored 0-based line position; the title is 1-based.
+ */
+export function offerLineTitle(position: number, customerName: string): string {
+  return `Pos. ${position + 1} — ${customerName}`;
+}
+
+/**
+ * Offer-level totals: the sum of each line's stored per-unit pricing × quantity.
+ * The header discount and transport/installation apply once, at the offer level,
+ * so the discounted total (sum of line nets) is authoritative. Lines without a
+ * BOM snapshot still carry stored prices, so they count toward both totals.
+ */
+export function computeRevisionTotals(revision: OfferRevision): {
+  totalListPrice: number;
+  discountedTotal: number;
+} {
+  const totalListPrice = revision.lines.reduce(
+    (sum, line) => sum + Number(line.list_price) * line.quantity,
+    0,
+  );
+  const discountedTotal = revision.lines.reduce(
+    (sum, line) => sum + Number(line.net_price) * line.quantity,
+    0,
+  );
+  return { totalListPrice, discountedTotal };
+}
+
+/**
+ * The offer-summary derivation shared by the quote view and the export builder:
+ * parse the revision's presentation settings, decide whether list prices are
+ * shown (net-total-only mode drops them), and compute the transport/installation
+ * riepilogo from the discounted total.
+ */
+export function deriveOfferSummary(
+  settingsSource: OfferSettingsSource,
+  discountedTotal: number,
+): {
+  settings: OfferDisplaySettings;
+  showPrices: boolean;
+  extras: OfferSummaryExtras;
+} {
+  const settings = parseOfferSettings(settingsSource);
+  return {
+    settings,
+    showPrices: !settings.show_net_total_only,
+    extras: computeOfferSummaryExtras(settings, discountedTotal),
+  };
+}
+
+/**
+ * Assembles the export payload for one revision. Per-line grouped display data,
  * offer-level totals from the stored per-unit prices, and the transport/
- * installation riepilogo. Lines whose snapshot yields no BOM are skipped.
+ * installation riepilogo all come from the same helpers QuoteView
+ * (app/offerte/[id]/quote-view.tsx) renders from, so the two never drift. Lines
+ * whose snapshot yields no BOM are skipped in the line list but still counted in
+ * the totals (see {@link computeRevisionTotals}).
  */
 export function buildOfferRevisionExportData(
   offer: OfferHeaderForExport,
   revision: OfferRevision,
 ): OfferRevisionExportData {
   const discountPct = Number(revision.discount_pct);
-  const settings = parseOfferSettings(revision);
 
   const lines: OfferExportLine[] = [];
   for (const line of revision.lines) {
@@ -74,7 +128,7 @@ export function buildOfferRevisionExportData(
     );
     if (!displayData) continue;
     lines.push({
-      title: `Pos. ${line.position + 1} — ${offer.customer_name}`,
+      title: offerLineTitle(line.position, offer.customer_name),
       quantity: line.quantity,
       unitListPrice: Number(line.list_price),
       data: displayData,
@@ -82,16 +136,8 @@ export function buildOfferRevisionExportData(
     });
   }
 
-  // Offer-level totals are the sum of each line's stored per-unit pricing ×
-  // quantity; the header discount and transport/installation apply once.
-  const totalListPrice = revision.lines.reduce(
-    (sum, line) => sum + Number(line.list_price) * line.quantity,
-    0,
-  );
-  const discountedTotal = revision.lines.reduce(
-    (sum, line) => sum + Number(line.net_price) * line.quantity,
-    0,
-  );
+  const { totalListPrice, discountedTotal } = computeRevisionTotals(revision);
+  const { showPrices, extras } = deriveOfferSummary(revision, discountedTotal);
 
   return {
     offerNumber: offer.offer_number,
@@ -100,10 +146,10 @@ export function buildOfferRevisionExportData(
     customerEmail: offer.customer_email ?? null,
     revisionNo: revision.revision_no,
     discountPct,
-    showPrices: !settings.show_net_total_only,
+    showPrices,
     lines,
     totalListPrice,
     discountedTotal,
-    extras: computeOfferSummaryExtras(settings, discountedTotal),
+    extras,
   };
 }

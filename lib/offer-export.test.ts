@@ -11,7 +11,12 @@ vi.mock("@/lib/BOM", () => ({
 }));
 
 import type { OfferWithRevisionAndLines } from "@/db/queries";
-import { buildOfferRevisionExportData } from "@/lib/offer-export";
+import {
+  buildOfferRevisionExportData,
+  computeRevisionTotals,
+  deriveOfferSummary,
+  offerLineTitle,
+} from "@/lib/offer-export";
 import {
   localIsoDate,
   offerExportFilenameStem,
@@ -126,6 +131,59 @@ describe("buildOfferRevisionExportData", () => {
     const data = buildOfferRevisionExportData(offer, revision);
     expect(data.lines).toHaveLength(1);
     expect(data.totalListPrice).toBe(150);
+  });
+});
+
+describe("offerLineTitle", () => {
+  test("renders a 1-based positional title from the 0-based position", () => {
+    expect(offerLineTitle(0, "ACME")).toBe("Pos. 1 — ACME");
+    expect(offerLineTitle(4, "ACME")).toBe("Pos. 5 — ACME");
+  });
+});
+
+describe("computeRevisionTotals", () => {
+  test("sums stored per-unit list and net prices × quantity", () => {
+    const revision = makeRevision([
+      makeLine({ list_price: "100", net_price: "90", quantity: 2 }),
+      makeLine({ list_price: "200", net_price: "180", quantity: 1 }),
+    ]);
+    expect(computeRevisionTotals(revision)).toEqual({
+      totalListPrice: 400, // 100*2 + 200*1
+      discountedTotal: 360, // 90*2 + 180*1
+    });
+  });
+
+  test("counts lines without a snapshot — totals come from stored prices", () => {
+    const revision = makeRevision([
+      makeLine({ pricing_snapshot: null, list_price: "50", net_price: "50" }),
+    ]);
+    expect(computeRevisionTotals(revision)).toEqual({
+      totalListPrice: 50,
+      discountedTotal: 50,
+    });
+  });
+});
+
+describe("deriveOfferSummary", () => {
+  test("shows prices unless the revision is net-total-only", () => {
+    expect(deriveOfferSummary(makeRevision([]), 1000).showPrices).toBe(true);
+    const hidden = deriveOfferSummary(
+      { ...makeRevision([]), show_net_total_only: true } as unknown as Revision,
+      1000,
+    );
+    expect(hidden.showPrices).toBe(false);
+  });
+
+  test("computes transport/installation extras from the discounted total", () => {
+    const revision = {
+      ...makeRevision([]),
+      transport_mode: "INCLUDED",
+      transport_amount: "100",
+    } as unknown as Revision;
+    const { extras } = deriveOfferSummary(revision, 1000);
+    // INCLUDED transport adds to the net total without showing an amount.
+    expect(extras.net_total).toBe(1100);
+    expect(extras.transportRow.amount).toBeNull();
   });
 });
 
