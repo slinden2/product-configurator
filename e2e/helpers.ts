@@ -1,4 +1,48 @@
-import type { Page } from "@playwright/test";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { Browser, BrowserContext, Locator, Page } from "@playwright/test";
+import { SEED_ROLE_EMAILS } from "../db/seed-constants";
+
+/** Short slugs for the seeded role accounts (db/seed.ts). */
+export type E2eRole = "agent" | "manager" | "engineer" | "admin";
+
+export const E2E_ROLE_EMAILS: Record<E2eRole, string> = {
+  agent: SEED_ROLE_EMAILS.SALES,
+  manager: SEED_ROLE_EMAILS.SALES_MANAGER,
+  engineer: SEED_ROLE_EMAILS.ENGINEER,
+  admin: SEED_ROLE_EMAILS.ADMIN,
+};
+
+const AUTH_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  ".auth",
+);
+
+/** Storage-state file for a seeded role, written by e2e/auth.setup.ts. */
+export function authStatePath(role: E2eRole): string {
+  return path.join(AUTH_DIR, `${role}.json`);
+}
+
+/**
+ * Opens an isolated browser context + page authenticated as one of the seeded
+ * role accounts. The caller owns the context and must close it (try/finally).
+ *
+ * `main` scopes queries to the page's main landmark. Use it for all page
+ * content: during RSC streaming a section can briefly exist twice — in place
+ * and in a hidden segment at the end of <body> — and page-wide queries then
+ * hit strict-mode violations. Portals (toasts, dialogs) render outside
+ * <main>, so assert those on `page` directly.
+ */
+export async function openPageAs(
+  browser: Browser,
+  role: E2eRole,
+): Promise<{ context: BrowserContext; page: Page; main: Locator }> {
+  const context = await browser.newContext({
+    storageState: authStatePath(role),
+  });
+  const page = await context.newPage();
+  return { context, page, main: page.getByRole("main") };
+}
 
 /**
  * Opens a Radix Select by its label text and clicks an option.
@@ -21,20 +65,25 @@ export async function selectRadixOption(
  * Fill all form fields required for a valid minimal configuration.
  * Does not include water supply fields — add those per-test as needed.
  *
+ * @param name - customer name, or `null` for an offer line: the config form
+ *               hides the customer-name field there (the offer header owns
+ *               the name — see GeneralSection's showClientName).
  * @param supplyType - "Mensola dritta" (default) or "Catena portacavi".
  *                     Energy chain requires a fixing type (not optional).
  */
 export async function fillMinimalForm(
   page: Page,
-  name: string,
+  name: string | null,
   supplyType: "Mensola dritta" | "Catena portacavi" = "Mensola dritta",
 ) {
   // General
-  // Use getByRole instead of getByLabel: during React hydration there can be a brief
-  // window where both the server-rendered and client-rendered inputs coexist in the DOM.
-  // getByRole only matches elements accessible in the ARIA tree (visible), so it reliably
-  // resolves to exactly 1 element even during that transient overlap.
-  await page.getByRole("textbox", { name: "Nome del cliente" }).fill(name);
+  if (name !== null) {
+    // Use getByRole instead of getByLabel: during React hydration there can be a brief
+    // window where both the server-rendered and client-rendered inputs coexist in the DOM.
+    // getByRole only matches elements accessible in the ARIA tree (visible), so it reliably
+    // resolves to exactly 1 element even during that transient overlap.
+    await page.getByRole("textbox", { name: "Nome del cliente" }).fill(name);
+  }
 
   // Brush (no brushes)
   await selectRadixOption(page, "Numero di spazzole", "No spazzole");

@@ -33,6 +33,7 @@ import {
   BLOCKED_SUPABASE_PROJECT_REFS,
   DEV_PASSWORD,
   E2E_USER_EMAIL,
+  SEED_ROLE_EMAILS,
 } from "./seed-constants";
 import { transformConfigToDbInsert } from "./transformations";
 
@@ -260,15 +261,23 @@ type SeedUser = {
 // One account per role so the full workflow can be exercised. The SALES agent
 // reports to the SALES_MANAGER to exercise manager-scoped visibility.
 const SEED_USERS: SeedUser[] = [
-  { email: "admin@itecosrl.com", role: "ADMIN", initials: "ADM" },
-  { email: "engineer@itecosrl.com", role: "ENGINEER", initials: "ENG" },
-  { email: "director@itecosrl.com", role: "SALES_DIRECTOR", initials: "DIR" },
-  { email: "manager@itecosrl.com", role: "SALES_MANAGER", initials: "MGR" },
+  { email: SEED_ROLE_EMAILS.ADMIN, role: "ADMIN", initials: "ADM" },
+  { email: SEED_ROLE_EMAILS.ENGINEER, role: "ENGINEER", initials: "ENG" },
   {
-    email: "agent@itecosrl.com",
+    email: SEED_ROLE_EMAILS.SALES_DIRECTOR,
+    role: "SALES_DIRECTOR",
+    initials: "DIR",
+  },
+  {
+    email: SEED_ROLE_EMAILS.SALES_MANAGER,
+    role: "SALES_MANAGER",
+    initials: "MGR",
+  },
+  {
+    email: SEED_ROLE_EMAILS.SALES,
     role: "SALES",
     initials: "AGT",
-    managerEmail: "manager@itecosrl.com",
+    managerEmail: SEED_ROLE_EMAILS.SALES_MANAGER,
   },
 ];
 
@@ -276,9 +285,9 @@ const SEED_USERS: SeedUser[] = [
 // Config 1 is offer-owned (wrapped by the sample offer below); configs 2 and 3 are
 // standalone technical configs, which per the workflow belong to ENGINEER/ADMIN.
 const CONFIG_OWNER_EMAILS = [
-  "agent@itecosrl.com",
-  "engineer@itecosrl.com",
-  "admin@itecosrl.com",
+  SEED_ROLE_EMAILS.SALES,
+  SEED_ROLE_EMAILS.ENGINEER,
+  SEED_ROLE_EMAILS.ADMIN,
 ];
 
 // Origin discriminator per seeded configuration (aligned with confArr order).
@@ -514,9 +523,9 @@ async function seedDb() {
   // fanning the line config out to SALES_APPROVED with its at-acceptance as-sold freeze
   // and locking the offer. This leaves an offer-born config in the engineering queue.
   console.log("🌱 Seeding sample offer (Rev 1 DRAFT → … → ACCEPTED)...");
-  const agentId = userIdByEmail.get("agent@itecosrl.com");
-  const managerId = userIdByEmail.get("manager@itecosrl.com");
-  const adminId = userIdByEmail.get("admin@itecosrl.com");
+  const agentId = userIdByEmail.get(SEED_ROLE_EMAILS.SALES);
+  const managerId = userIdByEmail.get(SEED_ROLE_EMAILS.SALES_MANAGER);
+  const adminId = userIdByEmail.get(SEED_ROLE_EMAILS.ADMIN);
   if (agentId && managerId && adminId && offerConfigId !== undefined) {
     const [offer] = await db
       .insert(offers)
@@ -551,7 +560,7 @@ async function seedDb() {
     // way acceptRevisionAction does (pooled read, before the tx). An ADMIN sees all.
     const adminUser = {
       id: adminId,
-      email: "admin@itecosrl.com",
+      email: SEED_ROLE_EMAILS.ADMIN,
       role: "ADMIN" as const,
       initials: "ADM",
       manager_id: null,
