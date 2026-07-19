@@ -1,6 +1,7 @@
 import {
   and,
   asc,
+  count,
   desc,
   eq,
   ilike,
@@ -44,6 +45,7 @@ import {
   resolveConfigurationClientName,
 } from "./configurations";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";
+import { paginatedList } from "./pagination";
 import { parseDbTimestamp } from "./sql-utils";
 import type { UserData } from "./users";
 
@@ -318,7 +320,7 @@ export async function getUserOffers(
     : undefined;
   const whereClause = and(scopeWhere, statusWhere);
 
-  const [data, countResult] = await Promise.all([
+  const { data, totalCount } = await paginatedList(
     db.query.offers.findMany({
       where: whereClause,
       columns: {
@@ -350,8 +352,9 @@ export async function getUserOffers(
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
-    db.select({ count: sql<number>`count(*)` }).from(offers).where(whereClause),
-  ]);
+    offers,
+    whereClause,
+  );
 
   const shaped = data.map((offer) => {
     const revision = offer.revisions[0];
@@ -367,7 +370,7 @@ export async function getUserOffers(
     };
   });
 
-  return { data: shaped, totalCount: Number(countResult[0].count) };
+  return { data: shaped, totalCount };
 }
 
 export type AllOffers = Awaited<ReturnType<typeof getUserOffers>>["data"];
@@ -1334,10 +1337,10 @@ async function assertRevisionNotEmpty(
   tx: TransactionType,
 ): Promise<void> {
   const [lineCount] = await tx
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: count() })
     .from(offerRevisionLines)
     .where(eq(offerRevisionLines.offer_revision_id, revisionId));
-  if (Number(lineCount?.count ?? 0) === 0) {
+  if (lineCount.count === 0) {
     throw new QueryError(MSG.offer.cannotSendEmpty);
   }
 }

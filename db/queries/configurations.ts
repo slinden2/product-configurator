@@ -36,6 +36,7 @@ import {
 } from "../transformations";
 import { hasEngineeringBom } from "./ebom";
 import { type DatabaseType, QueryError, type TransactionType } from "./errors";
+import { paginatedList } from "./pagination";
 import { parseDbTimestamp } from "./sql-utils";
 import type { UserData } from "./users";
 
@@ -168,7 +169,7 @@ export async function getUserConfigurations(
     statusFilter ? eq(configurations.status, statusFilter) : undefined,
   );
 
-  const [rows, countResult] = await Promise.all([
+  const { data: rows, totalCount } = await paginatedList(
     db.query.configurations.findMany({
       where: whereClause,
       columns: {
@@ -193,15 +194,13 @@ export async function getUserConfigurations(
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(configurations)
-      .where(whereClause),
-  ]);
+    configurations,
+    whereClause,
+  );
 
   const data = await resolveConfigurationClientNames(rows);
 
-  return { data, totalCount: Number(countResult[0].count) };
+  return { data, totalCount };
 }
 
 /**

@@ -44,9 +44,10 @@ const makeOffer = (
 beforeEach(() => {
   vi.clearAllMocks();
   mockFindMany.mockResolvedValue([]);
-  // Count query stub: db.select().from().where()
+  // Count query stub: db.select({ count: count() }).from().where(). Drizzle's
+  // count() maps the pg bigint to a JS number, so the stub yields a number.
   mockSelect.mockReturnValue({
-    from: () => ({ where: () => Promise.resolve([{ count: "0" }]) }),
+    from: () => ({ where: () => Promise.resolve([{ count: 0 }]) }),
   });
 });
 
@@ -56,7 +57,7 @@ describe("getUserOffers", () => {
       makeOffer(1, [{ id: 7, status: "DRAFT", lineCount: 3 }]),
     ]);
     mockSelect.mockReturnValue({
-      from: () => ({ where: () => Promise.resolve([{ count: "1" }]) }),
+      from: () => ({ where: () => Promise.resolve([{ count: 1 }]) }),
     });
 
     const { data, totalCount } = await getUserOffers(makeUser("ADMIN"));
@@ -95,9 +96,9 @@ describe("getUserOffers", () => {
     expect(revisions.with).toBeUndefined();
   });
 
-  test("coerces the driver's string count and applies pagination", async () => {
+  test("returns the total count and applies pagination", async () => {
     mockSelect.mockReturnValue({
-      from: () => ({ where: () => Promise.resolve([{ count: "42" }]) }),
+      from: () => ({ where: () => Promise.resolve([{ count: 42 }]) }),
     });
 
     const { totalCount } = await getUserOffers(makeUser("ADMIN"), 3, 20);

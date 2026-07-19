@@ -51,6 +51,9 @@ vi.mock("drizzle-orm", () => ({
   }),
   desc: vi.fn((column) => column),
   eq: vi.fn((column, value) => ({ type: "eq", column, value })),
+  // Aggregate used by the shared paginatedList count query; the select chain is
+  // stubbed, so its return value is irrelevant.
+  count: vi.fn(() => ({ type: "count" })),
   sql: vi.fn(),
 }));
 
@@ -86,7 +89,8 @@ describe("getActivityLog - filters, paging & transformation", () => {
     mockOrderBy.mockReturnValue({ limit: mockLimit });
     mockLimit.mockReturnValue({ offset: mockOffset });
     mockOffset.mockResolvedValue([makeRow()]);
-    mockCountWhere.mockResolvedValue([{ count: "1" }]);
+    // Drizzle's count() maps the pg bigint to a JS number.
+    mockCountWhere.mockResolvedValue([{ count: 1 }]);
   });
 
   test("applies no WHERE clause when no filter is given", async () => {
@@ -157,7 +161,7 @@ describe("getActivityLog - filters, paging & transformation", () => {
     mockOffset.mockResolvedValue([
       makeRow({ id: 2, user_email: "admin@iteco.it" }),
     ]);
-    mockCountWhere.mockResolvedValue([{ count: "37" }]);
+    mockCountWhere.mockResolvedValue([{ count: 37 }]);
 
     const result = await getActivityLog();
 
@@ -169,7 +173,7 @@ describe("getActivityLog - filters, paging & transformation", () => {
 
   test("returns an empty page when nothing matches the filters", async () => {
     mockOffset.mockResolvedValue([]);
-    mockCountWhere.mockResolvedValue([{ count: "0" }]);
+    mockCountWhere.mockResolvedValue([{ count: 0 }]);
 
     const result = await getActivityLog({ action: "PASSWORD_RESET" });
 

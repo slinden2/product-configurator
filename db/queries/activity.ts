@@ -1,8 +1,9 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { activityLogs, userProfiles } from "@/db/schemas";
 import type { ActivityAction } from "@/types";
 import type { DatabaseType, TransactionType } from "./errors";
+import { paginatedList } from "./pagination";
 
 export type ActivityLogEntry = typeof activityLogs.$inferSelect;
 
@@ -20,20 +21,16 @@ export async function getUserActivityLog(
   page: number = 1,
   pageSize: number = 20,
 ) {
-  const [data, countResult] = await Promise.all([
+  return paginatedList(
     db.query.activityLogs.findMany({
       where: eq(activityLogs.user_id, userId),
       orderBy: [desc(activityLogs.created_at)],
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(activityLogs)
-      .where(eq(activityLogs.user_id, userId)),
-  ]);
-
-  return { data, totalCount: Number(countResult[0].count) };
+    activityLogs,
+    eq(activityLogs.user_id, userId),
+  );
 }
 
 /**
@@ -51,7 +48,7 @@ export async function getActivityLog(
     filters.userId ? eq(activityLogs.user_id, filters.userId) : undefined,
   );
 
-  const [data, countResult] = await Promise.all([
+  return paginatedList(
     db
       .select({
         id: activityLogs.id,
@@ -71,10 +68,9 @@ export async function getActivityLog(
       .orderBy(desc(activityLogs.created_at))
       .limit(pageSize)
       .offset((page - 1) * pageSize),
-    db.select({ count: sql<number>`count(*)` }).from(activityLogs).where(where),
-  ]);
-
-  return { data, totalCount: Number(countResult[0].count) };
+    activityLogs,
+    where,
+  );
 }
 
 type ActivityLogParams = {
