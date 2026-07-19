@@ -45,7 +45,7 @@ const WashBayForm = (props: WashBayFormProps) => {
       schema={washBaySchema}
       entityDefaults={washBayDefaults}
       entityData={props.washBay}
-      entityName="Pista"
+      entity="washBay"
       entityIndex={props.washBayIndex}
       parentId={props.confId}
       parentStatus={props.confStatus}

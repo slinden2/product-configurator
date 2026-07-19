@@ -3,12 +3,36 @@
  * Single source of truth — import `MSG` wherever a user-facing message is needed.
  */
 
-/** SubRecordForm entity names with feminine grammatical gender. */
-const FEMININE_ENTITIES = new Set(["Pista"]);
+import type { SubRecordEntity } from "@/types";
+
+/**
+ * The user-facing Italian label and grammatical gender for each SubRecordForm
+ * entity — the single source both for display labels and for the gender-agreeing
+ * article/suffix helpers below. The typed `SubRecordEntity` key is the program
+ * discriminator; changing a `label` here never affects logic.
+ */
+export const SUB_RECORD_ENTITY_META: Record<
+  SubRecordEntity,
+  { label: string; gender: "m" | "f" }
+> = {
+  waterTank: { label: "Serbatoio", gender: "m" },
+  washBay: { label: "Pista", gender: "f" },
+};
 
 /** Italian past-participle suffix agreeing with the entity's gender. */
-const pastParticipleSuffix = (name: string): "a" | "o" =>
-  FEMININE_ENTITIES.has(name) ? "a" : "o";
+const pastParticipleSuffix = (entity: SubRecordEntity): "a" | "o" =>
+  SUB_RECORD_ENTITY_META[entity].gender === "f" ? "a" : "o";
+
+/** Italian indefinite article ("nuova"/"nuovo") agreeing with the gender. */
+const indefiniteArticleNuovo = (entity: SubRecordEntity): "nuova" | "nuovo" =>
+  SUB_RECORD_ENTITY_META[entity].gender === "f" ? "nuova" : "nuovo";
+
+/** "Serbatoio 1" / "Pista" — the entity label with an optional index suffix. */
+const entityLabelWithIndex = (
+  entity: SubRecordEntity,
+  index?: number | null,
+): string =>
+  `${SUB_RECORD_ENTITY_META[entity].label}${index != null ? ` ${index}` : ""}`;
 
 export const MSG = {
   auth: {
@@ -150,21 +174,22 @@ export const MSG = {
     generateError: "Errore durante la generazione.",
     regenerateError: "Errore durante la rigenerazione della distinta.",
     addError: "Errore durante l'aggiunta.",
-    entityUpdated: (name: string, index?: number | null) =>
-      `${name} ${index ?? ""} aggiornat${pastParticipleSuffix(name)}.`,
-    entityCreated: (name: string) =>
-      `${name} creat${pastParticipleSuffix(name)}.`,
-    entityDeleted: (name: string, index?: number | null) =>
-      `${name} ${index ?? ""} eliminat${pastParticipleSuffix(name)}.`,
-    entityUpdateFallback: (name: string) =>
-      `Errore durante l'aggiornamento (${name}).`,
-    entityCreateFallback: (name: string) =>
-      `Errore durante la creazione (${name}).`,
-    entityDeleteFailed: (name: string) => `Impossibile eliminare ${name}.`,
-    entitySaveUnknown: (name: string) =>
-      `Errore sconosciuto durante il salvataggio (${name}).`,
-    entityDeleteUnknown: (name: string) =>
-      `Errore sconosciuto durante l'eliminazione (${name}).`,
+    entityUpdated: (entity: SubRecordEntity, index?: number | null) =>
+      `${entityLabelWithIndex(entity, index)} aggiornat${pastParticipleSuffix(entity)}.`,
+    entityCreated: (entity: SubRecordEntity) =>
+      `${SUB_RECORD_ENTITY_META[entity].label} creat${pastParticipleSuffix(entity)}.`,
+    entityDeleted: (entity: SubRecordEntity, index?: number | null) =>
+      `${entityLabelWithIndex(entity, index)} eliminat${pastParticipleSuffix(entity)}.`,
+    entityUpdateFallback: (entity: SubRecordEntity) =>
+      `Errore durante l'aggiornamento (${SUB_RECORD_ENTITY_META[entity].label}).`,
+    entityCreateFallback: (entity: SubRecordEntity) =>
+      `Errore durante la creazione (${SUB_RECORD_ENTITY_META[entity].label}).`,
+    entityDeleteFailed: (entity: SubRecordEntity) =>
+      `Impossibile eliminare ${SUB_RECORD_ENTITY_META[entity].label}.`,
+    entitySaveUnknown: (entity: SubRecordEntity) =>
+      `Errore sconosciuto durante il salvataggio (${SUB_RECORD_ENTITY_META[entity].label}).`,
+    entityDeleteUnknown: (entity: SubRecordEntity) =>
+      `Errore sconosciuto durante l'eliminazione (${SUB_RECORD_ENTITY_META[entity].label}).`,
     passwordResetEmailSent: "Email per reimpostare la password inviata.",
     passwordResetSuccess: "Password aggiornata con successo.",
     validationErrors: "Errori di validazione: correggere i campi evidenziati.",
@@ -217,6 +242,17 @@ export const MSG = {
     body: (name: string, index?: number | null) =>
       `Sei sicuro di voler eliminare ${name}${index != null ? ` ${index}` : ""}? Questa azione non può essere annullata.`,
     confirm: "Elimina",
+  },
+  subRecord: {
+    /** Fieldset title for an existing entity, e.g. "Serbatoio 1". */
+    editTitle: (entity: SubRecordEntity, index?: number | null) =>
+      entityLabelWithIndex(entity, index),
+    /** Fieldset title for the add form, e.g. "Aggiungi nuova Pista". */
+    addTitle: (entity: SubRecordEntity) =>
+      `Aggiungi ${indefiniteArticleNuovo(entity)} ${SUB_RECORD_ENTITY_META[entity].label}`,
+    /** aria-label for the delete button, e.g. "Elimina Serbatoio 1". */
+    deleteLabel: (entity: SubRecordEntity, index?: number | null) =>
+      `Elimina ${entityLabelWithIndex(entity, index)}`,
   },
   duplicateConfirm: {
     title: "Conferma duplicazione",

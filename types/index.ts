@@ -103,6 +103,14 @@ export type WaterTankType = (typeof WaterTankTypes)[number];
 export const PressureWashers = ["L21_150BAR", "L21_200BAR"] as const;
 export type PressureWasherType = (typeof PressureWashers)[number];
 
+/**
+ * Discriminator for the two entities managed by `SubRecordForm`. English keys —
+ * the user-facing Italian labels and grammatical gender live in
+ * `SUB_RECORD_ENTITY_META` (`lib/messages.ts`), so a UI label change never
+ * touches program logic.
+ */
+export type SubRecordEntity = "waterTank" | "washBay";
+
 export const ConfigurationStatus = [
   "DRAFT",
   "SALES_APPROVED",

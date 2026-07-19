@@ -16,13 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { isConfigLocked } from "@/lib/access";
-import { MSG } from "@/lib/messages";
+import { MSG, SUB_RECORD_ENTITY_META } from "@/lib/messages";
 import type {
   ActionResult,
   ConfigOrigin,
   ConfigurationStatusType,
   OfferStatusType,
   Role,
+  SubRecordEntity,
 } from "@/types";
 
 // --- Generic Props Interface ---
@@ -38,7 +39,7 @@ interface SubRecordFormProps<
   schema: TFormSchema; // Zod schema for validation
   entityDefaults: TData; // Default values for new entity
   entityData?: TData & { id: number }; // Optional existing data (must have id)
-  entityName: "Serbatoio" | "Pista"; // Name for UI text (e.g., "Serbatoio")
+  entity: SubRecordEntity; // Typed discriminator; label/gender in SUB_RECORD_ENTITY_META
   entityIndex?: number; // Optional index for titles
   onDelete?: (id: number) => void; // Callback after delete
   // Called when the add form is finished — created or cancelled — and should be
@@ -76,7 +77,7 @@ const SubRecordForm = <
   schema,
   entityDefaults,
   entityData,
-  entityName,
+  entity,
   entityIndex,
   onDelete,
   onAddFormDone,
@@ -91,6 +92,10 @@ const SubRecordForm = <
   fields,
 }: SubRecordFormProps<TData, TFormSchema>) => {
   type FormData = TData;
+
+  // Italian display label for this entity; the gender-aware Italian strings are
+  // built from the typed `entity` key inside MSG.
+  const entityLabel = SUB_RECORD_ENTITY_META[entity].label;
 
   // --- State & Form Hook ---
   const [isSubmitting, startSubmit] = useTransition();
@@ -134,10 +139,10 @@ const SubRecordForm = <
             const result = await editAction(parentId, entityData.id, values);
             if (!result.success) {
               throw new Error(
-                result.error || MSG.toast.entityUpdateFallback(entityName),
+                result.error || MSG.toast.entityUpdateFallback(entity),
               );
             }
-            toast.success(MSG.toast.entityUpdated(entityName, entityIndex));
+            toast.success(MSG.toast.entityUpdated(entity, entityIndex));
             reset(values);
             if (formKey) {
               onSaved?.(formKey);
@@ -147,20 +152,20 @@ const SubRecordForm = <
             const result = await insertAction(parentId, values);
             if (!result.success) {
               throw new Error(
-                result.error || MSG.toast.entityCreateFallback(entityName),
+                result.error || MSG.toast.entityCreateFallback(entity),
               );
             }
-            toast.success(MSG.toast.entityCreated(entityName));
+            toast.success(MSG.toast.entityCreated(entity));
             reset(entityDefaults);
             if (formKey) onSaved?.(formKey);
             onAddFormDone?.();
           }
         } catch (err) {
-          console.error(`Save ${entityName} Error:`, err);
+          console.error(`Save ${entityLabel} Error:`, err);
           const message =
             err instanceof Error
               ? err.message
-              : MSG.toast.entitySaveUnknown(entityName);
+              : MSG.toast.entitySaveUnknown(entity);
           toast.error(message);
           if (formKey) onSubmitFailed?.(formKey);
         }
@@ -176,7 +181,8 @@ const SubRecordForm = <
       editAction,
       insertAction,
       entityDefaults,
-      entityName,
+      entity,
+      entityLabel,
       formKey,
       onSaved,
       onDirtyChange,
@@ -209,19 +215,17 @@ const SubRecordForm = <
       try {
         const result = await deleteAction(parentId, entityData.id);
         if (result.success) {
-          toast.success(MSG.toast.entityDeleted(entityName, entityIndex));
+          toast.success(MSG.toast.entityDeleted(entity, entityIndex));
           onDelete(entityData.id);
         } else {
-          throw new Error(
-            result.error || MSG.toast.entityDeleteFailed(entityName),
-          );
+          throw new Error(result.error || MSG.toast.entityDeleteFailed(entity));
         }
       } catch (err) {
-        console.error(`Delete ${entityName} Error:`, err);
+        console.error(`Delete ${entityLabel} Error:`, err);
         const message =
           err instanceof Error
             ? err.message
-            : MSG.toast.entityDeleteUnknown(entityName);
+            : MSG.toast.entityDeleteUnknown(entity);
         toast.error(message);
       }
     });
@@ -232,7 +236,8 @@ const SubRecordForm = <
     entityIndex,
     onDelete,
     deleteAction,
-    entityName,
+    entity,
+    entityLabel,
   ]);
 
   const handleDelete = useCallback(() => {
@@ -292,8 +297,8 @@ const SubRecordForm = <
               <Fieldset
                 title={
                   isEditing
-                    ? `${entityName} ${entityIndex}`
-                    : `Aggiungi ${entityName === "Pista" ? "nuova" : "nuovo"} ${entityName}`
+                    ? MSG.subRecord.editTitle(entity, entityIndex)
+                    : MSG.subRecord.addTitle(entity)
                 }
               >
                 {/* Render the specific fields (element slot) */}
@@ -308,7 +313,10 @@ const SubRecordForm = <
                       variant="destructive"
                       onClick={handleDelete}
                       disabled={isDeleteDisabled}
-                      aria-label={`Elimina ${entityName} ${entityIndex}`}
+                      aria-label={MSG.subRecord.deleteLabel(
+                        entity,
+                        entityIndex,
+                      )}
                     >
                       {isDeleting ? (
                         <Spinner className="h-4 w-4" />
@@ -350,7 +358,7 @@ const SubRecordForm = <
         isOpen={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         title={MSG.deleteConfirm.title}
-        description={MSG.deleteConfirm.body(entityName, entityIndex)}
+        description={MSG.deleteConfirm.body(entityLabel, entityIndex)}
         onConfirm={handleDeleteConfirm}
         confirmText={MSG.deleteConfirm.confirm}
         confirmVariant="destructive"

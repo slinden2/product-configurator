@@ -42,7 +42,7 @@ const WaterTankForm = (props: WaterTankFormProps) => {
       schema={waterTankSchema}
       entityDefaults={waterTankDefaults}
       entityData={props.waterTank}
-      entityName="Serbatoio"
+      entity="waterTank"
       entityIndex={props.waterTankIndex}
       parentId={props.confId}
       parentStatus={props.confStatus}
