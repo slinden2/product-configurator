@@ -1,23 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Button,
-  type ButtonProps,
-  buttonVariants,
-} from "@/components/ui/button";
+import { ConfirmModal } from "@/components/confirm-modal";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { MSG } from "@/lib/messages";
 
@@ -63,6 +49,7 @@ export function AsyncActionButton({
   ...buttonProps
 }: AsyncActionButtonProps) {
   const [isPending, startTransition] = useTransition();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const variant = buttonProps.variant || "default";
 
@@ -82,6 +69,11 @@ export function AsyncActionButton({
         toast.error(
           err instanceof Error ? err.message : (errorMsg ?? MSG.db.unknown),
         );
+      } finally {
+        // Close the confirm dialog once the transition settles (no-op when the
+        // button is used without a confirm step). The dialog keeps its in-modal
+        // spinner until this point via isConfirming={isPending}.
+        setIsConfirmOpen(false);
       }
     });
   };
@@ -90,7 +82,7 @@ export function AsyncActionButton({
     <Button
       {...buttonProps}
       disabled={isPending}
-      onClick={confirm ? undefined : handleAction}
+      onClick={confirm ? () => setIsConfirmOpen(true) : handleAction}
     >
       {isPending ? <Spinner size="small" className={spinnerClass} /> : icon}
       <span>{children}</span>
@@ -100,27 +92,19 @@ export function AsyncActionButton({
   if (!confirm) return button;
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{button}</AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{confirm.title}</AlertDialogTitle>
-          <AlertDialogDescription>{confirm.description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>
-            {confirm.cancelLabel ?? "Annulla"}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleAction}
-            className={buttonVariants({
-              variant: confirm.confirmVariant ?? "destructive",
-            })}
-          >
-            {confirm.confirmLabel ?? "Conferma"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      {button}
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        title={confirm.title}
+        description={confirm.description}
+        onConfirm={handleAction}
+        confirmText={confirm.confirmLabel}
+        cancelText={confirm.cancelLabel}
+        confirmVariant={confirm.confirmVariant}
+        isConfirming={isPending}
+      />
+    </>
   );
 }
