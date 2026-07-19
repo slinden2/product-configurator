@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import { useDerivedFieldReset } from "@/hooks/use-derived-field-reset";
 import { showCardQty as showCardQtyRule } from "@/lib/configuration/display-rules";
 import { CONFIG_FIELD_LABELS } from "@/lib/configuration/field-labels";
 import type { ConfigSchema } from "@/validation/config-schema";
 import { selectFieldOptions, zodEnums } from "@/validation/configuration";
 
 const TouchSection = () => {
-  const { control, setValue } = useFormContext<ConfigSchema>();
+  const { control } = useFormContext<ConfigSchema>();
   const touchQtyWatch = useWatch({ control, name: "touch_qty" });
   const touchPosWatch = useWatch({ control, name: "touch_pos" });
   const hasItecowebWatch = useWatch({ control, name: "has_itecoweb" });
@@ -22,14 +22,13 @@ const TouchSection = () => {
     has_card_reader: hasCardReaderWatch,
   });
 
-  // Cross-field condition: reset card_qty only when BOTH itecoweb AND card_reader
-  // are unchecked. This can't be expressed via single-field fieldsToResetOnUncheck
-  // because each checkbox alone shouldn't reset card_qty while the other is checked.
-  useEffect(() => {
-    if (!showCardQty) {
-      setValue("card_qty", 0, { shouldDirty: true });
-    }
-  }, [showCardQty, setValue]);
+  // Multi-field condition (both itecoweb AND card_reader off) — reset card_qty
+  // when card_qty is hidden. Not expressible via single-field
+  // fieldsToResetOnUncheck: each checkbox alone must not clear card_qty while
+  // the other is still checked.
+  useDerivedFieldReset<ConfigSchema>(!showCardQty, [
+    { name: "card_qty", value: 0 },
+  ]);
 
   return (
     <Fieldset

@@ -1,10 +1,11 @@
 "use client";
 
-import { Fragment, type ReactNode, useEffect } from "react";
+import { Fragment, type ReactNode } from "react";
 import { type FieldPath, useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import Fieldset from "@/components/fieldset";
 import SelectField from "@/components/select-field";
+import { useDerivedFieldReset } from "@/hooks/use-derived-field-reset";
 import {
   showChassisWashSensor as showChassisWashSensorRule,
   showChemicalRoofBar as showChemicalRoofBarRule,
@@ -105,7 +106,7 @@ const hpPumpRows: HpPumpRowProps[] = [
 ];
 
 const HPPumpSection = () => {
-  const { control, setValue } = useFormContext<ConfigSchema>();
+  const { control } = useFormContext<ConfigSchema>();
   const hasOMZPumpWatch = useWatch({ control, name: "has_omz_pump" });
   const omzPumpOutletWatch = useWatch({ control, name: "pump_outlet_omz" });
   const pumpOutlet1_15kw = useWatch({ control, name: "pump_outlet_1_15kw" });
@@ -128,12 +129,13 @@ const HPPumpSection = () => {
     pump_outlet_2_75kw: pumpOutlet2_75kw,
   });
 
-  useEffect(() => {
-    if (!showChassisWashSensor) {
-      setValue("chassis_wash_sensor_type", undefined, { shouldDirty: true });
-      setValue("has_chassis_wash_plates", false, { shouldDirty: true });
-    }
-  }, [showChassisWashSensor, setValue]);
+  // Multi-field condition (derived from all six pump outlets) — clear the
+  // chassis-wash accessory fields when no outlet enables them. Not expressible
+  // via a single field's declarative resets.
+  useDerivedFieldReset<ConfigSchema>(!showChassisWashSensor, [
+    { name: "chassis_wash_sensor_type", value: undefined },
+    { name: "has_chassis_wash_plates", value: false },
+  ]);
 
   return (
     <Fieldset

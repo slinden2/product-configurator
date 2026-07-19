@@ -1,8 +1,8 @@
-import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import CheckboxField from "@/components/checkbox-field";
 import SelectField from "@/components/select-field";
 import Banner from "@/components/shared/banner";
+import { useDerivedFieldReset } from "@/hooks/use-derived-field-reset";
 import {
   showEnergyChainWallWarning,
   showWashBayEnergyChainFields,
@@ -25,7 +25,7 @@ const WashBayFields = ({
   supplyType,
   supplyFixingType,
 }: WashBayFieldsProps) => {
-  const { control, setValue } = useFormContext<WashBaySchema>();
+  const { control } = useFormContext<WashBaySchema>();
   const pressureWashTypeWatch = useWatch({
     control,
     name: "pressure_washer_type",
@@ -53,14 +53,12 @@ const WashBayFields = ({
     hose_reel_hp_det_with_post_qty: hoseReelHpDet,
   });
 
-  useEffect(() => {
-    if (!hasHpSource) {
-      setValue("has_weeping_lances", false, {
-        shouldDirty: true,
-        shouldValidate: false,
-      });
-    }
-  }, [hasHpSource, setValue]);
+  // Multi-field condition (any of four HP sources present) — clear the
+  // weeping-lances flag when the bay has no HP source. shouldValidate:true (in
+  // the hook) also clears the stale "Disponibile solo con linee HP" error.
+  useDerivedFieldReset<WashBaySchema>(!hasHpSource, [
+    { name: "has_weeping_lances", value: false },
+  ]);
 
   const showEnergyChainFields = showWashBayEnergyChainFields(
     { has_gantry: hasGantryWatch },

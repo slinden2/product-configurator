@@ -22,6 +22,7 @@ When editing any file in `components/config-form/` or using `SubRecordForm`:
 
 1. **Dependency Logic:** - Never hardcode resets. Always use the `fieldsToReset` or `fieldsToResetOnValue` props.
    - If a new dependency is added, verify the key name exists in the associated Zod schema in `validation/`.
+   - **Only sanctioned escape hatch:** when the reset trigger is a *multi-field* condition the declarative props cannot express (e.g. "reset only when BOTH checkboxes are off"), use the `useDerivedFieldReset` hook (`hooks/use-derived-field-reset.ts`) — never a raw `useEffect` + `setValue`. Its JSDoc documents the mount-normalization contract (resets run on mount, mark the form dirty, always revalidate).
 
 2. **Generic Components:** - `SubRecordForm` is the source of truth for wash bays and water tanks. Do not create custom CRUD forms for these entities.
    - When modifying `SubRecordForm`, keep the save flow's reset semantics: server actions return `{ success: boolean, error? }` (no data payload), so after a successful edit the form calls `reset(values)` with the client-submitted values and relies on `revalidatePath` for the server-truth re-render; after a successful create it resets to `entityDefaults`.
