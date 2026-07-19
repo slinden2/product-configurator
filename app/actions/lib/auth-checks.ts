@@ -1,3 +1,5 @@
+import { canApproveRevision } from "@/lib/access";
+import { OFFER_ROLES } from "@/lib/roles";
 import type { OfferStatusType, Role } from "@/types";
 
 // canTransition and isEditable are pure domain logic and live in
@@ -41,9 +43,10 @@ export function canTransitionRevision(
   from: OfferStatusType,
   to: OfferStatusType,
 ): boolean {
-  const isManagement =
-    role === "SALES_MANAGER" || role === "SALES_DIRECTOR" || role === "ADMIN";
-  const hasOfferAccess = isManagement || role === "SALES";
+  // Management = the offer-approval capability; offer access = any offer-viewing
+  // role. Both derived from the shared role sets so they can't drift.
+  const isManagement = canApproveRevision(role);
+  const hasOfferAccess = OFFER_ROLES.includes(role);
 
   // ENGINEER (and any non-offer role) never acts on offer revisions, not even a
   // same-status no-op. Gate here so the identity short-circuit can't fail open.

@@ -4,6 +4,7 @@ import {
   canAccessAllOffers,
   canApproveRevision,
   canExportOfferRevision,
+  canManageConfigs,
   canManageStandaloneConfigs,
   canRenegotiateOffer,
   canViewBom,
@@ -93,6 +94,21 @@ describe("canManageStandaloneConfigs", () => {
     "SALES_DIRECTOR",
   ] as Role[])("%s does not (sales work from offers)", (role) => {
     expect(canManageStandaloneConfigs(role)).toBe(false);
+  });
+});
+
+describe("canManageConfigs — 'manage within scope without owning; bare SALES manage only their own' (workflow.md)", () => {
+  test.each([
+    "ADMIN",
+    "ENGINEER",
+    "SALES_MANAGER",
+    "SALES_DIRECTOR",
+  ] as const)("%s may manage configs within scope", (role) => {
+    expect(canManageConfigs(role)).toBe(true);
+  });
+
+  test("SALES may not manage others' configs (own only)", () => {
+    expect(canManageConfigs("SALES")).toBe(false);
   });
 });
 

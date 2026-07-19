@@ -1,4 +1,5 @@
 import { BadgeCheck, Eye, FilePen, Lock, type LucideIcon } from "lucide-react";
+import { ENGINEERING_ROLES, OFFER_ROLES } from "@/lib/roles";
 import {
   type ConfigOrigin,
   ConfigurationStatus,
@@ -257,7 +258,7 @@ export function isEditable(
   // 2. Standalone configs are pure technical work: Engineer/Admin only, editable
   // in DRAFT only (the hand-off statuses never apply — there is no hand-off).
   if (origin === "STANDALONE") {
-    if (role !== "ENGINEER" && role !== "ADMIN") {
+    if (!ENGINEERING_ROLES.includes(role)) {
       return false;
     }
     return status === "DRAFT";
@@ -266,7 +267,7 @@ export function isEditable(
   // 3. OFFER · engineering zone (post-handoff): governed by config status, not the
   // revision. Engineer/Admin finalize the BOM here; the offer is already frozen.
   if (status === "IN_TECH_REVIEW") {
-    return role === "ENGINEER" || role === "ADMIN";
+    return ENGINEERING_ROLES.includes(role);
   }
 
   // 4. OFFER · pre-handoff (DRAFT — the only status left here): governed by the
@@ -276,12 +277,7 @@ export function isEditable(
     return false;
   }
   // Offer-access roles only — ENGINEER has no offer access pre-handoff.
-  return (
-    role === "SALES" ||
-    role === "SALES_MANAGER" ||
-    role === "SALES_DIRECTOR" ||
-    role === "ADMIN"
-  );
+  return OFFER_ROLES.includes(role);
 }
 
 /**

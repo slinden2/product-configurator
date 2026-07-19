@@ -1,3 +1,11 @@
+import {
+  ALL_ACCESS_ROLES,
+  CONFIG_MANAGER_ROLES,
+  ENGINEERING_ROLES,
+  OFFER_ALL_ACCESS_ROLES,
+  OFFER_ROLES,
+  SALES_ROLES,
+} from "@/lib/roles";
 import { isEditable } from "@/lib/status-config";
 import type {
   ConfigOrigin,
@@ -7,35 +15,17 @@ import type {
 } from "@/types";
 import { OPEN_REVISION_STATUSES } from "@/types";
 
-/** Sales-side roles that capture or review offers. */
-export const SALES_ROLES: Role[] = ["SALES", "SALES_MANAGER", "SALES_DIRECTOR"];
-
-/**
- * Roles that can view and act on every configuration regardless of ownership.
- * Used as the explicit allowlist for scope checks so unknown/future roles fail
- * closed instead of inheriting full access.
- */
-export const ALL_ACCESS_ROLES: Role[] = ["ADMIN", "ENGINEER", "SALES_DIRECTOR"];
-
-/**
- * Roles allowed to manage (edit/duplicate/delete) configurations within their
- * access scope without owning them. Bare SALES manage only their own configs.
- */
-export const CONFIG_MANAGER_ROLES: Role[] = [
-  "ADMIN",
-  "ENGINEER",
-  "SALES_MANAGER",
-  "SALES_DIRECTOR",
-];
-
-/**
- * Engineering-side roles: own the standalone technical config area and can view
- * the BOM. Sales roles work from offers and never touch engineering surfaces.
- */
-export const ENGINEERING_ROLES: Role[] = ["ENGINEER", "ADMIN"];
-
-/** Roles allowed to view an offer: all sales roles plus ADMIN (ENGINEER excluded). */
-export const OFFER_ROLES: Role[] = [...SALES_ROLES, "ADMIN"];
+// The role-set constants live in the dependency-free lib/roles.ts (so
+// status-config.ts can consume them without cycling through access.ts).
+// Re-exported here so existing `@/lib/access` import sites keep working.
+export {
+  ALL_ACCESS_ROLES,
+  CONFIG_MANAGER_ROLES,
+  ENGINEERING_ROLES,
+  OFFER_ALL_ACCESS_ROLES,
+  OFFER_ROLES,
+  SALES_ROLES,
+};
 
 export const canAccessAllConfigs = (role: Role): boolean =>
   ALL_ACCESS_ROLES.includes(role);
@@ -87,17 +77,10 @@ export const canExportOfferRevision = (status: OfferStatusType): boolean =>
  * Roles allowed to approve an offer revision for send (and to reject / un-approve it
  * back to DRAFT). Sales agents capture and submit offers but cannot approve their own —
  * approval is a management gate. Scope (manager → own + direct reports) is enforced
- * separately by {@link canAccessOffer}; self-approval within scope is allowed.
+ * separately by canAccessOffer (db/queries/offers.ts); self-approval within scope is allowed.
  */
 export const canApproveRevision = (role: Role): boolean =>
   role === "SALES_MANAGER" || role === "SALES_DIRECTOR" || role === "ADMIN";
-
-/**
- * Offer-side equivalent of {@link canAccessAllConfigs}: roles that see every offer regardless of
- * ownership. Note this deliberately EXCLUDES ENGINEER (who has no offer access at all), so it
- * cannot reuse `ALL_ACCESS_ROLES`.
- */
-export const OFFER_ALL_ACCESS_ROLES: Role[] = ["ADMIN", "SALES_DIRECTOR"];
 
 export const canAccessAllOffers = (role: Role): boolean =>
   OFFER_ALL_ACCESS_ROLES.includes(role);
@@ -107,7 +90,7 @@ export const canAccessAllOffers = (role: Role): boolean =>
  * customer's quoted price together. Restricted to management/system roles.
  */
 export const canViewMarginReview = (role: Role): boolean =>
-  role === "ADMIN" || role === "SALES_DIRECTOR";
+  OFFER_ALL_ACCESS_ROLES.includes(role);
 
 /**
  * Roles allowed to open a post-acceptance commercial renegotiation on an accepted
@@ -115,7 +98,7 @@ export const canViewMarginReview = (role: Role): boolean =>
  * absorb sign-off. Deliberately the same set as {@link canViewMarginReview}.
  */
 export const canRenegotiateOffer = (role: Role): boolean =>
-  role === "ADMIN" || role === "SALES_DIRECTOR";
+  OFFER_ALL_ACCESS_ROLES.includes(role);
 
 /**
  * Returns true when the config cannot be edited (status frozen, unknown role, or

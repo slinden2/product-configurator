@@ -11,6 +11,7 @@ import {
   getTransitionDirection,
   getTransitionLabel,
   isEditable,
+  isRoleAllowedTransition,
   isWorkflowEdge,
   STATUS_CONFIG,
   STATUS_PIPELINE,
@@ -93,6 +94,68 @@ describe("isWorkflowEdge", () => {
     expect(isWorkflowEdge("SALES_APPROVED", "TECH_APPROVED", "OFFER")).toBe(
       false,
     );
+  });
+});
+
+describe("isRoleAllowedTransition — raw edge-table lookup, no ADMIN/STANDALONE layering", () => {
+  test("true only when the role appears in the matching edge row", () => {
+    expect(
+      isRoleAllowedTransition(
+        "ENGINEER",
+        "SALES_APPROVED",
+        "IN_TECH_REVIEW",
+        "OFFER",
+      ),
+    ).toBe(true);
+    expect(
+      isRoleAllowedTransition(
+        "ENGINEER",
+        "DRAFT",
+        "TECH_APPROVED",
+        "STANDALONE",
+      ),
+    ).toBe(true);
+  });
+
+  test("does NOT grant ADMIN a defined edge (that grant lives in canTransition)", () => {
+    // ADMIN is intentionally absent from every row's `roles`; the raw lookup
+    // must reflect the table, not the layered ADMIN-any-edge rule.
+    expect(
+      isRoleAllowedTransition(
+        "ADMIN",
+        "SALES_APPROVED",
+        "IN_TECH_REVIEW",
+        "OFFER",
+      ),
+    ).toBe(false);
+    // CLOSED edges carry an empty `roles` array — nobody passes the raw lookup.
+    expect(
+      isRoleAllowedTransition("ADMIN", "TECH_APPROVED", "CLOSED", "OFFER"),
+    ).toBe(false);
+  });
+
+  test("false when the role is not listed on the edge", () => {
+    expect(
+      isRoleAllowedTransition(
+        "SALES",
+        "SALES_APPROVED",
+        "IN_TECH_REVIEW",
+        "OFFER",
+      ),
+    ).toBe(false);
+  });
+
+  test("false when the edge does not apply to the origin", () => {
+    // DRAFT → TECH_APPROVED is a STANDALONE-only edge.
+    expect(
+      isRoleAllowedTransition("ENGINEER", "DRAFT", "TECH_APPROVED", "OFFER"),
+    ).toBe(false);
+  });
+
+  test("false for an undefined (rowless) edge", () => {
+    expect(
+      isRoleAllowedTransition("ENGINEER", "DRAFT", "CLOSED", "OFFER"),
+    ).toBe(false);
   });
 });
 
