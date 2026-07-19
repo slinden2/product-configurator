@@ -5,7 +5,6 @@ import type * as React from "react";
 import {
   type FieldPath,
   type FieldValues,
-  type PathValue,
   useFormContext,
 } from "react-hook-form";
 import { useFormDisabled } from "@/components/shared/form-disabled-context";
@@ -18,20 +17,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-interface ResetCheckboxConfig<TFieldValues extends FieldValues> {
-  fieldsToReset: Array<FieldPath<TFieldValues>>;
-  // `unknown` because fieldsToReset is heterogeneous — a single per-field
-  // value type isn't expressible here; callers must match the Zod schema type.
-  resetToValue?: unknown;
-}
+import {
+  applyFieldResets,
+  type FieldResetConfig,
+} from "@/lib/apply-field-resets";
 
 interface CheckboxFieldProps<TFieldValues extends FieldValues = FieldValues> {
   name: FieldPath<TFieldValues>;
   label: string;
   description?: React.ReactNode;
   disabled?: boolean;
-  fieldsToResetOnUncheck?: Array<ResetCheckboxConfig<TFieldValues>>;
+  fieldsToResetOnUncheck?: Array<FieldResetConfig<TFieldValues>>;
 }
 
 /**
@@ -77,19 +73,7 @@ const CheckboxField = <TFieldValues extends FieldValues = FieldValues>({
 
                   if (!newValue) {
                     // Unchecked: reset dependent fields so their values are cleared
-                    fieldsToResetOnUncheck?.forEach((item) => {
-                      item.fieldsToReset.forEach((fieldToReset) => {
-                        const valueToSet = (item.resetToValue ??
-                          undefined) as PathValue<
-                          TFieldValues,
-                          FieldPath<TFieldValues>
-                        >;
-                        setValue(fieldToReset, valueToSet, {
-                          shouldValidate: true,
-                          shouldDirty: true,
-                        });
-                      });
-                    });
+                    applyFieldResets(setValue, fieldsToResetOnUncheck ?? []);
                   } else {
                     // Checked: re-validate dependent fields so any stale errors
                     // from when the checkbox was off are cleared now that the

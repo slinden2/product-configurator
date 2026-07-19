@@ -24,16 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  applyFieldResets,
+  type FieldResetConfig,
+} from "@/lib/apply-field-resets";
 import { NOT_SELECTED_LABEL, NOT_SELECTED_VALUE } from "@/lib/utils";
 import type { SelectOption } from "@/types";
 
-interface ResetConfig<TFieldValues extends FieldValues> {
+interface ResetConfig<TFieldValues extends FieldValues>
+  extends FieldResetConfig<TFieldValues> {
   triggerValue: string | string[] | number | number[] | boolean | boolean[]; // Value(s) that trigger the reset; compared via toString()
-  fieldsToReset: Array<FieldPath<TFieldValues>>;
   invertTrigger?: boolean; // Reset when value is NOT triggerValue
-  // `unknown` because fieldsToReset is heterogeneous — a single per-field
-  // value type isn't expressible here; callers must match the Zod schema type.
-  resetToValue?: unknown;
 }
 
 interface SelectFieldProps<TFieldValues extends FieldValues = FieldValues> {
@@ -151,31 +152,18 @@ const SelectField = <TFieldValues extends FieldValues = FieldValues>({
                 field.onChange(parsedTypedValue);
                 field.onBlur();
 
-                fieldsToResetOnValue?.forEach((item) => {
-                  const triggerValues = Array.isArray(item.triggerValue)
-                    ? item.triggerValue.map((v) => v.toString())
-                    : [item.triggerValue.toString()];
+                const configsToApply = (fieldsToResetOnValue ?? []).filter(
+                  (item) => {
+                    const triggerValues = Array.isArray(item.triggerValue)
+                      ? item.triggerValue.map((v) => v.toString())
+                      : [item.triggerValue.toString()];
 
-                  const shouldReset = item.invertTrigger
-                    ? !triggerValues.includes(selectedValueString)
-                    : triggerValues.includes(selectedValueString);
-
-                  if (shouldReset) {
-                    item.fieldsToReset.forEach((fieldToReset) => {
-                      const valueToSet = (item.resetToValue ??
-                        undefined) as PathValue<
-                        TFieldValues,
-                        FieldPath<TFieldValues>
-                      >;
-
-                      setValue(fieldToReset, valueToSet, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                        shouldTouch: false,
-                      });
-                    });
-                  }
-                });
+                    return item.invertTrigger
+                      ? !triggerValues.includes(selectedValueString)
+                      : triggerValues.includes(selectedValueString);
+                  },
+                );
+                applyFieldResets(setValue, configsToApply);
 
                 // Validate this field only after the dependent resets above have
                 // been applied. A cross-field rule that reads a dependent (e.g.
