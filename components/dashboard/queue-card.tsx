@@ -31,10 +31,10 @@ export function QueueCard({
   );
 
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="block h-full">
       <Card
         className={cn(
-          "transition-colors hover:bg-muted/50",
+          "h-full transition-colors hover:bg-muted/50",
           highlightActive && "border-amber-500/50",
         )}
       >

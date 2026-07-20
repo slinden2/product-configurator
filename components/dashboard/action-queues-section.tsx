@@ -68,7 +68,7 @@ export async function ActionQueuesSection({ user }: ActionQueuesSectionProps) {
   return (
     <section>
       <h2 className="text-lg font-semibold mb-3">Da gestire</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {showOfferQueues &&
           OFFER_QUEUES.map(({ status, title, icon, highlight }) => {
             const row = offerCountMap.get(status);
