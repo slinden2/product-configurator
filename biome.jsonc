@@ -6,7 +6,16 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    // Biome 2.4.11's experimental HTML formatter re-indents the embedded <style>
+    // CSS in the Supabase email templates one level deeper on every --write run,
+    // so `npm run format` never reaches a stable state (see issue #272).
+    // Scoped opt-outs (formatter.includes, overrides.formatter.enabled,
+    // html.formatter.enabled) are all ignored in --write mode; only this
+    // files-level exclusion works. These are hand-tuned email templates, so
+    // losing auto-format on them costs nothing. Revisit once the upstream
+    // HTML formatter stabilizes.
+    "includes": ["**", "!supabase/templates"]
   },
   "formatter": {
     "enabled": true,
