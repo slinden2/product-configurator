@@ -33,7 +33,7 @@ export default function RootLayout({
         >
           <div className="flex min-h-screen flex-col">
             <header className="top-0 z-50 border-b bg-background/95">
-              <div className="container py-3">
+              <div className="container py-2">
                 <Suspense>
                   <MainNavServer />
                 </Suspense>

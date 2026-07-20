@@ -10,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { MSG } from "@/lib/messages";
 
-const Logout = () => {
+export const useLogout = () => {
   const [isPending, startTransition] = useTransition();
 
-  const handleLogout = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogout = () => {
     startTransition(async () => {
       try {
         await signOut();
@@ -29,8 +28,19 @@ const Logout = () => {
     });
   };
 
+  return { isPending, handleLogout };
+};
+
+const Logout = () => {
+  const { isPending, handleLogout } = useLogout();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleLogout();
+  };
+
   return (
-    <form onSubmit={handleLogout}>
+    <form onSubmit={handleSubmit}>
       <Button type="submit" variant="destructive" size="sm" className="gap-2">
         {isPending ? <Spinner /> : <LogOut className="h-4 w-4" />}
         <span>Esci</span>

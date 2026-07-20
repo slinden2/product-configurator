@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import UserMenu from "@/components/user-menu";
 import {
   canManageStandaloneConfigs,
   canManageUsers,
@@ -60,7 +61,7 @@ const MainNav = ({ user, role }: MainNavProps) => {
     ...(role && canManageStandaloneConfigs(role)
       ? [
           {
-            label: "Configurazioni tecniche",
+            label: "Configurazioni",
             href: "/configurazioni",
             active: pathname.startsWith("/configurazioni"),
           },
@@ -80,24 +81,24 @@ const MainNav = ({ user, role }: MainNavProps) => {
   return (
     <div className="relative flex items-center justify-between w-full">
       {/* Desktop: Logo + Nav */}
-      <div className="hidden sm:flex items-center gap-8">
+      <div className="hidden md:flex items-center gap-4 lg:gap-8">
         <Link href="/">
           <Image
             src="/iteco-logo.svg"
             alt="Iteco Logo"
             width={278}
             height={96}
-            className="h-12 w-auto"
+            className="h-14 lg:h-16 w-auto"
             loading="eager"
           />
         </Link>
-        <nav className="flex items-center space-x-6">
+        <nav className="flex items-center space-x-4 lg:space-x-6">
           {routes.map((route) => (
             <Link
               key={route.href}
               href={route.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
+                "text-sm font-medium whitespace-nowrap transition-colors hover:text-primary",
                 route.active
                   ? "text-primary font-semibold"
                   : "text-muted-foreground",
@@ -110,7 +111,7 @@ const MainNav = ({ user, role }: MainNavProps) => {
       </div>
 
       {/* Mobile: Hamburger (left) */}
-      <div className="flex sm:hidden">
+      <div className="flex md:hidden">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Apri menu">
@@ -163,23 +164,18 @@ const MainNav = ({ user, role }: MainNavProps) => {
       </div>
 
       {/* Mobile: Centered Logo */}
-      <Link href="/" className="absolute left-1/2 -translate-x-1/2 sm:hidden">
+      <Link href="/" className="absolute left-1/2 -translate-x-1/2 md:hidden">
         <Image
           src="/iteco-logo.svg"
           alt="Iteco Logo"
           width={278}
           height={96}
-          className="h-10 w-auto"
+          className="h-12 w-auto"
           loading="eager"
         />
       </Link>
 
-      <div className="flex items-center space-x-4">
-        {user && (
-          <p className="hidden md:block text-sm text-muted-foreground">
-            {user.email}
-          </p>
-        )}
+      <div className="flex items-center space-x-1">
         <Button
           variant="ghost"
           size="icon"
@@ -196,15 +192,7 @@ const MainNav = ({ user, role }: MainNavProps) => {
             <span className="h-5 w-5" />
           )}
         </Button>
-        <div className="hidden sm:block">
-          {user ? (
-            <Logout />
-          ) : (
-            <Button asChild>
-              <Link href="/signup">Registrati</Link>
-            </Button>
-          )}
-        </div>
+        <UserMenu user={user} />
       </div>
     </div>
   );
