@@ -91,8 +91,9 @@ export interface OfferSummaryExtras {
  *
  * Both costs follow the same mode semantics: INCLUDED adds the amount to the
  * total without showing it; SEPARATE shows the amount without adding it; TBD
- * shows "da definire" and ignores the amount. The installation amount is the
- * sum of the items flagged as included.
+ * and CUSTOMER (the customer arranges it) render a label-only row and ignore
+ * the amount. The installation amount is the sum of the items flagged as
+ * included.
  */
 export function computeOfferSummaryExtras(
   settings: OfferDisplaySettings,
@@ -101,6 +102,7 @@ export function computeOfferSummaryExtras(
   const transportRowByMode: Record<TransportMode, OfferSummaryRow> = {
     INCLUDED: { label: "Trasporto compreso", amount: null },
     SEPARATE: { label: "Trasporto a parte", amount: settings.transport_amount },
+    CUSTOMER: { label: "Trasporto a cura cliente", amount: null },
     TBD: { label: "Trasporto: da definire", amount: null },
   };
   const transportAdded =
@@ -110,6 +112,8 @@ export function computeOfferSummaryExtras(
   const installationRowByMode: Record<TransportMode, OfferSummaryRow> = {
     INCLUDED: { label: "Installazione compresa", amount: null },
     SEPARATE: { label: "Installazione a parte", amount: installationTotal },
+    // Not offered by the installation select; defined for enum completeness.
+    CUSTOMER: { label: "Installazione a cura cliente", amount: null },
     TBD: { label: "Installazione: da definire", amount: null },
   };
   const installationAdded =

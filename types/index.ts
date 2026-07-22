@@ -393,21 +393,36 @@ export const SurchargeKindLabels: Record<SurchargeKind, string> = {
   PAINT: "Verniciatura personalizzata",
 };
 
-export const TransportModes = ["INCLUDED", "SEPARATE", "TBD"] as const;
+export const TransportModes = [
+  "INCLUDED",
+  "SEPARATE",
+  "CUSTOMER",
+  "TBD",
+] as const;
 export type TransportMode = (typeof TransportModes)[number];
 
 export const TransportModeLabels: Record<TransportMode, string> = {
   INCLUDED: "Compreso",
   SEPARATE: "A parte",
+  CUSTOMER: "A cura cliente",
   TBD: "Da definire",
 };
 
-// Installation shares the transport mode values; INCLUDED uses the feminine form.
+// Installation shares the transport mode storage values; INCLUDED uses the
+// feminine form. CUSTOMER is offered for transport only (InstallationModes).
 export const InstallationModeLabels: Record<TransportMode, string> = {
   INCLUDED: "Compresa",
   SEPARATE: "A parte",
+  CUSTOMER: "A cura cliente",
   TBD: "Da definire",
 };
+
+// The installation select's option list — CUSTOMER is a transport-only mode.
+export const InstallationModes = [
+  "INCLUDED",
+  "SEPARATE",
+  "TBD",
+] as const satisfies readonly TransportMode[];
 
 export const InstallationItemKinds = ["BASE_SYSTEM", "HP_ROOF_BAR"] as const;
 export type InstallationItemKind = (typeof InstallationItemKinds)[number];

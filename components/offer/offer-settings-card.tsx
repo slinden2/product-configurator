@@ -19,6 +19,7 @@ import type { InstallationItemKind, TransportMode } from "@/types";
 import {
   InstallationItemKindLabels,
   InstallationModeLabels,
+  InstallationModes,
   TransportModeLabels,
   TransportModes,
   WarrantyMonthsOptions,
@@ -254,10 +255,11 @@ export default function OfferSettingsCard({
               />
             </div>
           </div>
-          {settings.transport_mode === "TBD" && (
+          {(settings.transport_mode === "TBD" ||
+            settings.transport_mode === "CUSTOMER") && (
             <p className="text-xs text-muted-foreground">
-              Con modalità «Da definire» l'importo non viene conteggiato nel
-              totale.
+              Con modalità «{TransportModeLabels[settings.transport_mode]}»
+              l'importo non viene conteggiato nel totale.
             </p>
           )}
         </div>
@@ -282,7 +284,7 @@ export default function OfferSettingsCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TransportModes.map((mode) => (
+                {InstallationModes.map((mode) => (
                   <SelectItem key={mode} value={mode}>
                     {InstallationModeLabels[mode]}
                   </SelectItem>

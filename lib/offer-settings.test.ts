@@ -203,6 +203,19 @@ describe("computeOfferSummaryExtras — transport", () => {
     expect(extras.net_total).toBe(1000);
     expect(extras.hasNetAdjustments).toBe(false);
   });
+
+  test("CUSTOMER renders a label-only row and ignores the amount", () => {
+    const extras = computeOfferSummaryExtras(
+      makeSettings({ transport_mode: "CUSTOMER", transport_amount: 300 }),
+      1000,
+    );
+    expect(extras.transportRow).toEqual({
+      label: "Trasporto a cura cliente",
+      amount: null,
+    });
+    expect(extras.net_total).toBe(1000);
+    expect(extras.hasNetAdjustments).toBe(false);
+  });
 });
 
 describe("computeOfferSummaryExtras — installation", () => {
