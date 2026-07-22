@@ -96,14 +96,20 @@ export async function setRevisionSettingsAction(
   const { user, revision } = auth;
 
   try {
-    const { transport_amount, delivery_destination, payment_terms, ...rest } =
-      parsed.data;
+    const {
+      transport_amount,
+      extra_discount_amount,
+      delivery_destination,
+      payment_terms,
+      ...rest
+    } = parsed.data;
     await updateRevisionSettingsWithAudit({
       offerId,
       revisionId: revision.id,
       settings: {
         ...rest,
         transport_amount: transport_amount.toFixed(2),
+        extra_discount_amount: extra_discount_amount.toFixed(2),
         // Blank optional fields are stored as NULL, mirroring insertOffer.
         delivery_destination: delivery_destination || null,
         payment_terms: payment_terms || null,

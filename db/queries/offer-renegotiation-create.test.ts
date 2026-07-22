@@ -117,6 +117,7 @@ function acceptedOffer() {
         installation_items: [
           { kind: "BASE_SYSTEM", amount: 0, included: true },
         ],
+        extra_discount_amount: "800.00",
         show_net_total_only: true,
         valid_until: new Date("2026-01-01T00:00:00.000Z"),
         notes: "accepted terms",
@@ -182,6 +183,7 @@ describe("createRenegotiationRevisionFrom", () => {
       transport_amount: "250.00",
       transport_mode: "SEPARATE",
       installation_mode: "INCLUDED",
+      extra_discount_amount: "800.00",
       show_net_total_only: true,
       valid_until: null,
       notes: "accepted terms",

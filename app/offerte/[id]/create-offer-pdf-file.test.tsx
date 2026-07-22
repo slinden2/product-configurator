@@ -45,6 +45,7 @@ function makeExtras(
   return {
     transportRow: { label: "Trasporto: da definire", amount: null },
     installationRow: { label: "Installazione: da definire", amount: null },
+    extraDiscountRow: null,
     net_total: 500,
     hasNetAdjustments: false,
     ...overrides,
@@ -211,6 +212,25 @@ describe("OfferPdfDocument", () => {
     expect(text).toContain("Trasporto a parte");
     expect(text).toContain("TOTALE NETTO");
     expect(text).toContain(formatEur(750));
+  });
+
+  test("renders the extra discount row before the net total", () => {
+    const data = makeData({
+      extras: makeExtras({
+        extraDiscountRow: { label: "Sconto extra", amount: -800 },
+        net_total: 75000,
+        hasNetAdjustments: true,
+      }),
+    });
+    const text = renderText(data);
+    expect(text).toContain("Sconto extra");
+    expect(text).toContain(formatEur(-800));
+    expect(text).toContain(formatEur(75000));
+  });
+
+  test("omits the extra discount row when no discount is set", () => {
+    const text = renderText(makeData());
+    expect(text).not.toContain("Sconto extra");
   });
 
   test("net-total-only mode hides prices but keeps the net total", () => {

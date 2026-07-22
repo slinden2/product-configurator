@@ -149,6 +149,16 @@ export default function QuoteView({
                 </span>
               )}
             </div>
+            {extras.extraDiscountRow && (
+              <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+                <span>{extras.extraDiscountRow.label}</span>
+                {extras.extraDiscountRow.amount !== null && (
+                  <span className="tabular-nums font-semibold">
+                    {formatEur(extras.extraDiscountRow.amount)}
+                  </span>
+                )}
+              </div>
+            )}
             {(!showPrices || extras.hasNetAdjustments) && (
               <div className="flex justify-between text-base font-bold text-green-600 dark:text-green-400">
                 <span>Totale netto</span>

@@ -136,6 +136,7 @@ function validSettings() {
       { kind: "BASE_SYSTEM" as const, amount: 0, included: false },
       { kind: "HP_ROOF_BAR" as const, amount: 0, included: false },
     ],
+    extra_discount_amount: 0,
     delivery_date: null,
     delivery_destination: "",
     payment_terms: "",
@@ -243,6 +244,28 @@ describe("setRevisionSettingsAction", () => {
     const result = await setRevisionSettingsAction(OFFER_ID, {
       ...validSettings(),
       transport_amount: -10,
+    });
+    expect(result.success).toBe(false);
+    expect(mockUpdateRevisionSettingsWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("persists the extra discount as a fixed string", async () => {
+    const result = await setRevisionSettingsAction(OFFER_ID, {
+      ...validSettings(),
+      extra_discount_amount: 800,
+    });
+    expect(result).toEqual({ success: true });
+    expect(mockUpdateRevisionSettingsWithAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({ extra_discount_amount: "800.00" }),
+      }),
+    );
+  });
+
+  test("rejects a negative extra discount", async () => {
+    const result = await setRevisionSettingsAction(OFFER_ID, {
+      ...validSettings(),
+      extra_discount_amount: -800,
     });
     expect(result.success).toBe(false);
     expect(mockUpdateRevisionSettingsWithAudit).not.toHaveBeenCalled();

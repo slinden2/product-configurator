@@ -15,6 +15,8 @@ export interface OfferDisplaySettings {
   /** Same mode values as transport: TBD means installation is not in the offer price. */
   installation_mode: TransportMode;
   installation_items: OfferInstallationItem[];
+  /** Rounding discount ("Sconto extra") subtracted from the net total; 0 means none. */
+  extra_discount_amount: number;
   delivery_date: Date | null;
   /** Empty string means "not set" — the quote falls back to the customer address. */
   delivery_destination: string;
@@ -33,6 +35,7 @@ export interface OfferSettingsSource {
   transport_mode: TransportMode;
   installation_mode: TransportMode;
   installation_items: unknown;
+  extra_discount_amount: string;
   delivery_date: Date | null;
   delivery_destination: string | null;
   payment_terms: string | null;
@@ -61,6 +64,7 @@ export function parseOfferSettings(
     installation_items: InstallationItemKinds.map(
       (kind) => storedByKind.get(kind) ?? { kind, amount: 0, included: false },
     ),
+    extra_discount_amount: Number(snapshot.extra_discount_amount),
     delivery_date: snapshot.delivery_date,
     delivery_destination: snapshot.delivery_destination ?? "",
     payment_terms: snapshot.payment_terms ?? "",
@@ -80,8 +84,21 @@ export interface OfferSummaryRow {
 export interface OfferSummaryExtras {
   transportRow: OfferSummaryRow;
   installationRow: OfferSummaryRow;
+  /**
+   * Rounding discount row ("Sconto extra") with a **negative** amount, so every
+   * surface renders it through its standard money row (same convention as the
+   * "Sconto %" rows). Null when no extra discount is set or the revision is
+   * net-total-only — a discount row would leak the price breakdown that mode
+   * hides, so only the already-reduced net total is shown.
+   */
+  extraDiscountRow: OfferSummaryRow | null;
   net_total: number;
-  /** True when transport/installation change the payable total beyond the discounted total. */
+  /**
+   * True when an included add-on or the extra discount adjusts the payable
+   * total. Presence-based, not a totals comparison: adjustments that exactly
+   * cancel out numerically must still reveal the net total, or the document
+   * would end on a dangling discount row with no final result.
+   */
   hasNetAdjustments: boolean;
 }
 
@@ -94,6 +111,11 @@ export interface OfferSummaryExtras {
  * and CUSTOMER (the customer arranges it) render a label-only row and ignore
  * the amount. The installation amount is the sum of the items flagged as
  * included.
+ *
+ * The extra discount is subtracted last. It is deliberately not clamped: an
+ * amount larger than the subtotal yields a negative net total, which the live
+ * Riepilogo next to the input makes immediately visible — clamping would
+ * silently misstate the arithmetic on a commercial document.
  */
 export function computeOfferSummaryExtras(
   settings: OfferDisplaySettings,
@@ -119,13 +141,20 @@ export function computeOfferSummaryExtras(
   const installationAdded =
     settings.installation_mode === "INCLUDED" ? installationTotal : 0;
 
-  const net_total = discountedTotal + transportAdded + installationAdded;
+  const extraDiscount = settings.extra_discount_amount;
+  const net_total =
+    discountedTotal + transportAdded + installationAdded - extraDiscount;
 
   return {
     transportRow: transportRowByMode[settings.transport_mode],
     installationRow: installationRowByMode[settings.installation_mode],
+    extraDiscountRow:
+      extraDiscount > 0 && !settings.show_net_total_only
+        ? { label: "Sconto extra", amount: -extraDiscount }
+        : null,
     net_total,
-    hasNetAdjustments: net_total !== discountedTotal,
+    hasNetAdjustments:
+      transportAdded > 0 || installationAdded > 0 || extraDiscount > 0,
   };
 }
 

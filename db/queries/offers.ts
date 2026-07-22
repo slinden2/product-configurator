@@ -977,6 +977,7 @@ export async function createOfferRevisionFrom(
       transport_mode: source.transport_mode,
       installation_mode: source.installation_mode,
       installation_items: source.installation_items,
+      extra_discount_amount: source.extra_discount_amount,
       show_net_total_only: source.show_net_total_only,
       // validity is a per-send commercial stamp, not a structural term: a fresh
       // working revision must re-establish its own validity rather than inherit the
@@ -1120,6 +1121,7 @@ export async function createRenegotiationRevisionFrom(
       transport_mode: source.transport_mode,
       installation_mode: source.installation_mode,
       installation_items: source.installation_items,
+      extra_discount_amount: source.extra_discount_amount,
       show_net_total_only: source.show_net_total_only,
       valid_until: null,
       notes: source.notes,
@@ -2044,6 +2046,7 @@ export type RevisionSettingsUpdate = {
   transport_mode: TransportMode;
   installation_mode: TransportMode;
   installation_items: OfferInstallationItem[];
+  extra_discount_amount: string;
   delivery_date: Date | null;
   delivery_destination: string | null;
   payment_terms: string | null;
@@ -2073,6 +2076,7 @@ export async function updateRevisionSettingsWithAudit(data: {
         transport_mode: offerRevisions.transport_mode,
         installation_mode: offerRevisions.installation_mode,
         installation_items: offerRevisions.installation_items,
+        extra_discount_amount: offerRevisions.extra_discount_amount,
         delivery_date: offerRevisions.delivery_date,
         delivery_destination: offerRevisions.delivery_destination,
         payment_terms: offerRevisions.payment_terms,

@@ -43,6 +43,7 @@ function makeRevision() {
     transport_mode: "SEPARATE",
     installation_mode: "TBD",
     installation_items: [],
+    extra_discount_amount: "0.00",
     show_net_total_only: false,
     delivery_date: null,
     delivery_destination: null,
@@ -116,6 +117,66 @@ describe("QuoteView", () => {
       />,
     );
     expect(screen.queryByTestId("settings-card")).not.toBeInTheDocument();
+  });
+
+  test("renders the extra discount row and the reduced net total", () => {
+    const revision = {
+      ...makeRevision(),
+      extra_discount_amount: "40.00",
+    };
+    render(
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
+        revision={revision}
+        editable={false}
+      />,
+    );
+
+    // Discounted total 540 − 40 extra discount → 500.
+    const row = screen.getByText("Sconto extra");
+    expect(row).toBeInTheDocument();
+    expect(row.parentElement).toHaveTextContent("-40,00");
+    expect(screen.getByText("Totale netto").parentElement).toHaveTextContent(
+      "500,00",
+    );
+  });
+
+  test("hides the extra discount row in net-total-only mode but keeps the reduced total", () => {
+    const revision = {
+      ...makeRevision(),
+      extra_discount_amount: "40.00",
+      show_net_total_only: true,
+    };
+    render(
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
+        revision={revision}
+        editable={false}
+      />,
+    );
+
+    expect(screen.queryByText("Sconto extra")).not.toBeInTheDocument();
+    // The net total still reflects the discount: 540 − 40 → 500.
+    expect(screen.getByText("Totale netto").parentElement).toHaveTextContent(
+      "500,00",
+    );
+  });
+
+  test("omits the extra discount row when no discount is set", () => {
+    render(
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
+        revision={makeRevision()}
+        editable={false}
+      />,
+    );
+    expect(screen.queryByText("Sconto extra")).not.toBeInTheDocument();
   });
 
   test("renders the supply conditions list with resolved placeholders", () => {

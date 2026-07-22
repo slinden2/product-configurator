@@ -53,6 +53,10 @@ export const offerSettingsSchema = z.object({
     (items) => new Set(items.map((i) => i.kind)).size === items.length,
     { error: "Voci di installazione duplicate." },
   ),
+  // Rounding discount subtracted from the offer net total (e.g. 75800 − 800 → 75000).
+  extra_discount_amount: z
+    .number()
+    .min(0, "Lo sconto extra non può essere negativo."),
   // Supply conditions (#274). Empty text fields mean "not set" — the display
   // layer resolves the fallbacks ("Da definire" / customer address).
   delivery_date: z.date({ error: "Data di consegna non valida." }).nullable(),

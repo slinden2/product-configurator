@@ -42,6 +42,7 @@ function makeExtras(
   return {
     transportRow: { label: "Trasporto: da definire", amount: null },
     installationRow: { label: "Installazione: da definire", amount: null },
+    extraDiscountRow: null,
     net_total: 500,
     hasNetAdjustments: false,
     ...overrides,
@@ -242,6 +243,24 @@ describe("riepilogo", () => {
     expect(findRow(sheet, "Trasporto a parte")?.getCell(4).value).toBe(300);
     expect(findRow(sheet, "Installazione a parte")?.getCell(4).value).toBe(200);
     expect(findRow(sheet, "TOTALE NETTO")?.getCell(4).value).toBe(1000);
+  });
+
+  test("renders the extra discount row before the net total", () => {
+    const data = makeData({
+      extras: makeExtras({
+        extraDiscountRow: { label: "Sconto extra", amount: -800 },
+        net_total: 75000,
+        hasNetAdjustments: true,
+      }),
+    });
+    const sheet = getSheet(buildOfferWorkbook(data, "SL"));
+    expect(findRow(sheet, "Sconto extra")?.getCell(4).value).toBe(-800);
+    expect(findRow(sheet, "TOTALE NETTO")?.getCell(4).value).toBe(75000);
+  });
+
+  test("omits the extra discount row when no discount is set", () => {
+    const sheet = getSheet(buildOfferWorkbook(makeData(), "SL"));
+    expect(hasCellValue(sheet, "Sconto extra")).toBe(false);
   });
 });
 

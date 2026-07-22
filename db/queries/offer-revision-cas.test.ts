@@ -43,6 +43,7 @@ const SETTINGS: RevisionSettingsUpdate = {
   transport_mode: "INCLUDED",
   installation_mode: "INCLUDED",
   installation_items: [],
+  extra_discount_amount: "0.00",
   delivery_date: null,
   delivery_destination: null,
   payment_terms: null,

@@ -331,6 +331,13 @@ export const OfferPdfDocument = ({ data, meta }: OfferPdfDocumentProps) => {
           total={data.extras.installationRow.amount}
           style={styles.subtotalRow}
         />
+        {data.extras.extraDiscountRow && (
+          <SummaryRow
+            label={data.extras.extraDiscountRow.label}
+            total={data.extras.extraDiscountRow.amount}
+            style={styles.subtotalRow}
+          />
+        )}
         {(!data.showPrices || data.extras.hasNetAdjustments) && (
           <SummaryRow
             label="TOTALE NETTO"

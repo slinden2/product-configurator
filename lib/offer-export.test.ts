@@ -70,6 +70,7 @@ function makeRevision(lines: Line[]): Revision {
     transport_mode: "TBD",
     installation_mode: "TBD",
     installation_items: [],
+    extra_discount_amount: "0",
     show_net_total_only: false,
     delivery_date: null,
     delivery_destination: null,
@@ -232,6 +233,19 @@ describe("deriveOfferSummary", () => {
     // INCLUDED transport adds to the net total without showing an amount.
     expect(extras.net_total).toBe(1100);
     expect(extras.transportRow.amount).toBeNull();
+  });
+
+  test("subtracts the extra discount and exposes its row", () => {
+    const revision = {
+      ...makeRevision([]),
+      extra_discount_amount: "800.00",
+    } as unknown as Revision;
+    const { extras } = deriveOfferSummary(revision, 75800);
+    expect(extras.extraDiscountRow).toEqual({
+      label: "Sconto extra",
+      amount: -800,
+    });
+    expect(extras.net_total).toBe(75000);
   });
 });
 

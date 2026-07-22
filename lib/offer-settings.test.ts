@@ -18,6 +18,7 @@ function makeSettings(
     transport_mode: "TBD",
     installation_mode: "TBD",
     installation_items: [],
+    extra_discount_amount: 0,
     delivery_date: null,
     delivery_destination: "",
     payment_terms: "",
@@ -76,6 +77,7 @@ describe("parseOfferSettings", () => {
         { kind: "BASE_SYSTEM", amount: 1200, included: true },
         { kind: "HP_ROOF_BAR", amount: 0, included: false },
       ],
+      extra_discount_amount: "800.00",
       delivery_date: new Date("2026-09-15T00:00:00Z"),
       delivery_destination: "Cantiere di Verona",
       payment_terms: "Bonifico 60 gg",
@@ -89,6 +91,7 @@ describe("parseOfferSettings", () => {
       { kind: "BASE_SYSTEM", amount: 1200, included: true },
       { kind: "HP_ROOF_BAR", amount: 0, included: false },
     ]);
+    expect(settings.extra_discount_amount).toBe(800);
     expect(settings.delivery_date).toEqual(new Date("2026-09-15T00:00:00Z"));
     expect(settings.delivery_destination).toBe("Cantiere di Verona");
     expect(settings.payment_terms).toBe("Bonifico 60 gg");
@@ -102,6 +105,7 @@ describe("parseOfferSettings", () => {
       transport_mode: "TBD",
       installation_mode: "TBD",
       installation_items: [],
+      extra_discount_amount: "0.00",
       delivery_date: null,
       delivery_destination: null,
       payment_terms: null,
@@ -120,6 +124,7 @@ describe("parseOfferSettings", () => {
       transport_mode: "TBD",
       installation_mode: "TBD",
       installation_items: [],
+      extra_discount_amount: "0.00",
       delivery_date: null,
       delivery_destination: null,
       payment_terms: null,
@@ -138,6 +143,7 @@ describe("parseOfferSettings", () => {
       transport_mode: "TBD",
       installation_mode: "TBD",
       installation_items: [],
+      extra_discount_amount: "0.00",
       delivery_date: null,
       delivery_destination: null,
       payment_terms: null,
@@ -153,6 +159,7 @@ describe("parseOfferSettings", () => {
       transport_mode: "TBD",
       installation_mode: "TBD",
       installation_items: { not: "an array" },
+      extra_discount_amount: "0.00",
       delivery_date: null,
       delivery_destination: null,
       payment_terms: null,
@@ -280,6 +287,80 @@ describe("computeOfferSummaryExtras — installation", () => {
       1000,
     );
     expect(extras.net_total).toBe(2250);
+    expect(extras.hasNetAdjustments).toBe(true);
+  });
+});
+
+describe("computeOfferSummaryExtras — extra discount", () => {
+  test("subtracts the amount and exposes a negative-amount row", () => {
+    const extras = computeOfferSummaryExtras(
+      makeSettings({ extra_discount_amount: 800 }),
+      75800,
+    );
+    expect(extras.extraDiscountRow).toEqual({
+      label: "Sconto extra",
+      amount: -800,
+    });
+    expect(extras.net_total).toBe(75000);
+    expect(extras.hasNetAdjustments).toBe(true);
+  });
+
+  test("zero discount yields no row and an unchanged total", () => {
+    const extras = computeOfferSummaryExtras(makeSettings(), 75800);
+    expect(extras.extraDiscountRow).toBeNull();
+    expect(extras.net_total).toBe(75800);
+    expect(extras.hasNetAdjustments).toBe(false);
+  });
+
+  test("combines with included transport and installation", () => {
+    const extras = computeOfferSummaryExtras(
+      makeSettings({
+        transport_mode: "INCLUDED",
+        transport_amount: 250,
+        installation_mode: "INCLUDED",
+        installation_items: [
+          { kind: "BASE_SYSTEM", amount: 1000, included: true },
+        ],
+        extra_discount_amount: 800,
+      }),
+      1000,
+    );
+    expect(extras.net_total).toBe(1450);
+    expect(extras.hasNetAdjustments).toBe(true);
+  });
+
+  test("net-total-only suppresses the row but keeps the subtraction", () => {
+    const extras = computeOfferSummaryExtras(
+      makeSettings({ show_net_total_only: true, extra_discount_amount: 800 }),
+      75800,
+    );
+    expect(extras.extraDiscountRow).toBeNull();
+    expect(extras.net_total).toBe(75000);
+  });
+
+  test("a discount above the subtotal is not clamped", () => {
+    const extras = computeOfferSummaryExtras(
+      makeSettings({ extra_discount_amount: 1500 }),
+      1000,
+    );
+    expect(extras.net_total).toBe(-500);
+  });
+
+  test("a discount exactly cancelling an included add-on still reveals the net total", () => {
+    // hasNetAdjustments is presence-based, not a totals comparison: the
+    // discount row renders, so the net total must stay visible even when the
+    // included add-on and the discount cancel out numerically — otherwise the
+    // document would end on a dangling "-800" with no final result.
+    const extras = computeOfferSummaryExtras(
+      makeSettings({
+        transport_mode: "INCLUDED",
+        transport_amount: 800,
+        extra_discount_amount: 800,
+      }),
+      1000,
+    );
+    expect(extras.extraDiscountRow).not.toBeNull();
+    expect(extras.net_total).toBe(1000);
     expect(extras.hasNetAdjustments).toBe(true);
   });
 });

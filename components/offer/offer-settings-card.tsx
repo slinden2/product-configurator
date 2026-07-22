@@ -63,6 +63,9 @@ export default function OfferSettingsCard({
   const [transportDraft, setTransportDraft] = useState(
     initialSettings.transport_amount.toString(),
   );
+  const [extraDiscountDraft, setExtraDiscountDraft] = useState(
+    initialSettings.extra_discount_amount.toString(),
+  );
   const [itemDrafts, setItemDrafts] = useState(amountDrafts(initialSettings));
   const [deliveryDraft, setDeliveryDraft] = useState(
     dateInputValue(initialSettings.delivery_date),
@@ -88,6 +91,9 @@ export default function OfferSettingsCard({
       const rollback = () => {
         setSettings(lastSaved.current);
         setTransportDraft(lastSaved.current.transport_amount.toString());
+        setExtraDiscountDraft(
+          lastSaved.current.extra_discount_amount.toString(),
+        );
         setItemDrafts(amountDrafts(lastSaved.current));
         setDeliveryDraft(dateInputValue(lastSaved.current.delivery_date));
         setDestinationDraft(lastSaved.current.delivery_destination);
@@ -117,6 +123,16 @@ export default function OfferSettingsCard({
     }
     if (numeric === settings.transport_amount) return;
     persist({ ...settings, transport_amount: numeric });
+  };
+
+  const handleExtraDiscountBlur = () => {
+    const numeric = parseFloat(extraDiscountDraft);
+    if (Number.isNaN(numeric) || numeric < 0) {
+      setExtraDiscountDraft(settings.extra_discount_amount.toString());
+      return;
+    }
+    if (numeric === settings.extra_discount_amount) return;
+    persist({ ...settings, extra_discount_amount: numeric });
   };
 
   const handleItemAmountBlur = (kind: InstallationItemKind) => {
@@ -334,6 +350,32 @@ export default function OfferSettingsCard({
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Sconto extra</p>
+          <div className="flex items-center gap-2">
+            <Label
+              htmlFor="extra-discount-amount"
+              className="whitespace-nowrap"
+            >
+              Importo (€)
+            </Label>
+            <Input
+              id="extra-discount-amount"
+              type="number"
+              min={0}
+              step={50}
+              value={extraDiscountDraft}
+              onChange={(e) => setExtraDiscountDraft(e.target.value)}
+              onBlur={handleExtraDiscountBlur}
+              disabled={controlsDisabled}
+              className="w-32"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Importo sottratto dal totale netto per arrotondare il prezzo finale.
+          </p>
         </div>
 
         <div className="space-y-2">

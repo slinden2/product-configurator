@@ -52,6 +52,15 @@ export const offerRevisions = pgTable(
       .notNull()
       .default("TBD"),
     installation_items: jsonb("installation_items").notNull().default([]),
+    // Free rounding discount ("Sconto extra"): absolute euro amount subtracted
+    // from the offer net total. Offer-level like transport/installation — never
+    // touches per-line net_price or the pricing snapshots.
+    extra_discount_amount: numeric("extra_discount_amount", {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default("0.00"),
     show_net_total_only: boolean("show_net_total_only")
       .notNull()
       .default(false),

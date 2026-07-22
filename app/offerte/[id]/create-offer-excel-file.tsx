@@ -193,6 +193,13 @@ export function buildOfferWorkbook(
     data.extras.installationRow.amount,
     COLORS.subtotalBg,
   );
+  if (data.extras.extraDiscountRow) {
+    addSummaryRow(
+      data.extras.extraDiscountRow.label,
+      data.extras.extraDiscountRow.amount,
+      COLORS.subtotalBg,
+    );
+  }
   if (!data.showPrices || data.extras.hasNetAdjustments) {
     addSummaryRow("TOTALE NETTO", data.extras.net_total, COLORS.grandTotalBg);
   }
