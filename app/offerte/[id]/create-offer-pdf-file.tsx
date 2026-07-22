@@ -339,6 +339,17 @@ export const OfferPdfDocument = ({ data, meta }: OfferPdfDocumentProps) => {
           />
         )}
 
+        <SectionTitle title="Condizioni di fornitura" />
+        {data.supplyConditions.map((line) => (
+          <View key={line.label} style={pdfStyles.row} wrap={false}>
+            <Text>
+              {line.value === null
+                ? line.label
+                : `${line.label}: ${line.value}`}
+            </Text>
+          </View>
+        ))}
+
         <PdfFooter generatedLine={generatedLine} />
       </Page>
     </Document>

@@ -9,6 +9,7 @@ import {
   timestamp,
   unique,
   uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { offers } from "@/db/schemas/offers";
 import { userProfiles } from "@/db/schemas/user-profiles";
@@ -56,6 +57,15 @@ export const offerRevisions = pgTable(
       .default(false),
     valid_until: timestamp("valid_until", { mode: "date", precision: 3 }),
     notes: text("notes"),
+    // Supply conditions ("Condizioni di fornitura", #274): per-revision commercial
+    // terms rendered as a list on the quote. Empty delivery/payment fields render
+    // "Da definire"; an empty destination falls back to the offer's customer_address.
+    // warranty_months is constrained to WarrantyMonthsOptions (12/24) by
+    // offerSettingsSchema; the column stays a plain integer.
+    delivery_date: timestamp("delivery_date", { mode: "date", precision: 3 }),
+    delivery_destination: varchar("delivery_destination", { length: 500 }),
+    payment_terms: varchar("payment_terms", { length: 500 }),
+    warranty_months: integer("warranty_months").notNull().default(12),
     // Manager who approved this revision for send, and when.
     approved_by: uuid("approved_by").references(() => userProfiles.id, {
       onDelete: "set null",

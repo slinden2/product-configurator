@@ -11,12 +11,15 @@ import {
   deriveOfferSummary,
   offerLineTitle,
 } from "@/lib/offer-export";
+import { buildSupplyConditions } from "@/lib/offer-settings";
 import { formatEur } from "@/lib/utils";
 import LineBreakdown from "./line-breakdown";
 
 interface Props {
   offerId: number;
   customerName: string;
+  /** Fallback for an empty "Destinazione" supply condition. */
+  customerAddress: string | null;
   revision: OfferWithRevisionAndLines["revisions"][number];
   editable: boolean;
 }
@@ -24,6 +27,7 @@ interface Props {
 export default function QuoteView({
   offerId,
   customerName,
+  customerAddress,
   revision,
   editable,
 }: Props) {
@@ -34,6 +38,7 @@ export default function QuoteView({
     revision,
     discountedTotal,
   );
+  const supplyConditions = buildSupplyConditions(settings, customerAddress);
 
   return (
     <div className="space-y-6">
@@ -153,6 +158,28 @@ export default function QuoteView({
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Condizioni di fornitura</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-1 text-sm">
+            {supplyConditions.map((line) => (
+              <li key={line.label}>
+                {line.value === null ? (
+                  <span className="font-medium">{line.label}</span>
+                ) : (
+                  <>
+                    <span className="font-medium">{line.label}:</span>{" "}
+                    {line.value}
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
     </div>

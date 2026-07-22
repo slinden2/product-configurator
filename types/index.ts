@@ -418,6 +418,10 @@ export const InstallationItemKindLabels: Record<InstallationItemKind, string> =
     HP_ROOF_BAR: "Barra oscillante",
   };
 
+// The only warranty terms ITECO offers; 12 is the contractual default.
+export const WarrantyMonthsOptions = [12, 24] as const;
+export type WarrantyMonths = (typeof WarrantyMonthsOptions)[number];
+
 /**
  * Structural shape of an admin pricing-settings row (surcharge / installation
  * defaults): a catalog kind plus its configured price. `price` is

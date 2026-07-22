@@ -21,6 +21,7 @@ import {
   InstallationModeLabels,
   TransportModeLabels,
   TransportModes,
+  WarrantyMonthsOptions,
 } from "@/types";
 import DiscountInput from "./discount-input";
 
@@ -46,6 +47,11 @@ function amountDrafts(settings: OfferDisplaySettings) {
   ) as Record<InstallationItemKind, string>;
 }
 
+/** yyyy-mm-dd value for a native date input; empty string when unset. */
+function dateInputValue(date: Date | null): string {
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
 export default function OfferSettingsCard({
   initialDiscount,
   initialSettings,
@@ -57,6 +63,15 @@ export default function OfferSettingsCard({
     initialSettings.transport_amount.toString(),
   );
   const [itemDrafts, setItemDrafts] = useState(amountDrafts(initialSettings));
+  const [deliveryDraft, setDeliveryDraft] = useState(
+    dateInputValue(initialSettings.delivery_date),
+  );
+  const [destinationDraft, setDestinationDraft] = useState(
+    initialSettings.delivery_destination,
+  );
+  const [paymentDraft, setPaymentDraft] = useState(
+    initialSettings.payment_terms,
+  );
   const [isPending, startTransition] = useTransition();
   const lastSaved = useRef(initialSettings);
 
@@ -73,6 +88,9 @@ export default function OfferSettingsCard({
         setSettings(lastSaved.current);
         setTransportDraft(lastSaved.current.transport_amount.toString());
         setItemDrafts(amountDrafts(lastSaved.current));
+        setDeliveryDraft(dateInputValue(lastSaved.current.delivery_date));
+        setDestinationDraft(lastSaved.current.delivery_destination);
+        setPaymentDraft(lastSaved.current.payment_terms);
       };
       try {
         const result = await onSaveSettings(next);
@@ -115,6 +133,43 @@ export default function OfferSettingsCard({
         i.kind === kind ? { ...i, amount: numeric } : i,
       ),
     });
+  };
+
+  const handleDeliveryDateBlur = () => {
+    // A native date input yields "" or a valid yyyy-mm-dd (parsed as UTC
+    // midnight, symmetric with dateInputValue).
+    const next = deliveryDraft ? new Date(`${deliveryDraft}T00:00:00Z`) : null;
+    if (next && Number.isNaN(next.getTime())) {
+      setDeliveryDraft(dateInputValue(settings.delivery_date));
+      return;
+    }
+    if (
+      (next?.getTime() ?? null) === (settings.delivery_date?.getTime() ?? null)
+    )
+      return;
+    persist({ ...settings, delivery_date: next });
+  };
+
+  const handleWarrantyChange = (value: string) => {
+    const months = WarrantyMonthsOptions.find((m) => m.toString() === value);
+    if (!months || months === settings.warranty_months) return;
+    persist({ ...settings, warranty_months: months });
+  };
+
+  // Text drafts are trimmed on blur so local state matches what the server
+  // stores (the Zod schema trims before persisting).
+  const handleDestinationBlur = () => {
+    const trimmed = destinationDraft.trim();
+    setDestinationDraft(trimmed);
+    if (trimmed === settings.delivery_destination) return;
+    persist({ ...settings, delivery_destination: trimmed });
+  };
+
+  const handlePaymentTermsBlur = () => {
+    const trimmed = paymentDraft.trim();
+    setPaymentDraft(trimmed);
+    if (trimmed === settings.payment_terms) return;
+    persist({ ...settings, payment_terms: trimmed });
   };
 
   const handleItemIncludedChange = (
@@ -276,6 +331,74 @@ export default function OfferSettingsCard({
                 />
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Condizioni di fornitura</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="delivery-date">Data di consegna</Label>
+              <Input
+                id="delivery-date"
+                type="date"
+                value={deliveryDraft}
+                onChange={(e) => setDeliveryDraft(e.target.value)}
+                onBlur={handleDeliveryDateBlur}
+                disabled={controlsDisabled}
+              />
+              <p className="text-xs text-muted-foreground">
+                Se vuota, sull'offerta compare «Da definire».
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="warranty-months">Garanzia</Label>
+              <Select
+                value={settings.warranty_months.toString()}
+                onValueChange={handleWarrantyChange}
+                disabled={controlsDisabled}
+              >
+                <SelectTrigger id="warranty-months" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WarrantyMonthsOptions.map((months) => (
+                    <SelectItem key={months} value={months.toString()}>
+                      {months} mesi
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="delivery-destination">Destinazione</Label>
+              <Input
+                id="delivery-destination"
+                type="text"
+                maxLength={500}
+                placeholder="Indirizzo del cliente"
+                value={destinationDraft}
+                onChange={(e) => setDestinationDraft(e.target.value)}
+                onBlur={handleDestinationBlur}
+                disabled={controlsDisabled}
+              />
+              <p className="text-xs text-muted-foreground">
+                Se vuota, sull'offerta viene indicato l'indirizzo del cliente.
+              </p>
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="payment-terms">Modalità di pagamento</Label>
+              <Input
+                id="payment-terms"
+                type="text"
+                maxLength={500}
+                placeholder="Da definire"
+                value={paymentDraft}
+                onChange={(e) => setPaymentDraft(e.target.value)}
+                onBlur={handlePaymentTermsBlur}
+                disabled={controlsDisabled}
+              />
+            </div>
           </div>
         </div>
       </CardContent>

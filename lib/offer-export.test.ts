@@ -71,6 +71,10 @@ function makeRevision(lines: Line[]): Revision {
     installation_mode: "TBD",
     installation_items: [],
     show_net_total_only: false,
+    delivery_date: null,
+    delivery_destination: null,
+    payment_terms: null,
+    warranty_months: 12,
     lines,
   } as unknown as Revision;
 }
@@ -131,6 +135,50 @@ describe("buildOfferRevisionExportData", () => {
     const data = buildOfferRevisionExportData(offer, revision);
     expect(data.lines).toHaveLength(1);
     expect(data.totalListPrice).toBe(150);
+  });
+
+  test("resolves empty supply conditions to their placeholders", () => {
+    const data = buildOfferRevisionExportData(offer, makeRevision([]));
+    expect(data.supplyConditions).toEqual([
+      { label: "IVA esclusa", value: null },
+      { label: "Data di consegna", value: "Da definire" },
+      // Empty destination falls back to the offer's customer address.
+      { label: "Destinazione", value: "Via Roma 1" },
+      { label: "Modalità di pagamento", value: "Da definire" },
+      { label: "Garanzia", value: "12 mesi" },
+    ]);
+  });
+
+  test("renders stored supply conditions verbatim", () => {
+    const revision = {
+      ...makeRevision([]),
+      delivery_date: new Date("2026-09-15T00:00:00Z"),
+      delivery_destination: "Cantiere di Verona",
+      payment_terms: "30% all'ordine, saldo alla consegna",
+      warranty_months: 24,
+    } as unknown as Revision;
+    const data = buildOfferRevisionExportData(offer, revision);
+    expect(data.supplyConditions).toEqual([
+      { label: "IVA esclusa", value: null },
+      { label: "Data di consegna", value: "15/09/2026" },
+      { label: "Destinazione", value: "Cantiere di Verona" },
+      {
+        label: "Modalità di pagamento",
+        value: "30% all'ordine, saldo alla consegna",
+      },
+      { label: "Garanzia", value: "24 mesi" },
+    ]);
+  });
+
+  test("empty destination with no customer address renders Da definire", () => {
+    const data = buildOfferRevisionExportData(
+      { ...offer, customer_address: null },
+      makeRevision([]),
+    );
+    const destination = data.supplyConditions.find(
+      (line) => line.label === "Destinazione",
+    );
+    expect(destination?.value).toBe("Da definire");
   });
 });
 

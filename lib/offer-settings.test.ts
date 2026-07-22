@@ -18,6 +18,10 @@ function makeSettings(
     transport_mode: "TBD",
     installation_mode: "TBD",
     installation_items: [],
+    delivery_date: null,
+    delivery_destination: "",
+    payment_terms: "",
+    warranty_months: 12,
     ...overrides,
   };
 }
@@ -72,6 +76,10 @@ describe("parseOfferSettings", () => {
         { kind: "BASE_SYSTEM", amount: 1200, included: true },
         { kind: "HP_ROOF_BAR", amount: 0, included: false },
       ],
+      delivery_date: new Date("2026-09-15T00:00:00Z"),
+      delivery_destination: "Cantiere di Verona",
+      payment_terms: "Bonifico 60 gg",
+      warranty_months: 24,
     });
     expect(settings.show_net_total_only).toBe(true);
     expect(settings.transport_amount).toBe(350.5);
@@ -81,6 +89,10 @@ describe("parseOfferSettings", () => {
       { kind: "BASE_SYSTEM", amount: 1200, included: true },
       { kind: "HP_ROOF_BAR", amount: 0, included: false },
     ]);
+    expect(settings.delivery_date).toEqual(new Date("2026-09-15T00:00:00Z"));
+    expect(settings.delivery_destination).toBe("Cantiere di Verona");
+    expect(settings.payment_terms).toBe("Bonifico 60 gg");
+    expect(settings.warranty_months).toBe(24);
   });
 
   test("fills missing catalog kinds for pre-feature snapshots", () => {
@@ -90,11 +102,48 @@ describe("parseOfferSettings", () => {
       transport_mode: "TBD",
       installation_mode: "TBD",
       installation_items: [],
+      delivery_date: null,
+      delivery_destination: null,
+      payment_terms: null,
+      warranty_months: 12,
     });
     expect(settings.installation_items).toEqual([
       { kind: "BASE_SYSTEM", amount: 0, included: false },
       { kind: "HP_ROOF_BAR", amount: 0, included: false },
     ]);
+  });
+
+  test("maps null supply-condition text columns to empty strings", () => {
+    const settings = parseOfferSettings({
+      show_net_total_only: false,
+      transport_amount: "0.00",
+      transport_mode: "TBD",
+      installation_mode: "TBD",
+      installation_items: [],
+      delivery_date: null,
+      delivery_destination: null,
+      payment_terms: null,
+      warranty_months: 12,
+    });
+    expect(settings.delivery_date).toBeNull();
+    expect(settings.delivery_destination).toBe("");
+    expect(settings.payment_terms).toBe("");
+    expect(settings.warranty_months).toBe(12);
+  });
+
+  test("normalizes an out-of-catalog stored warranty to 12 months", () => {
+    const settings = parseOfferSettings({
+      show_net_total_only: false,
+      transport_amount: "0.00",
+      transport_mode: "TBD",
+      installation_mode: "TBD",
+      installation_items: [],
+      delivery_date: null,
+      delivery_destination: null,
+      payment_terms: null,
+      warranty_months: 36,
+    });
+    expect(settings.warranty_months).toBe(12);
   });
 
   test("recovers from malformed stored items", () => {
@@ -104,6 +153,10 @@ describe("parseOfferSettings", () => {
       transport_mode: "TBD",
       installation_mode: "TBD",
       installation_items: { not: "an array" },
+      delivery_date: null,
+      delivery_destination: null,
+      payment_terms: null,
+      warranty_months: 12,
     });
     expect(settings.installation_items).toHaveLength(2);
   });

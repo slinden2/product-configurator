@@ -1,6 +1,7 @@
 import { sumInstallationTotal } from "@/lib/offer-installation";
-import type { TransportMode } from "@/types";
-import { InstallationItemKinds } from "@/types";
+import { formatDateDDMMYYYY } from "@/lib/utils";
+import type { TransportMode, WarrantyMonths } from "@/types";
+import { InstallationItemKinds, WarrantyMonthsOptions } from "@/types";
 import {
   type OfferInstallationItem,
   offerInstallationItemsSchema,
@@ -14,6 +15,12 @@ export interface OfferDisplaySettings {
   /** Same mode values as transport: TBD means installation is not in the offer price. */
   installation_mode: TransportMode;
   installation_items: OfferInstallationItem[];
+  delivery_date: Date | null;
+  /** Empty string means "not set" — the quote falls back to the customer address. */
+  delivery_destination: string;
+  /** Empty string means "not set" — the quote renders "Da definire". */
+  payment_terms: string;
+  warranty_months: WarrantyMonths;
 }
 
 /**
@@ -26,6 +33,10 @@ export interface OfferSettingsSource {
   transport_mode: TransportMode;
   installation_mode: TransportMode;
   installation_items: unknown;
+  delivery_date: Date | null;
+  delivery_destination: string | null;
+  payment_terms: string | null;
+  warranty_months: number;
 }
 
 /**
@@ -50,6 +61,13 @@ export function parseOfferSettings(
     installation_items: InstallationItemKinds.map(
       (kind) => storedByKind.get(kind) ?? { kind, amount: 0, included: false },
     ),
+    delivery_date: snapshot.delivery_date,
+    delivery_destination: snapshot.delivery_destination ?? "",
+    payment_terms: snapshot.payment_terms ?? "",
+    // A stored value outside the catalog (only reachable by a manual DB edit)
+    // normalizes to the contractual default, like malformed items above.
+    warranty_months:
+      WarrantyMonthsOptions.find((m) => m === snapshot.warranty_months) ?? 12,
   };
 }
 
@@ -105,4 +123,43 @@ export function computeOfferSummaryExtras(
     net_total,
     hasNetAdjustments: net_total !== discountedTotal,
   };
+}
+
+export interface SupplyConditionLine {
+  label: string;
+  /** null renders the label alone (the static "IVA esclusa" line). */
+  value: string | null;
+}
+
+/**
+ * The "Condizioni di fornitura" list (#274), shared by the quote view, Excel and
+ * PDF exports so all surfaces resolve the placeholders identically. "IVA esclusa"
+ * is always the first line; empty delivery date / payment terms render
+ * "Da definire"; an empty destination falls back to the offer's customer address
+ * (a live header read — a header correction retroactively changes re-exports,
+ * consistent with the documented header-edit behavior).
+ */
+export function buildSupplyConditions(
+  settings: OfferDisplaySettings,
+  customerAddress: string | null,
+): SupplyConditionLine[] {
+  const toBeDefined = "Da definire";
+  return [
+    { label: "IVA esclusa", value: null },
+    {
+      label: "Data di consegna",
+      value: settings.delivery_date
+        ? formatDateDDMMYYYY(settings.delivery_date)
+        : toBeDefined,
+    },
+    {
+      label: "Destinazione",
+      value: settings.delivery_destination || customerAddress || toBeDefined,
+    },
+    {
+      label: "Modalità di pagamento",
+      value: settings.payment_terms || toBeDefined,
+    },
+    { label: "Garanzia", value: `${settings.warranty_months} mesi` },
+  ];
 }

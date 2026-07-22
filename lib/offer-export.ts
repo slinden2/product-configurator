@@ -2,11 +2,13 @@ import type { OfferWithRevisionAndLines } from "@/db/queries";
 import type { GroupedOfferData } from "@/lib/offer";
 import { prepareOfferDisplayData } from "@/lib/offer";
 import {
+  buildSupplyConditions,
   computeOfferSummaryExtras,
   type OfferDisplaySettings,
   type OfferSettingsSource,
   type OfferSummaryExtras,
   parseOfferSettings,
+  type SupplyConditionLine,
 } from "@/lib/offer-settings";
 import type { OfferSurchargeItem } from "@/validation/offer/offer-pricing-schema";
 
@@ -47,6 +49,8 @@ export interface OfferRevisionExportData {
   totalListPrice: number;
   discountedTotal: number;
   extras: OfferSummaryExtras;
+  /** The resolved "Condizioni di fornitura" list (placeholders already applied). */
+  supplyConditions: SupplyConditionLine[];
 }
 
 /** Offer header fields the export needs; a subset of {@link OfferWithRevisionAndLines}. */
@@ -137,7 +141,10 @@ export function buildOfferRevisionExportData(
   }
 
   const { totalListPrice, discountedTotal } = computeRevisionTotals(revision);
-  const { showPrices, extras } = deriveOfferSummary(revision, discountedTotal);
+  const { settings, showPrices, extras } = deriveOfferSummary(
+    revision,
+    discountedTotal,
+  );
 
   return {
     offerNumber: offer.offer_number,
@@ -151,5 +158,9 @@ export function buildOfferRevisionExportData(
     totalListPrice,
     discountedTotal,
     extras,
+    supplyConditions: buildSupplyConditions(
+      settings,
+      offer.customer_address ?? null,
+    ),
   };
 }

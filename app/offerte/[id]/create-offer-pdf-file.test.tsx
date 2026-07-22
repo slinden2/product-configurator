@@ -90,6 +90,13 @@ function makeData(
     totalListPrice: 500,
     discountedTotal: 500,
     extras: makeExtras(),
+    supplyConditions: [
+      { label: "IVA esclusa", value: null },
+      { label: "Data di consegna", value: "Da definire" },
+      { label: "Destinazione", value: "Via Roma 1" },
+      { label: "Modalità di pagamento", value: "Da definire" },
+      { label: "Garanzia", value: "12 mesi" },
+    ],
     ...overrides,
   };
 }
@@ -217,6 +224,16 @@ describe("OfferPdfDocument", () => {
     expect(text).toContain("Desc PN-001");
     expect(text).toContain("TOTALE NETTO");
     expect(text).toContain(formatEur(500));
+  });
+
+  test("renders the supply conditions section", () => {
+    const text = renderText(makeData());
+    expect(text).toContain("Condizioni di fornitura");
+    expect(text).toContain("IVA esclusa");
+    expect(text).toContain("Data di consegna: Da definire");
+    expect(text).toContain("Destinazione: Via Roma 1");
+    expect(text).toContain("Modalità di pagamento: Da definire");
+    expect(text).toContain("Garanzia: 12 mesi");
   });
 
   test("footer credits the exporting user's initials", () => {

@@ -44,6 +44,10 @@ function makeRevision() {
     installation_mode: "TBD",
     installation_items: [],
     show_net_total_only: false,
+    delivery_date: null,
+    delivery_destination: null,
+    payment_terms: null,
+    warranty_months: 12,
     status: "DRAFT",
     updated_at: new Date("2026-01-05T10:00:00Z"),
     lines: [
@@ -86,6 +90,7 @@ describe("QuoteView", () => {
       <QuoteView
         offerId={5}
         customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
         revision={makeRevision()}
         editable={true}
       />,
@@ -105,10 +110,67 @@ describe("QuoteView", () => {
       <QuoteView
         offerId={5}
         customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
         revision={makeRevision()}
         editable={false}
       />,
     );
     expect(screen.queryByTestId("settings-card")).not.toBeInTheDocument();
+  });
+
+  test("renders the supply conditions list with resolved placeholders", () => {
+    render(
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
+        revision={makeRevision()}
+        editable={false}
+      />,
+    );
+
+    expect(screen.getByText("Condizioni di fornitura")).toBeInTheDocument();
+    expect(screen.getByText("IVA esclusa")).toBeInTheDocument();
+    expect(screen.getByText("Data di consegna:")).toBeInTheDocument();
+    expect(screen.getByText("Modalità di pagamento:")).toBeInTheDocument();
+    // Empty destination falls back to the customer address.
+    expect(screen.getByText("Destinazione:").closest("li")).toHaveTextContent(
+      "Destinazione: Via Milano 2",
+    );
+    expect(screen.getByText("Garanzia:").closest("li")).toHaveTextContent(
+      "Garanzia: 12 mesi",
+    );
+  });
+
+  test("renders stored supply conditions verbatim", () => {
+    const revision = {
+      ...makeRevision(),
+      delivery_date: new Date("2026-09-15T00:00:00Z"),
+      delivery_destination: "Cantiere di Verona",
+      payment_terms: "Bonifico 60 gg",
+      warranty_months: 24,
+    };
+    render(
+      <QuoteView
+        offerId={5}
+        customerName="Cliente offerta"
+        customerAddress="Via Milano 2"
+        revision={revision}
+        editable={false}
+      />,
+    );
+
+    expect(
+      screen.getByText("Data di consegna:").closest("li"),
+    ).toHaveTextContent("Data di consegna: 15/09/2026");
+    expect(screen.getByText("Destinazione:").closest("li")).toHaveTextContent(
+      "Destinazione: Cantiere di Verona",
+    );
+    expect(
+      screen.getByText("Modalità di pagamento:").closest("li"),
+    ).toHaveTextContent("Modalità di pagamento: Bonifico 60 gg");
+    expect(screen.getByText("Garanzia:").closest("li")).toHaveTextContent(
+      "Garanzia: 24 mesi",
+    );
   });
 });

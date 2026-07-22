@@ -87,6 +87,13 @@ function makeData(
     totalListPrice: 500,
     discountedTotal: 500,
     extras: makeExtras(),
+    supplyConditions: [
+      { label: "IVA esclusa", value: null },
+      { label: "Data di consegna", value: "Da definire" },
+      { label: "Destinazione", value: "Via Roma 1" },
+      { label: "Modalità di pagamento", value: "Da definire" },
+      { label: "Garanzia", value: "12 mesi" },
+    ],
     ...overrides,
   };
 }
@@ -235,6 +242,19 @@ describe("riepilogo", () => {
     expect(findRow(sheet, "Trasporto a parte")?.getCell(4).value).toBe(300);
     expect(findRow(sheet, "Installazione a parte")?.getCell(4).value).toBe(200);
     expect(findRow(sheet, "TOTALE NETTO")?.getCell(4).value).toBe(1000);
+  });
+});
+
+describe("condizioni di fornitura", () => {
+  test("renders the section with one row per condition", () => {
+    const sheet = getSheet(buildOfferWorkbook(makeData(), "SL"));
+    expect(findRow(sheet, "Condizioni di fornitura")).toBeDefined();
+    // The static line has no value; the others render "label: value".
+    expect(findRow(sheet, "IVA esclusa")).toBeDefined();
+    expect(findRow(sheet, "Data di consegna: Da definire")).toBeDefined();
+    expect(findRow(sheet, "Destinazione: Via Roma 1")).toBeDefined();
+    expect(findRow(sheet, "Modalità di pagamento: Da definire")).toBeDefined();
+    expect(findRow(sheet, "Garanzia: 12 mesi")).toBeDefined();
   });
 });
 

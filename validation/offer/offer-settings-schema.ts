@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { InstallationItemKinds, TransportModes } from "@/types";
+import {
+  InstallationItemKinds,
+  TransportModes,
+  WarrantyMonthsOptions,
+} from "@/types";
 
 export const offerDiscountSchema = z.object({
   discount_pct: z
@@ -49,5 +53,19 @@ export const offerSettingsSchema = z.object({
     (items) => new Set(items.map((i) => i.kind)).size === items.length,
     { error: "Voci di installazione duplicate." },
   ),
+  // Supply conditions (#274). Empty text fields mean "not set" — the display
+  // layer resolves the fallbacks ("Da definire" / customer address).
+  delivery_date: z.date({ error: "Data di consegna non valida." }).nullable(),
+  delivery_destination: z
+    .string()
+    .trim()
+    .max(500, "La destinazione non può superare 500 caratteri."),
+  payment_terms: z
+    .string()
+    .trim()
+    .max(500, "Le modalità di pagamento non possono superare 500 caratteri."),
+  warranty_months: z.literal(WarrantyMonthsOptions, {
+    error: "La garanzia deve essere di 12 o 24 mesi.",
+  }),
 });
 export type OfferSettings = z.infer<typeof offerSettingsSchema>;

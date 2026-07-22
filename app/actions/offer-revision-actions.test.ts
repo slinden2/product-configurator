@@ -121,6 +121,7 @@ import {
 } from "@/app/actions/offer-revision-actions";
 import { QueryError } from "@/db/queries";
 import { MSG } from "@/lib/messages";
+import type { OfferSettings } from "@/validation/offer/offer-settings-schema";
 
 const OFFER_ID = 5;
 const REVISION_ID = 7;
@@ -135,6 +136,10 @@ function validSettings() {
       { kind: "BASE_SYSTEM" as const, amount: 0, included: false },
       { kind: "HP_ROOF_BAR" as const, amount: 0, included: false },
     ],
+    delivery_date: null,
+    delivery_destination: "",
+    payment_terms: "",
+    warranty_months: 12 as const,
   };
 }
 
@@ -238,6 +243,58 @@ describe("setRevisionSettingsAction", () => {
     const result = await setRevisionSettingsAction(OFFER_ID, {
       ...validSettings(),
       transport_amount: -10,
+    });
+    expect(result.success).toBe(false);
+    expect(mockUpdateRevisionSettingsWithAudit).not.toHaveBeenCalled();
+  });
+
+  test("stores blank supply-condition text fields as null", async () => {
+    const result = await setRevisionSettingsAction(OFFER_ID, {
+      ...validSettings(),
+      delivery_destination: "   ",
+      payment_terms: "",
+    });
+    expect(result).toEqual({ success: true });
+    expect(mockUpdateRevisionSettingsWithAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          delivery_destination: null,
+          payment_terms: null,
+        }),
+      }),
+    );
+  });
+
+  test("persists filled supply conditions", async () => {
+    const deliveryDate = new Date("2026-09-15T00:00:00Z");
+    const result = await setRevisionSettingsAction(OFFER_ID, {
+      ...validSettings(),
+      delivery_date: deliveryDate,
+      delivery_destination: "Cantiere di Verona",
+      payment_terms: "Bonifico 60 gg",
+      warranty_months: 24,
+    });
+    expect(result).toEqual({ success: true });
+    expect(mockUpdateRevisionSettingsWithAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          delivery_date: deliveryDate,
+          delivery_destination: "Cantiere di Verona",
+          payment_terms: "Bonifico 60 gg",
+          warranty_months: 24,
+        }),
+      }),
+    );
+  });
+
+  test.each([
+    0, 12.5, 18, 121,
+  ])("rejects a warranty other than 12 or 24 (%s months)", async (warranty_months) => {
+    // The narrowed input type can't express an invalid warranty; the cast
+    // forges the over-the-wire payload the runtime schema must still reject.
+    const result = await setRevisionSettingsAction(OFFER_ID, {
+      ...validSettings(),
+      warranty_months: warranty_months as OfferSettings["warranty_months"],
     });
     expect(result.success).toBe(false);
     expect(mockUpdateRevisionSettingsWithAudit).not.toHaveBeenCalled();

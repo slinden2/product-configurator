@@ -983,6 +983,10 @@ export async function createOfferRevisionFrom(
       // source's (often already-expired) date.
       valid_until: null,
       notes: source.notes,
+      delivery_date: source.delivery_date,
+      delivery_destination: source.delivery_destination,
+      payment_terms: source.payment_terms,
+      warranty_months: source.warranty_months,
     })
     .returning({ id: offerRevisions.id });
 
@@ -1119,6 +1123,10 @@ export async function createRenegotiationRevisionFrom(
       show_net_total_only: source.show_net_total_only,
       valid_until: null,
       notes: source.notes,
+      delivery_date: source.delivery_date,
+      delivery_destination: source.delivery_destination,
+      payment_terms: source.payment_terms,
+      warranty_months: source.warranty_months,
     })
     .returning({ id: offerRevisions.id });
 
@@ -2036,6 +2044,10 @@ export type RevisionSettingsUpdate = {
   transport_mode: TransportMode;
   installation_mode: TransportMode;
   installation_items: OfferInstallationItem[];
+  delivery_date: Date | null;
+  delivery_destination: string | null;
+  payment_terms: string | null;
+  warranty_months: number;
 };
 
 /**
@@ -2061,6 +2073,10 @@ export async function updateRevisionSettingsWithAudit(data: {
         transport_mode: offerRevisions.transport_mode,
         installation_mode: offerRevisions.installation_mode,
         installation_items: offerRevisions.installation_items,
+        delivery_date: offerRevisions.delivery_date,
+        delivery_destination: offerRevisions.delivery_destination,
+        payment_terms: offerRevisions.payment_terms,
+        warranty_months: offerRevisions.warranty_months,
       })
       .from(offerRevisions)
       .where(eq(offerRevisions.id, data.revisionId));

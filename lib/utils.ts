@@ -30,6 +30,19 @@ export function formatDateDDMMYYYYHHMM(date: Date | string): string {
   });
 }
 
+/**
+ * Date-only variant of {@link formatDateDDMMYYYYHHMM} — "dd/mm/yyyy" in Italian
+ * time, timezone pinned so server and client render identically.
+ */
+export function formatDateDDMMYYYY(date: Date | string): string {
+  return new Date(date).toLocaleDateString("it-IT", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Europe/Rome",
+  });
+}
+
 // NOT_SELECTED_VALUE must be a non-empty string. "" or undefined will cause problems
 // with the Select component. Trust me, you have already tried those approaches.
 export const NOT_SELECTED_VALUE = "null";

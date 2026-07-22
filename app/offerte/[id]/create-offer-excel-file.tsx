@@ -197,6 +197,14 @@ export function buildOfferWorkbook(
     addSummaryRow("TOTALE NETTO", data.extras.net_total, COLORS.grandTotalBg);
   }
 
+  // ── Condizioni di fornitura ─────────────────────────────────────────────────
+  addSectionTitleRow(sheet, "Condizioni di fornitura", bodyColCount);
+  for (const line of data.supplyConditions) {
+    sheet.addRow([
+      line.value === null ? line.label : `${line.label}: ${line.value}`,
+    ]);
+  }
+
   applyHeaderRowStyling(sheet, headerRowNums, bodyColCount);
 
   return workbook;

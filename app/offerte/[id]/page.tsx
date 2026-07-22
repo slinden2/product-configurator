@@ -386,6 +386,7 @@ const OfferDetail = async (props: OfferDetailProps) => {
         <QuoteView
           offerId={offer.id}
           customerName={offer.customer_name}
+          customerAddress={offer.customer_address}
           revision={revision}
           editable={commercialEditable}
         />
